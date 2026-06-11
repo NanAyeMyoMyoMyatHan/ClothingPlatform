@@ -1,7 +1,1687 @@
 ﻿@page "/admin"
 
-<h3>Admin</h3>
+<style>
+  :root {
+    --bg-primary: #111111;
+    --bg-secondary: #1A1A1A;
+    --bg-card: #1F1F1F;
+    --bg-sidebar: #141414;
+    --gold: #D4AF37;
+    --gold-light: #E8C96D;
+    --gold-muted: rgba(212,175,55,0.15);
+    --rose: #E8B4B4;
+    --rose-muted: rgba(232,180,180,0.12);
+    --white: #FFFFFF;
+    --text-primary: #F0EDE8;
+    --text-secondary: #9A9490;
+    --text-muted: #5A5856;
+    --border: rgba(212,175,55,0.12);
+    --border-light: rgba(255,255,255,0.06);
+    --danger: #C0392B;
+    --success: #2E7D32;
+    --warning: #B7770D;
+    --sidebar-width: 260px;
+    --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
 
-@code {
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  #sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    transition: var(--transition);
+  }
+
+  .sidebar-brand {
+    padding: 32px 24px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-brand .brand-mark {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+
+  .sidebar-brand .brand-sub {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 16px 0;
+    overflow-y: auto;
+  }
+
+  .nav-section-label {
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 16px 24px 8px;
+  }
+
+  .nav-item-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 24px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: var(--transition);
+    border-left: 2px solid transparent;
+    position: relative;
+  }
+
+  .nav-item-link:hover {
+    color: var(--text-primary);
+    background: rgba(255,255,255,0.03);
+    border-left-color: var(--border);
+  }
+
+  .nav-item-link.active {
+    color: var(--gold);
+    background: var(--gold-muted);
+    border-left-color: var(--gold);
+  }
+
+  .nav-item-link .nav-icon {
+    width: 16px;
+    text-align: center;
+    font-size: 13px;
+    opacity: 0.8;
+  }
+
+  .sidebar-footer {
+    padding: 16px 24px 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .admin-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .admin-avatar {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, var(--gold), var(--rose));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #111;
+    flex-shrink: 0;
+  }
+
+  .admin-info .admin-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.2;
+  }
+
+  .admin-info .admin-role {
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ── MAIN CONTENT ── */
+  #main-content {
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+    background: var(--bg-primary);
+  }
+
+  .topbar {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-light);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .topbar-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+  }
+
+  .topbar-subtitle {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .topbar-date {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+  }
+
+  .content-area {
+    padding: 32px;
+  }
+
+  /* ── KPI CARDS ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 36px;
+  }
+
+  .kpi-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+    opacity: 0;
+    transition: var(--transition);
+  }
+
+  .kpi-card:hover {
+    border-color: var(--border);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+
+  .kpi-card:hover::before { opacity: 1; }
+
+  .kpi-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .kpi-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .kpi-value.gold { color: var(--gold); }
+  .kpi-value.rose { color: var(--rose); }
+
+  .kpi-delta {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .kpi-icon {
+    position: absolute;
+    top: 20px; right: 20px;
+    font-size: 28px;
+    opacity: 0.07;
+    color: var(--gold);
+  }
+
+  /* ── SECTION HEADERS ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text-primary);
+    letter-spacing: 0.3px;
+  }
+
+  .section-title span {
+    color: var(--gold);
+  }
+
+  /* ── TABLES ── */
+  .luxury-table-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .luxury-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .luxury-table thead {
+    background: rgba(212,175,55,0.06);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .luxury-table thead th {
+    padding: 14px 20px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .luxury-table tbody tr {
+    border-bottom: 1px solid var(--border-light);
+    transition: var(--transition);
+  }
+
+  .luxury-table tbody tr:last-child { border-bottom: none; }
+
+  .luxury-table tbody tr:hover {
+    background: rgba(255,255,255,0.02);
+  }
+
+  .luxury-table tbody td {
+    padding: 14px 20px;
+    color: var(--text-secondary);
+    vertical-align: middle;
+  }
+
+  .luxury-table tbody td.primary {
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  /* ── BADGES ── */
+  .badge-luxury {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .badge-gold { background: var(--gold-muted); color: var(--gold); border: 1px solid rgba(212,175,55,0.25); }
+  .badge-rose { background: var(--rose-muted); color: var(--rose); border: 1px solid rgba(232,180,180,0.25); }
+  .badge-green { background: rgba(46,125,50,0.15); color: #81C784; border: 1px solid rgba(46,125,50,0.3); }
+  .badge-blue { background: rgba(30,136,229,0.12); color: #64B5F6; border: 1px solid rgba(30,136,229,0.25); }
+  .badge-red { background: rgba(192,57,43,0.12); color: #EF9A9A; border: 1px solid rgba(192,57,43,0.25); }
+  .badge-muted { background: rgba(90,88,86,0.3); color: var(--text-muted); border: 1px solid rgba(90,88,86,0.4); }
+  .badge-warning { background: rgba(183,119,13,0.15); color: #FFD54F; border: 1px solid rgba(183,119,13,0.3); }
+
+  /* ── BUTTONS ── */
+  .btn-luxury {
+    background: linear-gradient(135deg, var(--gold), #B8960F);
+    color: #111;
+    border: none;
+    padding: 9px 20px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .btn-luxury:hover {
+    background: linear-gradient(135deg, var(--gold-light), var(--gold));
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(212,175,55,0.3);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-light);
+    padding: 7px 16px;
+    border-radius: 4px;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .btn-ghost:hover {
+    color: var(--text-primary);
+    border-color: var(--border);
+    background: rgba(255,255,255,0.03);
+  }
+
+  .btn-danger-ghost {
+    background: transparent;
+    color: #EF9A9A;
+    border: 1px solid rgba(192,57,43,0.25);
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .btn-danger-ghost:hover {
+    background: rgba(192,57,43,0.1);
+    border-color: rgba(192,57,43,0.5);
+  }
+
+  .btn-icon {
+    background: transparent;
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    width: 30px; height: 30px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 11px;
+  }
+
+  .btn-icon:hover {
+    color: var(--gold);
+    border-color: var(--border);
+  }
+
+  /* ── FORMS ── */
+  .luxury-form-group {
+    margin-bottom: 20px;
+  }
+
+  .luxury-label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .luxury-input, .luxury-select {
+    width: 100%;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+    padding: 10px 14px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    transition: var(--transition);
+    outline: none;
+    appearance: none;
+  }
+
+  .luxury-input:focus, .luxury-select:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px rgba(212,175,55,0.1);
+  }
+
+  .luxury-select option {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+  }
+
+  /* ── MODALS ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .modal-box {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 32px;
+    position: relative;
+    animation: modalIn 0.25s ease;
+  }
+
+  @@keyframes modalIn {
+    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .modal-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .modal-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    margin-bottom: 24px;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 20px; right: 20px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: var(--transition);
+  }
+
+  .modal-close:hover { color: var(--text-primary); background: var(--border-light); }
+
+  /* ── STATUS SELECT ── */
+  .status-select {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+  }
+
+  .status-select:focus { border-color: var(--gold); }
+
+  /* ── LOW STOCK ROW ── */
+  .low-stock-row { background: rgba(183,119,13,0.05) !important; }
+  .low-stock-indicator {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: #FFD54F;
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: pulse 1.5s infinite;
+  }
+
+  @@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ── PROFILE PAGE ── */
+  .profile-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 36px;
+    max-width: 600px;
+  }
+
+  .profile-avatar-lg {
+    width: 72px; height: 72px;
+    background: linear-gradient(135deg, var(--gold), var(--rose));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 20px;
+  }
+
+  .logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: transparent;
+    border: 1px solid rgba(192,57,43,0.3);
+    color: #EF9A9A;
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-top: 32px;
+    width: 100%;
+    justify-content: center;
+    letter-spacing: 0.5px;
+  }
+
+  .logout-btn:hover {
+    background: rgba(192,57,43,0.1);
+    border-color: rgba(192,57,43,0.6);
+    color: #FFCDD2;
+  }
+
+  /* ── LOGOUT SCREEN ── */
+  #logout-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg-primary);
+    z-index: 9999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+  }
+
+  #logout-screen.active { display: flex; }
+
+  .logout-icon {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: var(--gold-muted);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  .logout-msg {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 30px;
+    font-weight: 400;
+    color: var(--text-primary);
+    letter-spacing: 1px;
+  }
+
+  .logout-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ── FULFILLMENT LOG ── */
+  .timeline-item {
+    display: flex;
+    gap: 16px;
+    padding-bottom: 20px;
+    position: relative;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 16px; top: 32px;
+    bottom: 0;
+    width: 1px;
+    background: var(--border-light);
+  }
+
+  .timeline-item:last-child::before { display: none; }
+
+  .timeline-dot {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--gold-muted);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--gold);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .timeline-body { flex: 1; }
+
+  .timeline-title { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+  .timeline-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ── PAYMENT SLIP MODAL ── */
+  .slip-preview {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    padding: 28px;
+    text-align: center;
+  }
+
+  .slip-amount {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px;
+    font-weight: 600;
+    color: var(--gold);
+  }
+
+  .slip-divider {
+    border-top: 1px solid var(--border-light);
+    margin: 16px 0;
+  }
+
+  .slip-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+  }
+
+  .slip-row span:last-child { color: var(--text-primary); }
+
+  /* ── VIEWS ── */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── DIVIDER ── */
+  .gold-divider {
+    width: 40px; height: 1px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+    margin: 8px 0 16px;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 2px; }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 32px; right: 32px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--gold);
+    border-radius: 6px;
+    padding: 14px 20px;
+    font-size: 13px;
+    color: var(--text-primary);
+    z-index: 9000;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+    min-width: 260px;
+  }
+
+  #toast.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── STATS MINI ── */
+  .mini-stat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .mini-stat-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+
+  @@media (max-width: 1200px) {
+    .kpi-grid { grid-template-columns: repeat(2,1fr); }
+  }
+</style>
+
+<body>
+
+<!-- ═══════════════════════════════════════
+     LOGOUT SCREEN
+═══════════════════════════════════════ -->
+<div id="logout-screen">
+  <div class="logout-icon"><i class="fas fa-feather-alt"></i></div>
+  <div class="logout-msg">Session Ended</div>
+  <div class="logout-sub">Logged Out Successfully</div>
+  <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">You have been securely signed out of The Boutique Owner Portal.</p>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SIDEBAR
+═══════════════════════════════════════ -->
+<nav id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-mark">The Boutique</div>
+    <div class="brand-sub">Owner Portal</div>
+  </div>
+
+  <div class="sidebar-nav">
+    <div class="nav-section-label">Operations</div>
+    <a class="nav-item-link active" data-view="dashboard" onclick="navigate('dashboard')">
+      <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+      Business Overview
+    </a>
+    <a class="nav-item-link" data-view="orders" onclick="navigate('orders')">
+      <span class="nav-icon"><i class="fas fa-receipt"></i></span>
+      Order Management
+    </a>
+
+    <div class="nav-section-label">Store</div>
+    <a class="nav-item-link" data-view="products" onclick="navigate('products')">
+      <span class="nav-icon"><i class="fas fa-layer-group"></i></span>
+      Product Catalog
+    </a>
+    <a class="nav-item-link" data-view="staff" onclick="navigate('staff')">
+      <span class="nav-icon"><i class="fas fa-users"></i></span>
+      Staff Members
+    </a>
+    <a class="nav-item-link" data-view="fulfillment" onclick="navigate('fulfillment')">
+      <span class="nav-icon"><i class="fas fa-clock-rotate-left"></i></span>
+      Fulfillment Log
+    </a>
+
+    <div class="nav-section-label">Account</div>
+    <a class="nav-item-link" data-view="profile" onclick="navigate('profile')">
+      <span class="nav-icon"><i class="fas fa-user-circle"></i></span>
+      My Profile
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="admin-badge">
+      <div class="admin-avatar" id="sidebar-avatar">SA</div>
+      <div class="admin-info">
+        <div class="admin-name" id="sidebar-name">Sithu Aung</div>
+        <div class="admin-role">Administrator</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════
+     MAIN CONTENT
+═══════════════════════════════════════ -->
+<div id="main-content">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="topbar-title">Business Overview</div>
+      <div class="topbar-subtitle" id="topbar-sub">Key metrics & performance at a glance</div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-date" id="topbar-date"></div>
+      <div class="mini-stat">
+        <div class="mini-stat-dot" style="background:var(--gold)"></div>
+        <span>System Active</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ VIEW: DASHBOARD ═══ -->
+  <div class="view active content-area" id="view-dashboard">
+    <div class="kpi-grid">
+      <div class="kpi-card" onclick="navigate('orders')">
+        <i class="fas fa-coins kpi-icon"></i>
+        <div class="kpi-label">Total Gross Revenue</div>
+        <div class="kpi-value gold" id="kpi-revenue">—</div>
+        <div class="kpi-delta">MMK · All time orders</div>
+      </div>
+      <div class="kpi-card" onclick="navigate('staff')">
+        <i class="fas fa-users kpi-icon"></i>
+        <div class="kpi-label">Active Staff Members</div>
+        <div class="kpi-value" id="kpi-staff">—</div>
+        <div class="kpi-delta">Registered employees</div>
+      </div>
+      <div class="kpi-card" onclick="navigate('products')">
+        <i class="fas fa-layer-group kpi-icon"></i>
+        <div class="kpi-label">Products Catalogued</div>
+        <div class="kpi-value rose" id="kpi-products">—</div>
+        <div class="kpi-delta">Unique items in inventory</div>
+      </div>
+      <div class="kpi-card" onclick="navigate('orders')">
+        <i class="fas fa-check-double kpi-icon"></i>
+        <div class="kpi-label">Orders Dispatched</div>
+        <div class="kpi-value" id="kpi-delivered">—</div>
+        <div class="kpi-delta">Delivered & completed</div>
+      </div>
+    </div>
+
+    <!-- Recent Orders Preview -->
+    <div class="section-header">
+      <div>
+        <div class="section-title">Recent <span>Transactions</span></div>
+        <div class="gold-divider"></div>
+      </div>
+      <button class="btn-ghost" onclick="navigate('orders')">View All Orders →</button>
+    </div>
+    <div class="luxury-table-wrap" id="recent-orders-table">
+      <!-- rendered by JS -->
+    </div>
+  </div>
+
+  <!-- ═══ VIEW: ORDERS ═══ -->
+  <div class="view content-area" id="view-orders">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Order <span>Management</span></div>
+        <div class="gold-divider"></div>
+      </div>
+      <div class="mini-stat" id="order-count-label"></div>
+    </div>
+    <div class="luxury-table-wrap" id="orders-table">
+      <!-- rendered by JS -->
+    </div>
+  </div>
+
+  <!-- ═══ VIEW: PRODUCTS ═══ -->
+  <div class="view content-area" id="view-products">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Product <span>Catalog</span></div>
+        <div class="gold-divider"></div>
+      </div>
+      <button class="btn-luxury" onclick="openModal('modal-add-product')">
+        <i class="fas fa-plus" style="margin-right:6px;font-size:9px;"></i>Add Variant
+      </button>
+    </div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+      <span class="low-stock-indicator"></span>
+      Rows highlighted in amber indicate stock below 5 units
+    </div>
+    <div class="luxury-table-wrap" id="products-table">
+      <!-- rendered by JS -->
+    </div>
+  </div>
+
+  <!-- ═══ VIEW: STAFF ═══ -->
+  <div class="view content-area" id="view-staff">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Staff <span>Members</span></div>
+        <div class="gold-divider"></div>
+      </div>
+      <button class="btn-luxury" onclick="openModal('modal-add-staff')">
+        <i class="fas fa-user-plus" style="margin-right:6px;font-size:9px;"></i>Add Staff
+      </button>
+    </div>
+    <div class="luxury-table-wrap" id="staff-table">
+      <!-- rendered by JS -->
+    </div>
+  </div>
+
+  <!-- ═══ VIEW: FULFILLMENT LOG ═══ -->
+  <div class="view content-area" id="view-fulfillment">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Fulfillment <span>Log</span></div>
+        <div class="gold-divider"></div>
+      </div>
+    </div>
+    <div id="fulfillment-list" style="max-width:680px;">
+      <!-- rendered by JS -->
+    </div>
+  </div>
+
+  <!-- ═══ VIEW: PROFILE ═══ -->
+  <div class="view content-area" id="view-profile">
+    <div class="section-header">
+      <div>
+        <div class="section-title">My <span>Profile</span></div>
+        <div class="gold-divider"></div>
+      </div>
+    </div>
+    <div class="profile-card">
+      <div class="profile-avatar-lg" id="profile-avatar-lg">SA</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:500;margin-bottom:4px;" id="profile-full-name">Sithu Aung</div>
+      <div style="font-size:11px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:28px;">Administrator</div>
+
+      <div class="row g-3">
+        <div class="col-6">
+          <div class="luxury-form-group">
+            <label class="luxury-label">First Name</label>
+            <input type="text" class="luxury-input" id="profile-first" />
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="luxury-form-group">
+            <label class="luxury-label">Last Name</label>
+            <input type="text" class="luxury-input" id="profile-last" />
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="luxury-form-group">
+            <label class="luxury-label">Email Address</label>
+            <input type="email" class="luxury-input" id="profile-email" />
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="luxury-form-group">
+            <label class="luxury-label">Role</label>
+            <input type="text" class="luxury-input" id="profile-role" disabled style="opacity:0.5;" />
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-luxury" onclick="saveProfile()" style="margin-top:8px;">Save Changes</button>
+
+      <div style="border-top: 1px solid var(--border-light); margin-top: 36px; padding-top:28px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;letter-spacing:1px;text-transform:uppercase;">Danger Zone</div>
+        <button class="logout-btn" onclick="performLogout()">
+          <i class="fas fa-right-from-bracket"></i>
+          Sign Out of Owner Portal
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     MODALS
+═══════════════════════════════════════ -->
+
+<!-- ADD STAFF MODAL -->
+<div class="modal-overlay" id="modal-add-staff">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-add-staff')"><i class="fas fa-times"></i></button>
+    <div class="modal-title">Add Staff Member</div>
+    <div class="modal-sub">New employee will be added to the active team roster.</div>
+
+    <div class="luxury-form-group">
+      <label class="luxury-label">Full Name</label>
+      <input type="text" class="luxury-input" id="staff-new-name" placeholder="e.g. Thida Kyaw" />
+    </div>
+    <div class="luxury-form-group">
+      <label class="luxury-label">Email Address</label>
+      <input type="email" class="luxury-input" id="staff-new-email" placeholder="employee@theboutique.com" />
+    </div>
+    <div class="luxury-form-group">
+      <label class="luxury-label">Phone Number</label>
+      <input type="text" class="luxury-input" id="staff-new-phone" placeholder="+95 9XX XXX XXXX" />
+    </div>
+    <div class="luxury-form-group">
+      <label class="luxury-label">Status</label>
+      <select class="luxury-select" id="staff-new-status">
+        <option value="Active">Active</option>
+        <option value="On Leave">On Leave</option>
+      </select>
+    </div>
+    <button class="btn-luxury w-100" onclick="addStaff()">Add to Team</button>
+  </div>
+</div>
+
+<!-- ADD PRODUCT MODAL -->
+<div class="modal-overlay" id="modal-add-product">
+  <div class="modal-box" style="max-width:560px;">
+    <button class="modal-close" onclick="closeModal('modal-add-product')"><i class="fas fa-times"></i></button>
+    <div class="modal-title">Add Product Variant</div>
+    <div class="modal-sub">Introduce a new item or variant into the live catalog.</div>
+
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="luxury-form-group">
+          <label class="luxury-label">Product Name</label>
+          <input type="text" class="luxury-input" id="prod-new-name" placeholder="e.g. Silk Evening Gown" />
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="luxury-form-group">
+          <label class="luxury-label">SKU</label>
+          <input type="text" class="luxury-input" id="prod-new-sku" placeholder="e.g. SLK-EVE-001" />
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="luxury-form-group">
+          <label class="luxury-label">Category</label>
+          <select class="luxury-select" id="prod-new-category">
+            <option>Evening Wear</option>
+            <option>Day Wear</option>
+            <option>Casual</option>
+            <option>Traditional</option>
+            <option>Accessories</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="luxury-form-group">
+          <label class="luxury-label">Size</label>
+          <select class="luxury-select" id="prod-new-size">
+            <option>XS</option><option>S</option><option>M</option>
+            <option>L</option><option>XL</option><option>XXL</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="luxury-form-group">
+          <label class="luxury-label">Color</label>
+          <input type="text" class="luxury-input" id="prod-new-color" placeholder="e.g. Ivory" />
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="luxury-form-group">
+          <label class="luxury-label">Stock Units</label>
+          <input type="number" class="luxury-input" id="prod-new-stock" placeholder="e.g. 12" min="0" />
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="luxury-form-group">
+          <label class="luxury-label">Price (MMK)</label>
+          <input type="number" class="luxury-input" id="prod-new-price" placeholder="e.g. 85000" min="0" />
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="luxury-form-group">
+          <label class="luxury-label">Designer / Label</label>
+          <input type="text" class="luxury-input" id="prod-new-designer" placeholder="e.g. House Label" />
+        </div>
+      </div>
+    </div>
+    <button class="btn-luxury w-100 mt-2" onclick="addProduct()">Add to Catalog</button>
+  </div>
+</div>
+
+<!-- PAYMENT SLIP MODAL -->
+<div class="modal-overlay" id="modal-payment-slip">
+  <div class="modal-box" style="max-width:420px;">
+    <button class="modal-close" onclick="closeModal('modal-payment-slip')"><i class="fas fa-times"></i></button>
+    <div class="modal-title">Payment Slip</div>
+    <div class="modal-sub" id="slip-order-ref">Order Reference</div>
+
+    <div class="slip-preview">
+      <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">Mobile Wallet Transfer</div>
+      <div class="slip-amount" id="slip-amount">0 MMK</div>
+      <div style="font-size:11px;color:var(--gold);margin-top:4px;margin-bottom:16px;">✓ Payment Confirmed</div>
+      <div class="slip-divider"></div>
+      <div class="slip-row"><span>Customer</span><span id="slip-customer">—</span></div>
+      <div class="slip-row"><span>Transaction Ref</span><span id="slip-txn">—</span></div>
+      <div class="slip-row"><span>Wallet Provider</span><span id="slip-wallet">—</span></div>
+      <div class="slip-row"><span>Date & Time</span><span id="slip-date">—</span></div>
+      <div class="slip-row"><span>Status</span><span style="color:#81C784;">Verified</span></div>
+      <div class="slip-divider"></div>
+      <div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;">THE BOUTIQUE · LUXURY WOMEN'S FASHION</div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  STATE — MOCK DATABASE
+// ═══════════════════════════════════════════════════
+
+let adminProfile = {
+  firstName: "Sithu",
+  lastName: "Aung",
+  email: "admin@theboutique.com",
+  role: "admin"
+};
+
+let staffList = [
+  { id: 1, name: "Aye Myat Thu", email: "aye.myatthu@theboutique.com", phone: "+95 9 4512 3876", status: "Active", joined: "Jan 2023" },
+  { id: 2, name: "Nilar Win", email: "nilar.win@theboutique.com", phone: "+95 9 7834 5610", status: "Active", joined: "Mar 2023" },
+  { id: 3, name: "Phyo Thandar", email: "phyo.thandar@theboutique.com", phone: "+95 9 2109 8765", status: "On Leave", joined: "Jun 2023" },
+  { id: 4, name: "Su Myat Noe", email: "su.myatnoe@theboutique.com", phone: "+95 9 6654 3219", status: "Active", joined: "Sep 2023" },
+];
+
+let products = [
+  { id: 1, name: "Silk Velvet Evening Gown", category: "Evening Wear", designer: "Maison Boutique",
+    variants: [
+      { sku: "SVE-001-S-IV", size: "S", color: "Ivory", stock: 3, price: 285000 },
+      { sku: "SVE-001-M-IV", size: "M", color: "Ivory", stock: 7, price: 285000 },
+      { sku: "SVE-001-L-RG", size: "L", color: "Rose Gold", stock: 2, price: 295000 },
+    ]
+  },
+  { id: 2, name: "Lace Wrap Midi Dress", category: "Day Wear", designer: "House Label",
+    variants: [
+      { sku: "LWM-002-XS-BK", size: "XS", color: "Black", stock: 8, price: 145000 },
+      { sku: "LWM-002-M-BK", size: "M", color: "Black", stock: 5, price: 145000 },
+      { sku: "LWM-002-M-NV", size: "M", color: "Navy", stock: 1, price: 148000 },
+    ]
+  },
+  { id: 3, name: "Embroidered Longyi Set", category: "Traditional", designer: "Shwe Myanmar",
+    variants: [
+      { sku: "ELS-003-M-GD", size: "M", color: "Gold Thread", stock: 12, price: 98000 },
+      { sku: "ELS-003-L-GD", size: "L", color: "Gold Thread", stock: 6, price: 98000 },
+      { sku: "ELS-003-XL-RB", size: "XL", color: "Ruby", stock: 4, price: 105000 },
+    ]
+  },
+  { id: 4, name: "Cashmere Turtleneck Sweater", category: "Casual", designer: "House Label",
+    variants: [
+      { sku: "CTN-004-S-CM", size: "S", color: "Camel", stock: 9, price: 165000 },
+      { sku: "CTN-004-M-CM", size: "M", color: "Camel", stock: 3, price: 165000 },
+      { sku: "CTN-004-L-CR", size: "L", color: "Cream", stock: 6, price: 165000 },
+    ]
+  },
+  { id: 5, name: "Sequined Cocktail Dress", category: "Evening Wear", designer: "Maison Boutique",
+    variants: [
+      { sku: "SCD-005-S-SL", size: "S", color: "Silver", stock: 5, price: 225000 },
+      { sku: "SCD-005-M-CG", size: "M", color: "Champagne", stock: 2, price: 235000 },
+    ]
+  },
+  { id: 6, name: "Pleated Palazzo Trousers", category: "Day Wear", designer: "House Label",
+    variants: [
+      { sku: "PPT-006-M-WH", size: "M", color: "White", stock: 11, price: 89000 },
+      { sku: "PPT-006-L-BG", size: "L", color: "Beige", stock: 0, price: 89000 },
+    ]
+  },
+  { id: 7, name: "Pearl-Trim Blouse", category: "Day Wear", designer: "Atelier Thida",
+    variants: [
+      { sku: "PTB-007-XS-WH", size: "XS", color: "White", stock: 4, price: 72000 },
+      { sku: "PTB-007-S-PK", size: "S", color: "Blush Pink", stock: 7, price: 72000 },
+      { sku: "PTB-007-M-PK", size: "M", color: "Blush Pink", stock: 2, price: 72000 },
+    ]
+  },
+  { id: 8, name: "Organza Occasion Jacket", category: "Evening Wear", designer: "Maison Boutique",
+    variants: [
+      { sku: "OOJ-008-S-GD", size: "S", color: "Gold", stock: 3, price: 198000 },
+      { sku: "OOJ-008-M-GD", size: "M", color: "Gold", stock: 6, price: 198000 },
+    ]
+  },
+  { id: 9, name: "Cotton Kaftan Print Dress", category: "Casual", designer: "Shwe Myanmar",
+    variants: [
+      { sku: "CKP-009-M-FL", size: "M", color: "Floral", stock: 14, price: 58000 },
+      { sku: "CKP-009-XL-FL", size: "XL", color: "Floral", stock: 8, price: 58000 },
+      { sku: "CKP-009-XXL-BT", size: "XXL", color: "Batik", stock: 1, price: 62000 },
+    ]
+  },
+  { id: 10, name: "Crystal-Buckle Belt", category: "Accessories", designer: "Atelier Thida",
+    variants: [
+      { sku: "CBB-010-OS-SL", size: "OS", color: "Silver", stock: 16, price: 45000 },
+      { sku: "CBB-010-OS-GD", size: "OS", color: "Gold", stock: 2, price: 47000 },
+    ]
+  },
+  { id: 11, name: "Ruched Satin Slip Skirt", category: "Evening Wear", designer: "House Label",
+    variants: [
+      { sku: "RSS-011-S-CM", size: "S", color: "Champagne", stock: 5, price: 118000 },
+      { sku: "RSS-011-M-CH", size: "M", color: "Charcoal", stock: 3, price: 118000 },
+    ]
+  },
+];
+
+let orders = [
+  { id: "ORD-2024-001", customer: "Ma Thida Soe", items: "Silk Velvet Evening Gown (M / Ivory)", amount: 285000, status: "Delivered", date: "12 Mar 2024", wallet: "KBZPay", txn: "KBZ-884921X", processedBy: 1 },
+  { id: "ORD-2024-002", customer: "Ma Hnin Wai", items: "Lace Wrap Midi Dress (XS / Black) x2", amount: 290000, status: "Delivered", date: "14 Mar 2024", wallet: "Wave Money", txn: "WV-774302A", processedBy: 2 },
+  { id: "ORD-2024-003", customer: "Daw Khin Myat", items: "Embroidered Longyi Set (L / Gold Thread)", amount: 98000, status: "Delivered", date: "15 Mar 2024", wallet: "AYA Pay", txn: "AYA-998213B", processedBy: 1 },
+  { id: "ORD-2024-004", customer: "Ma Zin Thiri", items: "Cashmere Turtleneck (S / Camel) + Crystal Belt", amount: 212000, status: "Processing", date: "18 Mar 2024", wallet: "KBZPay", txn: "KBZ-001847C", processedBy: 3 },
+  { id: "ORD-2024-005", customer: "Ma Ei Phyu", items: "Sequined Cocktail Dress (S / Silver)", amount: 225000, status: "Pending", date: "19 Mar 2024", wallet: "Wave Money", txn: "WV-556671D", processedBy: null },
+  { id: "ORD-2024-006", customer: "Ma Su Yadanar", items: "Pearl-Trim Blouse (S / Blush Pink)", amount: 72000, status: "Delivered", date: "20 Mar 2024", wallet: "KBZPay", txn: "KBZ-772910E", processedBy: 4 },
+  { id: "ORD-2024-007", customer: "Ma Pyae Phyo", items: "Cotton Kaftan Print (M / Floral) x2", amount: 116000, status: "Delivered", date: "21 Mar 2024", wallet: "AYA Pay", txn: "AYA-334821F", processedBy: 2 },
+  { id: "ORD-2024-008", customer: "Daw Mie Mie", items: "Organza Occasion Jacket (M / Gold)", amount: 198000, status: "Processing", date: "22 Mar 2024", wallet: "KBZPay", txn: "KBZ-991243G", processedBy: 1 },
+  { id: "ORD-2024-009", customer: "Ma Yamin Soe", items: "Ruched Satin Slip Skirt (M / Champagne) + Palazzo Trousers (M)", amount: 207000, status: "Pending", date: "23 Mar 2024", wallet: "Wave Money", txn: "WV-119823H", processedBy: null },
+  { id: "ORD-2024-010", customer: "Ma Pyone Wai Lwin", items: "Silk Velvet Evening Gown (L / Rose Gold)", amount: 295000, status: "Delivered", date: "24 Mar 2024", wallet: "AYA Pay", txn: "AYA-660321I", processedBy: 4 },
+  { id: "ORD-2024-011", customer: "Ma Aye Nandar", items: "Embroidered Longyi Set (XL / Ruby)", amount: 105000, status: "Processing", date: "25 Mar 2024", wallet: "KBZPay", txn: "KBZ-443210J", processedBy: 3 },
+  { id: "ORD-2024-012", customer: "Ma Htet Htet Aung", items: "Cashmere Sweater (L / Cream) x1 + Crystal Belt (Gold)", amount: 212000, status: "Delivered", date: "26 Mar 2024", wallet: "Wave Money", txn: "WV-887034K", processedBy: 2 },
+];
+
+let fulfillmentLogs = [
+  { timestamp: "12 Mar 2024 · 10:42 AM", staffId: 1, orderId: "ORD-2024-001", action: "Order marked Delivered" },
+  { timestamp: "14 Mar 2024 · 02:15 PM", staffId: 2, orderId: "ORD-2024-002", action: "Order marked Delivered" },
+  { timestamp: "15 Mar 2024 · 11:30 AM", staffId: 1, orderId: "ORD-2024-003", action: "Order marked Delivered" },
+  { timestamp: "18 Mar 2024 · 09:05 AM", staffId: 3, orderId: "ORD-2024-004", action: "Status updated to Processing" },
+  { timestamp: "20 Mar 2024 · 03:48 PM", staffId: 4, orderId: "ORD-2024-006", action: "Order marked Delivered" },
+  { timestamp: "21 Mar 2024 · 01:22 PM", staffId: 2, orderId: "ORD-2024-007", action: "Order marked Delivered" },
+  { timestamp: "22 Mar 2024 · 10:55 AM", staffId: 1, orderId: "ORD-2024-008", action: "Status updated to Processing" },
+  { timestamp: "24 Mar 2024 · 04:10 PM", staffId: 4, orderId: "ORD-2024-010", action: "Order marked Delivered" },
+  { timestamp: "25 Mar 2024 · 11:00 AM", staffId: 3, orderId: "ORD-2024-011", action: "Status updated to Processing" },
+  { timestamp: "26 Mar 2024 · 02:35 PM", staffId: 2, orderId: "ORD-2024-012", action: "Order marked Delivered" },
+];
+
+// ═══════════════════════════════════════════════════
+//  ROUTING
+// ═══════════════════════════════════════════════════
+
+const viewTitles = {
+  dashboard:    ["Business Overview",   "Key metrics & performance at a glance"],
+  orders:       ["Order Management",    "Track, update, and manage all transactions"],
+  products:     ["Product Catalog",     "Inventory control and variant management"],
+  staff:        ["Staff Members",       "Team roster and access management"],
+  fulfillment:  ["Fulfillment Log",     "Audit trail of order processing activity"],
+  profile:      ["My Profile",          "Account settings and session management"],
+};
+
+function navigate(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item-link').forEach(a => a.classList.remove('active'));
+
+  const el = document.getElementById('view-' + view);
+  if (el) el.classList.add('active');
+
+  const link = document.querySelector(`[data-view="${view}"]`);
+  if (link) link.classList.add('active');
+
+  const [title, sub] = viewTitles[view] || ['', ''];
+  document.getElementById('topbar-title').textContent = title;
+  document.getElementById('topbar-sub').textContent = sub;
+
+  if (view === 'dashboard')   renderDashboard();
+  if (view === 'orders')      renderOrders();
+  if (view === 'products')    renderProducts();
+  if (view === 'staff')       renderStaff();
+  if (view === 'fulfillment') renderFulfillment();
+  if (view === 'profile')     renderProfile();
 }
+
+// ═══════════════════════════════════════════════════
+//  RENDERERS
+// ═══════════════════════════════════════════════════
+
+function fmtMMK(n) {
+  return n.toLocaleString('en-US') + ' MMK';
+}
+
+function renderDashboard() {
+  const totalRevenue = orders.reduce((sum, o) => sum + o.amount, 0);
+  const delivered = orders.filter(o => o.status === 'Delivered').length;
+  document.getElementById('kpi-revenue').textContent = totalRevenue.toLocaleString('en-US');
+  document.getElementById('kpi-staff').textContent = staffList.length;
+  document.getElementById('kpi-products').textContent = products.length;
+  document.getElementById('kpi-delivered').textContent = delivered;
+
+  // Recent 5 orders
+  const recent = [...orders].slice(-5).reverse();
+  const rows = recent.map(o => `
+    <tr>
+      <td class="primary">${o.id}</td>
+      <td>${o.customer}</td>
+      <td>${o.items.length > 38 ? o.items.substring(0,38)+'…' : o.items}</td>
+      <td style="color:var(--gold);">${o.amount.toLocaleString()} MMK</td>
+      <td>${statusBadge(o.status)}</td>
+      <td style="font-size:11px;color:var(--text-muted);">${o.date}</td>
+    </tr>`).join('');
+
+  document.getElementById('recent-orders-table').innerHTML = `
+    <table class="luxury-table">
+      <thead><tr>
+        <th>Order ID</th><th>Customer</th><th>Items</th>
+        <th>Amount</th><th>Status</th><th>Date</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function statusBadge(status) {
+  const map = {
+    'Delivered': '<span class="badge-luxury badge-green">✓ Delivered</span>',
+    'Processing': '<span class="badge-luxury badge-blue">⟳ Processing</span>',
+    'Pending': '<span class="badge-luxury badge-warning">⏳ Pending</span>',
+  };
+  return map[status] || status;
+}
+
+function renderOrders() {
+  document.getElementById('order-count-label').innerHTML =
+    `<div class="mini-stat-dot" style="background:var(--gold)"></div>${orders.length} total orders`;
+
+  const rows = orders.map(o => {
+    const locked = o.status === 'Delivered';
+    const action = locked
+      ? `<span class="badge-luxury badge-green" style="padding:6px 14px;">✓ Delivered — Closed</span>`
+      : `<select class="status-select" onchange="updateOrderStatus('${o.id}', this.value)">
+           <option ${o.status==='Pending'?'selected':''}>Pending</option>
+           <option ${o.status==='Processing'?'selected':''}>Processing</option>
+           <option value="Delivered">Mark Delivered</option>
+         </select>`;
+
+    return `
+      <tr>
+        <td class="primary">${o.id}</td>
+        <td>${o.customer}</td>
+        <td style="max-width:220px;font-size:12px;">${o.items}</td>
+        <td style="color:var(--gold);font-weight:500;">${o.amount.toLocaleString()} MMK</td>
+        <td>${statusBadge(o.status)}</td>
+        <td style="font-size:11px;color:var(--text-muted);">${o.date}</td>
+        <td>${action}</td>
+        <td>
+          <button class="btn-icon" title="View Payment Slip" onclick="viewSlip('${o.id}')">
+            <i class="fas fa-receipt"></i>
+          </button>
+        </td>
+      </tr>`;
+  }).join('');
+
+  document.getElementById('orders-table').innerHTML = `
+    <table class="luxury-table">
+      <thead><tr>
+        <th>Order ID</th><th>Customer</th><th>Items</th>
+        <th>Amount</th><th>Status</th><th>Date</th>
+        <th>Action</th><th>Slip</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function updateOrderStatus(orderId, newStatus) {
+  const order = orders.find(o => o.id === orderId);
+  if (!order) return;
+  order.status = newStatus;
+  if (newStatus === 'Delivered') {
+    fulfillmentLogs.unshift({
+      timestamp: new Date().toLocaleString('en-US', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}),
+      staffId: 1,
+      orderId: orderId,
+      action: 'Order marked Delivered'
+    });
+  }
+  renderOrders();
+  renderDashboard();
+  toast(`Order ${orderId} updated to ${newStatus}`);
+}
+
+function viewSlip(orderId) {
+  const o = orders.find(x => x.id === orderId);
+  if (!o) return;
+  document.getElementById('slip-order-ref').textContent = `Reference: ${o.id}`;
+  document.getElementById('slip-amount').textContent = o.amount.toLocaleString() + ' MMK';
+  document.getElementById('slip-customer').textContent = o.customer;
+  document.getElementById('slip-txn').textContent = o.txn;
+  document.getElementById('slip-wallet').textContent = o.wallet;
+  document.getElementById('slip-date').textContent = o.date;
+  openModal('modal-payment-slip');
+}
+
+function renderProducts() {
+  let rows = '';
+  products.forEach(p => {
+    p.variants.forEach((v, i) => {
+      const low = v.stock < 5;
+      const stockDisplay = v.stock === 0
+        ? `<span class="badge-luxury badge-red">Out of Stock</span>`
+        : low
+          ? `<span><span class="low-stock-indicator"></span>${v.stock} units</span>`
+          : `${v.stock} units`;
+
+      rows += `
+        <tr class="${low ? 'low-stock-row' : ''}">
+          ${i === 0 ? `<td class="primary" rowspan="${p.variants.length}" style="border-right:1px solid var(--border-light);vertical-align:top;padding-top:16px;">
+            <div style="font-weight:500;color:var(--text-primary);">${p.name}</div>
+            <div style="font-size:10px;color:var(--gold);margin-top:3px;letter-spacing:0.5px;">${p.category}</div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${p.designer}</div>
+          </td>` : ''}
+          <td style="font-family:monospace;font-size:11px;color:var(--text-muted);">${v.sku}</td>
+          <td>${v.size}</td>
+          <td>${v.color}</td>
+          <td style="color:var(--gold);">${v.price.toLocaleString()} MMK</td>
+          <td>${stockDisplay}</td>
+        </tr>`;
+    });
+  });
+
+  document.getElementById('products-table').innerHTML = `
+    <table class="luxury-table">
+      <thead><tr>
+        <th>Product</th><th>SKU</th><th>Size</th>
+        <th>Color</th><th>Price</th><th>Stock</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function renderStaff() {
+  const rows = staffList.map(s => `
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--rose));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#111;flex-shrink:0;">
+            ${s.name.split(' ').map(w=>w[0]).slice(0,2).join('')}
+          </div>
+          <div>
+            <div style="color:var(--text-primary);font-weight:500;font-size:13px;">${s.name}</div>
+            <div style="font-size:10px;color:var(--text-muted);">${s.email}</div>
+          </div>
+        </div>
+      </td>
+      <td style="font-size:12px;">${s.phone}</td>
+      <td>
+        <span class="badge-luxury ${s.status === 'Active' ? 'badge-green' : 'badge-warning'}">
+          ${s.status}
+        </span>
+      </td>
+      <td style="font-size:11px;color:var(--text-muted);">Joined ${s.joined}</td>
+      <td>
+        <button class="btn-danger-ghost" onclick="revokeStaff(${s.id})">
+          <i class="fas fa-user-slash" style="margin-right:4px;"></i>Revoke
+        </button>
+      </td>
+    </tr>`).join('');
+
+  document.getElementById('staff-table').innerHTML = `
+    <table class="luxury-table">
+      <thead><tr>
+        <th>Employee</th><th>Phone</th><th>Status</th><th>Since</th><th>Action</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function revokeStaff(id) {
+  staffList = staffList.filter(s => s.id !== id);
+  renderStaff();
+  renderDashboard();
+  toast('Staff access revoked and member removed.');
+}
+
+function renderFulfillment() {
+  const html = fulfillmentLogs.map(log => {
+    const staff = staffList.find(s => s.id === log.staffId);
+    const staffName = staff ? staff.name : 'System';
+    const initials = staffName.split(' ').map(w=>w[0]).slice(0,2).join('');
+    return `
+      <div class="timeline-item">
+        <div class="timeline-dot">${initials}</div>
+        <div class="timeline-body">
+          <div class="timeline-title">${log.action} — <span style="color:var(--gold);">${log.orderId}</span></div>
+          <div class="timeline-meta">By ${staffName} · ${log.timestamp}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('fulfillment-list').innerHTML = html ||
+    '<div style="color:var(--text-muted);font-size:13px;padding:24px;">No fulfillment activity recorded.</div>';
+}
+
+function renderProfile() {
+  document.getElementById('profile-first').value = adminProfile.firstName;
+  document.getElementById('profile-last').value = adminProfile.lastName;
+  document.getElementById('profile-email').value = adminProfile.email;
+  document.getElementById('profile-role').value = adminProfile.role.charAt(0).toUpperCase() + adminProfile.role.slice(1);
+  const initials = adminProfile.firstName[0] + adminProfile.lastName[0];
+  document.getElementById('profile-avatar-lg').textContent = initials;
+  document.getElementById('profile-full-name').textContent = adminProfile.firstName + ' ' + adminProfile.lastName;
+}
+
+function saveProfile() {
+  adminProfile.firstName = document.getElementById('profile-first').value.trim() || adminProfile.firstName;
+  adminProfile.lastName  = document.getElementById('profile-last').value.trim()  || adminProfile.lastName;
+  adminProfile.email     = document.getElementById('profile-email').value.trim()  || adminProfile.email;
+
+  const initials = adminProfile.firstName[0] + adminProfile.lastName[0];
+  document.getElementById('sidebar-avatar').textContent = initials;
+  document.getElementById('sidebar-name').textContent = adminProfile.firstName + ' ' + adminProfile.lastName;
+  renderProfile();
+  toast('Profile updated successfully.');
+}
+
+// ═══════════════════════════════════════════════════
+//  FORM ACTIONS
+// ═══════════════════════════════════════════════════
+
+function addStaff() {
+  const name  = document.getElementById('staff-new-name').value.trim();
+  const email = document.getElementById('staff-new-email').value.trim();
+  const phone = document.getElementById('staff-new-phone').value.trim();
+  const status = document.getElementById('staff-new-status').value;
+
+  if (!name || !email) { toast('Please enter name and email.'); return; }
+
+  const newId = staffList.length > 0 ? Math.max(...staffList.map(s => s.id)) + 1 : 1;
+  staffList.push({
+    id: newId,
+    name, email, phone: phone || '—',
+    status,
+    joined: new Date().toLocaleDateString('en-US', {month:'short', year:'numeric'})
+  });
+
+  document.getElementById('staff-new-name').value = '';
+  document.getElementById('staff-new-email').value = '';
+  document.getElementById('staff-new-phone').value = '';
+  closeModal('modal-add-staff');
+  renderStaff();
+  renderDashboard();
+  toast(`${name} added to the team.`);
+}
+
+function addProduct() {
+  const name     = document.getElementById('prod-new-name').value.trim();
+  const sku      = document.getElementById('prod-new-sku').value.trim();
+  const category = document.getElementById('prod-new-category').value;
+  const size     = document.getElementById('prod-new-size').value;
+  const color    = document.getElementById('prod-new-color').value.trim();
+  const stock    = parseInt(document.getElementById('prod-new-stock').value) || 0;
+  const price    = parseInt(document.getElementById('prod-new-price').value) || 0;
+  const designer = document.getElementById('prod-new-designer').value.trim() || 'House Label';
+
+  if (!name || !sku) { toast('Product name and SKU are required.'); return; }
+
+  // Check if product exists (add variant) or create new
+  const existing = products.find(p => p.name.toLowerCase() === name.toLowerCase());
+  if (existing) {
+    existing.variants.push({ sku, size, color, stock, price });
+  } else {
+    const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+    products.push({ id: newId, name, category, designer, variants: [{ sku, size, color, stock, price }] });
+  }
+
+  ['prod-new-name','prod-new-sku','prod-new-color','prod-new-stock','prod-new-price','prod-new-designer']
+    .forEach(id => document.getElementById(id).value = '');
+
+  closeModal('modal-add-product');
+  renderProducts();
+  renderDashboard();
+  toast(`${name} added to catalog.`);
+}
+
+// ═══════════════════════════════════════════════════
+//  MODAL HELPERS
+// ═══════════════════════════════════════════════════
+
+function openModal(id) {
+  document.getElementById(id).classList.add('active');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+// Close modal on backdrop click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('active');
+  });
+});
+
+// ═══════════════════════════════════════════════════
+//  LOGOUT
+// ═══════════════════════════════════════════════════
+
+function performLogout() {
+  // Wipe session state
+  adminProfile = null;
+  document.getElementById('logout-screen').classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+
+function init() {
+  // Set date
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  // Set sidebar info
+  const initials = adminProfile.firstName[0] + adminProfile.lastName[0];
+  document.getElementById('sidebar-avatar').textContent = initials;
+  document.getElementById('sidebar-name').textContent = adminProfile.firstName + ' ' + adminProfile.lastName;
+
+  // Render initial view
+  navigate('dashboard');
+}
+
+init();
+</script>
+</body>
