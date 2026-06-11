@@ -1491,7 +1491,7 @@
             </button>
 
             <!-- User Nav -->
-            <span class="text-muted small d-none d-sm-inline">Bonjour, <strong>@currentUser?.FirstName</strong></span>
+            <span class="text-muted small d-none d-sm-inline">Mingalarpar, <strong>@currentUser?.FirstName</strong></span>
         </div>
     </div>
 
@@ -1499,7 +1499,7 @@
     <nav class="nav-tabs-bar">
         <button class="nav-tab @(activeTab == "home" ? "active" : "")" @onclick='() => Navigate("home")'>Home</button>
         <button class="nav-tab @(activeTab == "shop" ? "active" : "")" @onclick='() => Navigate("shop")'>The Collection</button>
-        <button class="nav-tab @(activeTab == "history" ? "active" : "")" @onclick='() => Navigate("history")'>Atelier Purchases</button>
+        <button class="nav-tab @(activeTab == "history" ? "active" : "")" @onclick='() => Navigate("history")'>My Purchases</button>
         <button class="nav-tab @(activeTab == "profile" ? "active" : "")" @onclick='() => Navigate("profile")'>My Profile</button>
         <button class="nav-tab text-danger" @onclick="Logout" style="margin-left: auto;">Sign Out</button>
     </nav>
@@ -1522,9 +1522,9 @@
         </div>
 
         <div class="products-grid">
-            @foreach (var prod in filteredProducts.Where(p => (bool)(p.IsFeatured ?? false)).Take(4))
+            @foreach (var prod in filteredProducts.Where(p => (bool)(p.IsFeatured ?? false)).Take(10))
             {
-                var primaryImg = prod.ProductImages.FirstOrDefault(i => (bool)i.IsPrimary)?.ImageUrl ?? "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80";
+                var primaryImg = prod.ProductImages.FirstOrDefault(i => i.IsPrimary==true)?.ImageUrl ?? "/images/products/crossTop.jpg";
                 <div class="product-card" @onclick="() => OpenQuickView(prod)">
                     <div class="card-img-wrap">
                         <span class="card-badge">Featured</span>
@@ -1541,7 +1541,7 @@
         </div>
     }
 
-    <!-- ═══════════════ VIEW: SHOP ═══════════════ -->
+    
     else if (activeTab == "shop")
     {
     <div class="section-head">
@@ -1549,14 +1549,13 @@
         <span class="section-count">@filteredProducts.Count creations found</span>
     </div>
 
-    <!-- Categories Filter Tabs -->
-    <div class="px-5 mb-4 d-flex flex-wrap gap-2">
+    @* <div class="px-5 mb-4 d-flex flex-wrap gap-2">
         <button class="btn btn-sm @(selectedCategoryId == 0 ? "btn-dark" : "btn-outline-dark")" @onclick="() => SelectCategory(0)">All Creations</button>
         @foreach (var cat in allCategories)
         {
             <button class="btn btn-sm @(selectedCategoryId == cat.CategoryId ? "btn-dark" : "btn-outline-dark")" @onclick="() => SelectCategory(cat.CategoryId)">@cat.Name</button>
         }
-    </div>
+    </div> *@
 
     <div class="products-grid">
         @if (!filteredProducts.Any())
@@ -1570,14 +1569,17 @@
         {
             @foreach (var prod in filteredProducts)
             {
-                var primaryImg = prod.ProductImages.FirstOrDefault(i => (bool)i.IsPrimary)?.ImageUrl ?? "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80";
+                // Safely extract the primary image string using a defensive null check
+                var primaryImg = prod.ProductImages?.FirstOrDefault(i => i.IsPrimary == true)?.ImageUrl
+                                 ?? "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80";
+
                 <div class="product-card" @onclick="() => OpenQuickView(prod)">
                     <div class="card-img-wrap">
                         <img src="@primaryImg" alt="@prod.Name" />
                         <button class="card-quick">Quick View</button>
                     </div>
                     <div class="card-body">
-                        <p class="card-collection">@prod.Category.Name</p>
+                        <p class="card-collection">@prod.Category?.Name</p>
                         <h3 class="card-name">@prod.Name</h3>
                         <p class="card-price">@prod.BasePrice.ToString("N0") <span class="currency">MMK</span></p>
                     </div>
@@ -1586,8 +1588,7 @@
         }
     </div>
     }
-
-    <!-- ═══════════════ VIEW: CHECKOUT ═══════════════ -->
+    
     else if (activeTab == "checkout")
     {
     <div class="checkout-view">
@@ -1714,7 +1715,7 @@
     </div>
     }
 
-    <!-- ═══════════════ VIEW: HISTORY ═══════════════ -->
+    
     else if (activeTab == "history")
     {
     <div class="history-view">
@@ -1776,7 +1777,7 @@
     </div>
     }
 
-    <!-- ═══════════════ VIEW: PROFILE ═══════════════ -->
+    
     else if (activeTab == "profile")
     {
     <div class="profile-view">
