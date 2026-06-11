@@ -15,8 +15,8 @@ namespace ClothingPlatformProject.Features.Auth
             _authService = authService;
         }
 
-        [HttpPost("loginUser")]
-        public IActionResult loginUser(LoginRequestDto request)
+        [HttpPost("login")]
+        public IActionResult loginUser(LoginRequest request)
         {
             var result = _authService.loginuser(request);
             if (result == null)
@@ -27,11 +27,8 @@ namespace ClothingPlatformProject.Features.Auth
 
                 });
             }
-            return Ok(new
-            {
-                Message = "Login Success",
-                Data = result
-            });
+            return Ok(result);
+   
         }
     }
 }

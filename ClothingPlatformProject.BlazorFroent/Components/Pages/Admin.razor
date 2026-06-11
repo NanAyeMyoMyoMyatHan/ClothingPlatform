@@ -1,10 +1,9 @@
-﻿@page "/admin"
+@page "/admin"
 @inject IJSRuntime JSRuntime
 @inject HttpClientServices HttpClientServices
 
 <style>
     :root {
-        /* 👇 အရောင်ဒီဇိုင်းသစ်များ - Soft Pink & Rose Gold Theme */
         --bg-primary: #FAFAFA; /* Soft Pearl Off-White */
         --bg-sidebar: #FFFFFF; /* Pure White Sidebar */
         --bg-card: #FFFFFF; /* Pure White Cards */
@@ -47,9 +46,9 @@
         border-radius: 3px;
     }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--accent-main);
-        }
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--accent-main);
+    }
 
     /* Sidebar Navigation */
     .sidebar {
@@ -70,23 +69,23 @@
         text-align: center;
     }
 
-        .sidebar-brand h3 {
-            color: var(--accent-hover); /* Brand Name in Deeper Pink */
-            margin: 0;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 1.4rem;
-            letter-spacing: 2px;
-        }
+    .sidebar-brand h3 {
+        color: var(--accent-hover); /* Brand Name in Deeper Pink */
+        margin: 0;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 1.4rem;
+        letter-spacing: 2px;
+    }
 
-        .sidebar-brand span {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: var(--text-muted);
-            display: block;
-            margin-top: 5px;
-        }
+    .sidebar-brand span {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        color: var(--text-muted);
+        display: block;
+        margin-top: 5px;
+    }
 
     .nav-list {
         padding: 1.5rem 0;
@@ -105,24 +104,25 @@
         transition: all 0.2s ease;
         border-left: 3px solid transparent;
         margin-bottom: 0.25rem;
+        cursor: pointer;
     }
 
-        .nav-item-link i {
-            font-size: 1.1rem;
-            margin-right: 1rem;
-            transition: color 0.2s ease;
-            color: #A09092; /* Muted rose gray for icons */
-        }
+    .nav-item-link i {
+        font-size: 1.1rem;
+        margin-right: 1rem;
+        transition: color 0.2s ease;
+        color: #A09092; /* Muted rose gray for icons */
+    }
 
-        .nav-item-link:hover, .nav-item-link.active {
-            color: var(--accent-hover);
-            background-color: var(--sidebar-active-bg);
-            border-left-color: var(--accent-main);
-        }
+    .nav-item-link:hover, .nav-item-link.active {
+        color: var(--accent-hover);
+        background-color: var(--sidebar-active-bg);
+        border-left-color: var(--accent-main);
+    }
 
-            .nav-item-link:hover i, .nav-item-link.active i {
-                color: var(--accent-main);
-            }
+    .nav-item-link:hover i, .nav-item-link.active i {
+        color: var(--accent-main);
+    }
 
     /* Main Workspace Content */
     .main-workspace {
@@ -147,11 +147,11 @@
         cursor: pointer;
     }
 
-        .luxury-card-clickable:hover {
-            transform: translateY(-3px);
-            border-color: var(--accent-main);
-            box-shadow: 0 8px 25px rgba(229, 169, 180, 0.2);
-        }
+    .luxury-card-clickable:hover {
+        transform: translateY(-3px);
+        border-color: var(--accent-main);
+        box-shadow: 0 8px 25px rgba(229, 169, 180, 0.2);
+    }
 
     .kpi-title {
         font-size: 0.75rem;
@@ -193,28 +193,28 @@
         vertical-align: middle;
     }
 
-        .luxury-table thead th {
-            background-color: var(--sidebar-active-bg); /* Light pink header */
-            border-bottom: 1px solid var(--border-color);
-            color: #615557;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 1rem;
-            font-weight: 600;
-        }
+    .luxury-table thead th {
+        background-color: var(--sidebar-active-bg); /* Light pink header */
+        border-bottom: 1px solid var(--border-color);
+        color: #615557;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 1rem;
+        font-weight: 600;
+    }
 
-        .luxury-table tbody td {
-            padding: 1rem;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 0.9rem;
-            background-color: transparent !important;
-            color: var(--text-main) !important;
-        }
+    .luxury-table tbody td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 0.9rem;
+        background-color: transparent !important;
+        color: var(--text-main) !important;
+    }
 
-        .luxury-table tbody tr:hover td {
-            background-color: #FFFAFB !important; /* Extremely faint pink on hover */
-        }
+    .luxury-table tbody tr:hover td {
+        background-color: #FFFAFB !important; /* Extremely faint pink on hover */
+    }
 
     /* Form Controls */
     .luxury-input, .luxury-select {
@@ -223,12 +223,15 @@
         color: var(--text-main) !important;
         border-radius: 8px !important;
         padding: 0.6rem 1rem;
+        width: 100%;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
     }
 
-        .luxury-input:focus, .luxury-select:focus {
-            border-color: var(--accent-main) !important;
-            box-shadow: 0 0 0 0.2rem rgba(229, 169, 180, 0.15) !important;
-        }
+    .luxury-input:focus, .luxury-select:focus {
+        border-color: var(--accent-main) !important;
+        box-shadow: 0 0 0 0.2rem rgba(229, 169, 180, 0.15) !important;
+    }
 
     /* Buttons styling - Rose Gold Gradient */
     .btn-luxury {
@@ -242,13 +245,14 @@
         text-transform: uppercase;
         font-weight: 600;
         transition: all 0.3s;
+        cursor: pointer;
     }
 
-        .btn-luxury:hover {
-            background-color: var(--sidebar-active-bg);
-            border-color: var(--accent-hover);
-            color: var(--accent-hover);
-        }
+    .btn-luxury:hover {
+        background-color: var(--sidebar-active-bg);
+        border-color: var(--accent-hover);
+        color: var(--accent-hover);
+    }
 
     .btn-luxury-solid {
         background: linear-gradient(135deg, var(--accent-main) 0%, var(--accent-hover) 100%);
@@ -262,14 +266,15 @@
         font-weight: 700;
         transition: all 0.3s;
         box-shadow: 0 4px 10px rgba(194, 112, 127, 0.2);
+        cursor: pointer;
     }
 
-        .btn-luxury-solid:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-            box-shadow: 0 6px 15px rgba(194, 112, 127, 0.3);
-            color: white;
-        }
+    .btn-luxury-solid:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 15px rgba(194, 112, 127, 0.3);
+        color: white;
+    }
 
     /* Badges */
     .badge-pending {
@@ -279,40 +284,15 @@
     }
 
     .badge-processing {
-        background-color: rgba(75, 181, 67, 0.1);
-        color: #5cb85c;
-        border: 1px solid rgba(75, 181, 67, 0.2);
+        background-color: rgba(60, 130, 246, 0.1);
+        color: #2563EB;
+        border: 1px solid rgba(60, 130, 246, 0.2);
     }
 
     .badge-delivered {
-        background-color: #E2F0D9;
-        color: #385723;
-        border: 1px solid #C5E0B4;
-        padding: 0.5rem 1rem;
-        font-weight: bold;
-        border-radius: 50px;
-    }
-
-    /* Low stock flash animation */
-    .badge-low-stock {
-        background-color: rgba(226, 92, 92, 0.1);
-        color: var(--danger-color);
-        border: 1px solid rgba(226, 92, 92, 0.2);
-        animation: pulseDanger 2s infinite;
-    }
-    @@keyframes pulseDanger {
-        0% {
-            opacity: 0.7;
-        }
-
-        50% {
-            opacity: 1;
-            transform: scale(1.05);
-        }
-
-        100% {
-            opacity: 0.7;
-        }
+        background-color: rgba(75, 181, 67, 0.1);
+        color: var(--success-color);
+        border: 1px solid rgba(75, 181, 67, 0.2);
     }
 
     /* Modals Styling */
@@ -331,200 +311,538 @@
         border-radius: 12px 12px 0 0;
     }
 
-        .modal-header-luxury .modal-title {
-            color: var(--accent-hover);
-        }
+    .modal-header-luxury .modal-title {
+        color: var(--accent-hover);
+    }
 
     .modal-footer-luxury {
         border-top: 1px solid var(--border-color);
         padding: 1.2rem;
     }
 
-    .btn-close-white {
-        filter: none; /* Reset close button color for light header */
+    /* Alerts */
+    .alert-banner {
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+    }
+    .alert-banner-error {
+        background-color: #FDE8E8;
+        color: #9B1C1C;
+        border: 1px solid #F8B4B4;
+    }
+    .alert-banner-success {
+        background-color: #EDFDF5;
+        color: #03543F;
+        border: 1px solid #BCF0DA;
     }
 
-    /* Custom utilities */
-    .section-wrapper {
-        display: none;
-        animation: fadeIn 0.4s ease-in-out forwards;
+    /* Split panel for CRUD form */
+    .crud-grid {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 1.5rem;
+        align-items: start;
     }
-
-        .section-wrapper.active-view {
-            display: block;
+    @@media(max-width: 992px) {
+        .crud-grid {
+            grid-template-columns: 1fr;
         }
-
-    @@keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    /* Logout Screen */
-    .system-logout-screen {
-        display: none;
-        min-height: 100vh;
-        background-color: var(--bg-primary);
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-    }
-
-    .logout-box {
-        background-color: var(--bg-card);
-        border: 1px solid var(--border-color);
-        box-shadow: 0 10px 40px rgba(229, 169, 180, 0.15);
     }
 </style>
 
 <div class="dashboard-container">
+    <!-- ── SIDEBAR NAVIGATION ── -->
     <aside class="sidebar">
-        <div class="sidebar-brand">Chic Boutique Admin</div>
+        <div class="sidebar-brand">
+            <h3>Chic Boutique</h3>
+            <span>Admin Control</span>
+        </div>
         <ul class="nav-list">
             <li>
-                <a href="#" class="nav-item-link active">
-                    <i class="bi bi-grid"></i>
+                <a class="nav-item-link @(activeView == "dashboard" ? "active" : "")" @onclick='() => SetView("dashboard")'>
+                    <i class="bi bi-grid-1x2"></i>
                     Dashboard
                 </a>
             </li>
 
             <li>
-                <a href="#" class="nav-item-link">
+                <a class="nav-item-link @(activeView == "products" ? "active" : "")" @onclick='() => SetView("products")'>
                     <i class="bi bi-bag"></i>
                     Products
                 </a>
             </li>
 
             <li>
-                <a href="#" class="nav-item-link">
+                <a class="nav-item-link @(activeView == "orders" ? "active" : "")" @onclick='() => SetView("orders")'>
                     <i class="bi bi-cart"></i>
                     Orders
                 </a>
             </li>
 
             <li>
-                <a href="#" class="nav-item-link">
+                <a class="nav-item-link @(activeView == "customers" ? "active" : "")" @onclick='() => SetView("customers")'>
                     <i class="bi bi-people"></i>
                     Customers
                 </a>
             </li>
 
             <li>
-                <a href="#" class="nav-item-link">
-                    <i class="bi bi-gear"></i>
-                    Settings
+                <a class="nav-item-link @(activeView == "reports" ? "active" : "")" @onclick='() => SetView("reports")'>
+                    <i class="bi bi-bar-chart-line"></i>
+                    Sales Reports
+                </a>
+            </li>
+            
+            <li class="mt-5">
+                <a class="nav-item-link text-danger" @onclick="Logout">
+                    <i class="bi bi-box-arrow-right text-danger"></i>
+                    Sign Out
                 </a>
             </li>
         </ul>
     </aside>
 
+    <!-- ── MAIN WORKSPACE ── -->
     <main class="main-workspace">
-        <div class="header-section">
-            <h2>Welcome Back, Admin!</h2>
-            <p>Today is: @DateTime.Now.ToString("dd MMM yyyy")</p>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="luxury-text m-0">Atelier Admin Panel</h1>
+                <p class="text-muted m-0">Today is @DateTime.Now.ToString("dd MMM yyyy")</p>
+            </div>
+            <div>
+                <button class="btn-luxury" @onclick="LoadData"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+            </div>
         </div>
 
-        <div class="row g-4 mb-4">
+        <!-- Alerts -->
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert-banner alert-banner-error">
+                <i class="bi bi-exclamation-circle-fill me-2"></i> @errorMessage
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <div class="alert-banner alert-banner-success">
+                <i class="bi bi-check-circle-fill me-2"></i> @successMessage
+            </div>
+        }
 
-            <div class="col-md-4">
-                <div class="luxury-card">
-                    <div class="kpi-title">Revenue</div>
-                    <h2 class="kpi-value">$12,450</h2>
-                    <div class="kpi-icon-box">
-                        <i class="bi bi-cash-stack"></i>
+        <!-- ═══════════════ VIEW: DASHBOARD ═══════════════ -->
+        @if (activeView == "dashboard")
+        {
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="luxury-card luxury-card-clickable" @onclick='() => SetView("reports")'>
+                        <div class="kpi-title">Revenue</div>
+                        <h2 class="kpi-value">@TotalRevenue.ToString("N0") MMK</h2>
+                        <div class="kpi-icon-box">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="luxury-card luxury-card-clickable" @onclick='() => SetView("orders")'>
+                        <div class="kpi-title">Total Orders</div>
+                        <h2 class="kpi-value">@TotalOrders</h2>
+                        <div class="kpi-icon-box">
+                            <i class="bi bi-bag-check"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="luxury-card luxury-card-clickable" @onclick='() => SetView("orders")'>
+                        <div class="kpi-title">Pending Orders</div>
+                        <h2 class="kpi-value">@PendingOrders</h2>
+                        <div class="kpi-icon-box">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="luxury-card luxury-card-clickable" @onclick='() => SetView("customers")'>
+                        <div class="kpi-title">Customers</div>
+                        <h2 class="kpi-value">@TotalCustomers</h2>
+                        <div class="kpi-icon-box">
+                            <i class="bi bi-people"></i>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-4">
-                <div class="luxury-card">
-                    <div class="kpi-title">Orders</div>
-                    <h2 class="kpi-value">184</h2>
-                    <div class="kpi-icon-box">
-                        <i class="bi bi-bag-check"></i>
-                    </div>
-                </div>
+            <div class="d-flex justify-content-between align-items-center mt-5 mb-3">
+                <h3 class="m-0">Recent Orders Queue</h3>
+                <button class="btn-luxury" @onclick='() => SetView("orders")'>View All Orders</button>
             </div>
 
-            <div class="col-md-4">
-                <div class="luxury-card">
-                    <div class="kpi-title">Customers</div>
-                    <h2 class="kpi-value">48</h2>
-                    <div class="kpi-icon-box">
-                        <i class="bi bi-people"></i>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        @* <h3>Recent Orders</h3>
-
-        @* <div class="filter-buttons">
-            <button class="btn-luxury-solid me-2"
-                    @onclick='() => FilterOrders("All")'>
-                All Orders
-            </button>
-
-            <button class="btn-luxury me-2"
-                    @onclick='() => FilterOrders("Pending")'>
-                Pending
-            </button>
-
-            <button class="btn-luxury"
-                    @onclick='() => FilterOrders("Completed")'>
-                Completed
-            </button>
-        </div> *@
-        @* <h2 class="kpi-value">@TotalRevenue.ToString("C")</h2>
-
-        <h2 class="kpi-value">@TotalOrders</h2> *@
-
-       @*@ <h2 class="kpi-value">@PendingOrders</h2> *@
-
-        <div class="table-responsive-wrapper mt-4">
-            <table class="table luxury-table">
-                
-                <thead>
-                    <tr>
-                        <th>Order ID</th>
-                        <th>Address</th>
-                        <th>Total Amount</th>
-                        <th>Status</th>
-                        <th>Created Date</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    @foreach (var order in orders)
-                    {
+            <div class="table-responsive-wrapper">
+                <table class="table luxury-table">
+                    <thead>
                         <tr>
-                            <td>@order.OrderId</td>
-                            <td>@order.ShippingAddress</td>
-                            <td>@order.TotalPrice.ToString("C")</td>
-                            <td>
-                                @if (order.OrderStatus == "Completed")
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Address</th>
+                            <th>Total Amount</th>
+                            <th>Status</th>
+                            <th>Date Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!allOrders.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">No orders found in the boutique queue.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var order in allOrders.Take(5))
+                            {
+                                <tr>
+                                    <td><strong>#ORD-@order.OrderId.ToString("D4")</strong></td>
+                                    <td>@order.User.FirstName @order.User.LastName</td>
+                                    <td>@order.ShippingAddress</td>
+                                    <td>@order.TotalAmount.ToString("N0") MMK</td>
+                                    <td>
+                                        @if (order.OrderStatus.ToLower() == "completed" || order.OrderStatus.ToLower() == "delivered")
+                                        {
+                                            <span class="badge badge-delivered px-3 py-2 rounded-pill text-success">Delivered</span>
+                                        }
+                                        else if (order.OrderStatus.ToLower() == "processing")
+                                        {
+                                            <span class="badge badge-processing px-3 py-2 rounded-pill text-primary">Processing</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-pending px-3 py-2 rounded-pill text-warning">@order.OrderStatus</span>
+                                        }
+                                    </td>
+                                    <td>@(order.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <!-- ═══════════════ VIEW: PRODUCTS ═══════════════ -->
+        else if (activeView == "products")
+        {
+            <div class="crud-grid">
+                <!-- Product Form (Add / Edit) -->
+                <div class="luxury-card">
+                    <h4>@(editingProduct == null ? "Add Atelier Product" : "Edit Product")</h4>
+                    <hr />
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-muted small uppercase fw-bold">Product Name</label>
+                        <input type="text" class="luxury-input" @bind="newProductName" placeholder="e.g., Silk Slip Dress" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small uppercase fw-bold">Description</label>
+                        <textarea class="luxury-input" @bind="newProductDesc" rows="3" placeholder="Describe this luxury garment..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small uppercase fw-bold">Base Price (MMK)</label>
+                        <input type="number" class="luxury-input" @bind="newProductBasePrice" placeholder="e.g., 75000" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small uppercase fw-bold">Category</label>
+                        <select class="luxury-select" @bind="newProductCategoryId">
+                            @foreach (var cat in allCategories)
+                            {
+                                <option value="@cat.CategoryId">@cat.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small uppercase fw-bold">Image URL</label>
+                        <input type="text" class="luxury-input" @bind="newProductImgUrl" placeholder="https://images.unsplash.com/..." />
+                    </div>
+
+                    @if (editingProduct == null)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label text-muted small uppercase fw-bold">Create Sizes (Comma-separated)</label>
+                            <input type="text" class="luxury-input" @bind="selectedSizesString" placeholder="XS, S, M, L, XL" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small uppercase fw-bold">Create Colors (Comma-separated)</label>
+                            <input type="text" class="luxury-input" @bind="selectedColorsString" placeholder="Blush Pink, Sage Green" />
+                        </div>
+                    }
+
+                    <div class="mt-4 d-grid gap-2">
+                        @if (editingProduct == null)
+                        {
+                            <button class="btn-luxury-solid" @onclick="HandleCreateProduct">Add Product</button>
+                        }
+                        else
+                        {
+                            <button class="btn-luxury-solid" @onclick="HandleUpdateProduct">Save Changes</button>
+                            <button class="btn-luxury" @onclick="ResetProductForm">Cancel</button>
+                        }
+                    </div>
+                </div>
+
+                <!-- Product Catalog List -->
+                <div class="table-responsive-wrapper">
+                    <h4>Catalog Items</h4>
+                    <table class="table luxury-table mt-3">
+                        <thead>
+                            <tr>
+                                <th>Thumbnail</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Base Price</th>
+                                <th>Variants</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!allProducts.Any())
+                            {
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">No products registered. Create one to display.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var prod in allProducts)
                                 {
-                                    <span class="badge-delivered">Completed</span>
+                                    var primaryImg = prod.ProductImages.FirstOrDefault(i => (bool)i.IsPrimary)?.ImageUrl ?? "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80";
+                                    <tr>
+                                        <td>
+                                            <img src="@primaryImg" style="width: 48px; height: 60px; object-fit: cover; border-radius: 4px;" alt="Product Thumb" />
+                                        </td>
+                                        <td>
+                                            <strong>@prod.Name</strong>
+                                            <p class="text-muted small m-0 text-truncate" style="max-width: 200px;">@prod.Description</p>
+                                        </td>
+                                        <td>@prod.Category.Name</td>
+                                        <td>@prod.BasePrice.ToString("N0") MMK</td>
+                                        <td>
+                                            <span class="badge bg-secondary">@prod.ProductVariants.Count variants</span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditProduct(prod)"><i class="bi bi-pencil"></i></button>
+                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteProduct(prod.ProductId)"><i class="bi bi-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <!-- ═══════════════ VIEW: ORDERS ═══════════════ -->
+       
+            else if (activeView == "orders")
+        {
+            <div class="mb-3 d-flex justify-content-between align-items-center">
+                <div class="filter-buttons">
+                    <button class="btn-luxury @(orderFilter == "All" ? "btn-luxury-solid text-white" : "") me-2" @onclick='() => FilterOrders("All")'>All Orders</button>
+                    <button class="btn-luxury @(orderFilter == "pending" ? "btn-luxury-solid text-white" : "") me-2" @onclick='() => FilterOrders("pending")'>Pending</button>
+                    <button class="btn-luxury @(orderFilter == "processing" ? "btn-luxury-solid text-white" : "") me-2" @onclick='() => FilterOrders("processing")'>Processing</button>
+                    <button class="btn-luxury @(orderFilter == "delivered" ? "btn-luxury-solid text-white" : "")" @onclick='() => FilterOrders("delivered")'>Delivered</button>
+                </div>
+                <span class="text-muted small">Queue Count: @filteredOrders.Count</span>
+            </div>
+
+            <div class="table-responsive-wrapper">
+                <table class="table luxury-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer Info</th>
+                            <th>Delivery Address</th>
+                            <th>Payment Info</th>
+                            <th>Total Price</th>
+                            <th>Fulfillment Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!filteredOrders.Any())
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">No orders found matching the filter.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var order in filteredOrders)
+                            {
+                                var payInfo = order.Payments.FirstOrDefault()?.PaymentMethod ?? "COD";
+                                <tr>
+                                    <td><strong>#ORD-@order.OrderId.ToString("D4")</strong></td>
+                                    <td>
+                                        <div>@order.User.FirstName @order.User.LastName</div>
+                                        <div class="small text-muted">@order.User.Email</div>
+                                    </td>
+                                    <td>@order.ShippingAddress</td>
+                                    <td><span class="badge bg-light text-dark border">@payInfo.ToUpper()</span></td>
+                                    <td><strong>@order.TotalAmount.ToString("N0") MMK</strong></td>
+                                    <td>
+                                        @if (order.OrderStatus.ToLower() == "completed" || order.OrderStatus.ToLower() == "delivered")
+                                        {
+                                            <span class="badge badge-delivered px-3 py-2 rounded-pill text-success">Delivered</span>
+                                        }
+                                        else if (order.OrderStatus.ToLower() == "processing")
+                                        {
+                                            <span class="badge badge-processing px-3 py-2 rounded-pill text-primary">Processing</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-pending px-3 py-2 rounded-pill text-warning">@order.OrderStatus</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (order.OrderStatus.ToLower() == "completed" || order.OrderStatus.ToLower() == "delivered")
+                                        {
+                                            <span class="text-muted small"><i class="bi bi-lock-fill"></i> Locked</span>
+                                        }
+                                        else
+                                        {
+                                            <select class="luxury-select py-1 px-2 small d-inline-block" style="width: 140px; font-size: 0.85rem;" @onchange="(e) => UpdateOrderStatus(order, e.Value?.ToString() ?? string.Empty)">
+                                                <option value="pending" selected="@(order.OrderStatus.ToLower() == "pending")">Pending</option>
+                                                <option value="processing" selected="@(order.OrderStatus.ToLower() == "processing")">Processing</option>
+                                                <option value="delivered" selected="@(order.OrderStatus.ToLower() == "delivered")">Delivered</option>
+                                            </select>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <!-- ═══════════════ VIEW: CUSTOMERS ═══════════════ -->
+        else if (activeView == "customers")
+        {
+            <div class="table-responsive-wrapper">
+                <table class="table luxury-table">
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Email Address</th>
+                            <th>Default Delivery Address</th>
+                            <th>Registration Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!customers.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">No registered customers.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var cust in customers)
+                            {
+                                <tr>
+                                    <td><strong>#USR-@cust.UserId.ToString("D4")</strong></td>
+                                    <td>@cust.FirstName</td>
+                                    <td>@cust.LastName</td>
+                                    <td>@cust.Email</td>
+                                    <td>@cust.Address</td>
+                                    <td>@(cust.CreatedAt?.ToString("dd/MM/yyyy") ?? "N/A")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <!-- ═══════════════ VIEW: REPORTS ═══════════════ -->
+        else if (activeView == "reports")
+        {
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="luxury-card">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="m-0">Daily Revenue Summary</h4>
+                            <button class="btn-luxury-solid py-1 px-3" style="font-size: 0.75rem;" @onclick="TriggerDailyReport">Recalculate Today</button>
+                        </div>
+                        <table class="table table-sm luxury-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Orders Count</th>
+                                    <th>Total Sales</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!dailyReportList.Any())
+                                {
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted py-3">No sales reports logged.</td>
+                                    </tr>
                                 }
                                 else
                                 {
-                                    <span class="badge-pending px-3 py-2 rounded-pill">
-                                        @order.OrderStatus
-                                    </span>
+                                    @foreach (var day in dailyReportList)
+                                    {
+                                        <tr>
+                                            <td>@day.Date.ToString("dd MMM yyyy")</td>
+                                            <td>@day.OrdersCount</td>
+                                            <td><strong>@day.Revenue.ToString("N0") MMK</strong></td>
+                                        </tr>
+                                    }
                                 }
-                            </td>
-                            <td>@order.CreatedAt.ToString("dd/MM/yyyy")</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="luxury-card">
+                        <h4>Staff Activity Logs</h4>
+                        <hr />
+                        <ul class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
+                            @if (!activityLogs.Any())
+                            {
+                                <li class="list-group-item text-center py-3 text-muted">No operational activities logged yet.</li>
+                            }
+                            else
+                            {
+                                @foreach (var log in activityLogs)
+                                {
+                                    <li class="list-group-item px-0 py-3 bg-transparent">
+                                        <div class="d-flex justify-content-between">
+                                            <strong>@log.Staff.FirstName @log.Staff.LastName</strong>
+                                            <span class="small text-muted">@log.CreatedAt.ToString("dd/MM/yyyy")</span>
+                                        </div>
+                                        <div class="small text-muted mt-1">
+                                            <span class="badge bg-light text-dark border me-2">@log.ActionType.ToUpper()</span>
+                                            @log.Description
+                                        </div>
+                                    </li>
+                                }
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        }
     </main>
 </div>

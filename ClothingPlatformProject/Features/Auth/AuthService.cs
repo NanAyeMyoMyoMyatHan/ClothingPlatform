@@ -12,8 +12,9 @@ namespace ClothingPlatformProject.Features.Auth
         {
             _db = db;
         }
-        public LoginResponseModel? loginuser(LoginRequestDto loginRequest)
+        public async Task<AuthResponse> loginuser(LoginRequest loginRequest)
         {
+            await Task.Delay(500);
             var user = _db.Users
                 .AsNoTracking()
                 .FirstOrDefault(x =>
@@ -21,14 +22,18 @@ namespace ClothingPlatformProject.Features.Auth
                 x.PasswordHash == loginRequest.Password); 
             if(user != null)
             {
-                return new LoginResponseModel
+                return new AuthResponse
                 {
-                    Email = user.Email,
-                    UserId = user.UserId,
-                    Username = $"{user.FirstName}{user.LastName}"
+                    IsSuccess = true,
+                   // Token = "fake-jwt-toke-xyz123",
+                    ErrorMessage = null
                 };
             }
-            return null;
+            return new AuthResponse
+            {
+                IsSuccess = false,
+                ErrorMessage="Invalid email or passowrd."
+            };
         }
     }
 }

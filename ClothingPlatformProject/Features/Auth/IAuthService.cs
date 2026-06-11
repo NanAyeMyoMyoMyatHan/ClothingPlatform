@@ -4,6 +4,6 @@ namespace ClothingPlatformProject.Features.Auth
 {
     public interface IAuthService
     {
-        LoginResponseModel loginuser(LoginRequestDto loginRequest);
+        Task<AuthResponse> loginuser(LoginRequest loginRequest);
     }
 }
