@@ -1,0 +1,53 @@
+﻿using ClothingPlatformProject.Models.Category;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace ClothingPlatformProject.Features.Category
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class CategoryController : ControllerBase
+    {
+       private readonly ICategoryService _categoryService;
+
+        public CategoryController(ICategoryService categoryService)
+        {
+            _categoryService = categoryService;
+        }
+
+        [HttpGet]
+        public IActionResult GetCategory()
+        {
+            var getcat=_categoryService.GetCategories();
+            return Ok(getcat);
+        }
+        [HttpGet("{id}")]
+        public IActionResult GetCategory(int id)
+        {
+            var result = _categoryService.GetCategoryById(id);
+            if(result == null)
+            {
+                return NotFound("There is no Category");
+            }
+            return Ok(result);
+        }
+        [HttpPost]
+        public IActionResult CreateCategory(CategoryRequestModel model)
+        {
+            _categoryService.CreateCategory(model);
+            return Ok("Create Successful");
+        }
+        [HttpPut("{id}")]
+        public IActionResult UpdateCategory(UpdateRequsetModel model,int id)
+        {
+            _categoryService.UpdateCategory(model,id);
+            return Ok("Update Success");
+        }
+        [HttpDelete("{id}")]
+        public IActionResult DeleteCategory(int id)
+        {
+            _categoryService.DeleteCategory(id);
+            return Ok("Delete Successful");
+        }
+    }
+}

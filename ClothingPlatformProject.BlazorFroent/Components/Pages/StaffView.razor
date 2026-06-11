@@ -1,0 +1,1360 @@
+﻿@page "/staff"
+@inject AppDbContext Db
+@inject SessionState Session
+@inject NavigationManager Nav
+<PageTitle>The Boutique — Staff Portal</PageTitle>
+<style>
+    /* ═══════════ TOKENS ═══════════ */
+    :root {
+        --navy: #1E3A8A;
+        --navy-dark: #152D6E;
+        --navy-xdark: #0F2050;
+        --slate: #64748B;
+        --slate-light: #94A3B8;
+        --slate-border: #CBD5E1;
+        --white: #FFFFFF;
+        --off-white: #F8FAFC;
+        --rose: #C8837A;
+        --rose-light: #F2D8D5;
+        --rose-dark: #A8615A;
+        --amber: #F59E0B;
+        --amber-light: #FEF3C7;
+        --green: #16A34A;
+        --green-light: #DCFCE7;
+        --red: #DC2626;
+        --red-light: #FEE2E2;
+        --sidebar-w: 240px;
+        --topbar-h: 60px;
+        --radius: 10px;
+        --shadow-sm: 0 1px 4px rgba(30,58,138,.07);
+        --shadow-md: 0 4px 20px rgba(30,58,138,.10);
+        --shadow-lg: 0 8px 32px rgba(30,58,138,.14);
+        --transition: 0.22s cubic-bezier(.4,0,.2,1);
+    }
+
+    body {
+        font-family: 'DM Sans', system-ui, sans-serif;
+        background: var(--off-white);
+        color: #1e293b;
+        font-size: .9rem;
+        line-height: 1.55;
+    }
+
+    #appShell {
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+    }
+    /* ───── SIDEBAR ───── */
+    #sidebar {
+        width: var(--sidebar-w);
+        flex-shrink: 0;
+        background: linear-gradient(180deg, var(--navy-xdark) 0%, var(--navy-dark) 60%, var(--navy) 100%);
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid rgba(255,255,255,.06);
+        position: relative;
+        z-index: 10;
+    }
+
+    .sidebar-brand {
+        padding: 1.4rem 1.2rem 1rem;
+        border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    .brand-monogram {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 1.5px solid var(--rose);
+        background: rgba(200,131,122,.12);
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1rem;
+        color: var(--rose);
+        margin-bottom: .5rem;
+    }
+
+    .brand-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.15rem;
+        color: #fff;
+        font-weight: 400;
+        letter-spacing: .06em;
+    }
+
+    .brand-sub {
+        font-size: .62rem;
+        letter-spacing: .22em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,.38);
+    }
+
+    .sidebar-nav {
+        flex: 1;
+        padding: .75rem 0;
+        overflow-y: auto;
+    }
+
+    .nav-section-label {
+        font-size: .6rem;
+        letter-spacing: .2em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,.3);
+        padding: .9rem 1.2rem .3rem;
+    }
+
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        padding: .6rem 1.2rem;
+        margin: 0 .5rem .15rem;
+        border-radius: 8px;
+        cursor: pointer;
+        color: rgba(255,255,255,.62);
+        font-size: .82rem;
+        font-weight: 400;
+        transition: background var(--transition), color var(--transition);
+    }
+
+        .nav-item i {
+            font-size: 1rem;
+            flex-shrink: 0;
+            width: 1.1rem;
+            text-align: center;
+        }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,.08);
+            color: rgba(255,255,255,.9);
+        }
+
+        .nav-item.active {
+            background: rgba(200,131,122,.22);
+            color: #fff;
+            font-weight: 500;
+        }
+
+            .nav-item.active i {
+                color: var(--rose);
+            }
+
+    .sidebar-footer {
+        padding: .9rem 1.2rem;
+        border-top: 1px solid rgba(255,255,255,.08);
+    }
+
+    .staff-chip {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+    }
+
+    .staff-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, var(--rose), var(--rose-dark));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: .95rem;
+        color: #fff;
+        font-weight: 400;
+    }
+
+    .staff-name {
+        font-size: .78rem;
+        color: rgba(255,255,255,.82);
+        font-weight: 500;
+        line-height: 1.2;
+    }
+
+    .staff-role {
+        font-size: .65rem;
+        color: rgba(255,255,255,.38);
+        letter-spacing: .05em;
+    }
+    /* ───── MAIN AREA ───── */
+    #mainArea {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    /* TOP BAR */
+    #topbar {
+        height: var(--topbar-h);
+        background: var(--white);
+        border-bottom: 1px solid var(--slate-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 1.8rem;
+        flex-shrink: 0;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .topbar-greeting {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.25rem;
+        color: var(--navy);
+        font-weight: 400;
+    }
+
+        .topbar-greeting span {
+            color: var(--rose-dark);
+            font-style: italic;
+        }
+
+    .topbar-right {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+    }
+
+    .topbar-badge {
+        font-size: .68rem;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        background: var(--rose-light);
+        color: var(--rose-dark);
+        padding: .25rem .65rem;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+
+    .topbar-date {
+        font-size: .75rem;
+        color: var(--slate-light);
+    }
+    /* CONTENT */
+    #content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.8rem;
+    }
+    /* ───── VIEW SECTIONS ───── */
+    .view-section {
+        display: none;
+    }
+
+        .view-section.active {
+            display: block;
+        }
+    /* ───── PAGE HEADER ───── */
+    .page-header {
+        margin-bottom: 1.6rem;
+    }
+
+    .page-title {
+        font-size: 1.6rem;
+        color: var(--navy);
+        font-weight: 400;
+        line-height: 1.1;
+    }
+
+    .page-sub {
+        font-size: .78rem;
+        color: var(--slate-light);
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        margin-top: .1rem;
+    }
+
+    .page-divider {
+        height: 2px;
+        background: linear-gradient(90deg, var(--rose), transparent);
+        width: 48px;
+        margin-top: .5rem;
+        border-radius: 2px;
+    }
+    /* ───── KPI CARDS ───── */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.6rem;
+    }
+
+    .kpi-card {
+        background: var(--white);
+        border-radius: var(--radius);
+        padding: 1.3rem 1.4rem;
+        border: 1px solid var(--slate-border);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+        box-shadow: var(--shadow-sm);
+    }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
+
+        .kpi-card.kpi-pending::before {
+            background: linear-gradient(90deg, #F59E0B, #FBBF24);
+        }
+
+        .kpi-card.kpi-processing::before {
+            background: linear-gradient(90deg, #3B82F6, #60A5FA);
+        }
+
+        .kpi-card.kpi-delivered::before {
+            background: linear-gradient(90deg, var(--green), #4ADE80);
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .kpi-card.kpi-active {
+            border-color: var(--navy);
+            box-shadow: 0 0 0 2px rgba(30,58,138,.18);
+        }
+
+    .kpi-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        margin-bottom: .8rem;
+    }
+
+    .kpi-pending .kpi-icon {
+        background: var(--amber-light);
+        color: var(--amber);
+    }
+
+    .kpi-processing .kpi-icon {
+        background: #DBEAFE;
+        color: #2563EB;
+    }
+
+    .kpi-delivered .kpi-icon {
+        background: var(--green-light);
+        color: var(--green);
+    }
+
+    .kpi-count {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 2.2rem;
+        color: var(--navy);
+        line-height: 1;
+        margin-bottom: .2rem;
+    }
+
+    .kpi-label {
+        font-size: .72rem;
+        text-transform: uppercase;
+        letter-spacing: .1em;
+        color: var(--slate-light);
+        font-weight: 500;
+    }
+
+    .kpi-hint {
+        font-size: .68rem;
+        color: var(--slate-light);
+        margin-top: .35rem;
+        display: flex;
+        align-items: center;
+        gap: .3rem;
+    }
+    /* ALL ORDERS RESET BUTTON */
+    .filter-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: .9rem;
+    }
+
+    .filter-label {
+        font-size: .75rem;
+        color: var(--slate);
+        font-weight: 500;
+    }
+
+    #resetFilterBtn {
+        font-size: .72rem;
+        padding: .3rem .8rem;
+        border-radius: 20px;
+        border: 1px solid var(--slate-border);
+        background: var(--white);
+        color: var(--slate);
+        cursor: pointer;
+        transition: all var(--transition);
+        font-family: 'DM Sans', sans-serif;
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+    }
+    /* ───── TABLE ───── */
+    .table-card {
+        background: var(--white);
+        border-radius: var(--radius);
+        border: 1px solid var(--slate-border);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+    }
+
+        .table-card .table {
+            margin: 0;
+            font-size: .82rem;
+        }
+
+            .table-card .table thead th {
+                background: var(--off-white);
+                color: var(--slate);
+                font-weight: 600;
+                font-size: .68rem;
+                letter-spacing: .1em;
+                text-transform: uppercase;
+                border-bottom: 1px solid var(--slate-border);
+                padding: .85rem 1rem;
+                white-space: nowrap;
+            }
+
+            .table-card .table tbody td {
+                padding: .8rem 1rem;
+                vertical-align: middle;
+                border-color: #F1F5F9;
+            }
+
+            .table-card .table tbody tr {
+                transition: background var(--transition);
+            }
+
+                .table-card .table tbody tr:hover {
+                    background: rgba(248,250,252,.8);
+                }
+    /* Status badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+        font-size: .68rem;
+        font-weight: 600;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        padding: .28rem .7rem;
+        border-radius: 20px;
+    }
+
+    .badge-pending {
+        background: var(--amber-light);
+        color: #92400E;
+    }
+
+    .badge-processing {
+        background: #DBEAFE;
+        color: #1D4ED8;
+    }
+
+    .badge-delivered {
+        background: var(--green-light);
+        color: #15803D;
+    }
+
+    .badge-locked {
+        background: #E2E8F0;
+        color: #475569;
+        cursor: not-allowed;
+    }
+    /* Status select dropdown */
+    .status-select {
+        font-size: .76rem;
+        font-family: 'DM Sans', sans-serif;
+        border: 1px solid var(--slate-border);
+        border-radius: 7px;
+        padding: .3rem .6rem;
+        background: var(--white);
+        color: var(--navy);
+        cursor: pointer;
+        transition: border-color var(--transition);
+    }
+
+        .status-select:focus {
+            outline: none;
+            border-color: var(--rose);
+            box-shadow: 0 0 0 2px rgba(200,131,122,.15);
+        }
+    /* Payment badge */
+    .pay-badge {
+        font-size: .7rem;
+        color: var(--slate);
+        background: #F1F5F9;
+        padding: .2rem .55rem;
+        border-radius: 5px;
+    }
+    /* ───── DASHBOARD ───── */
+    .dash-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.6rem;
+    }
+
+    .dash-stat {
+        background: var(--white);
+        border-radius: var(--radius);
+        padding: 1.2rem 1.3rem;
+        border: 1px solid var(--slate-border);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .dash-stat-val {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 2rem;
+        color: var(--navy);
+        line-height: 1;
+    }
+
+    .dash-stat-label {
+        font-size: .72rem;
+        text-transform: uppercase;
+        letter-spacing: .1em;
+        color: var(--slate-light);
+        margin-top: .25rem;
+    }
+
+    .welcome-banner {
+        background: linear-gradient(135deg, var(--navy-xdark) 0%, var(--navy) 60%, rgba(200,131,122,.4) 100%);
+        border-radius: var(--radius);
+        padding: 1.6rem 2rem;
+        margin-bottom: 1.4rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        overflow: hidden;
+        position: relative;
+    }
+
+        .welcome-banner::after {
+            content: 'TB';
+            position: absolute;
+            right: 2rem;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 7rem;
+            color: rgba(255,255,255,.06);
+            line-height: 1;
+            font-weight: 300;
+            pointer-events: none;
+        }
+
+    .wb-greeting {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.55rem;
+        color: #fff;
+        font-weight: 300;
+    }
+
+        .wb-greeting strong {
+            font-weight: 500;
+            color: var(--rose-light);
+        }
+
+    .wb-sub {
+        font-size: .75rem;
+        color: rgba(255,255,255,.55);
+        margin-top: .2rem;
+        letter-spacing: .04em;
+    }
+
+    .wb-badge {
+        background: rgba(200,131,122,.25);
+        border: 1px solid rgba(200,131,122,.4);
+        color: var(--rose-light);
+        font-size: .7rem;
+        padding: .35rem .85rem;
+        border-radius: 20px;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+    }
+
+    .section-title {
+        font-size: 1rem;
+        color: var(--navy);
+        font-weight: 500;
+        margin-bottom: .9rem;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.2rem;
+    }
+    /* ───── INVENTORY ───── */
+    .inv-controls {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+
+    .qty-btn {
+        width: 28px;
+        height: 28px;
+        border: 1px solid var(--slate-border);
+        border-radius: 6px;
+        background: var(--white);
+        color: var(--navy);
+        font-size: .9rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background var(--transition), color var(--transition);
+        font-weight: 600;
+        font-family: 'DM Sans', sans-serif;
+    }
+
+        .qty-btn:hover {
+            background: var(--navy);
+            color: #fff;
+            border-color: var(--navy);
+        }
+
+    .qty-display {
+        min-width: 38px;
+        text-align: center;
+        font-weight: 600;
+        font-size: .85rem;
+        color: var(--navy);
+    }
+
+    .low-stock-badge {
+        background: var(--amber-light);
+        color: #92400E;
+        font-size: .65rem;
+        font-weight: 700;
+        padding: .2rem .55rem;
+        border-radius: 4px;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+    }
+
+    .in-stock-badge {
+        background: var(--green-light);
+        color: #15803D;
+        font-size: .65rem;
+        font-weight: 700;
+        padding: .2rem .55rem;
+        border-radius: 4px;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+    }
+    /* ───── PROFILE ───── */
+    .profile-card {
+        background: var(--white);
+        border-radius: var(--radius);
+        border: 1px solid var(--slate-border);
+        padding: 2rem;
+        box-shadow: var(--shadow-sm);
+        max-width: 560px;
+    }
+
+    .profile-avatar-lg {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--rose), var(--rose-dark));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 2rem;
+        color: #fff;
+        margin-bottom: 1.2rem;
+        box-shadow: 0 4px 16px rgba(200,131,122,.35);
+    }
+
+    .profile-form .form-label {
+        font-size: .7rem;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--slate);
+        font-weight: 500;
+        margin-bottom: .35rem;
+    }
+
+    .profile-form .form-control {
+        font-family: 'DM Sans', sans-serif;
+        font-size: .85rem;
+        border: 1px solid var(--slate-border);
+        border-radius: 8px;
+        padding: .6rem .9rem;
+        transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+        .profile-form .form-control:focus {
+            border-color: var(--rose);
+            box-shadow: 0 0 0 3px rgba(200,131,122,.14);
+            outline: none;
+        }
+
+    .btn-save {
+        font-size: .78rem;
+        font-weight: 600;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        background: var(--navy);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: .65rem 1.6rem;
+        cursor: pointer;
+        transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+        font-family: 'DM Sans', sans-serif;
+    }
+
+        .btn-save:hover {
+            background: var(--navy-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(30,58,138,.25);
+        }
+
+    .btn-logout {
+        font-size: .78rem;
+        font-weight: 600;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        background: transparent;
+        color: var(--red);
+        border: 1.5px solid var(--red);
+        border-radius: 8px;
+        padding: .6rem 1.4rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        transition: background var(--transition), color var(--transition), transform var(--transition);
+        font-family: 'DM Sans', sans-serif;
+    }
+
+        .btn-logout:hover {
+            background: var(--red);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+    .profile-divider {
+        height: 1px;
+        background: var(--slate-border);
+        margin: 1.5rem 0;
+    }
+
+    .profile-section-title {
+        font-size: .7rem;
+        letter-spacing: .15em;
+        text-transform: uppercase;
+        color: var(--slate-light);
+        margin-bottom: .75rem;
+    }
+    /* Inline toast */
+    .inline-toast {
+        font-size: .8rem;
+        padding: .6rem 1rem;
+        border-radius: 8px;
+        display: none;
+        align-items: center;
+        gap: .45rem;
+        margin-top: .8rem;
+    }
+
+        .inline-toast.success {
+            background: var(--green-light);
+            color: #15803D;
+            display: flex;
+        }
+
+        .inline-toast.error {
+            background: var(--red-light);
+            color: var(--red);
+            display: flex;
+        }
+    /* ───── TOAST NOTIFICATION ───── */
+    #toastContainer {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        z-index: 8888;
+        display: flex;
+        flex-direction: column;
+        gap: .5rem;
+    }
+
+    .app-toast {
+        background: var(--white);
+        border-radius: 10px;
+        padding: .9rem 1.2rem;
+        box-shadow: var(--shadow-lg);
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        min-width: 260px;
+        border-left: 3px solid var(--green);
+        transition: transform .35s cubic-bezier(.34,1.56,.64,1), opacity .28s ease;
+        font-size: .82rem;
+        opacity: 1;
+    }
+
+        .app-toast.toast-error {
+            border-color: var(--red);
+        }
+
+    .toast-ico {
+        font-size: 1.1rem;
+    }
+
+    .toast-msg {
+        flex: 1;
+        color: var(--navy);
+        font-weight: 500;
+    }
+</style>
+<!-- ═══════════ TOAST CONTAINER ═══════════ -->
+<div id="toastContainer">
+    @foreach (var toast in activeToasts)
+    {
+        <div class="app-toast @(toast.IsError ? "toast-error" : "")">
+            <div class="toast-ico">
+                <i class="bi @(toast.IsError ? "bi-x-circle text-danger" : "bi-check-circle text-success")"></i>
+            </div>
+            <div class="toast-msg">@HtmlRaw(toast.Message)</div>
+        </div>
+    }
+</div>
+<!-- ═══════════ APP SHELL ═══════════ -->
+<div id="appShell">
+    <!-- ── SIDEBAR ── -->
+    <aside id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-monogram">TB</div>
+            <div class="brand-title">The Boutique</div>
+            <div class="brand-sub">Staff Portal</div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Main</div>
+            <div class="nav-item @(activeView == "dashboard" ? "active" : "")" @onclick='() => NavigateTo("dashboard")'>
+                <i class="bi bi-grid-1x2"></i> Dashboard
+            </div>
+            <div class="nav-section-label">Operations</div>
+            <div class="nav-item @(activeView == "orders" ? "active" : "")" @onclick='() => NavigateTo("orders")'>
+                <i class="bi bi-bag-check"></i> Order Management
+            </div>
+            <div class="nav-item @(activeView == "inventory" ? "active" : "")" @onclick='() => NavigateTo("inventory")'>
+                <i class="bi bi-archive"></i> Stock Control
+            </div>
+            <div class="nav-section-label">Account</div>
+            <div class="nav-item @(activeView == "profile" ? "active" : "")" @onclick='() => NavigateTo("profile")'>
+                <i class="bi bi-person-circle"></i> My Profile
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="staff-chip">
+                <div class="staff-avatar">@staffInitials</div>
+                <div>
+                    <div class="staff-name">@staffFirstName @staffLastName</div>
+                    <div class="staff-role">@staffRole</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+    <!-- ── MAIN AREA ── -->
+    <div id="mainArea">
+        <!-- TOP BAR -->
+        <div id="topbar">
+            <div class="topbar-greeting">Hello, <span>@staffFirstName @staffLastName</span></div>
+            <div class="topbar-right">
+                <span class="topbar-date">@currentDateString</span>
+                <span class="topbar-badge">@staffRole</span>
+            </div>
+        </div>
+        <!-- CONTENT PANE -->
+        <div id="content">
+            <!-- ──────────── DASHBOARD VIEW ──────────── -->
+            <section class="view-section @(activeView == "dashboard" ? "active" : "")">
+                <div class="welcome-banner">
+                    <div>
+                        <div class="wb-greeting">Good day, <strong>@staffFirstName @staffLastName</strong></div>
+                        <div class="wb-sub">Here's an overview of today's boutique activity.</div>
+                    </div>
+                    <div class="wb-badge">@staffRole</div>
+                </div>
+                <div class="dash-grid">
+                    <div class="dash-stat">
+                        <div class="dash-stat-val">@totalOrdersCount</div>
+                        <div class="dash-stat-label">Total Orders</div>
+                    </div>
+                    <div class="dash-stat">
+                        <div class="dash-stat-val">@totalRevenue.ToString("N0")</div>
+                        <div class="dash-stat-label">Total Revenue (MMK)</div>
+                    </div>
+                    <div class="dash-stat">
+                        <div class="dash-stat-val">@totalSkusCount</div>
+                        <div class="dash-stat-label">Active SKUs</div>
+                    </div>
+                    <div class="dash-stat">
+                        <div class="dash-stat-val text-warning">@lowStockCount</div>
+                        <div class="dash-stat-label">Low Stock Items</div>
+                    </div>
+                </div>
+                <div class="section-title">Recent Orders</div>
+                <div class="table-card">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Amount (MMK)</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ord in recentOrders)
+                            {
+                                <tr>
+                                    <td style="font-family:'DM Sans',monospace;font-weight:600;color:var(--navy);">#ORD-@ord.OrderId.ToString("D4")</td>
+                                    <td>@ord.User.FirstName @ord.User.LastName</td>
+                                    <td>@ord.TotalAmount.ToString("N0")</td>
+                                    <td>
+                                        @if (ord.OrderStatus.ToLower() == "delivered")
+                                        {
+                                            <span class="status-badge badge-delivered"><i class="bi bi-check-circle"></i>Delivered</span>
+                                        }
+                                        else if (ord.OrderStatus.ToLower() == "processing")
+                                        {
+                                            <span class="status-badge badge-processing"><i class="bi bi-arrow-repeat"></i>Processing</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="status-badge badge-pending"><i class="bi bi-hourglass-split"></i>Pending</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            <!-- ──────────── ORDERS VIEW ──────────── -->
+            <section class="view-section @(activeView == "orders" ? "active" : "")">
+                <div class="page-header">
+                    <div class="page-sub">Operations</div>
+                    <h1 class="page-title">Order Management</h1>
+                    <div class="page-divider"></div>
+                </div>
+                <!-- KPI Cards -->
+                <div class="kpi-grid">
+                    <div class="kpi-card kpi-pending @(currentFilter == "pending" ? "kpi-active" : "")" @onclick='() => FilterOrders("pending")'>
+                        <div class="kpi-icon"><i class="bi bi-hourglass-split"></i></div>
+                        <div class="kpi-count">@pendingCount</div>
+                        <div class="kpi-label">Pending Orders</div>
+                        <div class="kpi-hint"><i class="bi bi-hand-index"></i> Click to filter</div>
+                    </div>
+                    <div class="kpi-card kpi-processing @(currentFilter == "processing" ? "kpi-active" : "")" @onclick='() => FilterOrders("processing")'>
+                        <div class="kpi-icon"><i class="bi bi-arrow-repeat"></i></div>
+                        <div class="kpi-count">@processingCount</div>
+                        <div class="kpi-label">Processing Orders</div>
+                        <div class="kpi-hint"><i class="bi bi-hand-index"></i> Click to filter</div>
+                    </div>
+                    <div class="kpi-card kpi-delivered @(currentFilter == "delivered" ? "kpi-active" : "")" @onclick='() => FilterOrders("delivered")'>
+                        <div class="kpi-icon"><i class="bi bi-check-circle"></i></div>
+                        <div class="kpi-count">@deliveredCount</div>
+                        <div class="kpi-label">Delivered Orders</div>
+                        <div class="kpi-hint"><i class="bi bi-hand-index"></i> Click to filter</div>
+                    </div>
+                </div>
+                <!-- Filter Bar -->
+                <div class="filter-bar">
+                    <div class="filter-label">
+                        Showing: <strong>@(string.IsNullOrEmpty(currentFilter) ? "All Orders" : char.ToUpper(currentFilter[0]) + currentFilter.Substring(1) + " Orders")</strong>
+                    </div>
+                    @if (!string.IsNullOrEmpty(currentFilter))
+                    {
+                        <button id="resetFilterBtn" @onclick='() => FilterOrders("")'>
+                            <i class="bi bi-x-circle"></i> Show All
+                        </button>
+                    }
+                </div>
+                <!-- Orders Table -->
+                <div class="table-card">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer Name</th>
+                                <th>Amount (MMK)</th>
+                                <th>Payment</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!filteredOrders.Any())
+                            {
+                                <tr>
+                                    <td colspan="6" style="text-align:center;padding:2rem;color:var(--slate-light)">
+                                        <i class="bi bi-inbox" style="font-size:1.6rem;display:block;margin-bottom:.4rem"></i>No orders found.
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var ord in filteredOrders)
+                                {
+                                    var payMethod = ord.Payments.FirstOrDefault()?.PaymentMethod ?? "COD";
+
+                                    <tr>
+                                        <td style="font-family:'DM Sans',monospace;font-weight:600;color:var(--navy);font-size:.8rem">#ORD-@ord.OrderId.ToString("D4")</td>
+                                        <td>@ord.User.FirstName @ord.User.LastName</td>
+                                        <td style="font-weight:500">@ord.TotalAmount.ToString("N0")</td>
+                                        <td><span class="pay-badge">@payMethod.ToUpper()</span></td>
+                                        <td>
+                                            @if (ord.OrderStatus.ToLower() == "delivered")
+                                            {
+                                                <span class="status-badge badge-delivered"><i class="bi bi-check-circle"></i>Delivered</span>
+                                            }
+                                            else if (ord.OrderStatus.ToLower() == "processing")
+                                            {
+                                                <span class="status-badge badge-processing"><i class="bi bi-arrow-repeat"></i>Processing</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-badge badge-pending"><i class="bi bi-hourglass-split"></i>Pending</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (ord.OrderStatus.ToLower() == "delivered")
+                                            {
+                                                <span class="status-badge badge-locked"><i class="bi bi-lock-fill"></i>Delivered — Locked</span>
+                                            }
+                                            else
+                                            {
+                                                <select class="status-select" value="@ord.OrderStatus" @onchange="(e) => UpdateOrderStatus(ord, e.Value?.ToString())">
+                                                    <option value="pending">Pending</option>
+                                                    <option value="processing">Processing</option>
+                                                    <option value="delivered">Delivered</option>
+                                                </select>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            <!-- ──────────── INVENTORY VIEW ──────────── -->
+            <section class="view-section @(activeView == "inventory" ? "active" : "")">
+                <div class="page-header">
+                    <div class="page-sub">Operations</div>
+                    <h1 class="page-title">Stock Control (Inventory)</h1>
+                    <div class="page-divider"></div>
+                </div>
+                <div class="table-card">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>SKU</th>
+                                <th>Product Name</th>
+                                <th>Size</th>
+                                <th>Color</th>
+                                <th>Qty</th>
+                                <th>Stock Status</th>
+                                <th>Adjust</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < inventoryVariants.Count; i++)
+                            {
+                                var idx = i;
+                                var variant = inventoryVariants[idx];
+                                bool isLow = variant.StockQuantity < 5;
+
+                                <tr class="@(isLow ? "low-stock-row" : "")">
+                                    <td>@(idx + 1)</td>
+                                    <td style="font-family: monospace; font-weight: 500;">@variant.Sku</td>
+                                    <td>@variant.Product.Name</td>
+                                    <td>@variant.Size</td>
+                                    <td>@variant.Color</td>
+                                    <td class="qty-display">@variant.StockQuantity</td>
+                                    <td>
+                                        @if (variant.StockQuantity == 0)
+                                        {
+                                            <span class="low-stock-badge" style="background-color: var(--red-light); color: var(--red);">Out of Stock</span>
+                                        }
+                                        else if (isLow)
+                                        {
+                                            <span class="low-stock-badge">Low Stock</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="in-stock-badge">In Stock</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="inv-controls">
+                                            <button class="qty-btn" @onclick="() => AdjustStock(variant, -1)">-</button>
+                                            <button class="qty-btn" @onclick="() => AdjustStock(variant, 1)">+</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            <!-- ──────────── PROFILE VIEW ──────────── -->
+            <section class="view-section @(activeView == "profile" ? "active" : "")">
+                <div class="page-header">
+                    <div class="page-sub">Account</div>
+                    <h1 class="page-title">My Profile</h1>
+                    <div class="page-divider"></div>
+                </div>
+                <div class="profile-card">
+                    <div class="profile-avatar-lg">@staffInitials</div>
+                    <div class="profile-section-title">Personal Information</div>
+                    <div class="profile-form">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label">First Name</label>
+                                <input type="text" class="form-control" @bind="staffFirstName" />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Last Name</label>
+                                <input type="text" class="form-control" @bind="staffLastName" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" class="form-control" @bind="staffEmail" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" @bind="staffPhone" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Role</label>
+                                <input type="text" class="form-control" value="@staffRole" disabled style="background:#f8fafc;color:var(--slate)" />
+                            </div>
+                        </div>
+                        @if (profileSaved)
+                        {
+                            <div class="inline-toast success">
+                                <i class="bi bi-check-circle"></i> Profile changes saved in system registers.
+                            </div>
+                        }
+                        <div style="margin-top:1.4rem">
+                            <button class="btn-save" @onclick="SaveProfile">
+                                <i class="bi bi-floppy" style="margin-right:.35rem"></i>Save Changes
+                            </button>
+                        </div>
+                    </div>
+                    <div class="profile-divider"></div>
+                    <div class="profile-section-title">Session</div>
+                    <p style="font-size:.8rem;color:var(--slate);margin-bottom:1rem">
+                        Logging out will clear your session state from this portal instance.
+                    </p>
+                    <button class="btn-logout" @onclick="Logout">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </button>
+                </div>
+            </section>
+        </div><!-- /content -->
+    </div><!-- /mainArea -->
+</div><!-- /appShell -->
+@code {
+    private string activeView = "dashboard";
+    private string currentFilter = "";
+    private string currentDateString = "";
+    private bool profileSaved = false;
+    // Staff details state
+    private string staffFirstName = "Thiri";
+    private string staffLastName = "San";
+    private string staffEmail = "thiri@boutique.com";
+    private string staffPhone = "09222333444";
+    private string staffRole = "Senior Staff";
+    private string staffInitials => (staffFirstName.Length > 0 ? staffFirstName[0].ToString() : "") + (staffLastName.Length > 0 ? staffLastName[0].ToString() : "");
+    // Database aggregates
+    private int totalOrdersCount = 0;
+    private decimal totalRevenue = 0;
+    private int totalSkusCount = 0;
+    private int lowStockCount = 0;
+    private int pendingCount = 0;
+    private int processingCount = 0;
+    private int deliveredCount = 0;
+    // Lists
+    private List<Order> allOrders = new();
+    private List<Order> filteredOrders = new();
+    private List<Order> recentOrders = new();
+    private List<ProductVariant> inventoryVariants = new();
+    // Custom Toast ToastItem
+    private class ToastItem
+    {
+        public string Message { get; set; } = "";
+        public bool IsError { get; set; }
+    }
+    private List<ToastItem> activeToasts = new();
+    protected override void OnInitialized()
+    {
+        // Enforce user sign-in check
+        if (!Session.IsLoggedIn)
+        {
+            var defaultStaff = Db.Users.FirstOrDefault(u => u.Role == "staff");
+            if (defaultStaff != null)
+            {
+                Session.Login(defaultStaff);
+            }
+            else
+            {
+                Nav.NavigateTo("/login");
+                return;
+            }
+        }
+        var user = Session.CurrentUser!;
+        staffFirstName = user.FirstName;
+        staffLastName = user.LastName;
+        staffEmail = user.Email;
+        
+        staffRole = user.Role == "admin" ? "Boutique Owner" : "Senior Staff";
+        currentDateString = DateTime.Now.ToString("ddd, d MMM yyyy");
+        LoadStaffDashboardData();
+    }
+    private void LoadStaffDashboardData()
+    {
+        allOrders = Db.Orders
+            .Include(o => o.User)
+            .Include(o => o.Payments)
+            .OrderByDescending(o => o.OrderId)
+            .ToList();
+        recentOrders = allOrders.Take(5).ToList();
+
+        inventoryVariants = Db.ProductVariants
+                    .Include(v => v.Product)
+                    .OrderBy(v => v.Sku)
+                    .ToList();
+        // Recalculate KPI aggregates
+        totalOrdersCount = allOrders.Count;
+        totalRevenue = allOrders.Sum(o => o.TotalAmount);
+        totalSkusCount = inventoryVariants.Count;
+        lowStockCount = inventoryVariants.Count(v => v.StockQuantity < 5);
+        pendingCount = allOrders.Count(o => o.OrderStatus.ToLower() == "pending");
+        processingCount = allOrders.Count(o => o.OrderStatus.ToLower() == "processing");
+        deliveredCount = allOrders.Count(o => o.OrderStatus.ToLower() == "delivered");
+        ApplyFilter();
+    }
+    private void NavigateTo(string view)
+    {
+        activeView = view;
+        profileSaved = false;
+        LoadStaffDashboardData();
+    }
+    private void FilterOrders(string status)
+    {
+        currentFilter = status;
+        ApplyFilter();
+    }
+    private void ApplyFilter()
+    {
+        if (string.IsNullOrEmpty(currentFilter))
+        {
+            filteredOrders = allOrders;
+        }
+        else
+        {
+            filteredOrders = allOrders.Where(o => o.OrderStatus.ToLower() == currentFilter).ToList();
+        }
+    }
+    private void UpdateOrderStatus(Order order, string? newStatus)
+    {
+        if (string.IsNullOrEmpty(newStatus)) return;
+
+        var dbOrder = Db.Orders.FirstOrDefault(o => o.OrderId == order.OrderId);
+        if (dbOrder != null)
+        {
+            dbOrder.OrderStatus = newStatus;
+
+            // Also log staff fulfillment action
+            var log = new StaffFulfillmentLog
+            {
+                OrderId = order.OrderId,
+                StaffId = Session.CurrentUser!.UserId,
+                ActionTaken = char.ToUpper(newStatus[0]) + newStatus.Substring(1),
+                Notes = $"Status changed by operational staff member."
+            };
+            Db.StaffFulfillmentLogs.Add(log);
+            Db.SaveChanges();
+            LoadStaffDashboardData();
+            TriggerToast($"Order #ORD-{order.OrderId:D4} updated to <strong>{newStatus.ToUpper()}</strong>");
+        }
+    }
+    private void AdjustStock(ProductVariant variant, int adjustment)
+    {
+        var dbVariant = Db.ProductVariants.FirstOrDefault(v => v.VariantId == variant.VariantId);
+        if (dbVariant != null)
+        {
+            int oldQty = dbVariant.StockQuantity;
+            dbVariant.StockQuantity = Math.Max(0, dbVariant.StockQuantity + adjustment);
+
+            // Record activity log
+            var log = new StaffActivityLog
+            {
+                StaffId = Session.CurrentUser!.UserId,
+                TargetTable = "product_variants",
+                TargetId = variant.VariantId,
+                ActionType = "update",
+                Description = $"Adjusted SKU {variant.Sku} stock from {oldQty} to {dbVariant.StockQuantity}."
+            };
+            Db.StaffActivityLogs.Add(log);
+            Db.SaveChanges();
+            LoadStaffDashboardData();
+            TriggerToast($"Stock adjusted for SKU <strong>{variant.Sku}</strong> ({oldQty} &rarr; {dbVariant.StockQuantity})");
+        }
+    }
+    private void SaveProfile()
+    {
+        var user = Db.Users.FirstOrDefault(u => u.UserId == Session.CurrentUser!.UserId);
+        if (user != null)
+        {
+            user.FirstName = staffFirstName;
+            user.LastName = staffLastName;
+            user.Email = staffEmail;
+            
+            Db.SaveChanges();
+
+            // Sync session
+            Session.Login(user);
+            profileSaved = true;
+            TriggerToast("System staff details saved successfully.");
+        }
+    }
+    private void Logout()
+    {
+        Session.Logout();
+        Nav.NavigateTo("/login");
+    }
+    private void TriggerToast(string msg, bool isError = false)
+    {
+        var toast = new ToastItem { Message = msg, IsError = isError };
+        activeToasts.Add(toast);
+        StateHasChanged();
+        Task.Delay(3000).ContinueWith(_ =>
+        {
+            activeToasts.Remove(toast);
+            InvokeAsync(StateHasChanged);
+        });
+    }
+    private MarkupString HtmlRaw(string value) => new MarkupString(value);
+}

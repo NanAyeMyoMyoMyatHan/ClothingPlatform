@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Women's Fashion Customer Dashboard</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        :root{
+            --primary:#F4C2C2;
+            --primary-dark:#E5A9A9;
+            --bg:#FDFBFB;
+            --white:#FFFFFF;
+            --text:#333333;
+            --muted:#B78A8A;
+            --border:#F0E4E4;
+            --shadow:0 10px 30px rgba(0,0,0,0.06);
+            --radius:18px;
+        }
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        body{
+            background:var(--bg);
+            font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color:var(--text);
+        }
+
+        .dashboard-wrapper{
+            min-height:100vh;
+        }
+
+        /* Sidebar */
+        .sidebar{
+            background:linear-gradient(
+                180deg,
+                #ffffff,
+                #fff7f7
+            );
+            border-right:1px solid var(--border);
+            min-height:100vh;
+            padding:30px 20px;
+            position:sticky;
+            top:0;
+        }
+
+        .profile-card{
+            text-align:center;
+            margin-bottom:35px;
+        }
+
+        .profile-image{
+            width:90px;
+            height:90px;
+            border-radius:50%;
+            background:linear-gradient(
+                135deg,
+                var(--primary),
+                var(--primary-dark)
+            );
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:white;
+            font-size:32px;
+            margin:auto;
+            box-shadow:var(--shadow);
+        }
+
+        .profile-name{
+            font-weight:700;
+            margin-top:15px;
+            font-size:18px;
+        }
+
+        .profile-role{
+            color:var(--muted);
+            font-size:14px;
+        }
+
+        .nav-link-custom{
+            width:100%;
+            border:none;
+            background:transparent;
+            padding:14px 16px;
+            border-radius:14px;
+            margin-bottom:8px;
+            text-align:left;
+            transition:all .3s ease;
+            color:var(--text);
+            font-weight:500;
+        }
+
+        .nav-link-custom:hover{
+            background:#fff2f2;
+        }
+
+        .nav-link-custom.active{
+            background:linear-gradient(
+                135deg,
+                var(--primary),
+                var(--primary-dark)
+            );
+            color:white;
+            box-shadow:var(--shadow);
+        }
+
+        /* Main Content */
+        .content-area{
+            padding:30px;
+        }
+
+        .welcome-banner{
+            background:linear-gradient(
+                135deg,
+                #fff,
+                #ffecec
+            );
+            border-radius:25px;
+            padding:35px;
+            box-shadow:var(--shadow);
+            margin-bottom:30px;
+        }
+
+        .welcome-title{
+            font-size:32px;
+            font-weight:700;
+        }
+
+        .welcome-subtitle{
+            color:var(--muted);
+        }
+
+        /* KPI Cards */
+        .kpi-card{
+            background:var(--white);
+            border-radius:20px;
+            padding:24px;
+            box-shadow:var(--shadow);
+            height:100%;
+            transition:.3s;
+        }
+
+        .kpi-card:hover{
+            transform:translateY(-4px);
+        }
+
+        .kpi-icon{
+            width:55px;
+            height:55px;
+            border-radius:15px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:#fff1f1;
+            color:var(--primary-dark);
+            font-size:24px;
+        }
+
+        .kpi-number{
+            font-size:30px;
+            font-weight:700;
+            margin-top:15px;
+        }
+
+        .kpi-label{
+            color:var(--muted);
+        }
+
+        /* Cards */
+        .section-card{
+            background:var(--white);
+            border-radius:20px;
+            padding:25px;
+            box-shadow:var(--shadow);
+            margin-top:25px;
+        }
+
+        .section-title{
+            font-size:20px;
+            font-weight:700;
+            margin-bottom:20px;
+        }
+
+        /* Orders Table */
+        .table thead{
+            background:#fff5f5;
+        }
+
+        .table th{
+            color:#555;
+            border:none;
+        }
+
+        .table td{
+            vertical-align:middle;
+        }
+
+        .badge-processing{
+            background:#FFF4C7;
+            color:#8B6B00;
+            padding:8px 12px;
+            border-radius:50px;
+        }
+
+        .badge-delivered{
+            background:#DDF8E5;
+            color:#1E7A41;
+            padding:8px 12px;
+            border-radius:50px;
+        }
+
+        /* Wishlist */
+        .product-card{
+            border:none;
+            border-radius:18px;
+            overflow:hidden;
+            box-shadow:var(--shadow);
+            transition:.3s;
+        }
+
+        .product-card:hover{
+            transform:translateY(-6px);
+        }
+
+        .product-image{
+            height:220px;
+            background:linear-gradient(
+                135deg,
+                #f6d8d8,
+                #fef6f6
+            );
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:50px;
+            color:var(--primary-dark);
+        }
+
+        .price{
+            color:var(--primary-dark);
+            font-size:20px;
+            font-weight:700;
+        }
+
+        .btn-luxury{
+            background:linear-gradient(
+                135deg,
+                var(--primary),
+                var(--primary-dark)
+            );
+            border:none;
+            color:white;
+            border-radius:12px;
+            padding:10px 18px;
+        }
+
+        .btn-luxury:hover{
+            opacity:.9;
+            color:white;
+        }
+
+        /* Address */
+        .address-box{
+            background:#fff8f8;
+            border:1px solid var(--border);
+            border-radius:16px;
+            padding:20px;
+        }
+
+        .tab-content{
+            display:none;
+        }
+
+        .tab-content.active{
+            display:block;
+        }
+
+        @media(max-width:991px){
+
+            .sidebar{
+                min-height:auto;
+                position:relative;
+            }
+
+            .content-area{
+                padding:20px;
+            }
+
+            .welcome-title{
+                font-size:24px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid dashboard-wrapper">
+    <div class="row">
+
+        <!-- Sidebar -->
+        <div class="col-lg-3 col-xl-2 sidebar">
+
+            <div class="profile-card">
+                <div class="profile-image">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                <div class="profile-name">Emily Watson</div>
+                <div class="profile-role">Premium Fashion Member</div>
+            </div>
+
+            <button class="nav-link-custom active" onclick="showTab('dashboard',this)">
+                <i class="bi bi-grid me-2"></i> Dashboard Home
+            </button>
+
+            <button class="nav-link-custom" onclick="showTab('orders',this)">
+                <i class="bi bi-bag-check me-2"></i> My Orders
+            </button>
+
+            <button class="nav-link-custom" onclick="showTab('wishlist',this)">
+                <i class="bi bi-heart me-2"></i> My Wishlist
+                (ကြိုက်နှစ်သက်သည့်စာရင်း)
+            </button>
+
+            <button class="nav-link-custom" onclick="showTab('address',this)">
+                <i class="bi bi-geo-alt me-2"></i> Shipping Addresses
+            </button>
+
+            <button class="nav-link-custom" onclick="showTab('support',this)">
+                <i class="bi bi-headset me-2"></i> Support
+            </button>
+
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-9 col-xl-10 content-area">
+
+            <!-- Dashboard -->
+            <div id="dashboard" class="tab-content active">
+
+                <div class="welcome-banner">
+                    <h1 class="welcome-title">
+                        Hello, Emily! Welcome back to your style hub.
+                    </h1>
+                    <p class="welcome-subtitle mb-0">
+                        Discover your latest fashion favorites and manage your boutique experience effortlessly.
+                    </p>
+                </div>
+
+                <!-- KPI -->
+                <div class="row g-4">
+
+                    <div class="col-md-4">
+                        <div class="kpi-card">
+                            <div class="kpi-icon">
+                                <i class="bi bi-bag"></i>
+                            </div>
+                            <div class="kpi-number">24</div>
+                            <div class="kpi-label">Total Orders Placed</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="kpi-card">
+                            <div class="kpi-icon">
+                                <i class="bi bi-heart"></i>
+                            </div>
+                            <div class="kpi-number">12</div>
+                            <div class="kpi-label">Items in Wishlist</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="kpi-card">
+                            <div class="kpi-icon">
+                                <i class="bi bi-cart"></i>
+                            </div>
+                            <div class="kpi-number">4</div>
+                            <div class="kpi-label">Active Cart Items</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Recent Orders -->
+                <div class="section-card">
+
+                    <h4 class="section-title">Recent Orders</h4>
+
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                            </thead>
+
+                            <tbody>
+                            <tr>
+                                <td>#ORD-1001</td>
+                                <td>08 Jun 2026</td>
+                                <td>$89.00</td>
+                                <td>
+                                    <span class="badge-processing">
+                                        Processing
+                                    </span>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>#ORD-1002</td>
+                                <td>04 Jun 2026</td>
+                                <td>165,000 MMK</td>
+                                <td>
+                                    <span class="badge-delivered">
+                                        Delivered
+                                    </span>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>#ORD-1003</td>
+                                <td>29 May 2026</td>
+                                <td>$120.00</td>
+                                <td>
+                                    <span class="badge-delivered">
+                                        Delivered
+                                    </span>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Orders -->
+            <div id="orders" class="tab-content">
+                <div class="section-card">
+                    <h3 class="section-title">My Orders</h3>
+                    <p>Track all your fashion purchases and delivery updates here.</p>
+                </div>
+            </div>
+
+            <!-- Wishlist -->
+            <div id="wishlist" class="tab-content">
+
+                <div class="section-card">
+                    <h3 class="section-title">
+                        My Wishlist (ကြိုက်နှစ်သက်သည့်စာရင်း)
+                    </h3>
+
+                    <div class="row g-4">
+
+                        <div class="col-md-4">
+                            <div class="card product-card">
+
+                                <div class="product-image">
+                                    <i class="bi bi-image"></i>
+                                </div>
+
+                                <div class="card-body">
+                                    <h5>Floral Summer Maxi Dress</h5>
+                                    <p class="price">$59.99</p>
+
+                                    <button class="btn btn-luxury w-100">
+                                        Add to Cart
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card product-card">
+
+                                <div class="product-image">
+                                    <i class="bi bi-image"></i>
+                                </div>
+
+                                <div class="card-body">
+                                    <h5>Elegant Rose Blouse</h5>
+                                    <p class="price">$39.99</p>
+
+                                    <button class="btn btn-luxury w-100">
+                                        Add to Cart
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card product-card">
+
+                                <div class="product-image">
+                                    <i class="bi bi-image"></i>
+                                </div>
+
+                                <div class="card-body">
+                                    <h5>Luxury Satin Skirt</h5>
+                                    <p class="price">$69.99</p>
+
+                                    <button class="btn btn-luxury w-100">
+                                        Add to Cart
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Address -->
+            <div id="address" class="tab-content">
+
+                <div class="section-card">
+
+                    <h3 class="section-title">
+                        Saved Shipping Address
+                    </h3>
+
+                    <div class="address-box">
+
+                        <h5>Default Address</h5>
+
+                        <p class="mb-1">
+                            Emily Watson
+                        </p>
+
+                        <p class="mb-1">
+                            221 Fashion Avenue
+                        </p>
+
+                        <p class="mb-1">
+                            New York, NY 10001
+                        </p>
+
+                        <p>
+                            United States
+                        </p>
+
+                        <button class="btn btn-luxury">
+                            Edit Address
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Support -->
+            <div id="support" class="tab-content">
+
+                <div class="section-card">
+                    <h3 class="section-title">Customer Support</h3>
+
+                    <p>
+                        Need help with your orders, returns, or account?
+                    </p>
+
+                    <button class="btn btn-luxury">
+                        Contact Support
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(tabId, element){
+
+        document.querySelectorAll('.tab-content')
+            .forEach(tab => tab.classList.remove('active'));
+
+        document.getElementById(tabId)
+            .classList.add('active');
+
+        document.querySelectorAll('.nav-link-custom')
+            .forEach(btn => btn.classList.remove('active'));
+
+        element.classList.add('active');
+    }
+</script>
+
+</body>
+</html>

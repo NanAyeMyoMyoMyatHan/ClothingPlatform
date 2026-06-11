@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE BOUTIQUE | Luxury Women's Fashion</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-primary: #FDFBFB;
+            --bg-white: #FFFFFF;
+            --accent-gold: #D4A5A5;
+            --accent-pink: #E8B4B4;
+            --accent-pink-dark: #C39393;
+            --text-dark: #2B2B2B;
+            --text-muted: #6C757D;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+            --shadow-md: 0 8px 24px rgba(43,43,43,0.08);
+            --transition-smooth: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, .brand-font {
+            font-family: 'Playfair Display', serif;
+            letter-spacing: 1px;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F1F1F1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-gold);
+            border-radius: 3px;
+        }
+
+        /* Header Navigation */
+        .navbar-brand {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-dark) !important;
+            letter-spacing: 4px;
+        }
+        .nav-link {
+            color: var(--text-dark);
+            font-weight: 400;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            padding: 0.5rem 1rem !important;
+            margin: 0 0.25rem;
+            position: relative;
+            transition: var(--transition-smooth);
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 1px;
+            background-color: var(--text-dark);
+            transition: var(--transition-smooth);
+            transform: translateX(-50%);
+        }
+        .nav-link.active::after, .nav-link:hover::after {
+            width: 70%;
+        }
+        .nav-link.active {
+            font-weight: 600;
+        }
+        .cart-icon-wrapper {
+            position: relative;
+            cursor: pointer;
+        }
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            background-color: var(--text-dark);
+            color: #fff;
+            font-size: 0.65rem;
+            padding: 0.25rem 0.45rem;
+            border-radius: 50%;
+            font-weight: 600;
+        }
+
+        /* Product Cards */
+        .product-card {
+            background: var(--bg-white);
+            border: none;
+            border-radius: 0;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition-smooth);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+        }
+        .product-img-container {
+            position: relative;
+            overflow: hidden;
+            background-color: #f7f7f7;
+            padding-top: 125%; /* 4:5 Portrait Luxury Aspect Ratio */
+        }
+        .product-img-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition-smooth);
+        }
+        .product-card:hover .product-img-container img {
+            transform: scale(1.04);
+        }
+        .product-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background-color: var(--bg-white);
+            color: var(--text-dark);
+            font-size: 0.7rem;
+            font-weight: 500;
+            padding: 0.4rem 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .quick-view-btn {
+            position: absolute;
+            bottom: -50px;
+            left: 0;
+            right: 0;
+            background-color: rgba(43, 43, 43, 0.9);
+            color: var(--bg-white);
+            text-align: center;
+            padding: 0.75rem;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            transition: var(--transition-smooth);
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+        }
+        .product-card:hover .quick-view-btn {
+            bottom: 0;
+        }
+        .product-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.15rem;
+            margin-top: 1rem;
+            margin-bottom: 0.25rem;
+            color: var(--text-dark);
+        }
+        .product-price {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        /* Attribute Selectors */
+        .attr-btn {
+            border: 1px solid #E0E0E0;
+            background: #fff;
+            color: var(--text-dark);
+            padding: 0.4rem 1rem;
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            transition: var(--transition-smooth);
+            cursor: pointer;
+        }
+        .attr-btn:hover {
+            border-color: var(--text-dark);
+        }
+        .attr-btn.selected {
+            background: var(--text-dark);
+            color: #fff;
+            border-color: var(--text-dark);
+        }
+
+        /* Custom Color Dots */
+        .color-dot {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: var(--transition-smooth);
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.1);
+        }
+        .color-dot.selected {
+            border-color: var(--text-dark);
+            transform: scale(1.15);
+        }
+
+        /* Shopping Bag Sidebar Drawer */
+        .cart-drawer {
+            position: fixed;
+            top: 0;
+            right: -450px;
+            width: 420px;
+            height: 100%;
+            background: var(--bg-white);
+            box-shadow: -5px 0 30px rgba(0,0,0,0.1);
+            z-index: 1060;
+            transition: var(--transition-smooth);
+            display: flex;
+            flex-direction: column;
+        }
+        @media(max-width: 450px) {
+            .cart-drawer {
+                width: 100%;
+                right: -100%;
+            }
+        }
+        .cart-drawer.open {
+            right: 0;
+        }
+        .cart-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #F0F0F0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .cart-body {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+        .cart-footer {
+            padding: 1.5rem;
+            border-top: 1px solid #F0F0F0;
+            background: #FAFAFA;
+        }
+        .cart-item {
+            display: flex;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #F5F5F5;
+        }
+        .cart-item-img {
+            width: 70px;
+            height: 90px;
+            object-fit: cover;
+            background: #F7F7F7;
+            margin-right: 1rem;
+        }
+        .cart-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            z-index: 1050;
+            display: none;
+        }
+        .cart-overlay.show {
+            display: block;
+        }
+
+        /* Buttons styling */
+        .btn-luxury {
+            background-color: var(--text-dark);
+            color: #fff;
+            border-radius: 0;
+            padding: 0.75rem 2rem;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border: 1px solid var(--text-dark);
+            transition: var(--transition-smooth);
+        }
+        .btn-luxury:hover {
+            background-color: transparent;
+            color: var(--text-dark);
+        }
+        .btn-outline-luxury {
+            background-color: transparent;
+            color: var(--text-dark);
+            border-radius: 0;
+            padding: 0.75rem 2rem;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border: 1px solid var(--text-dark);
+            transition: var(--transition-smooth);
+        }
+        .btn-outline-luxury:hover {
+            background-color: var(--text-dark);
+            color: #fff;
+        }
+
+        /* App View Screens */
+        .app-view {
+            display: none;
+        }
+        .app-view.active-view {
+            display: block;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Form Controls */
+        .form-control, .form-select {
+            border-radius: 0;
+            border-color: #E0E0E0;
+            padding: 0.75rem;
+            font-size: 0.9rem;
+        }
+        .form-control:focus, .form-select:focus {
+            box-shadow: none;
+            border-color: var(--text-dark);
+        }
+
+        /* Payment QR Wrapper */
+        .qr-card {
+            border: 1px dashed var(--accent-gold);
+            background-color: #FFFDFD;
+            padding: 1.5rem;
+            text-align: center;
+            margin-top: 1rem;
+        }
+        .qr-code-placeholder {
+            width: 160px;
+            height: 160px;
+            background: #fff;
+            border: 1px solid #E0E0E0;
+            margin: 0.5rem auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* Purchase History Grid */
+        .history-card {
+            background: #fff;
+            border: 1px solid #F0F0F0;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 1.5rem;
+        }
+        .history-header {
+            background-color: #FAF8F8;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #F0F0F0;
+        }
+
+        /* Hero Banner styling */
+        .hero-banner {
+            background: linear-gradient(135deg, #F9F5F5 0%, #F1E7E7 100%);
+            padding: 5rem 2rem;
+            margin-bottom: 3rem;
+            text-align: center;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top py-3 shadow-sm">
+        <div class="container">
+            <a class="navbar-brand h1 m-0" href="#" onclick="switchView('home')">THE BOUTIQUE</a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto mt-3 mt-lg-0">
+                    <li class="nav-item"><a class="nav-link active" id="link-home" href="#" onclick="switchView('home')">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" id="link-new" href="#" onclick="switchView('new-arrivals')">New Arrivals</a></li>
+                    <li class="nav-item"><a class="nav-link" id="link-best" href="#" onclick="switchView('best-sellers')">Best Sellers</a></li>
+                    <li class="nav-item"><a class="nav-link" id="link-silk" href="#" onclick="switchView('traditional-silk')">Traditional Silk</a></li>
+                    <li class="nav-item"><a class="nav-link" id="link-history" href="#" onclick="switchView('history')">My Purchase History</a></li>
+                </ul>
+                <div class="d-flex align-items-center mt-3 mt-lg-0">
+                    <div class="cart-icon-wrapper p-2" onclick="toggleCart(true)">
+                        <i class="fa-solid fa-bag-shopping fs-4"></i>
+                        <span class="cart-badge" id="cart-counter-badge">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="cart-overlay" id="cart-overlay" onclick="toggleCart(false)"></div>
+    <div class="cart-drawer" id="cart-drawer">
+        <div class="cart-header">
+            <h4 class="m-0">Shopping Bag</h4>
+            <button class="btn-close" onclick="toggleCart(false)"></button>
+        </div>
+        <div class="cart-body" id="cart-items-container"></div>
+        <div class="cart-footer">
+            <div class="d-flex justify-content-between font-weight-bold mb-3">
+                <span class="text-uppercase tracking-wide">Estimated Subtotal</span>
+                <span id="cart-subtotal-text" class="fw-bold text-dark">0 MMK</span>
+            </div>
+            <button class="btn btn-luxury w-100 py-3" onclick="proceedToCheckout()">Proceed To Checkout</button>
+        </div>
+    </div>
+
+    <main class="container my-4">
+
+        <div id="view-catalog" class="app-view active-view">
+            <div class="hero-banner" id="catalog-hero">
+                <h1 class="display-5 fw-normal" id="hero-title">Curated Curations</h1>
+                <p class="text-muted italic-text fs-6" id="hero-subtitle">Discover handcrafted excellence tailored premium for elegant fashion expressions.</p>
+            </div>
+            <div class="row" id="product-grid-target"></div>
+        </div>
+
+        <div id="view-checkout" class="app-view">
+            <h2 class="mb-4 text-center">Secure Checkout & Settlement</h2>
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <div class="card p-4 border-0 shadow-sm bg-white">
+                        <h4 class="mb-3 pb-2 border-bottom border-light">1. Shipping Logistics Configuration</h4>
+                        <form id="checkout-form" onsubmit="event.preventDefault();">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small">Customer Name</label>
+                                    <input type="text" id="ship-name" class="form-control" value="Emily Watson" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small">Contact Mobile Number</label>
+                                    <input type="tel" id="ship-phone" class="form-control" placeholder="09xxxxxxxxx" required>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label text-muted small">Complete Street Address Details</label>
+                                    <textarea id="ship-address" rows="3" class="form-control" placeholder="Building Number, Room, Street, Ward..." required></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small">State / Region</label>
+                                    <select id="ship-state" class="form-select" required>
+                                        <option value="Yangon" selected>Yangon Region</option>
+                                        <option value="Mandalay">Mandalay Region</option>
+                                        <option value="Naypyidaw">Naypyidaw Union Territory</option>
+                                        <option value="Shan">Shan State</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small">Township / City</label>
+                                    <input type="text" id="ship-city" class="form-control" placeholder="e.g. Bahan" required>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="card p-4 border-0 shadow-sm bg-white mb-4">
+                        <h4 class="mb-3 pb-2 border-bottom border-light">2. Order Overview</h4>
+                        <div id="checkout-summary-items"></div>
+                        <hr class="text-muted">
+                        <div class="d-flex justify-content-between align-items-center fs-5 fw-bold px-1">
+                            <span>Total Payable:</span>
+                            <span id="checkout-payable-text" class="text-dark">0 MMK</span>
+                        </div>
+                    </div>
+
+                    <div class="card p-4 border-0 shadow-sm bg-white">
+                        <h4 class="mb-3 pb-2 border-bottom border-light">3. Direct Digital Mobile Wallet</h4>
+                        <p class="text-muted small">Cash on Delivery (COD) is disabled for secure boutique handling. Please select your mobile provider:</p>
+                        
+                        <div class="d-flex gap-4 my-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="paymentProvider" id="pay-kpay" value="KBZ Pay" checked onchange="updatePaymentGateway()">
+                                <label class="form-check-input-label fw-medium" for="pay-kpay">
+                                    <i class="fa-solid fa-wallet text-primary me-1"></i> KBZ Pay
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="paymentProvider" id="pay-wave" value="Wave Money" onchange="updatePaymentGateway()">
+                                <label class="form-check-input-label fw-medium" for="pay-wave">
+                                    <i class="fa-solid fa-wallet text-danger me-1"></i> Wave Money
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="qr-card" id="wallet-gateway-node">
+                            <span class="badge bg-dark mb-2 text-uppercase" id="gateway-title-badge">KBZ Pay Gateway</span>
+                            <div class="qr-code-placeholder" id="gateway-qr-placeholder"></div>
+                            <p class="small text-muted m-0 mt-2" id="gateway-instruction-text">Please transfer the exact total payable sum above to account <strong>09-400392941 (The Boutique Boutique Co.)</strong>.</p>
+                        </div>
+
+                        <div class="mt-4">
+                            <label class="form-label small fw-medium text-dark"><i class="fa-solid fa-cloud-arrow-up me-1"></i> Upload Bank / Mobile Transfer Screenshot Slip</label>
+                            <input type="file" id="slip-file-input" class="form-control" accept="image/*" onchange="processSlipUpload(event)">
+                            <div id="slip-preview-box" class="mt-3 text-center d-none" style="border: 1px solid #E0E0E0; padding: 0.5rem; background:#FFF;">
+                                <span class="d-block small text-muted mb-1 text-uppercase">Screenshot Preview Attached</span>
+                                <img id="uploaded-slip-img" src="" alt="Transaction Slip Preview" style="max-height: 250px; max-width: 100%; object-fit: contain;">
+                            </div>
+                        </div>
+
+                        <button class="btn btn-luxury w-100 mt-4 py-3" onclick="submitFinalPaymentPurchaseOrder()">Submit Payment & Place Order</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-history" class="app-view">
+            <h2 class="mb-4">My Purchase History</h2>
+            <p class="text-muted">Track the status, items, verification parameters, and fulfillment state lines of your direct boutique placement files.</p>
+            <div id="purchase-history-ledger-container"></div>
+        </div>
+
+    </main>
+
+    <div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-0 border-0">
+                <div class="modal-body p-0">
+                    <div class="row g-0">
+                        <div class="col-md-6 bg-light text-center position-relative">
+                            <img id="modal-product-img" src="" alt="Selected Product Feature" class="img-fluid w-100 h-100" style="object-fit: cover; min-height: 400px;">
+                        </div>
+                        <div class="col-md-6 p-4 p-md-5 d-flex flex-column justify-content-center">
+                            <div class="w-100">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h3 class="modal-title mb-1" id="modal-product-title">Product Headline Title</h3>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <span class="d-block fs-5 text-muted mb-3" id="modal-product-price">0 MMK</span>
+                                <p class="text-muted small mb-4" id="modal-product-desc">Premium item descriptions curated uniquely from the boutique's central high fashion tailoring studio files.</p>
+                                
+                                <div class="mb-3">
+                                    <label class="d-block text-uppercase small text-muted mb-2 tracking-wide">Select Available Size:</label>
+                                    <div id="modal-size-matrix"></div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="d-block text-uppercase small text-muted mb-2 tracking-wide">Select Core Palette Color:</label>
+                                    <div id="modal-color-matrix" class="d-flex align-items-center"></div>
+                                </div>
+
+                                <button class="btn btn-luxury w-100 py-3 mt-2" onclick="executeAddToBagItem()">Add To Shopping Bag</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="successModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-center p-4 p-md-5 rounded-0 border-0">
+                <div class="modal-body">
+                    <i class="fa-regular fa-circle-check text-success display-3 mb-3"></i>
+                    <h3 class="mb-2 font-display">Order Confirmed!</h3>
+                    <p class="text-muted small mb-4">Your relational order structure and matching mobile wallet remittance transfer slip screenshot have been pushed securely to our store database ledger. Staff verification queues will validate and ship shortly.</p>
+                    <button class="btn btn-luxury" data-bs-dismiss="modal" onclick="switchView('history')">View Purchase Records</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white py-5 mt-5 border-top border-light">
+        <div class="container text-center">
+            <p class="brand-font fs-4 mb-2 tracking-widest">THE BOUTIQUE</p>
+            <p class="text-muted small">© 2026 The Boutique Premium Luxury Fashion Network. Engineered Relational Web System State Infrastructure.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // GLOBAL SYSTEM STATE REPLICATING CENTRAL STORAGE RELATION DATA MANAGEMENT TABLES
+        const databaseState = {
+            products: [],
+            cart: [],
+            purchaseHistory: [],
+            activeSelectedProduct: null,
+            activeSelectedSize: null,
+            activeSelectedColor: null,
+            attachedSlipDataUrl: null
+        };
+
+        // RUN ENGINE INITIALIZER SEED ON DOM SYSTEM CONTENT ATTACHED
+        document.addEventListener("DOMContentLoaded", () => {
+            initializeProductCatalogData();
+            initializePurchaseHistoryLedger();
+            renderProductGrid('home');
+            updatePaymentGateway();
+        });
+
+        // POPULATE ALL 3 COLLECTIONS EXACTLY 10 COMPREHENSIVE UNIQUE ROWS EACH (TOTAL 30 BOUTIQUE RECORDS)
+        function initializeProductCatalogData() {
+            // Collection A: New Arrivals (IDs 101-110)
+            const newArrivals = [
+                { id: 101, name: "Aura Floral Chiffon Maxi", price: 85000, collection: "new-arrivals", sizes: ["S","M","L"], colors: ["#D4A5A5","#E8B4B4","#FFFFFF"], img: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=500&auto=format&fit=crop&q=60", desc: "Breathable modern floral dress crafted from premier Italian silk-chiffon textile layers." },
+                { id: 102, name: "Seraphina Pastel Lace Blouse", price: 48000, collection: "new-arrivals", sizes: ["M","L","XL"], colors: ["#E8B4B4","#FDFBFB"], img: "https://images.unsplash.com/photo-1545291730-f1860d7b9a5f?w=500&auto=format&fit=crop&q=60", desc: "Exquisite handmade lace work accents along a delicate luxury feminine daytime silhouette." },
+                { id: 103, name: "Lumiere Organza Pleated Top", price: 55000, collection: "new-arrivals", sizes: ["S","M","L"], colors: ["#FFFFFF","#D4A5A5"], img: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&auto=format&fit=crop&q=60", desc: "Structured architectural pleated patterns utilizing premium translucent luxury organza textiles." },
+                { id: 104, name: "Verdant Blossom Summer Midi", price: 78000, collection: "new-arrivals", sizes: ["S","M"], colors: ["#2B2B2B","#D4A5A5"], img: "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=500&auto=format&fit=crop&q=60", desc: "An artistic pastel array perfect for premium high fashion outdoor garden gatherings." },
+                { id: 105, name: "Celeste Satin Ribbon Camisole", price: 39000, collection: "new-arrivals", sizes: ["S","M","L","XL"], colors: ["#FFFFFF","#E8B4B4"], img: "https://images.unsplash.com/photo-1609357605129-26f69add5d6e?w=500&auto=format&fit=crop&q=60", desc: "Luminous liquid satin undergarment tailored cleanly to coordinate with luxury layering blazers." },
+                { id: 106, name: "Elysian Embroidered Linen Set", price: 120000, collection: "new-arrivals", sizes: ["M","L"], colors: ["#FDFBFB","#D4A5A5"], img: "https://images.unsplash.com/photo-1605763240001-7e9c0b7ce435?w=500&auto=format&fit=crop&q=60", desc: "Premium heavy flax organic linen combined matching shorts and shirt lounge pairing." },
+                { id: 107, name: "Rosé Cotton Eyelet Sun Dress", price: 92000, collection: "new-arrivals", sizes: ["S","M","L"], colors: ["#E8B4B4","#FFFFFF"], img: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=500&auto=format&fit=crop&q=60", desc: "Detailed geometric eyelet openwork embroidery layered with complete luxurious cotton voile shielding." },
+                { id: 108, name: "Monochrome Tiered Cocktail Midi", price: 89000, collection: "new-arrivals", sizes: ["S","M","L","XL"], colors: ["#2B2B2B","#FFFFFF"], img: "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=500&auto=format&fit=crop&q=60", desc: "Cascading asynchronous tiered fabric presentation structured for absolute luxury styling events." },
+                { id: 109, name: "Whisper Knit Lightweight Cardigan", price: 42000, collection: "new-arrivals", sizes: ["M","L","XL"], colors: ["#D4A5A5","#FDFBFB"], img: "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=500&auto=format&fit=crop&q=60", desc: "Ultra soft luxury thread spinning optimized for gentle sun shielding and office room cooling." },
+                { id: 110, name: "Iris Asymmetric Silk Wrap Shirt", price: 67000, collection: "new-arrivals", sizes: ["S","M","L"], colors: ["#FFFFFF","#2B2B2B"], img: "https://images.unsplash.com/photo-1614023342667-6f060e9d1e04?w=500&auto=format&fit=crop&q=60", desc: "Sophisticated overlapping front profile architecture stitched out of dense premium high luster silk threads." }
+            ];
+
+            // Collection B: Best Sellers (IDs 201-210)
+            const bestSellers = [
+                { id: 201, name: "Royal Velvet Crimson Evening Gown", price: 240000, collection: "best-sellers", sizes: ["S","M","L"], colors: ["#2B2B2B","#D4A5A5"], img: "https://images.unsplash.com/photo-1518887570146-0612132dd618?w=500&auto=format&fit=crop&q=60", desc: "Heavy luxury grade premium silk velvet evening garment tailored for absolute royal status appearance." },
+                { id: 202, name: "Savile Tailored Wool Blazer", price: 165000, collection: "best-sellers", sizes: ["M","L","XL"], colors: ["#2B2B2B","#FDFBFB"], img: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=500&auto=format&fit=crop&q=60", desc: "Sharp modern high end business corporate jacket constructed using Italian fine gauge tailored wool." },
+                { id: 203, name: "Opulent Pleated Satin Skirt", price: 72000, collection: "best-sellers", sizes: ["S","M","L"], colors: ["#D4A5A5","#2B2B2B"], img: "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=500&auto=format&fit=crop&q=60", desc: "Sunburst sharp pleat structural lines featuring shimmering metallic satin light reflection mechanics." },
+                { id: 204, name: "Regent Minimalist Trench Coat", price: 195000, collection: "best-sellers", sizes: ["M","L","XL"], colors: ["#6C757D","#2B2B2B"], img: "https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=500&auto=format&fit=crop&q=60", desc: "Classic outer protective fashion armor layered perfectly in double breasted horn button configuration." },
+                { id: 205, name: "Empress Silk Slip Gown", price: 180000, collection: "best-sellers", sizes: ["S","M","L"], colors: ["#FFFFFF","#E8B4B4"], img: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=500&auto=format&fit=crop&q=60", desc: "Sensual minimal luxury backless drape layout cut on the true fabric bias for exquisite body form fits." },
+                { id: 206, name: "Ivory Wide-Leg Tailored Trousers", price: 88000, collection: "best-sellers", sizes: ["S","M","L"], colors: ["#FFFFFF","#FDFBFB"], img: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=500&auto=format&fit=crop&q=60", desc: "Structured front pressed high waist statement trousers bringing long silhouette aesthetics to form." },
+                { id: 207, name: "Athena Pleated Grecian Gown", price: 210000, collection: "best-sellers", sizes: ["M","L"], colors: ["#FFFFFF","#D4A5A5"], img: "https://images.unsplash.com/photo-1539008885128-443120099d88?w=500&auto=format&fit=crop&q=60", desc: "Draped asymmetric fluid micro-pleat processing building a dramatic flowing fashion narrative." },
+                { id: 208, name: "Merino Wool Knit Turtle Neck", price: 64000, collection: "best-sellers", sizes: ["S","M","L","XL"], colors: ["#2B2B2B","#6C757D"], img: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=500&auto=format&fit=crop&q=60", desc: "Fine luxury gauge authentic merino wool providing lightweight thermoregulation warmth matrices cleanly." },
+                { id: 209, name: "Classic Bouclé Tweed Jacket", price: 150000, collection: "best-sellers", sizes: ["S","M","L"], colors: ["#FFFFFF","#2B2B2B"], img: "https://images.unsplash.com/photo-1544441893-675973e31985?w=500&auto=format&fit=crop&q=60", desc: "Timeless Parisian elegance woven with intricate multi-textured premium cotton-blend wool threads." },
+                { id: 210, name: "Sovereign Silk Wrap Dress", price: 135000, collection: "best-sellers", sizes: ["S","M","L"], colors: ["#E8B4B4","#2B2B2B"], img: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=500&auto=format&fit=crop&q=60", desc: "Clean geometric wrap structure using heavyweight silk crepe fabrics ensuring smooth drape weight lines." }
+            ];
+
+            // Collection C: Traditional Silk (IDs 301-310)
+            const traditionalSilk = [
+                { id: 301, name: "Mandalay Heritage Acheik Pattern", price: 320000, collection: "traditional-silk", sizes: ["Custom","M","L"], colors: ["#E8B4B4","#D4A5A5"], img: "https://images.unsplash.com/photo-1583391533417-6466a93d56d5?w=500&auto=format&fit=crop&q=60", desc: "Masterfully hand-loomed legendary royal wave formations using pure 100% genuine multi-ply Myanmar silk threads." },
+                { id: 302, name: "Inle Lotus Filament Blend Ingyin", price: 280000, collection: "traditional-silk", sizes: ["S","M","L"], colors: ["#FDFBFB","#D4A5A5"], img: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=500&auto=format&fit=crop&q=60", desc: "Rare microscopic natural organic lotus fibers combined with silk strings for unprecedented cooling textures." },
+                { id: 303, name: "Golden Shwe Bo Brocade Tapestry", price: 450000, collection: "traditional-silk", sizes: ["M","L"], colors: ["#D4A5A5","#2B2B2B"], img: "https://images.unsplash.com/photo-1528952686551-542043782ab9?w=500&auto=format&fit=crop&q=60", desc: "Stunning authentic gold filament leaf geometric patterns woven painstakingly into dark silk bases." },
+                { id: 304, name: "Amarapura Dual Tone Silk Set", price: 260000, collection: "traditional-silk", sizes: ["S","M","L","XL"], colors: ["#E8B4B4","#FFFFFF"], img: "https://images.unsplash.com/photo-1605763240001-7e9c0b7ce435?w=500&auto=format&fit=crop&q=60", desc: "Luminous cross-weave warp technology reflecting vibrant complementary color accents under dynamic rays." },
+                { id: 305, name: "Imperial Hand-Painted Silk Organza", price: 380000, collection: "traditional-silk", sizes: ["M","L"], colors: ["#FFFFFF","#E8B4B4"], img: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=500&auto=format&fit=crop&q=60", desc: "Each item behaves as an isolated canvas painted by fine fashion artisans with gold leaf lacquers." },
+                { id: 306, name: "Classic Mon Silk Intricate Wrap", price: 195000, collection: "traditional-silk", sizes: ["S","M","L"], colors: ["#2B2B2B","#D4A5A5"], img: "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=500&auto=format&fit=crop&q=60", desc: "Geometric tribal border configurations utilizing ancient heritage stamping and stitching patterns." },
+                { id: 307, name: "Royal Sagaing Blossom Silk Cape", price: 290000, collection: "traditional-silk", sizes: ["S","M"], colors: ["#E8B4B4","#FDFBFB"], img: "https://images.unsplash.com/photo-1545291730-f1860d7b9a5f?w=500&auto=format&fit=crop&q=60", desc: "Flowing outerwear accessory structured to overlay formal traditional high fashion ensembles seamlessly." },
+                { id: 308, name: "Sandoway Raw Silk Structured Top", price: 175000, collection: "traditional-silk", sizes: ["M","L","XL"], colors: ["#6C757D","#FFFFFF"], img: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&auto=format&fit=crop&q=60", desc: "Thick textured genuine wild raw cocoons providing crisp structural lines and high fashion shape holding." },
+                { id: 309, name: "Prestige Kachin Diamond Jacquard", price: 340000, collection: "traditional-silk", sizes: ["S","M","L"], colors: ["#2B2B2B","#E8B4B4"], img: "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=500&auto=format&fit=crop&q=60", desc: "Stunning cross stitching and interlocking diamond patterns symbolizing premium traditional strength narratives." },
+                { id: 310, name: "Minimalist Silk Satin Kimono Blouse", price: 155000, collection: "traditional-silk", sizes: ["S","M","L","XL"], colors: ["#FFFFFF","#D4A5A5"], img: "https://images.unsplash.com/photo-1614023342667-6f060e9d1e04?w=500&auto=format&fit=crop&q=60", desc: "Ultra-high density liquid mirror silk sheen texture designed for global contemporary fusion wear styles." }
+            ];
+
+            // Merge securely into main running catalog relational tracking array
+            databaseState.products = [...newArrivals, ...bestSellers, ...traditionalSilk];
+        }
+
+        // SEED STATIC LOGISTIC LEDGER TRANSACTION ENTRY DATA REPLICATING FORMER SETTLEMENT FILES
+        function initializePurchaseHistoryLedger() {
+            databaseState.purchaseHistory = [
+                {
+                    orderId: "Boutique-9482-2026",
+                    date: "May 12, 2026",
+                    customer: "Emily Watson",
+                    phone: "09448392011",
+                    address: "No. 44, Inya Road, Kamayut Township",
+                    cityState: "Yangon Region",
+                    items: [
+                        { name: "Royal Velvet Crimson Evening Gown", price: 240000, size: "M", color: "#2B2B2B" }
+                    ],
+                    total: 240000,
+                    provider: "KBZ Pay",
+                    status: "Delivered & Verified"
+                },
+                {
+                    orderId: "Boutique-1049-2026",
+                    date: "June 02, 2026",
+                    customer: "Emily Watson",
+                    phone: "09448392011",
+                    address: "No. 44, Inya Road, Kamayut Township",
+                    cityState: "Yangon Region",
+                    items: [
+                        { name: "Aura Floral Chiffon Maxi", price: 85000, size: "S", color: "#D4A5A5" },
+                        { name: "Seraphina Pastel Lace Blouse", price: 48000, size: "M", color: "#FDFBFB" }
+                    ],
+                    total: 133000,
+                    provider: "Wave Money",
+                    status: "Processing Audit Verification"
+                }
+            ];
+        }
+
+        // VIEW CONTROLLER SWAPPER MECHANICS
+        function switchView(targetViewId) {
+            // Remove active tags from links
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            
+            // Handle logical routing parameters
+            const catalogViewNode = document.getElementById('view-catalog');
+            const checkoutViewNode = document.getElementById('view-checkout');
+            const historyViewNode = document.getElementById('view-history');
+
+            catalogViewNode.classList.remove('active-view');
+            checkoutViewNode.classList.remove('active-view');
+            historyViewNode.classList.remove('active-view');
+
+            if (targetViewId === 'home') {
+                document.getElementById('link-home').classList.add('active');
+                catalogViewNode.classList.add('active-view');
+                setupHeroBanner("Curated Curations", "Discover handcrafted excellence tailored premium for elegant fashion expressions.");
+                renderProductGrid('home');
+            } else if (targetViewId === 'new-arrivals') {
+                document.getElementById('link-new').classList.add('active');
+                catalogViewNode.classList.add('active-view');
+                setupHeroBanner("The Haute New Arrivals", "Fresh styling textures launched straight from our creative production atelier rooms this week.");
+                renderProductGrid('new-arrivals');
+            } else if (targetViewId === 'best-sellers') {
+                document.getElementById('link-best').classList.add('active');
+                catalogViewNode.classList.add('active-view');
+                setupHeroBanner("High-Demand Best Sellers", "The most coveted premium silhouette investments celebrated globally across contemporary networks.");
+                renderProductGrid('best-sellers');
+            } else if (targetViewId === 'traditional-silk') {
+                document.getElementById('link-silk').classList.add('active');
+                catalogViewNode.classList.add('active-view');
+                setupHeroBanner("Heritage Traditional Silk", "Preserving timeless ancient looping craftsmanship woven perfectly using pure handloomed filaments.");
+            } else if (targetViewId === 'history') {
+                document.getElementById('link-history').classList.add('active');
+                historyViewNode.classList.add('active-view');
+                renderPurchaseHistoryLedger();
+            }
+            
+            window.scrollTo(0,0);
+        }
+
+        function setupHeroBanner(title, subtitle) {
+            document.getElementById('hero-title').innerText = title;
+            document.getElementById('hero-subtitle').innerText = subtitle;
+        }
+
+        // CATALOG RENDERING SYSTEM MECHANICS
+        function renderProductGrid(filterType) {
+            const gridContainer = document.getElementById('product-grid-target');
+            gridContainer.innerHTML = "";
+
+            let targetedItems = databaseState.products;
+            if (filterType !== 'home') {
+                targetedItems = databaseState.products.filter(p => p.collection === filterType);
+            }
+
+            targetedItems.forEach(product => {
+                const colCard = document.createElement('div');
+                colCard.className = "col-sm-6 col-md-4 col-lg-3";
+                colCard.innerHTML = `
+                    <div class="product-card">
+                        <div class="product-img-container">
+                            <span class="product-badge">${product.collection.replace('-', ' ')}</span>
+                            <img src="${product.img}" alt="${product.name}" loading="lazy">
+                            <button class="quick-view-btn" onclick="openProductQuickView(${product.id})"><i class="fa-solid fa-magnifying-glass me-1"></i> Quick View</button>
+                        </div>
+                        <div class="px-2 pb-2">
+                            <h3 class="product-title text-truncate" title="${product.name}">${product.name}</h3>
+                            <div class="product-price">${product.price.toLocaleString()} MMK</div>
+                        </div>
+                    </div>
+                `;
+                gridContainer.appendChild(colCard);
+            });
+        }
+
+        // MODAL VARIANT SELECTION MANAGEMENT CONTROL LINES
+        function openProductQuickView(productId) {
+            const targetProd = databaseState.products.find(p => p.id === productId);
+            if (!targetProd) return;
+
+            databaseState.activeSelectedProduct = targetProd;
+            databaseState.activeSelectedSize = targetProd.sizes[0];
+            databaseState.activeSelectedColor = targetProd.colors[0];
+
+            document.getElementById('modal-product-img').src = targetProd.img;
+            document.getElementById('modal-product-title').innerText = targetProd.name;
+            document.getElementById('modal-product-price').innerText = `${targetProd.price.toLocaleString()} MMK`;
+            document.getElementById('modal-product-desc').innerText = targetProd.desc;
+
+            // Render Size Selectors Matrix
+            const sizeMatrixNode = document.getElementById('modal-size-matrix');
+            sizeMatrixNode.innerHTML = "";
+            targetProd.sizes.forEach(size => {
+                const btn = document.createElement('button');
+                btn.className = `attr-btn ${size === databaseState.activeSelectedSize ? 'selected' : ''}`;
+                btn.innerText = size;
+                btn.onclick = () => {
+                    document.querySelectorAll('#modal-size-matrix .attr-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    databaseState.activeSelectedSize = size;
+                };
+                sizeMatrixNode.appendChild(btn);
+            });
+
+            // Render Color Selectors Matrix
+            const colorMatrixNode = document.getElementById('modal-color-matrix');
+            colorMatrixNode.innerHTML = "";
+            targetProd.colors.forEach(color => {
+                const dot = document.createElement('span');
+                dot.className = `color-dot ${color === databaseState.activeSelectedColor ? 'selected' : ''}`;
+                dot.style.backgroundColor = color;
+                dot.title = color;
+                dot.onclick = () => {
+                    document.querySelectorAll('#modal-color-matrix .color-dot').forEach(d => d.classList.remove('selected'));
+                    dot.classList.add('selected');
+                    databaseState.activeSelectedColor = color;
+                };
+                colorMatrixNode.appendChild(dot);
+            });
+
+            const bootstrapModalInstance = new bootstrap.Modal(document.getElementById('productModal'));
+            bootstrapModalInstance.show();
+        }
+
+        // SHOPPING BAG CORE OPERATIONS
+        function toggleCart(shouldOpen) {
+            const drawer = document.getElementById('cart-drawer');
+            const overlay = document.getElementById('cart-overlay');
+            if (shouldOpen) {
+                drawer.classList.add('open');
+                overlay.classList.add('show');
+                renderCartDrawerItems();
+            } else {
+                drawer.classList.remove('open');
+                overlay.classList.remove('show');
+            }
+        }
+
+        function executeAddToBagItem() {
+            const state = databaseState;
+            if (!state.activeSelectedProduct) return;
+
+            // Generate unique primary key combination identifier hash strings
+            const variantHash = `${state.activeSelectedProduct.id}-${state.activeSelectedSize}-${state.activeSelectedColor}`;
+            
+            const existingItem = state.cart.find(item => item.variantKey === variantHash);
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                state.cart.push({
+                    variantKey: variantHash,
+                    id: state.activeSelectedProduct.id,
+                    name: state.activeSelectedProduct.name,
+                    price: state.activeSelectedProduct.price,
+                    size: state.activeSelectedSize,
+                    color: state.activeSelectedColor,
+                    img: state.activeSelectedProduct.img,
+                    quantity: 1
+                });
+            }
+
+            // Sync visual UI elements
+            updateCartCounterBadges();
+            
+            // Close product modal cleanly via Bootstrap programmatic interface APIs
+            const modalElement = document.getElementById('productModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalElement);
+            if (modalInstance) modalInstance.hide();
+
+            // Re-open cart drawer for elegant user conversion confirmation lines
+            setTimeout(() => { toggleCart(true); }, 400);
+        }
+
+        function removeCartItem(variantKey) {
+            databaseState.cart = databaseState.cart.filter(item => item.variantKey !== variantKey);
+            updateCartCounterBadges();
+            renderCartDrawerItems();
+        }
+
+        function updateCartCounterBadges() {
+            const totalQuantity = databaseState.cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cart-counter-badge').innerText = totalQuantity;
+        }
+
+        function renderCartDrawerItems() {
+            const container = document.getElementById('cart-items-container');
+            container.innerHTML = "";
+
+            if (databaseState.cart.length === 0) {
+                container.innerHTML = `<div class="text-center py-5 text-muted"><i class="fa-solid fa-basket-shopping display-6 mb-3 d-block"></i>Your luxury bag feels empty.</div>`;
+                document.getElementById('cart-subtotal-text').innerText = "0 MMK";
+                return;
+            }
+
+            let subtotal = 0;
+            databaseState.cart.forEach(item => {
+                const totalItemCost = item.price * item.quantity;
+                subtotal += totalItemCost;
+
+                const row = document.createElement('div');
+                row.className = "cart-item";
+                row.innerHTML = `
+                    <img src="${item.img}" alt="${item.name}" class="cart-item-img">
+                    <div class="flex-grow-1 position-relative">
+                        <h5 class="small fw-bold m-0 text-truncate architecture-title" style="max-width:200px;">${item.name}</h5>
+                        <div class="text-muted extra-small small my-1">Variant: <span class="badge bg-light text-dark">${item.size}</span> <span class="d-inline-block rounded-circle" style="width:10px; height:10px; background-color:${item.color};"></span></div>
+                        <div class="small text-dark fw-medium">${item.quantity} x ${item.price.toLocaleString()} MMK</div>
+                        <button class="btn btn-sm position-absolute top-0 end-0 text-danger" onclick="removeCartItem('${item.variantKey}')"><i class="fa-regular fa-trash-can"></i></button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+
+            document.getElementById('cart-subtotal-text').innerText = `${subtotal.toLocaleString()} MMK`;
+        }
+
+        // CHECKOUT LOGISTICS PIPELINE MANAGEMENT
+        function proceedToCheckout() {
+            if (databaseState.cart.length === 0) {
+                alert("Your checkout deployment matrix is unauthorized because the current Shopping Bag contains zero rows.");
+                return;
+            }
+            toggleCart(false);
+            
+            // Switch view state lines
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            document.getElementById('view-catalog').classList.remove('active-view');
+            document.getElementById('view-history').classList.remove('active-view');
+            document.getElementById('view-checkout').classList.add('active-view');
+
+            // Render Dynamic Settlement Overview Data structures
+            const summaryContainer = document.getElementById('checkout-summary-items');
+            summaryContainer.innerHTML = "";
+            
+            let finalPayableSum = 0;
+            databaseState.cart.forEach(item => {
+                finalPayableSum += (item.price * item.quantity);
+                const itemRow = document.createElement('div');
+                itemRow.className = "d-flex justify-content-between align-items-center small mb-2 text-muted";
+                itemRow.innerHTML = `
+                    <span>${item.name} <strong class="text-dark">(${item.quantity})</strong> <span class="small">[Size: ${item.size}]</span></span>
+                    <span class="fw-medium text-dark">${(item.price * item.quantity).toLocaleString()} MMK</span>
+                `;
+                summaryContainer.appendChild(itemRow);
+            });
+
+            document.getElementById('checkout-payable-text').innerText = `${finalPayableSum.toLocaleString()} MMK`;
+        }
+
+        function updatePaymentGateway() {
+            const isKpaySelected = document.getElementById('pay-kpay').checked;
+            const badge = document.getElementById('gateway-title-badge');
+            const qrBox = document.getElementById('gateway-qr-placeholder');
+            const textInstruction = document.getElementById('gateway-instruction-text');
+
+            if (isKpaySelected) {
+                badge.className = "badge bg-primary mb-2 text-uppercase";
+                badge.innerText = "KBZ Pay Luxury System Gateway";
+                qrBox.style.background = "linear-gradient(45deg, #0056B3, #002D62)";
+                qrBox.innerHTML = `<span class="text-white text-center small p-2"><i class="fa-solid fa-qrcode fs-1 d-block mb-1"></i>KBZ-PAY QR</span>`;
+                textInstruction.innerHTML = `Please transfer the exact total payable sum above to account <strong>09-400392941 (The Boutique Co.)</strong> or scan the automated standard KBZ payment routing layer code block above.`;
+            } else {
+                badge.className = "badge bg-danger mb-2 text-uppercase";
+                badge.innerText = "Wave Money Remittance Gateway";
+                qrBox.style.background = "linear-gradient(45deg, #DC3545, #8B0000)";
+                qrBox.innerHTML = `<span class="text-white text-center small p-2"><i class="fa-solid fa-qrcode fs-1 d-block mb-1"></i>WAVE-QR GATE</span>`;
+                textInstruction.innerHTML = `Please wire standard transfer funds exactly corresponding with calculation layers to account <strong>09-765039201 (MGR - Boutique Retail Group)</strong>.`;
+            }
+        }
+
+        // SYSTEM DATA URL IMAGE UPLOAD ATTACHMENT STRINGS MAPPING CAPABILITIES
+        function processSlipUpload(event) {
+            const inputNode = event.target;
+            if (inputNode.files && inputNode.files[0]) {
+                const fileReaderEngine = new FileReader();
+                fileReaderEngine.onload = function(e) {
+                    databaseState.attachedSlipDataUrl = e.target.result;
+                    document.getElementById('uploaded-slip-img').src = e.target.result;
+                    document.getElementById('slip-preview-box').classList.remove('d-none');
+                };
+                fileReaderEngine.readAsDataURL(inputNode.files[0]);
+            }
+        }
+
+        // SUBMIT AND COMPREHENSIVELY REPLICATE THE PUSH OF RECORDS INTO HISTORICAL CENTRAL SYSTEM LEDGERS
+        function submitFinalPaymentPurchaseOrder() {
+            const nameInput = document.getElementById('ship-name').value.trim();
+            const phoneInput = document.getElementById('ship-phone').value.trim();
+            const addressInput = document.getElementById('ship-address').value.trim();
+            const stateInput = document.getElementById('ship-state').value;
+            const cityInput = document.getElementById('ship-city').value.trim();
+            const activeProvider = document.querySelector('input[name="paymentProvider"]:checked').value;
+
+            // Enforce basic front-end constraints validation maps
+            if (!nameInput || !phoneInput || !addressInput || !cityInput) {
+                alert("Logistics constraint verification failed. Please complete all missing elements within section 1.");
+                return;
+            }
+
+            if (!databaseState.attachedSlipDataUrl) {
+                alert("Security transaction denial. High fashion handling guidelines mandate attaching a valid mobile wallet system transfer receipt screenshot to bypass fraud firewalls.");
+                return;
+            }
+
+            // Calculation mapping arrays transformations
+            const currentSubtotalCost = databaseState.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const randomizedTrackingId = `Boutique-${Math.floor(1000 + Math.random() * 9000)}-2026`;
+            
+            const compiledOrderRecordFile = {
+                orderId: randomizedTrackingId,
+                date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+                customer: nameInput,
+                phone: phoneInput,
+                address: addressInput,
+                cityState: `${cityInput}, ${stateInput} State/Region`,
+                items: databaseState.cart.map(i => ({ name: i.name, price: i.price, size: i.size, color: i.color, quantity: i.quantity })),
+                total: currentSubtotalCost,
+                provider: activeProvider,
+                slipAttached: databaseState.attachedSlipDataUrl,
+                status: "Pending Administrative Authentication Audit"
+            };
+
+            // Atomically prepend generated structures straight inside relational ledger simulators
+            databaseState.purchaseHistory.unshift(compiledOrderRecordFile);
+
+            // Clean running states safely to prevent cross transaction contamination
+            databaseState.cart = [];
+            databaseState.attachedSlipDataUrl = null;
+            updateCartCounterBadges();
+            
+            // Flush inputs interface nodes cleanly
+            document.getElementById('checkout-form').reset();
+            document.getElementById('slip-file-input').value = "";
+            document.getElementById('slip-preview-box').classList.add('d-none');
+
+            // Trigger programmatic bootstrap completion popup notifications
+            const outputModalNode = new bootstrap.Modal(document.getElementById('successModal'));
+            outputModalNode.show();
+        }
+
+        // PURCHASE RECORDS RENDER OPERATIONS
+        function renderPurchaseHistoryLedger() {
+            const container = document.getElementById('purchase-history-ledger-container');
+            container.innerHTML = "";
+
+            if (databaseState.purchaseHistory.length === 0) {
+                container.innerHTML = `<p class="text-muted">No registered relational transactions detected across local operational file structures.</p>`;
+                return;
+            }
+
+            databaseState.purchaseHistory.forEach(record => {
+                const card = document.createElement('div');
+                card.className = "card history-card border-0 rounded-0 shadow-sm overflow-hidden";
+                
+                let dynamicItemsLinesMarkup = "";
+                record.items.forEach(i => {
+                    dynamicItemsLinesMarkup += `
+                        <div class="d-flex justify-content-between align-items-center small border-bottom border-light pb-2 mb-2">
+                            <div>
+                                <span class="fw-medium text-dark">${i.name}</span>
+                                <div class="extra-small text-muted">Configuration: Variant Size [${i.size}] / Palette Hex [${i.color}]</div>
+                            </div>
+                            <span class="text-dark fw-medium">${(i.price * (i.quantity || 1)).toLocaleString()} MMK</span>
+                        </div>
+                    `;
+                });
+
+                let screenshotSectionMarkup = record.slipAttached ? `
+                    <div class="mt-2 text-start">
+                        <span class="d-block extra-small text-muted text-uppercase fw-bold mb-1">Cryptographic Vault Remittance Document Attached:</span>
+                        <img src="${record.slipAttached}" alt="Remittance Token Map" style="max-height: 90px; border: 1px solid #E0E0E0;" class="img-thumbnail">
+                    </div>
+                ` : `
+                    <div class="mt-2 text-start text-muted extra-small italic"><i class="fa-solid fa-box-archive me-1"></i> Legacy migration structural documentation bypass template record.</div>
+                `;
+
+                card.innerHTML = `
+                    <div class="history-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <div>
+                            <span class="badge bg-secondary text-uppercase tracking-wider font-monospace" style="font-size:0.75rem;">ID: ${record.orderId}</span>
+                            <span class="ms-2 small text-muted font-monospace">${record.date}</span>
+                        </div>
+                        <div>
+                            <span class="badge ${record.status.includes('Delivered') ? 'bg-success' : 'bg-warning text-dark'} text-uppercase fs-7">${record.status}</span>
+                        </div>
+                    </div>
+                    <div class="p-3">
+                        <div class="row g-3">
+                            <div class="col-md-6 border-end border-light">
+                                <h5 class="small text-uppercase tracking-widest text-muted mb-2 fw-bold">Settlement Components Grid</h5>
+                                ${dynamicItemsLinesMarkup}
+                                <div class="d-flex justify-content-between align-items-center fw-bold fs-6 mt-2 pt-2 text-dark text-uppercase">
+                                    <span>Audited Total Paid:</span>
+                                    <span>${record.total.toLocaleString()} MMK</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 d-flex flex-column justify-content-between">
+                                <div class="small text-muted">
+                                    <h5 class="small text-uppercase tracking-widest text-muted mb-2 fw-bold">Logistics Meta Parameters</h5>
+                                    <div><strong>Consignee:</strong> ${record.customer}</div>
+                                    <div><strong>Phone Matrix:</strong> ${record.phone}</div>
+                                    <div class="text-truncate" style="max-width:320px;"><strong>Destination Routing Line:</strong> ${record.address}, ${record.cityState}</div>
+                                    <div><strong>Provider Layer:</strong> <span class="badge bg-dark text-white">${record.provider}</span></div>
+                                </div>
+                                ${screenshotSectionMarkup}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>
