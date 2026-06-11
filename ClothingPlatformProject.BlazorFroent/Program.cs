@@ -1,6 +1,7 @@
 using ClothingPlatform.DB.AppDbModels;
 using ClothingPlatformProject.BlazorFroent.Components;
 using ClothingPlatformProject.BlazorFroent.Components.Pages;
+using ClothingPlatformProject.BlazorFroent.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,7 +18,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseSqlServer(connectionString);
 });
-
+builder.Services.AddHttpClient("admin", client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7065/api/");
+});
+builder.Services.AddScoped<HttpClientServices>();
 
 var app = builder.Build();
 
