@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ClothingPlatformProject.Features.Product
 {
     [Route("api/[controller]")]
+    
     [ApiController]
     public class ProductController : ControllerBase
     {
@@ -27,12 +28,14 @@ namespace ClothingPlatformProject.Features.Product
             if (result == null) return NotFound();
             return Ok(result);
         }
-
+        
         [HttpPost]
-        public IActionResult CreateProduct(ProductCreateRequest model)
+        public IActionResult CreateProduct([FromBody]ProductModel product)
         {
-            _productService.CreateProduct(model);
-            return Ok("Create Success");
+
+            _productService.CreateProduct(product);
+            
+            return Ok(product);
         }
 
         [HttpPut("{id}")]

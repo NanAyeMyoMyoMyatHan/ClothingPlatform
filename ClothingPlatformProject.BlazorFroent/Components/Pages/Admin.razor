@@ -530,7 +530,7 @@
             </div>
         }
 
-        <!-- ═══════════════ VIEW: PRODUCTS ═══════════════ -->
+        
         else if (activeView == "products")
         {
             <div class="crud-grid">
@@ -541,22 +541,23 @@
                     
                     <div class="mb-3">
                         <label class="form-label text-muted small uppercase fw-bold">Product Name</label>
-                        <input type="text" class="luxury-input" @bind="newProductName" placeholder="e.g., Silk Slip Dress" />
+                        <input type="text" class="luxury-input" @bind-value="model.Name" placeholder="e.g., Silk Slip Dress" />
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label text-muted small uppercase fw-bold">Description</label>
-                        <textarea class="luxury-input" @bind="newProductDesc" rows="3" placeholder="Describe this luxury garment..."></textarea>
+                        <textarea class="luxury-input" @bind="model.Description" rows="3" placeholder="Describe this luxury garment..."></textarea>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label text-muted small uppercase fw-bold">Base Price (MMK)</label>
-                        <input type="number" class="luxury-input" @bind="newProductBasePrice" placeholder="e.g., 75000" />
+                        <input type="number" class="luxury-input" @bind-value="model.BasePrice" placeholder="e.g., 75000" />
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label text-muted small uppercase fw-bold">Category</label>
-                        <select class="luxury-select" @bind="newProductCategoryId">
+                        <select class="luxury-select" @bind:get="newProductCategoryId" @bind:set="(int val) => OnCategoryChanged(val)">
+                            >
                             @foreach (var cat in allCategories)
                             {
                                 <option value="@cat.CategoryId">@cat.Name</option>
@@ -620,7 +621,7 @@
                             {
                                 @foreach (var prod in allProducts)
                                 {
-                                    var primaryImg = prod.ProductImages.FirstOrDefault(i => (bool)i.IsPrimary)?.ImageUrl ?? "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80";
+                                    var primaryImg = prod.ProductImages?.FirstOrDefault(i => (bool)i.IsPrimary)?.ImageUrl ?? "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80";
                                     <tr>
                                         <td>
                                             <img src="@primaryImg" style="width: 48px; height: 60px; object-fit: cover; border-radius: 4px;" alt="Product Thumb" />
@@ -629,7 +630,7 @@
                                             <strong>@prod.Name</strong>
                                             <p class="text-muted small m-0 text-truncate" style="max-width: 200px;">@prod.Description</p>
                                         </td>
-                                        <td>@prod.Category.Name</td>
+                                        <td>@(prod.Category?.Name ?? "No Category")</td>
                                         <td>@prod.BasePrice.ToString("N0") MMK</td>
                                         <td>
                                             <span class="badge bg-secondary">@prod.ProductVariants.Count variants</span>
@@ -647,7 +648,7 @@
             </div>
         }
 
-        <!-- ═══════════════ VIEW: ORDERS ═══════════════ -->
+       
        
             else if (activeView == "orders")
         {
@@ -731,7 +732,7 @@
             </div>
         }
 
-        <!-- ═══════════════ VIEW: CUSTOMERS ═══════════════ -->
+       
         else if (activeView == "customers")
         {
             <div class="table-responsive-wrapper">
@@ -772,7 +773,7 @@
             </div>
         }
 
-        <!-- ═══════════════ VIEW: REPORTS ═══════════════ -->
+       
         else if (activeView == "reports")
         {
             <div class="row g-4 mb-4">

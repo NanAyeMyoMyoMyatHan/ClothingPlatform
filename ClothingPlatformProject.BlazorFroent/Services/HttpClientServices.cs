@@ -10,7 +10,7 @@ namespace ClothingPlatformProject.BlazorFroent.Services
         {
             _httpClientFactory = httpClientFactory;
         }
-        public async Task<T> ExecuteAsync<T>(string url, object? obj = null, EnumHttpMethod method = EnumHttpMethod.Get)
+        public async Task<T?> ExecuteAsync<T>(string url, object? obj = null, EnumHttpMethod method = EnumHttpMethod.Get)
         {
             HttpResponseMessage? response = null;
             HttpContent? content = null;
@@ -46,11 +46,14 @@ namespace ClothingPlatformProject.BlazorFroent.Services
                 var jsonString = await response.Content.ReadAsStringAsync();
                 return JsonConvert.DeserializeObject<T>(jsonString)!;
             }
+            // API ဘက်က တက်လာတဲ့ Error Message အစစ်ကို ဆွဲထုတ်ပြခြင်း
+            var errorContent = await response.Content.ReadAsStringAsync();
             throw new Exception($"PLM Http request failed with status code: {response.StatusCode}");
         }
 
 
     }
+    
     public enum EnumHttpMethod
     {
         None,

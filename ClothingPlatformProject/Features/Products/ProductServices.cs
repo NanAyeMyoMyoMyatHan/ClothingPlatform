@@ -1,5 +1,5 @@
 ﻿using ClothingPlatform.DB.AppDbModels;
-using ClothingPlatformProject.Models.Product;
+//using ClothingPlatformProject.Models.Product;
 using Microsoft.EntityFrameworkCore;
 
 namespace ClothingPlatformProject.Features.Product
@@ -51,17 +51,22 @@ namespace ClothingPlatformProject.Features.Product
             };
         }
 
-        public void CreateProduct(ProductCreateRequest model)
+        public async Task CreateProduct(ProductModel model)
         {
             var product = new ClothingPlatform.DB.AppDbModels.Product
             {
                 Name = model.Name,
                 Description = model.Description,
                 CategoryId = model.CategoryId,
-                BasePrice = model.BasePrice
+                BasePrice = model.BasePrice,
+                IsFeatured = true,
+                CreatedAt = DateTime.UtcNow
+                
             };
             _db.Products.Add(product);
-            _db.SaveChanges();
+            
+             await _db.SaveChangesAsync();
+            
         }
 
         public void UpdateProduct(int id, ProductUpdateRequest model)
@@ -85,5 +90,12 @@ namespace ClothingPlatformProject.Features.Product
             _db.Products.Remove(item);
             _db.SaveChanges();
         }
+        //public void CreateProductImage (ProductImagesDto image)
+        //{
+        //    var img = new ProductImage
+        //    {
+        //        ImageUrl = image.image
+        //    };
+        //}
     }
 }

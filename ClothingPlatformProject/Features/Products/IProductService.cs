@@ -6,8 +6,9 @@ namespace ClothingPlatformProject.Features.Product
     {
         List<ProductModel> GetAllProducts();
         ProductDto? GetProductById(int id);
-        void CreateProduct(ProductCreateRequest model);
+        Task CreateProduct(ProductModel model);
         void UpdateProduct(int id, ProductUpdateRequest model);
         void DeleteProduct(int id);
+        //void CreateProductImage(ProductImage image);
     }
 }

@@ -20,6 +20,8 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         [Inject]
         public SessionState Session { get; set; }
 
+       
+
         // State variables
         private string activeView = "dashboard";
         private string errorMessage = "";
@@ -32,7 +34,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private List<Category> allCategories = new();
         private List<User> customers = new();
         private List<StaffActivityLog> activityLogs = new();
-
+        private ProductModel model = new();
         // Dashboard Stats
         private decimal TotalRevenue;
         private int TotalOrders;
@@ -65,6 +67,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             // Access control
             if (!Session.IsLoggedIn || Session.CurrentUser?.Role != "admin")
             {
+                var user = HttpClientServices.ExecuteAsync<List<User>>("admin", EnumHttpMethod.Get);
                 // If not logged in as admin, try to login automatically as default admin for convenience
                 var defaultAdmin = _db.Users.FirstOrDefault(u => u.Role == "admin");
                 if (defaultAdmin != null)
@@ -232,18 +235,21 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
             try
             {
+                
                 var product = new Product
                 {
-                    Name = newProductName.Trim(),
-                    Description = newProductDesc.Trim(),
-                    BasePrice = newProductBasePrice,
+                    Name = model.Name.Trim(),
+                    Description = model.Description.Trim(),
+                    BasePrice = model.BasePrice,
                     CategoryId = newProductCategoryId,
                     IsFeatured = true,
                     CreatedAt = DateTime.Now
                 };
+                var result = await HttpClientServices.ExecuteAsync <ProductModel>(
+                    "api/product",model,
+                     EnumHttpMethod.Post);
 
-                _db.Products.Add(product);
-                await _db.SaveChangesAsync(); // to generate ProductId
+                 
 
                 // Add image if provided
                 if (!string.IsNullOrWhiteSpace(newProductImgUrl))
@@ -308,7 +314,20 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                 errorMessage = "Error creating product: " + ex.Message;
             }
         }
+        
 
+        // Dropdown ကနေ တစ်ခုခုရွေးလိုက်ရင် ဒီကောင် အလုပ်လုပ်ပါမယ်
+        private void OnCategoryChanged(int selectedId)
+        {
+            newProductCategoryId = selectedId; // ရွေးလိုက်တဲ့ ID (int) ကို ထည့်လိုက်ခြင်း
+
+            // တကယ်လို့ သင့်မှာ ပြင်ဆင်နေတဲ့ Product Object (ဥပမာ- editingProduct) ရှိရင်
+            if (editingProduct != null)
+            {
+                editingProduct.CategoryId = selectedId; // Model ထဲကိုပါ တစ်ခါတည်း ထည့်ပေးလိုက်ပါ
+                editingProduct.Category = allCategories.FirstOrDefault(c => c.CategoryId == selectedId);
+            }
+        }
         private void EditProduct(Product prod)
         {
             editingProduct = prod;
@@ -328,6 +347,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
             try
             {
+
                 var dbProd = await _db.Products.FirstOrDefaultAsync(p => p.ProductId == editingProduct.ProductId);
                 if (dbProd != null)
                 {
@@ -335,7 +355,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                     dbProd.Description = newProductDesc.Trim();
                     dbProd.BasePrice = newProductBasePrice;
                     dbProd.CategoryId = newProductCategoryId;
-
+                    _db.Products.Update(dbProd);
                     // Update Image
                     var primaryImg = await _db.ProductImages.FirstOrDefaultAsync(i => i.ProductId == dbProd.ProductId && (bool)i.IsPrimary);
                     if (primaryImg != null)
@@ -353,15 +373,15 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                     }
 
                     // Log activity
-                    _db.StaffActivityLogs.Add(new StaffActivityLog
-                    {
-                        StaffId = Session.CurrentUser!.UserId,
-                        TargetTable = "products",
-                        TargetId = dbProd.ProductId,
-                        ActionType = "update",
-                        Description = $"Updated product info for: '{dbProd.Name}'."
-                    });
-
+                    //_db.StaffActivityLogs.Add(new StaffActivityLog
+                    //{
+                    //    StaffId = Session.CurrentUser!.UserId,
+                    //    TargetTable = "products",
+                    //    TargetId = dbProd.ProductId,
+                    //    ActionType = "update",
+                    //    Description = $"Updated product info for: '{dbProd.Name}'."
+                    //});
+                    
                     await _db.SaveChangesAsync();
                     successMessage = $"Product '{dbProd.Name}' updated successfully.";
                     ResetProductForm();
@@ -385,20 +405,23 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
                 if (product != null)
                 {
+                    var variantIds = product.ProductVariants.Select(v => v.VariantId).ToList();
+                    var relatedOrderItems = _db.OrderItems.Where(oi => variantIds.Contains(oi.VariantId));
+                    _db.OrderItems.RemoveRange(relatedOrderItems);
                     // Remove primary records
                     _db.ProductImages.RemoveRange(product.ProductImages);
                     _db.ProductVariants.RemoveRange(product.ProductVariants);
                     _db.Products.Remove(product);
 
                     // Log activity
-                    _db.StaffActivityLogs.Add(new StaffActivityLog
-                    {
-                        StaffId = Session.CurrentUser!.UserId,
-                        TargetTable = "products",
-                        TargetId = productId,
-                        ActionType = "delete",
-                        Description = $"Deleted product ID: {productId}."
-                    });
+                    //_db.StaffActivityLogs.Add(new StaffActivityLog
+                    //{
+                    //    StaffId = Session.CurrentUser!.UserId,
+                    //    TargetTable = "products",
+                    //    TargetId = productId,
+                    //    ActionType = "delete",
+                    //    Description = $"Deleted product ID: {productId}."
+                    //});
 
                     await _db.SaveChangesAsync();
                     successMessage = "Product deleted successfully.";

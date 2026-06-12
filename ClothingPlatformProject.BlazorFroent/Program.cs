@@ -20,7 +20,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 builder.Services.AddHttpClient("admin", client =>
 {
-    client.BaseAddress = new Uri("https://localhost:7065/api/");
+    client.BaseAddress = new Uri("https://localhost:7065/");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 builder.Services.AddScoped<HttpClientServices>();
 
