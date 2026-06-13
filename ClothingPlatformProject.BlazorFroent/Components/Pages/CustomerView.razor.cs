@@ -1,11 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using ClothingPlatform.DB.AppDbModels;
 using ClothingPlatformProject.BlazorFroent.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.JSInterop;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 {
@@ -38,7 +39,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private string selectedColor = "";
         private string modalErrorMessage = "";
         private bool isModalOpen = false;
-
+        private bool isLoggedIn = false;
         // Shopping Bag drawer
         private bool isCartOpen = false;
         private List<CartItemModel> cart = new();
@@ -61,7 +62,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private string profFirstName = "";
         private string profLastName = "";
         private string profEmail = "";
-        private string profPhone = "09443322110";
+        private string profPhone = "";
         private string profAddress = "";
         private string profCity = "Yangon";
         private int loyaltyPoints = 0;
@@ -79,7 +80,16 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         {
             // Seed sample products/categories if empty
             DbSeeder.Seed(_db);
-
+            var authState = await AuthenStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            if(user.Identity !=null && user.Identity.IsAuthenticated)
+            {
+                isLoggedIn = true;
+            }
+            else
+            {
+                isLoggedIn = false;
+            }
             // Authentication check
             if (!Session.IsLoggedIn)
             {
@@ -229,61 +239,79 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             isCartOpen = !isCartOpen;
         }
 
-        private void AddToBag()
+        
+        private async Task AddToBagAsync()
         {
-            if (selectedProduct == null) return;
-
-            if (string.IsNullOrEmpty(selectedSize) || string.IsNullOrEmpty(selectedColor))
+            if (!isLoggedIn)
             {
-                modalErrorMessage = "Please select both a size and color before adding to bag.";
-                return;
-            }
-
-            var variant = selectedProduct.ProductVariants
-                .FirstOrDefault(v => v.Size == selectedSize && v.Color == selectedColor);
-
-            if (variant == null)
-            {
-                modalErrorMessage = "Selected combination is currently unavailable.";
-                return;
-            }
-
-            if (variant.StockQuantity <= 0)
-            {
-                modalErrorMessage = "This variant is currently out of stock.";
-                return;
-            }
-
-            var cartItem = cart.FirstOrDefault(i => i.VariantId == variant.VariantId);
-            if (cartItem != null)
-            {
-                if (cartItem.Qty + 1 > variant.StockQuantity)
+                string message = $"You are not logging in.Please login to make order";
+                var isComfirm = await JSRuntime.InvokeAsync<bool>("confirm", message);
+                if (isComfirm)
                 {
-                    modalErrorMessage = $"Cannot add more items. Only {variant.StockQuantity} items in stock.";
+                    Nav.NavigateTo("login?returnUrl=" + Uri.EscapeDataString(Nav.Uri));
                     return;
                 }
-                cartItem.Qty++;
+
+               
             }
             else
             {
-                var primaryImg = selectedProduct.ProductImages.FirstOrDefault(i => (bool)i.IsPrimary)?.ImageUrl 
-                    ?? "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80";
 
-                cart.Add(new CartItemModel
+
+                if (selectedProduct == null) return;
+
+                if (string.IsNullOrEmpty(selectedSize) || string.IsNullOrEmpty(selectedColor))
                 {
-                    VariantId = variant.VariantId,
-                    Name = selectedProduct.Name,
-                    Size = selectedSize,
-                    Color = selectedColor,
-                    Price = selectedProduct.BasePrice + (variant.PriceModifier ?? 0.00m),
-                    Qty = 1,
-                    ImgUrl = primaryImg
-                });
-            }
+                    modalErrorMessage = "Please select both a size and color before adding to bag.";
+                    return;
+                }
 
-            ShowToast($"Added {selectedProduct.Name} to bag!");
-            CloseQuickView();
-            isCartOpen = true;
+                var variant = selectedProduct.ProductVariants
+                    .FirstOrDefault(v => v.Size == selectedSize && v.Color == selectedColor);
+
+                if (variant == null)
+                {
+                    modalErrorMessage = "Selected combination is currently unavailable.";
+                    return;
+                }
+
+                if (variant.StockQuantity <= 0)
+                {
+                    modalErrorMessage = "This variant is currently out of stock.";
+                    return;
+                }
+
+                var cartItem = cart.FirstOrDefault(i => i.VariantId == variant.VariantId);
+                if (cartItem != null)
+                {
+                    if (cartItem.Qty + 1 > variant.StockQuantity)
+                    {
+                        modalErrorMessage = $"Cannot add more items. Only {variant.StockQuantity} items in stock.";
+                        return;
+                    }
+                    cartItem.Qty++;
+                }
+                else
+                {
+                    var primaryImg = selectedProduct.ProductImages.FirstOrDefault(i => (bool)i.IsPrimary)?.ImageUrl
+                        ?? "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80";
+
+                    cart.Add(new CartItemModel
+                    {
+                        VariantId = variant.VariantId,
+                        Name = selectedProduct.Name,
+                        Size = selectedSize,
+                        Color = selectedColor,
+                        Price = selectedProduct.BasePrice + (variant.PriceModifier ?? 0.00m),
+                        Qty = 1,
+                        ImgUrl = primaryImg
+                    });
+                }
+
+                ShowToast($"Added {selectedProduct.Name} to bag!");
+                CloseQuickView();
+                isCartOpen = true;
+            }
         }
 
         private void UpdateQty(CartItemModel item, int change)

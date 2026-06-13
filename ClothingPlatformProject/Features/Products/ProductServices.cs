@@ -16,7 +16,9 @@ namespace ClothingPlatformProject.Features.Product
         public List<ProductModel> GetAllProducts()
         {
             return _db.Products.AsNoTracking()
-                .Include(p=>p.ProductVariants)
+                .Include(x => x.ProductImages)
+                .Include(x => x.Category)
+                .Include(p => p.ProductVariants)
                 .Select(x => new ProductModel
                 {
                     Id = x.ProductId,
@@ -32,7 +34,14 @@ namespace ClothingPlatformProject.Features.Product
                             Size = v.Size,
                             Color = v.Color,
                             StockQuantity = v.StockQuantity
-                        }).ToList()
+                        }).ToList(),
+                    Image = _db.ProductImages
+        .Where(i => i.ProductId == x.ProductId) //  i.ProductId နဲ့ x.ProductId ချိတ်ရပါမယ်
+        .Select(i => new ProductImageModel
+        {
+            ImageUrl = i.ImageUrl
+        })
+        .FirstOrDefault()
                 }).ToList();
         }
 
@@ -61,8 +70,18 @@ namespace ClothingPlatformProject.Features.Product
                 BasePrice = model.BasePrice,
                 IsFeatured = true,
                 CreatedAt = DateTime.UtcNow
-                
             };
+                if(model.Image !=null && !string.IsNullOrEmpty(model.Image.ImageUrl))
+            {
+                product.ProductImages = new List<ClothingPlatform.DB.AppDbModels.ProductImage>
+                {
+                    new ClothingPlatform.DB.AppDbModels.ProductImage
+                    {
+                        ImageUrl= model.Image.ImageUrl
+                    }
+                };
+            }
+            
             _db.Products.Add(product);
             
              await _db.SaveChangesAsync();

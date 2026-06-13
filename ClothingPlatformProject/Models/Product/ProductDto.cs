@@ -15,8 +15,12 @@ public class ProductModel
     public int CategoryId { get; set; }
     public decimal BasePrice { get; set; }
     public List<VariantDto> Variants { get; set; } = new();
+    public ProductImageModel Image { get; set; }
 }
-
+public class ProductImageModel
+{
+    public string ImageUrl { get; set; }
+}
 // GET Product By ID အတွက် DTO
 public class ProductDto
 {

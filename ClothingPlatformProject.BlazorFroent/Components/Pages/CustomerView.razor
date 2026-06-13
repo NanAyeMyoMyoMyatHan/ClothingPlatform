@@ -1,5 +1,8 @@
-﻿@page "/customer"
+﻿@page "/"
+@page "/customer"
 @inject IJSRuntime JSRuntime
+
+@inject AuthenticationStateProvider AuthenStateProvider
 
 <PageTitle>Chic Boutique — Luxury Atelier</PageTitle>
 
@@ -1498,6 +1501,7 @@
     <!-- Main Navigation Tabs -->
     <nav class="nav-tabs-bar">
         <button class="nav-tab @(activeTab == "home" ? "active" : "")" @onclick='() => Navigate("home")'>Home</button>
+        <button class="nav-tab @(activeTab == "best" ? "active" : "")" @onclick='() => Navigate("best")'>Best Seller</button>
         <button class="nav-tab @(activeTab == "shop" ? "active" : "")" @onclick='() => Navigate("shop")'>The Collection</button>
         <button class="nav-tab @(activeTab == "history" ? "active" : "")" @onclick='() => Navigate("history")'>My Purchases</button>
         <button class="nav-tab @(activeTab == "profile" ? "active" : "")" @onclick='() => Navigate("profile")'>My Profile</button>
@@ -1541,6 +1545,44 @@
         </div>
     }
 
+    else if (activeTab == "best")
+    {
+        <div class="section-head">
+            <h2 class="section-title">The <span>Best Collection</span></h2>
+            <span class="section-count">@filteredProducts.Count best seller found</span>
+        </div>
+
+        <div class="products-grid">
+            @if (!filteredProducts.Any())
+            {
+                <div class="col-12 text-center py-5 text-muted">
+                    <i class="bi bi-inbox" style="font-size:2rem; display:block;"></i>
+                    No products match the selection criteria.
+                </div>
+            }
+            else
+            {
+                @foreach (var prod in filteredProducts)
+                {
+                    // Safely extract the primary image string using a defensive null check
+                    var primaryImg = prod.ProductImages?.FirstOrDefault(i => i.IsPrimary == true)?.ImageUrl
+                                     ?? "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80";
+
+                    <div class="product-card" @onclick="() => OpenQuickView(prod)">
+                        <div class="card-img-wrap">
+                            <img src="@primaryImg" alt="@prod.Name" />
+                            <button class="card-quick">Quick View</button>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-collection">@prod.Category?.Name</p>
+                            <h3 class="card-name">@prod.Name</h3>
+                            <p class="card-price">@prod.BasePrice.ToString("N0") <span class="currency">MMK</span></p>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    }
     
     else if (activeTab == "shop")
     {
@@ -1548,14 +1590,6 @@
         <h2 class="section-title">The <span>Atelier Collection</span></h2>
         <span class="section-count">@filteredProducts.Count creations found</span>
     </div>
-
-    @* <div class="px-5 mb-4 d-flex flex-wrap gap-2">
-        <button class="btn btn-sm @(selectedCategoryId == 0 ? "btn-dark" : "btn-outline-dark")" @onclick="() => SelectCategory(0)">All Creations</button>
-        @foreach (var cat in allCategories)
-        {
-            <button class="btn btn-sm @(selectedCategoryId == cat.CategoryId ? "btn-dark" : "btn-outline-dark")" @onclick="() => SelectCategory(cat.CategoryId)">@cat.Name</button>
-        }
-    </div> *@
 
     <div class="products-grid">
         @if (!filteredProducts.Any())
@@ -1924,7 +1958,7 @@
                     <p class="modal-error"><i class="bi bi-exclamation-triangle"></i> @modalErrorMessage</p>
                 }
 
-                <button class="btn-add-bag" @onclick="AddToBag">Add to Bag</button>
+                <button class="btn-add-bag" @onclick="AddToBagAsync">Add to Bag</button>
             </div>
         </div>
     }

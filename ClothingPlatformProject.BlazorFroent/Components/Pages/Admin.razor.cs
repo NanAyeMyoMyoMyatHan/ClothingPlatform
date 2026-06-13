@@ -34,7 +34,12 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private List<Category> allCategories = new();
         private List<User> customers = new();
         private List<StaffActivityLog> activityLogs = new();
-        private ProductModel model = new();
+        private ProductModel model { get; set; } = new()
+        {
+            Image = new ProductImageModel(),
+            Variants = new List<VariantDto>()
+        };
+
         // Dashboard Stats
         private decimal TotalRevenue;
         private int TotalOrders;
@@ -83,7 +88,12 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
             await LoadData();
         }
-
+        //private int newProductCategoryId;
+        //private async Task HandleCategoryChange(int val)
+        //{
+        //    newProductCategoryId = val;
+        //    await OnCategoryChanged(val);
+        //}
         private async Task LoadData()
         {
             try
@@ -212,22 +222,21 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         // Product methods
         private void ResetProductForm()
         {
-            newProductName = "";
-            newProductDesc = "";
-            newProductBasePrice = 0;
+            editingProduct = null;
+            model = new();
             newProductCategoryId = allCategories.FirstOrDefault()?.CategoryId ?? 0;
             newProductImgUrl = "";
             selectedSizesString = "S, M, L";
             selectedColorsString = "Cream Beige, Midnight Black, Blush Pink";
-            editingProduct = null;
+            
         }
 
         private async Task HandleCreateProduct()
         {
             errorMessage = "";
             successMessage = "";
-
-            if (string.IsNullOrWhiteSpace(newProductName) || newProductBasePrice <= 0)
+            model.CategoryId = newProductCategoryId;
+            if (string.IsNullOrWhiteSpace(model.Name) || model.BasePrice <= 0)
             {
                 errorMessage = "Product name and positive base price are required.";
                 return;
@@ -235,11 +244,12 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
             try
             {
-                
+                Console.WriteLine(model.Name);
+                Console.WriteLine(model.Description);
                 var product = new Product
                 {
-                    Name = model.Name.Trim(),
-                    Description = model.Description.Trim(),
+                    Name = model.Name,
+                    Description = model.Description,
                     BasePrice = model.BasePrice,
                     CategoryId = newProductCategoryId,
                     IsFeatured = true,
@@ -248,7 +258,16 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                 var result = await HttpClientServices.ExecuteAsync <ProductModel>(
                     "api/product",model,
                      EnumHttpMethod.Post);
-
+                if(result != null)
+                {
+                    model = new ProductModel
+                    {
+                        Image = new ProductImageModel(),
+                        Variants = new List<VariantDto>()
+                    };
+                    newProductCategoryId = 0;
+                    StateHasChanged();
+                }
                  
 
                 // Add image if provided
@@ -331,9 +350,13 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private void EditProduct(Product prod)
         {
             editingProduct = prod;
-            newProductName = prod.Name;
-            newProductDesc = prod.Description ?? "";
-            newProductBasePrice = prod.BasePrice;
+            model = new ProductModel
+            {
+                Name = prod.Name,
+                Description = prod.Description,
+                BasePrice = prod.BasePrice
+            };
+            
             newProductCategoryId = prod.CategoryId;
             newProductImgUrl = prod.ProductImages.FirstOrDefault(i => (bool)i.IsPrimary)?.ImageUrl ?? "";
         }
@@ -438,13 +461,20 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         {
             try
             {
-                // Trigger daily report summaries calculation
                 var today = DateOnly.FromDateTime(DateTime.Today);
-                var todaySummary = await _db.StoreSalesDailies.FirstOrDefaultAsync(s => s.ReportDate == today);
-                
-                var todaysOrders = allOrders.Where(o => o.CreatedAt.HasValue && DateOnly.FromDateTime(o.CreatedAt.Value) == today && (o.OrderStatus.ToLower() == "completed" || o.OrderStatus.ToLower() == "processing" || o.OrderStatus.ToLower() == "delivered")).ToList();
+                var todaySummary = await _db.StoreSalesDailies
+                                            .FirstOrDefaultAsync(s => s.ReportDate == today);
+
+                // ✅ Bug 1 fixed: || operators ထည့်ပြီး
+                var todaysOrders = allOrders.Where(o =>
+                    o.CreatedAt.HasValue &&
+                    DateOnly.FromDateTime(o.CreatedAt.Value) == today &&
+                    (o.OrderStatus.ToLower() == "completed" ||
+                     o.OrderStatus.ToLower() == "processing" ||
+                     o.OrderStatus.ToLower() == "delivered")).ToList();
+
                 decimal todayRev = todaysOrders.Sum(o => o.TotalAmount);
-                int todaySold = todaysOrders.Count; // Simplification
+                int todaySold = todaysOrders.Count;
 
                 if (todaySummary == null)
                 {
@@ -464,14 +494,13 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
                 await _db.SaveChangesAsync();
                 successMessage = "Daily sales figures aggregated successfully.";
-                await LoadData();
+                await LoadData();   // ← LoadData ထဲမှာ mapping မှန်ဖို့လည်း သေချာစစ်ပါ
             }
             catch (Exception ex)
             {
                 errorMessage = "Error calculating summaries: " + ex.Message;
             }
         }
-
         private void Logout()
         {
             Session.Logout();
