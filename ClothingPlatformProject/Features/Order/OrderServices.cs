@@ -82,5 +82,59 @@ namespace ClothingPlatformProject.Features.Order
                 Message = "Order and Payment checkout process completed."
             };
         }
+        public async Task<List<OrderDashboardDto>> GetAllOrder()
+        {
+            return await _db.Orders
+                    .AsNoTracking() // 💡 Read-only ဖြစ်၍ Performance ပိုမြန်စေရန်
+                    .Include(o => o.User)
+                    .Include(o => o.Payments)
+                    .Include(o => o.OrderItems)
+                        .ThenInclude(oi => oi.Variant)
+                            .ThenInclude(v => v.Product)
+                    .OrderByDescending(o => o.OrderId)
+                    // 🟢 အမှန်ပြင်ဆင်ချက်: Entity (Order) မှ DTO (OrderDashboardDto) သို့ ဒေတာများ ပြောင်းလဲပေးခြင်း
+                    .Select(o => new OrderDashboardDto
+                    {
+                        OrderId = o.OrderId,
+                        UserId = o.UserId,
+                        // 🟢 အမှန်ပြင်ဆင်ချက်: FirstName နှင့် LastName ကို တစ်ခါတည်း တွဲပေးလိုက်ခြင်း
+                        UserName = o.User != null ? $"{o.User.FirstName} {o.User.LastName}".Trim() : "Guest",
+                        UserEmail = o.User != null ? o.User.Email : string.Empty,
+                        OrderDate = o.CreatedAt,
+                        TotalAmount = o.TotalAmount,
+                        OrderStatus = o.OrderStatus,
+                        PaymentStatus = o.PaymentStatus,
+                        ShippingAddress = o.ShippingAddress,
+                        PhoneNumber = o.User.PhoneNumber,
+                        
+
+                        // Payments များကို Mapping လုပ်ခြင်း
+                        Payments = o.Payments.Select(p => new OrderPaymentDto
+                        {
+                            PaymentId = p.PaymentId,
+                            PaymentMethod = p.PaymentMethod,
+                            TransactionNumber = p.TransactionId,
+                            AmountPaid = p.Amount,
+                            PaymentDate = p.CreatedAt,
+                            Status = p.PaymentStatus
+                        }).ToList(),
+
+                        // OrderItems များကို Mapping လုပ်ခြင်း
+                        OrderItems = o.OrderItems.Select(oi => new OrderItemDashboardDto
+                        {
+                            OrderItemId = oi.OrderItemId,
+                            VariantId = oi.VariantId,
+                            ProductId = oi.Variant != null ? oi.Variant.ProductId : 0,
+                            ProductName = oi.Variant != null && oi.Variant.Product != null ? oi.Variant.Product.Name : "Unknown Product",
+                            Size = oi.Variant != null ? oi.Variant.Size : string.Empty,
+                            Color = oi.Variant != null ? oi.Variant.Color : string.Empty,
+                            Sku = oi.Variant != null ? oi.Variant.Sku : string.Empty,
+                            PricePerUnit = oi.PriceAtPurchase,
+                            Quantity = oi.Quantity
+                        }).ToList()
+                    })
+                    .ToListAsync();
+        }
+
     }
 }

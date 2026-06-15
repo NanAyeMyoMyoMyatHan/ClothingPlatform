@@ -1,6 +1,8 @@
 using ClothingPlatform.DB.AppDbModels;
 using ClothingPlatformProject.BlazorFroent.Services;
+using ClothingPlatformProject.Models.Order;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Mvc.Razor.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
 using System;
@@ -21,6 +23,9 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         [Inject]
         public SessionState Session { get; set; }
 
+        [Inject]
+        public HttpClientServices httpClientServices { get; set; }
+
         // State variables
         private string activeTab = "home";
         private List<Product> allProducts = new();
@@ -32,7 +37,10 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         // Search & filter
         private int selectedCategoryId = 0;
         private string searchQuery = "";
-
+        private int PageNo = 1;
+        private int PageSize = 5;
+        private int TotalPageCount;
+        private int TotalPages => (int)Math.Ceiling((double)TotalPageCount / PageSize);
         // Quick View Modal
         private Product? selectedProduct;
         private string selectedSize = "";
@@ -68,6 +76,8 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private int loyaltyPoints = 0;
         private string profileAvatar = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80";
 
+        private List<BestSellerDto> bestSeller = new() ;
+        private List<NewCreationDto> newCreation = new();
         // Toast notifications
         private class ToastMessage
         {
@@ -80,29 +90,33 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         {
             // Seed sample products/categories if empty
             DbSeeder.Seed(_db);
-            var authState = await AuthenStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-            if(user.Identity !=null && user.Identity.IsAuthenticated)
+            try
             {
-                isLoggedIn = true;
+                // API မှ Best Sellers လှမ်းဆွဲခြင်း
+                var bestResult = await httpClientServices.ExecuteAsync<List<BestSellerDto>>("api/product/bestsellers", null, EnumHttpMethod.Get);
+                if (bestResult != null)
+                {
+                    bestSeller = bestResult;
+                }
+
+                // API မှ New Creations လှမ်းဆွဲခြင်း
+                var newResult = await httpClientServices.ExecuteAsync<List<NewCreationDto>>("api/product/new-creations", null, EnumHttpMethod.Get);
+                if (newResult != null)
+                {
+                    newCreation = newResult;
+                }
             }
-            else
+            catch (Exception ex)
             {
-                isLoggedIn = false;
+                Console.WriteLine($"Error loading UI Data: {ex.Message}");
             }
+
+
+
             // Authentication check
             if (!Session.IsLoggedIn)
             {
-                var defaultCust = _db.Users.FirstOrDefault(u => u.Role == "customer");
-                if (defaultCust != null)
-                {
-                    Session.Login(defaultCust);
-                }
-                else
-                {
-                    Nav.NavigateTo("/login");
-                    return;
-                }
+
             }
 
             currentUser = Session.CurrentUser;
@@ -126,8 +140,14 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                 coPhone = profPhone;
                 coCity = profCity;
             }
+
         }
 
+        private async Task ChangePage(int newPage)
+        {
+            PageNo = newPage;
+            await LoadData(); // စာမျက်နှာပြောင်းရင် ဒေတာ ပြန်မောင်းတင်မယ်
+        }
         private async Task LoadData()
         {
             try
@@ -155,6 +175,8 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                         .OrderByDescending(o => o.OrderId)
                         .ToListAsync();
 
+                   
+
                     // Calculate loyalty points: 1 point per 100 MMK spent on completed/delivered orders
                     var totalSpent = userOrders
                         .Where(o => o.OrderStatus.ToLower() == "completed" || o.OrderStatus.ToLower() == "processing" || o.OrderStatus.ToLower() == "delivered")
@@ -171,7 +193,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private void ApplyProductFilters()
         {
             var query = allProducts.AsEnumerable();
-
+           
             if (selectedCategoryId > 0)
             {
                 query = query.Where(p => p.CategoryId == selectedCategoryId);
@@ -215,6 +237,30 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             isModalOpen = true;
         }
 
+       
+
+        // 🟢 အမှန်ပြင်ဆင်ရန်ပုံစံ (Type ကို BestSellerDto သို့ ပြောင်းလဲလိုက်ပါပြီ):
+        private BestSellerDto? selectedProducts;
+
+        private void OpenQuickViews(BestSellerDto product)
+        {
+            selectedProducts = product; // 🤝 အမျိုးအစား တူသွားပြီဖြစ်လို့ အနီလိုင်း ချက်ချင်း ပျောက်သွားပါလိမ့်မည်
+            selectedSize = "";
+            selectedColor = "";
+            modalErrorMessage = "";
+            isModalOpen = true;
+        }
+        private NewCreationDto? selectedProductss;
+
+        private void OpenQuickViewss(NewCreationDto product)
+        {
+            selectedProductss = product; // 🤝 အမျိုးအစား တူသွားပြီဖြစ်လို့ အနီလိုင်း ချက်ချင်း ပျောက်သွားပါလိမ့်မည်
+            selectedSize = "";
+            selectedColor = "";
+            modalErrorMessage = "";
+            isModalOpen = true;
+        }
+
         private void CloseQuickView()
         {
             isModalOpen = false;
@@ -242,7 +288,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         
         private async Task AddToBagAsync()
         {
-            if (!isLoggedIn)
+            if (Session.CurrentUser== null)
             {
                 string message = $"You are not logging in.Please login to make order";
                 var isComfirm = await JSRuntime.InvokeAsync<bool>("confirm", message);
@@ -548,6 +594,11 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             public decimal Price { get; set; }
             public int Qty { get; set; }
             public string ImgUrl { get; set; } = "";
+        }
+
+        private async Task BestSeller()
+        {
+            var result = await httpClientServices.ExecuteAsync<List<BestSellerDto>>("api/order", EnumHttpMethod.Get);
         }
     }
 }

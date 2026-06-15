@@ -34,4 +34,58 @@
         public string ShippingAddress { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
     }
+
+    public class OrderDashboardDto
+    {
+        public int OrderId { get; set; }
+        public int UserId { get; set; }
+        public string UserName { get; set; } = string.Empty;
+        public string UserEmail { get; set; } = string.Empty;
+
+        public DateTime? OrderDate { get; set; }
+        public decimal TotalAmount { get; set; }
+        public string OrderStatus { get; set; } = "pending"; // pending, processing, shipped, delivered, cancelled
+        public string PaymentStatus { get; set; } = "unpaid";  // unpaid, paid, refunded, completed
+
+        // Shipping Details
+        public string ShippingAddress { get; set; } = string.Empty;
+        public string PhoneNumber { get; set; } = string.Empty;
+        public string? Notes { get; set; }
+
+        // Child Collections (ဆက်စပ်နေသော ဇယားတွဲများ)
+        public List<OrderPaymentDto> Payments { get; set; } = new();
+        public List<OrderItemDashboardDto> OrderItems { get; set; } = new();
+    }
+
+    // ၂။ Order Items DTO (အော်ဒါထဲက ပစ္စည်းတစ်ခုချင်းစီ)
+    public class OrderItemDashboardDto
+    {
+        public int OrderItemId { get; set; }
+        public int VariantId { get; set; }
+        public int ProductId { get; set; }
+
+        // Product & Variant Details (UI တွင် တန်းပြရန် ဆွဲထုတ်လာမည့်အချက်အလက်များ)
+        public string ProductName { get; set; } = string.Empty;
+        public string Size { get; set; } = string.Empty;
+        public string Color { get; set; } = string.Empty;
+        public string? Sku { get; set; }
+        public string? PrimaryImageUrl { get; set; } // ပစ္စည်းဓာတ်ပုံပြရန်
+
+        public int Quantity { get; set; }
+        public decimal PricePerUnit { get; set; }
+        public decimal TotalPrice => Quantity * PricePerUnit; // Auto Calculation
+    }
+
+    // ၃။ Payments DTO (ငွေပေးချေမှုမှတ်တမ်း)
+    public class OrderPaymentDto
+    {
+        public int PaymentId { get; set; }
+        public string PaymentMethod { get; set; } = string.Empty; // KBZPay, CBPay, WaveMoney, COD
+        public string TransactionNumber { get; set; } = string.Empty;
+        public decimal AmountPaid { get; set; }
+        public DateTime? PaymentDate { get; set; }
+        public string Status { get; set; } = string.Empty;
+    }
+
+
 }

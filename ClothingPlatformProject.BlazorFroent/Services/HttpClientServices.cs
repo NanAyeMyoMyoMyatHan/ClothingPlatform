@@ -53,7 +53,7 @@ namespace ClothingPlatformProject.BlazorFroent.Services
             var errorContent = await response.Content.ReadAsStringAsync();
 
             // 💡 ရှင်းလင်းတဲ့ Error မက်ဆေ့ချ် ရအောင် ပြင်ဆင်လိုက်ပါတယ်
-            throw new Exception($"PLM Http request failed ({response.StatusCode}). API Error: {errorContent}");
+            throw new Exception($" Http request failed ({response.StatusCode}). API Error: {errorContent}");
         }
     }
 

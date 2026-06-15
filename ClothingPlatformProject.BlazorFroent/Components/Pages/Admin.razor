@@ -1,4 +1,5 @@
 @page "/admin"
+@using ClothingPlatformProject.BlazorFroent.Components.Partial
 @inject IJSRuntime JSRuntime
 @inject HttpClientServices HttpClientServices
 
@@ -391,6 +392,13 @@
                 </a>
             </li>
 
+             <li>
+                <a class="nav-item-link @(activeView == "staffs" ? "active" : "")" @onclick='() => SetView("staffs")'>
+                    <i class="bi bi-people"></i>
+                    Staffs
+                </a>
+            </li>
+
             <li>
                 <a class="nav-item-link @(activeView == "reports" ? "active" : "")" @onclick='() => SetView("reports")'>
                     <i class="bi bi-bar-chart-line"></i>
@@ -495,7 +503,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if (!allOrders.Any())
+                        @if (!Pagedorders.Any())
                         {
                             <tr>
                                 <td colspan="6" class="text-center py-4 text-muted">No orders found in the boutique queue.</td>
@@ -503,7 +511,7 @@
                         }
                         else
                         {
-                            @foreach (var order in allOrders.Take(5))
+                            @foreach (var order in Pagedorders)
                             {
                                 <tr>
                                     <td><strong>#ORD-@order.OrderId.ToString("D4")</strong></td>
@@ -530,6 +538,9 @@
                         }
                     </tbody>
                 </table>
+                <Pagination CurrentPage="@orderPage"
+                            TotalPages="@OrderTotalPages"
+                            CurrentPageChanged="@ChangeOrderPage" />
             </div>
         }
 
@@ -559,37 +570,22 @@
 
                     <div class="mb-3">
                         <label class="form-label text-muted small uppercase fw-bold">Category</label>
-
-                        @if (allCategories != null)
-                        {
-                            <select class="luxury-select"
-                                    @bind:get="newProductCategoryId">
-                                    
-                                <option value="0">-- Select Category --</option>
-                                @foreach (var cat in allCategories)
-                                {
-                                    <option value="@cat.CategoryId">@cat.Name</option>
-                                }
-                            </select>
-                        }
-                        else
-                        {
-                            <div class="text-muted small">
-                                <i class="fas fa-spinner fa-spin"></i> Loading categories...
-                            </div>
-                        }
+                        <select class="luxury-select" @bind="newProductCategoryId">
+                            <option value="0">-- Select Category --</option>
+                            @foreach (var cat in allCategories)
+                            {
+                                <option value="@cat.CategoryId">@cat.Name</option>
+                            }
+                        </select>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label text-muted small uppercase fw-bold">Image URL</label>
-                        @if (model.Image != null)
-                        {
-                            <input type="text" class="luxury-input" @bind="model.Image.ImageUrl" placeholder="https://images.unsplash.com/..." />
-                        }
-                        else
-                        {
-                         <p class="text-danger small">Image component is initializing...</p>
-                           }
+                       
+                        
+                            <input type="text" class="luxury-input" @bind="imageUrl" placeholder="images/products/...jpg" />
+                        
+                       
                     </div>
                         
                     @if (editingProduct == null)
@@ -602,6 +598,11 @@
                         <div class="mb-3">
                             <label class="form-label text-muted small uppercase fw-bold">Create Colors (Comma-separated)</label>
                             <input type="text" class="luxury-input" @bind="selectedColorsString" placeholder="Blush Pink, Sage Green" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small uppercase fw-bold">Quantity</label>
+                            <input type="text" class="luxury-input" @bind="quantity" placeholder="1,2,3" />
                         </div>
                     }
 
@@ -633,7 +634,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @if (!allProducts.Any())
+                            @if (!PagedProducts.Any())
                             {
                                 <tr>
                                     <td colspan="6" class="text-center py-4 text-muted">No products registered. Create one to display.</td>
@@ -641,7 +642,7 @@
                             }
                             else
                             {
-                                @foreach (var prod in allProducts)
+                                @foreach (var prod in PagedProducts)
                                 {
                                     var primaryImg = prod.ProductImages?.FirstOrDefault(i => (bool)i.IsPrimary)?.ImageUrl ?? "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80";
                                     <tr>
@@ -660,12 +661,16 @@
                                         <td>
                                             <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditProduct(prod)"><i class="bi bi-pencil"></i></button>
                                             <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteProduct(prod.ProductId)"><i class="bi bi-trash"></i></button>
+                                            
                                         </td>
                                     </tr>
                                 }
                             }
                         </tbody>
                     </table>
+                    <Pagination CurrentPage="@productPage" 
+                            TotalPages="@ProductTotalPages" 
+                             CurrentPageChanged="@OnProductPageChanged" />
                 </div>
             </div>
         }
@@ -698,7 +703,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if (!filteredOrders.Any())
+                        @if (!Pagedorders.Any())
                         {
                             <tr>
                                 <td colspan="7" class="text-center py-4 text-muted">No orders found matching the filter.</td>
@@ -706,7 +711,7 @@
                         }
                         else
                         {
-                            @foreach (var order in filteredOrders)
+                            @foreach (var order in Pagedorders)
                             {
                                 var payInfo = order.Payments.FirstOrDefault()?.PaymentMethod ?? "COD";
                                 <tr>
@@ -751,6 +756,9 @@
                         }
                     </tbody>
                 </table>
+                <Pagination CurrentPage="@orderPage"
+                            TotalPages="@OrderTotalPages"
+                            CurrentPageChanged="@ChangeOrderPage" />
             </div>
         }
 
@@ -764,13 +772,14 @@
                             <th>User ID</th>
                             <th>First Name</th>
                             <th>Last Name</th>
-                            <th>Email Address</th>
+                            <th>Email Address</th
+                             <th>Role</th>
                             <th>Default Delivery Address</th>
                             <th>Registration Date</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @if (!customers.Any())
+                        @if (!PageCustomer.Any())
                         {
                             <tr>
                                 <td colspan="6" class="text-center py-4 text-muted">No registered customers.</td>
@@ -778,13 +787,14 @@
                         }
                         else
                         {
-                            @foreach (var cust in customers)
+                            @foreach (var cust in PageCustomer)
                             {
                                 <tr>
-                                    <td><strong>#USR-@cust.UserId.ToString("D4")</strong></td>
-                                    <td>@cust.FirstName</td>
-                                    <td>@cust.LastName</td>
+                                    <td><strong>#USR-@cust.Id.ToString("D4")</strong></td>
+                                    <td>@cust.First_Name</td>
+                                    <td>@cust.Last_Name</td>
                                     <td>@cust.Email</td>
+                                    <td>@cust.Role</td>
                                     <td>@cust.Address</td>
                                     <td>@(cust.CreatedAt?.ToString("dd/MM/yyyy") ?? "N/A")</td>
                                 </tr>
@@ -792,9 +802,56 @@
                         }
                     </tbody>
                 </table>
+                <Pagination CurrentPage="@customerPage"
+                            TotalPages="@customerTotalPage"
+                            CurrentPageChanged="@ChangeCustomerPage" />
             </div>
         }
 
+         else if (activeView == "staffs")
+        {
+            <div class="table-responsive-wrapper">
+                <table class="table luxury-table">
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Email Address</th
+                             <th>Role</th>
+                            <th>Default Delivery Address</th>
+                            <th>Registration Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!PageStaff.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">No registered customers.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var cust in PageStaff)
+                            {
+                                <tr>
+                                    <td><strong>#USR-@cust.Id.ToString("D4")</strong></td>
+                                    <td>@cust.First_Name</td>
+                                    <td>@cust.Last_Name</td>
+                                    <td>@cust.Email</td>
+                                    <td>@cust.Role</td>
+                                    <td>@cust.Address</td>
+                                    <td>@(cust.CreatedAt?.ToString("dd/MM/yyyy") ?? "N/A")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+                <Pagination CurrentPage="@staffPage"
+                            TotalPages="@staffTotalPage"
+                            CurrentPageChanged="@ChangeStaffPage" />
+            </div>
+        }
        
         else if (activeView == "reports")
         {
@@ -852,7 +909,7 @@
                                     <li class="list-group-item px-0 py-3 bg-transparent">
                                         <div class="d-flex justify-content-between">
                                             <strong>@log.Staff.FirstName @log.Staff.LastName</strong>
-                                            <span class="small text-muted">@log.CreatedAt.ToString("dd/MM/yyyy")</span>
+                                            <span class="small text-muted">@log.CreatedAt?.ToString("dd/MM/yyyy")</span>
                                         </div>
                                         <div class="small text-muted mt-1">
                                             <span class="badge bg-light text-dark border me-2">@log.ActionType.ToUpper()</span>

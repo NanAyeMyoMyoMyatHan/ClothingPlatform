@@ -1,5 +1,6 @@
 using ClothingPlatform.DB.AppDbModels;
 using ClothingPlatformProject.Features.Auth;
+using ClothingPlatformProject.Features.Order;
 using ClothingPlatformProject.Features.Product;
 using ClothingPlatformProject.Features.User;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IUserService, UserServices>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProductService, ProductServices>();
+builder.Services.AddScoped<IOrderService, OrderServices>();
 
 builder.Services.AddControllers().AddJsonOptions(options =>
 {

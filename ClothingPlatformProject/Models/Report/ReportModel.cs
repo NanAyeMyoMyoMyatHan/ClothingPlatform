@@ -48,6 +48,6 @@
         public int TargetId { get; set; }
         public string ActionType { get; set; } = string.Empty;
         public string? Description { get; set; }
-        public DateOnly CreatedAt { get; set; }
+        public DateTime? CreatedAt { get; set; }
     }
 }

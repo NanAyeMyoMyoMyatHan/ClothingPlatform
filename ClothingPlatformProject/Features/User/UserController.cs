@@ -15,12 +15,20 @@ namespace ClothingPlatformProject.Features.User
             _userService = userService;
         }
 
-        [HttpGet]
-        public IActionResult GetAllUsers()
+        [HttpGet("customers")]
+        public async Task<IActionResult> GetUsersCustomer(int page=1, int pageSize=10)
         {
-            var users = _userService.GetAllUsersInTbl();
-            return Ok(users);
+            var result = await _userService.GetUsersCustomerAsync(page, pageSize);
+            return Ok(result);
         }
+
+        [HttpGet("staffs")]
+        public async Task<IActionResult> GetUsersStaff(int staffpage = 1, int staffpageSize = 10)
+        {
+            var result = await _userService.GetUsersStaffAsync(staffpage, staffpageSize);
+            return Ok(result);
+        }
+
 
         [HttpGet("{id}")]
         public IActionResult GetUserById(int id)

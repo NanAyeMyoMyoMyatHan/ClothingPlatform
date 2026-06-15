@@ -4,8 +4,10 @@ namespace ClothingPlatformProject.Features.User
 {
     public interface IUserService
     {
-        List<UserModel> GetAllUsersInTbl();
-        
+      
+        Task<PagedResult<UserModel>> GetUsersCustomerAsync(int page, int pageSize);
+        Task<PagedResult<UserModel>> GetUsersStaffAsync(int page, int pageSize);
+
         UserDto? GetUserDto(int userId);
         
         void CreateUser(CreatRquestModel model);

@@ -1,5 +1,6 @@
 ﻿@page "/"
 @page "/customer"
+@using ClothingPlatformProject.BlazorFroent.Components.Partial
 @inject IJSRuntime JSRuntime
 
 @inject AuthenticationStateProvider AuthenStateProvider
@@ -1494,7 +1495,14 @@
             </button>
 
             <!-- User Nav -->
+            @if (Session.CurrentUser != null)
+            {
             <span class="text-muted small d-none d-sm-inline">Mingalarpar, <strong>@currentUser?.FirstName</strong></span>
+            }
+            else
+            {
+                <span class="text-muted small d-none d-sm-inline">Mingalarpar</span>
+            }
         </div>
     </div>
 
@@ -1505,7 +1513,14 @@
         <button class="nav-tab @(activeTab == "shop" ? "active" : "")" @onclick='() => Navigate("shop")'>The Collection</button>
         <button class="nav-tab @(activeTab == "history" ? "active" : "")" @onclick='() => Navigate("history")'>My Purchases</button>
         <button class="nav-tab @(activeTab == "profile" ? "active" : "")" @onclick='() => Navigate("profile")'>My Profile</button>
+        @if (Session.CurrentUser != null)
+            {
         <button class="nav-tab text-danger" @onclick="Logout" style="margin-left: auto;">Sign Out</button>
+            }
+        else
+        {
+            <button class="nav-tab text-danger" @onclick="Logout" style="margin-left: auto;">Sign in</button>
+        }
     </nav>
 </header>
 
@@ -1526,23 +1541,37 @@
         </div>
 
         <div class="products-grid">
-            @foreach (var prod in filteredProducts.Where(p => (bool)(p.IsFeatured ?? false)).Take(10))
+            @foreach (var prod in newCreation)
             {
-                var primaryImg = prod.ProductImages.FirstOrDefault(i => i.IsPrimary==true)?.ImageUrl ?? "/images/products/crossTop.jpg";
-                <div class="product-card" @onclick="() => OpenQuickView(prod)">
+                var primaryImg = !string.IsNullOrEmpty(prod.ImageDto)
+                                     ? prod.ImageDto
+                                     : "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80";
+
+                <div class="product-card best-seller" @onclick="() => OpenQuickViewss(prod)">
+
                     <div class="card-img-wrap">
-                        <span class="card-badge">Featured</span>
                         <img src="@primaryImg" alt="@prod.Name" />
+
+                        <span class="badge-best">🔥New Arrival</span>
+
                         <button class="card-quick">Quick View</button>
                     </div>
+
                     <div class="card-body">
-                        <p class="card-collection">@prod.Category.Name</p>
+                        <p class="card-collection">@prod.CategoryName</p>
                         <h3 class="card-name">@prod.Name</h3>
-                        <p class="card-price">@prod.BasePrice.ToString("N0") <span class="currency">MMK</span></p>
+
+                        <p class="card-price">
+                            @prod.BasePrice.ToString("N0")
+                            <span class="currency">MMK</span>
+                        </p>
                     </div>
+
                 </div>
+                
             }
         </div>
+        
     }
 
     else if (activeTab == "best")
@@ -1553,7 +1582,7 @@
         </div>
 
         <div class="products-grid">
-            @if (!filteredProducts.Any())
+            @if (!bestSeller.Any())
             {
                 <div class="col-12 text-center py-5 text-muted">
                     <i class="bi bi-inbox" style="font-size:2rem; display:block;"></i>
@@ -1562,22 +1591,33 @@
             }
             else
             {
-                @foreach (var prod in filteredProducts)
+                @foreach (var prod in bestSeller)
                 {
-                    // Safely extract the primary image string using a defensive null check
-                    var primaryImg = prod.ProductImages?.FirstOrDefault(i => i.IsPrimary == true)?.ImageUrl
-                                     ?? "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80";
+                 
+                    var primaryImg = !string.IsNullOrEmpty(prod.ImageDto)
+                                     ? prod.ImageDto
+                                     : "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80";
 
-                    <div class="product-card" @onclick="() => OpenQuickView(prod)">
+                    <div class="product-card best-seller" @onclick="() => OpenQuickViews(prod)">
+
                         <div class="card-img-wrap">
                             <img src="@primaryImg" alt="@prod.Name" />
+
+                            <span class="badge-best">🔥 Best Seller</span>
+
                             <button class="card-quick">Quick View</button>
                         </div>
+
                         <div class="card-body">
-                            <p class="card-collection">@prod.Category?.Name</p>
+                            <p class="card-collection">@prod.CategoryName</p>
                             <h3 class="card-name">@prod.Name</h3>
-                            <p class="card-price">@prod.BasePrice.ToString("N0") <span class="currency">MMK</span></p>
+
+                            <p class="card-price">
+                                @prod.BasePrice.ToString("N0")
+                                <span class="currency">MMK</span>
+                            </p>
                         </div>
+
                     </div>
                 }
             }
@@ -1814,109 +1854,122 @@
     
     else if (activeTab == "profile")
     {
-    <div class="profile-view">
-        <div class="profile-grid">
-            <!-- Member Badge Card -->
-            <div class="profile-card">
-                <div class="profile-avatar-wrap">
-                    <img src="@profileAvatar" alt="Avatar" />
+        if (Session.CurrentUser == null)
+        {
+            <div class="history-card" >
+                <div class="section-head px-0">
+                    <h2 class="section-title">Your <span>Authentication required. Please log in to access your profile page.</span></h2>
+                    <button class="nav-tab text-danger" @onclick="Logout" style="margin-left: auto;">Login</button>
                 </div>
+            </div>
 
-                <h3 class="profile-name-display">@currentUser?.FirstName @currentUser?.LastName</h3>
+        }
+        else
+        {
+            <div class="profile-view">
+                <div class="profile-grid">
+                    <!-- Member Badge Card -->
+                    <div class="profile-card">
+                        <div class="profile-avatar-wrap">
+                            <img src="@profileAvatar" alt="Avatar" />
+                        </div>
 
-                @if (loyaltyPoints >= 1500)
-                {
-                    <span class="profile-tier-badge" style="background:#D4AF37;">Royal Circle (Gold)</span>
-                }
-                else if (loyaltyPoints >= 500)
-                {
-                    <span class="profile-tier-badge" style="background:#C0C0C0;">Atelier Elite (Silver)</span>
-                }
-                else
-                {
-                    <span class="profile-tier-badge">Salon Member (Bronze)</span>
-                }
+                        <h3 class="profile-name-display">@currentUser?.FirstName @currentUser?.LastName</h3>
 
-                <p class="profile-joined">Joined Atelier: @(currentUser?.CreatedAt?.ToString("MMM yyyy") ?? "June 2026")</p>
-
-                <div class="loyalty-points-box">
-                    <div class="points-header">
-                        <span class="points-label">Loyalty Balance</span>
-                        <span class="points-value">@loyaltyPoints.ToString("N0") pts</span>
-                    </div>
-
-                    @{
-                        int nextTierTarget = 1500;
-                        int ptsNeeded = nextTierTarget - loyaltyPoints;
-                        double progressPercent = (double)loyaltyPoints / nextTierTarget * 100;
-                        if (progressPercent > 100) progressPercent = 100;
-                    }
-
-                    <div class="points-progress-bar">
-                        <div class="points-progress-fill" style="width: @(progressPercent)%;"></div>
-                    </div>
-                    <div class="points-footer">
-                        @if (ptsNeeded > 0)
+                        @if (loyaltyPoints >= 1500)
                         {
-                            <span>@ptsNeeded.ToString("N0") pts to Gold Member</span>
+                            <span class="profile-tier-badge" style="background:#D4AF37;">Royal Circle (Gold)</span>
+                        }
+                        else if (loyaltyPoints >= 500)
+                        {
+                            <span class="profile-tier-badge" style="background:#C0C0C0;">Atelier Elite (Silver)</span>
                         }
                         else
                         {
-                            <span>Maximum Membership Tier Achieved</span>
+                            <span class="profile-tier-badge">Salon Member (Bronze)</span>
                         }
-                        <span>Target: @nextTierTarget pts</span>
-                    </div>
-                </div>
 
-                <div class="alert bg-light border text-start p-3 small" style="line-height: 1.6;">
-                    <strong>⭐ Membership Privileges:</strong>
-                    <ul class="ps-3 mt-1 m-0">
-                        <li>Earn 1 Point for every 100 MMK spent.</li>
-                        <li>Silver members get 5% off items automatically.</li>
-                        <li>Gold members unlock free shipping & early access.</li>
-                    </ul>
+                        <p class="profile-joined">Joined Atelier: @(currentUser?.CreatedAt?.ToString("MMM yyyy") ?? "June 2026")</p>
+
+                        <div class="loyalty-points-box">
+                            <div class="points-header">
+                                <span class="points-label">Loyalty Balance</span>
+                                <span class="points-value">@loyaltyPoints.ToString("N0") pts</span>
+                            </div>
+
+                            @{
+                                int nextTierTarget = 1500;
+                                int ptsNeeded = nextTierTarget - loyaltyPoints;
+                                double progressPercent = (double)loyaltyPoints / nextTierTarget * 100;
+                                if (progressPercent > 100) progressPercent = 100;
+                            }
+
+                            <div class="points-progress-bar">
+                                <div class="points-progress-fill" style="width: @(progressPercent)%;"></div>
+                            </div>
+                            <div class="points-footer">
+                                @if (ptsNeeded > 0)
+                                {
+                                    <span>@ptsNeeded.ToString("N0") pts to Gold Member</span>
+                                }
+                                else
+                                {
+                                    <span>Maximum Membership Tier Achieved</span>
+                                }
+                                <span>Target: @nextTierTarget pts</span>
+                            </div>
+                        </div>
+
+                        <div class="alert bg-light border text-start p-3 small" style="line-height: 1.6;">
+                            <strong>⭐ Membership Privileges:</strong>
+                            <ul class="ps-3 mt-1 m-0">
+                                <li>Earn 1 Point for every 100 MMK spent.</li>
+                                <li>Silver members get 5% off items automatically.</li>
+                                <li>Gold members unlock free shipping & early access.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Edit Profile Form -->
+                    <div class="profile-card text-start">
+                        <h3 class="checkout-section-title">Atelier Member Details</h3>
+
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label class="form-label-custom">First Name</label>
+                                <input type="text" class="form-control-custom" @bind="profFirstName" />
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label class="form-label-custom">Last Name</label>
+                                <input type="text" class="form-control-custom" @bind="profLastName" />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label-custom">Email Address (Registered)</label>
+                            <input type="email" class="form-control-custom" @bind="profEmail" />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label-custom">Phone Number</label>
+                            <input type="text" class="form-control-custom" @bind="profPhone" />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label-custom">Default Delivery Address</label>
+                            <input type="text" class="form-control-custom" @bind="profAddress" />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label-custom">Default City</label>
+                            <input type="text" class="form-control-custom" @bind="profCity" />
+                        </div>
+
+                        <button class="btn-primary-rose mt-4 w-100" @onclick="SaveProfile">Save Member Profile</button>
+                    </div>
                 </div>
             </div>
-
-            <!-- Edit Profile Form -->
-            <div class="profile-card text-start">
-                <h3 class="checkout-section-title">Atelier Member Details</h3>
-
-                <div class="row">
-                    <div class="col-md-6 form-group">
-                        <label class="form-label-custom">First Name</label>
-                        <input type="text" class="form-control-custom" @bind="profFirstName" />
-                    </div>
-                    <div class="col-md-6 form-group">
-                        <label class="form-label-custom">Last Name</label>
-                        <input type="text" class="form-control-custom" @bind="profLastName" />
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label-custom">Email Address (Registered)</label>
-                    <input type="email" class="form-control-custom" @bind="profEmail" />
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label-custom">Phone Number</label>
-                    <input type="text" class="form-control-custom" @bind="profPhone" />
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label-custom">Default Delivery Address</label>
-                    <input type="text" class="form-control-custom" @bind="profAddress" />
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label-custom">Default City</label>
-                    <input type="text" class="form-control-custom" @bind="profCity" />
-                </div>
-
-                <button class="btn-primary-rose mt-4 w-100" @onclick="SaveProfile">Save Member Profile</button>
-            </div>
-        </div>
-    </div>
+        }
     }
 </main>
 
@@ -1963,6 +2016,53 @@
         </div>
     }
 </div>
+
+<!-- ═══════════════ QUICK VIEW MODAL ═══════════════ -->
+<div class="modal-overlay @(isModalOpen ? "open" : "")">
+    @if (selectedProducts != null)
+    {
+        var primaryImg = !string.IsNullOrEmpty(selectedProducts.ImageDto)
+                                     ? selectedProducts.ImageDto
+                                     : "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80";
+
+        <div class="product-modal">
+            <button class="modal-close" @onclick="CloseQuickView"><i class="bi bi-x-lg"></i></button>
+            <div class="modal-img-col">
+                <img src="@primaryImg" alt="@selectedProducts.Name" />
+            </div>
+            <div class="modal-info-col">
+                <p class="modal-collection">@selectedProducts.CategoryName</p>
+                <h2 class="modal-name">@selectedProducts.Name</h2>
+                <p class="modal-price">@selectedProducts.BasePrice.ToString("N0") <span class="currency">MMK</span></p>
+                <p class="modal-desc">@selectedProducts.Description</p>
+
+                <label class="option-label">Select Size</label>
+                <div class="size-btns">
+                    @foreach (var size in selectedProducts.VariantsDto.Select(v => v.Size).Distinct())
+                    {
+                        <button class="size-btn @(selectedSize == size ? "selected" : "")" @onclick="() => SelectSize(size)">@size</button>
+                    }
+                </div>
+
+                <label class="option-label">Select Color</label>
+                <div class="color-btns">
+                    @foreach (var color in selectedProducts.VariantsDto.Select(v => v.Color).Distinct())
+                    {
+                        <button class="size-btn @(selectedColor == color ? "selected" : "")" @onclick="() => SelectColor(color)">@color</button>
+                    }
+                </div>
+
+                @if (!string.IsNullOrEmpty(modalErrorMessage))
+                {
+                    <p class="modal-error"><i class="bi bi-exclamation-triangle"></i> @modalErrorMessage</p>
+                }
+
+                <button class="btn-add-bag" @onclick="AddToBagAsync">Add to Bag</button>
+            </div>
+        </div>
+    }
+</div>
+
 
 <!-- ═══════════════ CART DRAWER ═══════════════ -->
 <div class="cart-backdrop @(isCartOpen ? "open" : "")" @onclick="ToggleCart"></div>

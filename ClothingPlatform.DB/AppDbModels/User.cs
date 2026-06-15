@@ -17,6 +17,8 @@ public partial class User
 
     public string Address { get; set; } = null!;
 
+    public string PhoneNumber { get; set; } = null!;
+
     public string Role { get; set; } = null!;
 
     public DateTime? CreatedAt { get; set; }

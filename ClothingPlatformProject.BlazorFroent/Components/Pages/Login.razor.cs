@@ -8,7 +8,10 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
     {
         [Inject]
         public AppDbContext _db { get; set; }
-
+        [Inject]
+        public SessionState Session { get; set; }
+        [Inject]
+        public NavigationManager Nav {  get; set; }
         public LoginRequest data { get; set; } = new();
 
 
@@ -54,6 +57,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             ClearAllErrors();
             loginErrorMessage = "";
             signupErrorMessage = "";
+            loginSuccessMessage = "";
         }
         private void ClearAllErrors()
         {
@@ -204,6 +208,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                 LastName = regLastName,
                 Email = regEmail.Trim(),
                 Address = regAddress,
+                PhoneNumber = regPhone,
                 PasswordHash = regPassword,
                 Role = "customer"
             };
@@ -214,7 +219,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
             regFirstName = "";
             regLastName = "";
-            regEmail = "";
+            regEmail = ""; 
             regPhone = "";
             regPassword = "";
             regConfirmPassword = "";

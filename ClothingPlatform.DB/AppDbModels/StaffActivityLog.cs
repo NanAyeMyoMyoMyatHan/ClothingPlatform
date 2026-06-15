@@ -17,7 +17,7 @@ public partial class StaffActivityLog
 
     public string? Description { get; set; }
 
-    public DateOnly CreatedAt { get; set; }
+    public DateTime? CreatedAt { get; set; }
 
     public virtual User Staff { get; set; } = null!;
 }

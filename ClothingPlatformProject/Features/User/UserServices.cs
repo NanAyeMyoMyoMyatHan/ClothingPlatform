@@ -13,21 +13,71 @@ namespace ClothingPlatformProject.Features.User
         {
             _db = db;
         }
-        public List<UserModel> GetAllUsersInTbl()
+        public async Task<PagedResult<UserModel>> GetUsersCustomerAsync(int page, int pageSize)
         {
-            return _db.Users.AsNoTracking()
-                .Select(x => new UserModel
+            var query = _db.Users.AsNoTracking();
+
+            var totalCount = await query.CountAsync();
+
+            var users = await query
+                .OrderByDescending(u => u.UserId)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Where(u=>u.Role =="customer")
+                .Select(u => new UserModel
                 {
-                    Id = x.UserId,
-                    First_Name = x.FirstName,
-                    Last_Name = x.LastName,
-                    Email = x.Email,
-                    Address=x.Address,
-                  
-                }).ToList();
+                    Id = u.UserId,
+                    First_Name = u.FirstName,
+                    Last_Name = u.LastName,
+                    Email = u.Email,
+                    Address = u.Address,
+                    Role = u.Role,
+                    PhoneNo = u.PhoneNumber,
+                    CreatedAt= u.CreatedAt
+                })
+                .ToListAsync();
+
+            return new PagedResult<UserModel>
+            {
+                Items = users,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
         }
 
-      
+        public async Task<PagedResult<UserModel>> GetUsersStaffAsync(int page, int pageSize)
+        {
+            var query = _db.Users.AsNoTracking();
+
+            var totalCount = await query.CountAsync();
+
+            var users = await query
+                .OrderByDescending(u => u.UserId)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Where(u => u.Role == "staff")
+                .Select(u => new UserModel
+                {
+                    Id = u.UserId,
+                    First_Name = u.FirstName,
+                    Last_Name = u.LastName,
+                    Email = u.Email,
+                    Address = u.Address,
+                    Role = u.Role,
+                    PhoneNo = u.PhoneNumber,
+                    CreatedAt = u.CreatedAt
+                })
+                .ToListAsync();
+
+            return new PagedResult<UserModel>
+            {
+                Items = users,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
+        }
 
         public UserDto? GetUserDto(int userId)
         {

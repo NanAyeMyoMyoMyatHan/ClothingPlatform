@@ -16,70 +16,80 @@ namespace ClothingPlatformProject.Features.Report
         // ၁။ နေ့စဉ် အရောင်းမှတ်တမ်းအသေးစိတ် (StaffSalesLogs) မှ ဒေတာများကို ယူ၍ Summary ဇယားများထဲသို့ Aggregation ပြုလုပ်သိမ်းဆည်းခြင်း Logic
         public void GenerateDailyAggregatedSummaries(DateTime date)
         {
-            var targetDate =DateOnly.FromDateTime( date);
-            var nextDate = targetDate.AddDays(1);
+            // 💡 အဓိကသော့ချက်- Database ထဲက DateTime? နှင့် နှိုင်းယှဉ်ရန်အတွက် DateTime Type ဖြင့်သာ Boundary သတ်မှတ်ပါမည်။
+            DateTime targetDateStart = date.Date; // ဥပမာ - 2026-06-13 00:00:00.000
+            DateTime targetDateEnd = targetDateStart.AddDays(1); // ဥပမာ - 2026-06-14 00:00:00.000
 
-            // ထိုနေ့ရက်အတွက် ရှိသော Sales Logs များကို ဆွဲထုတ်ခြင်း
-            var dailyLogs = _db.StaffSalesLogs
-                .Where(s => s.SoldAt >= targetDate && s.SoldAt < nextDate)
+            // UI/Report ဇယားများအတွက် DateOnly ပြောင်းလဲခြင်း
+            var reportDateOnly = DateOnly.FromDateTime(targetDateStart);
+
+            // 🟢 အဆင့်မြှင့်ချက်- GroupBy ကို Database ဘက်မှာတင် တစ်ခါတည်း တွက်ခိုင်းလိုက်ခြင်းဖြင့် သာလွန်ကောင်းမွန်သော Performance ရရှိစေပါသည်။
+            var dailySummaryFromDb = _db.StaffSalesLogs
+                .Where(s => s.SoldAt >= targetDateStart && s.SoldAt < targetDateEnd)
+                .GroupBy(l => l.StaffId)
+                .Select(group => new
+                {
+                    StaffId = group.Key,
+                    TotalQty = group.Sum(g => g.QuantitySold),
+                    TotalAmount = group.Sum(g => g.SaleAmount)
+                })
                 .ToList();
 
-            if (!dailyLogs.Any()) return;
+            if (!dailySummaryFromDb.Any()) return;
 
-            // --- က။ ဝန်ထမ်းတစ်ဦးချင်းစီအလိုက် Group ဖွဲ့၍ staff_sales_daily ထဲသို့ သိမ်းခြင်း ---
-            var staffGroups = dailyLogs.GroupBy(l => l.StaffId);
-            foreach (var group in staffGroups)
+            // ဆိုင်တစ်ခုလုံးအတွက် စုစုပေါင်း တွက်ချက်ရန် Variable များ
+            int activeStaff = dailySummaryFromDb.Count;
+            int storeTotalQty = dailySummaryFromDb.Sum(x => x.TotalQty);
+            decimal storeTotalRevenue = dailySummaryFromDb.Sum(x => x.TotalAmount);
+
+            // --- က။ ဝန်ထမ်းတစ်ဦးချင်းစီအလိုက် ပတ်၍ နေ့စဉ်/လစဉ် ဇယားများသိမ်းခြင်း ---
+            foreach (var staffData in dailySummaryFromDb)
             {
+                // ၁။ staff_sales_daily Update သို့မဟုတ် Add လုပ်ခြင်း
                 var existingStaffReport = _db.StaffSalesDailies
-                    .FirstOrDefault(r => r.StaffId == group.Key && r.ReportDate == targetDate);
-
-                int totalQty = group.Sum(g => g.QuantitySold);
-                decimal totalAmount = group.Sum(g => g.SaleAmount);
+                    .FirstOrDefault(r => r.StaffId == staffData.StaffId && r.ReportDate == reportDateOnly);
 
                 if (existingStaffReport != null)
                 {
-                    existingStaffReport.TotalProductsSold = totalQty;
-                    existingStaffReport.TotalSalesValue = totalAmount;
+                    existingStaffReport.TotalProductsSold = staffData.TotalQty;
+                    existingStaffReport.TotalSalesValue = staffData.TotalAmount;
                 }
                 else
                 {
                     _db.StaffSalesDailies.Add(new StaffSalesDaily
                     {
-                        StaffId = group.Key,
-                        ReportDate = targetDate,
-                        TotalProductsSold = totalQty,
-                        TotalSalesValue = totalAmount
+                        StaffId = staffData.StaffId,
+                        ReportDate = reportDateOnly,
+                        TotalProductsSold = staffData.TotalQty,
+                        TotalSalesValue = staffData.TotalAmount
                     });
                 }
 
-                // --- ခ။ staff_sales_monthly (လစဉ်ဇယား) အတွက်ပါ တစ်ခါတည်း Update လုပ်ခြင်း ---
+                // ၂။ staff_sales_monthly (လစဉ်ဇယား) အတွက်ပါ တစ်ခါတည်း Update လုပ်ခြင်း
                 var existingStaffMonthly = _db.StaffSalesMonthlies
-                    .FirstOrDefault(m => m.StaffId == group.Key && m.ReportMonth == targetDate.Month && m.ReportYear == targetDate.Year);
+                    .FirstOrDefault(m => m.StaffId == staffData.StaffId && m.ReportMonth == reportDateOnly.Month && m.ReportYear == reportDateOnly.Year);
 
                 if (existingStaffMonthly != null)
                 {
-                    // ယခင်လစဉ် စုစုပေါင်းထဲကို ယနေ့ရောင်းရငွေ ထပ်ပေါင်းထည့်ခြင်း (Idempotent ဖြစ်စေရန် နေ့စဉ်အဟောင်းကို နှုတ်ပြီးမှ ပေါင်းခြင်း သို့မဟုတ် Recalculate လုပ်ခြင်းက ပိုကောင်းသော်လည်း ဤနေရာတွင် ရိုးရှင်းစွာ ရေးသားထားပါသည်)
-                    existingStaffMonthly.TotalProductsSold += totalQty;
-                    existingStaffMonthly.TotalSalesValue += totalAmount;
+                    // 💡 မှတ်ချက်- နေ့စဉ်အဟောင်းကို နှုတ်ပြီးမှ ပေါင်းခြင်း Logic ကို သုံးနိုင်ရန် ဤနေရာတွင် ရိုးရှင်းစွာ ဆက်လက်ထားရှိပါသည်
+                    existingStaffMonthly.TotalProductsSold += staffData.TotalQty;
+                    existingStaffMonthly.TotalSalesValue += staffData.TotalAmount;
                 }
                 else
                 {
                     _db.StaffSalesMonthlies.Add(new StaffSalesMonthly
                     {
-                        StaffId = group.Key,
-                        ReportMonth = targetDate.Month,
-                        ReportYear = targetDate.Year,
-                        TotalProductsSold = totalQty,
-                        TotalSalesValue = totalAmount
+                        StaffId = staffData.StaffId,
+                        ReportMonth = reportDateOnly.Month,
+                        ReportYear = reportDateOnly.Year,
+                        TotalProductsSold = staffData.TotalQty,
+                        TotalSalesValue = staffData.TotalAmount
                     });
                 }
             }
 
-            // --- ဂ။ ဆိုင်တစ်ခုလုံးအတွက် store_sales_daily ထဲသို့ သိမ်းခြင်း ---
-            var existingStoreReport = _db.StoreSalesDailies.FirstOrDefault(s => s.ReportDate == targetDate);
-            int activeStaff = staffGroups.Count();
-            int storeTotalQty = dailyLogs.Sum(l => l.QuantitySold);
-            decimal storeTotalRevenue = dailyLogs.Sum(l => l.SaleAmount);
+            // --- ခ။ ဆိုင်တစ်ခုလုံးအတွက် store_sales_daily ထဲသို့ သိမ်းခြင်း ---
+            var existingStoreReport = _db.StoreSalesDailies.FirstOrDefault(s => s.ReportDate == reportDateOnly);
 
             if (existingStoreReport != null)
             {
@@ -91,16 +101,16 @@ namespace ClothingPlatformProject.Features.Report
             {
                 _db.StoreSalesDailies.Add(new StoreSalesDaily
                 {
-                    ReportDate = targetDate,
+                    ReportDate = reportDateOnly,
                     ActiveStaffCount = activeStaff,
                     TotalProductsSold = storeTotalQty,
                     TotalRevenue = storeTotalRevenue
                 });
             }
 
-            // --- ဃ။ ဆိုင်တစ်ခုလုံးအတွက် store_sales_monthly ထဲသို့ သိမ်းခြင်း ---
+            // --- ဂ။ ဆိုင်တစ်ခုလုံးအတွက် store_sales_monthly ထဲသို့ သိမ်းခြင်း ---
             var existingStoreMonthly = _db.StoreSalesMonthlies
-                .FirstOrDefault(m => m.ReportMonth == targetDate.Month && m.ReportYear == targetDate.Year);
+                .FirstOrDefault(m => m.ReportMonth == reportDateOnly.Month && m.ReportYear == reportDateOnly.Year);
 
             if (existingStoreMonthly != null)
             {
@@ -111,13 +121,14 @@ namespace ClothingPlatformProject.Features.Report
             {
                 _db.StoreSalesMonthlies.Add(new StoreSalesMonthly
                 {
-                    ReportMonth = targetDate.Month,
-                    ReportYear = targetDate.Year,
+                    ReportMonth = reportDateOnly.Month,
+                    ReportYear = reportDateOnly.Year,
                     TotalProductsSold = storeTotalQty,
                     TotalRevenue = storeTotalRevenue
                 });
             }
 
+            // အားလုံးပြီးမှ Database ဆီသို့ Commit တစ်ခါတည်း လုပ်ခြင်း
             _db.SaveChanges();
         }
 
@@ -191,25 +202,27 @@ namespace ClothingPlatformProject.Features.Report
         // ၆။ ဝန်ထမ်းများ၏ Activity Logs ပြန်ကြည့်ခြင်း Logic
         public List<StaffActivityLogDto> GetStaffActivityLogs(DateTime date)
         {
-            DateOnly targetDate = DateOnly.FromDateTime(date);
-            var nextDate = targetDate.AddDays(1);
+            // 💡 အဓိကဖြေရှင်းနည်း- နှိုင်းယှဉ်မှု မှန်ကန်စေရန် DateTime Boundary ကိုသာ အသုံးပြုပါမည်
+            DateTime targetDateStart = date.Date; // ဥပမာ - 2026-06-13 00:00:00.000
+            DateTime targetDateEnd = targetDateStart.AddDays(1); // ဥပမာ - 2026-06-14 00:00:00.000
 
             return _db.StaffActivityLogs
-                .Include(l => l.Staff)
-                .AsNoTracking()
-                .Where(l => l.CreatedAt >= targetDate && l.CreatedAt < nextDate)
+                .AsNoTracking() // Read-only ဖြစ်လို့ Performance တက်အောင် သုံးထားတာ အရမ်းမှန်ပါတယ်ဗျာ
+                .Where(l => l.CreatedAt >= targetDateStart && l.CreatedAt < targetDateEnd)
                 .OrderByDescending(l => l.CreatedAt)
                 .Select(l => new StaffActivityLogDto
                 {
                     LogId = l.LogId,
                     StaffId = l.StaffId,
-                    StaffName = l.Staff != null ? $"{l.Staff.FirstName} {l.Staff.LastName}" : "Unknown Staff",
+                    // 🟢 Null Conditional စစ်ပြီး ဝန်ထမ်းနာမည်ကို တစ်ခါတည်း ပေါင်းထုတ်ခြင်း
+                    StaffName = l.Staff != null ? l.Staff.FirstName + " " + l.Staff.LastName : "Unknown Staff",
                     TargetTable = l.TargetTable,
                     TargetId = l.TargetId,
                     ActionType = l.ActionType,
                     Description = l.Description,
                     CreatedAt = l.CreatedAt
-                }).ToList();
+                })
+                .ToList();
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿
 @page "/login"
-@inject SessionState Session
-@inject NavigationManager Nav
+
 <PageTitle>The Boutique — Atelier Access</PageTitle>
 <style>
     /* ─── DESIGN TOKENS ─── */
@@ -432,6 +431,56 @@
             width: 100%;
         }
     }
+    /* Danger Alert Box ပုံစံ */
+    .alert-boutique-danger {
+        background-color: #fffbfa; /* အနီနု/ပန်းနုရောင်ဖျော့ */
+        border: 1px solid #fcdbd9; /* ဘောင်လိုင်း အနီနု */
+        border-radius: 8px;
+        box-shadow: 0 4px 25px rgba(219, 68, 85, 0.1);
+    }
+
+        .alert-boutique-danger .alert-icon {
+            color: #db4455; /* Luxury Red Color */
+        }
+
+    /* Alert ထဲက ခလုတ်များ စတိုင် */
+    .alert-actions {
+        display: flex;
+        gap: 12px;
+    }
+
+    .btn-alert-danger {
+        background-color: #db4455;
+        color: white;
+        border: none;
+        padding: 6px 16px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+        .btn-alert-danger:hover {
+            background-color: #bc3242;
+        }
+
+    .btn-alert-secondary {
+        background: none;
+        border: 1px solid #cccccc;
+        color: #666666;
+        padding: 6px 16px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .btn-alert-secondary:hover {
+            background-color: #f5f5f5;
+            color: #1c1c1c;
+        }
+
 </style>
 <!-- ── TOAST ──────────────────────────────── -->
 <div class="toast-container-custom">

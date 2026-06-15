@@ -17,7 +17,7 @@ public partial class StaffSalesLog
 
     public decimal SaleAmount { get; set; }
 
-    public DateOnly SoldAt { get; set; }
+    public DateTime? SoldAt { get; set; }
 
     public virtual Order Order { get; set; } = null!;
 

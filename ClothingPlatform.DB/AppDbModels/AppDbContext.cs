@@ -51,13 +51,13 @@ public partial class AppDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=.;Database=ClothingDB;User ID=sa; Password=sasa@123;Trusted_Connection=True;TrustServerCertificate=True;");
+        => optionsBuilder.UseSqlServer("Server=.;Database=ClothingPlatformDB;User ID=sa; Password=sasa@123;Trusted_Connection=True;TrustServerCertificate=True;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<CartItem>(entity =>
         {
-            entity.HasKey(e => e.CartId).HasName("PK__cart_ite__2EF52A273F3634C8");
+            entity.HasKey(e => e.CartId).HasName("PK__cart_ite__2EF52A27A47B04D1");
 
             entity.ToTable("cart_items");
 
@@ -79,11 +79,11 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<Category>(entity =>
         {
-            entity.HasKey(e => e.CategoryId).HasName("PK__categori__D54EE9B440723C83");
+            entity.HasKey(e => e.CategoryId).HasName("PK__categori__D54EE9B49AB8EA43");
 
             entity.ToTable("categories");
 
-            entity.HasIndex(e => e.Slug, "UQ__categori__32DD1E4C3EBB20DD").IsUnique();
+            entity.HasIndex(e => e.Slug, "UQ__categori__32DD1E4CEA146E15").IsUnique();
 
             entity.Property(e => e.CategoryId).HasColumnName("category_id");
             entity.Property(e => e.Name)
@@ -103,7 +103,7 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<Order>(entity =>
         {
-            entity.HasKey(e => e.OrderId).HasName("PK__orders__46596229CF7189EE");
+            entity.HasKey(e => e.OrderId).HasName("PK__orders__4659622916A91316");
 
             entity.ToTable("orders");
 
@@ -138,7 +138,7 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<OrderItem>(entity =>
         {
-            entity.HasKey(e => e.OrderItemId).HasName("PK__order_it__3764B6BCFA03CC44");
+            entity.HasKey(e => e.OrderItemId).HasName("PK__order_it__3764B6BC7C249A9E");
 
             entity.ToTable("order_items");
 
@@ -162,7 +162,7 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<Payment>(entity =>
         {
-            entity.HasKey(e => e.PaymentId).HasName("PK__payments__ED1FC9EA072113FC");
+            entity.HasKey(e => e.PaymentId).HasName("PK__payments__ED1FC9EA9BBECDAA");
 
             entity.ToTable("payments");
 
@@ -199,7 +199,7 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<Product>(entity =>
         {
-            entity.HasKey(e => e.ProductId).HasName("PK__products__47027DF5AB8C7242");
+            entity.HasKey(e => e.ProductId).HasName("PK__products__47027DF5F7C63A06");
 
             entity.ToTable("products");
 
@@ -230,7 +230,7 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<ProductImage>(entity =>
         {
-            entity.HasKey(e => e.ImageId).HasName("PK__product___DC9AC9551E53364B");
+            entity.HasKey(e => e.ImageId).HasName("PK__product___DC9AC9559F26F083");
 
             entity.ToTable("product_images");
 
@@ -251,11 +251,11 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<ProductVariant>(entity =>
         {
-            entity.HasKey(e => e.VariantId).HasName("PK__product___EACC68B7ECD26419");
+            entity.HasKey(e => e.VariantId).HasName("PK__product___EACC68B7899A808F");
 
             entity.ToTable("product_variants");
 
-            entity.HasIndex(e => e.Sku, "UQ__product___DDDF4BE70F9D851A").IsUnique();
+            entity.HasIndex(e => e.Sku, "UQ__product___DDDF4BE78DBF58F2").IsUnique();
 
             entity.Property(e => e.VariantId).HasColumnName("variant_id");
             entity.Property(e => e.Color)
@@ -284,7 +284,7 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<StaffActivityLog>(entity =>
         {
-            entity.HasKey(e => e.LogId).HasName("PK__staff_ac__9E2397E037F972C3");
+            entity.HasKey(e => e.LogId).HasName("PK__staff_ac__9E2397E0A262F058");
 
             entity.ToTable("staff_activity_logs");
 
@@ -314,7 +314,7 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<StaffFulfillmentLog>(entity =>
         {
-            entity.HasKey(e => e.LogId).HasName("PK__staff_fu__9E2397E0E948D2FB");
+            entity.HasKey(e => e.LogId).HasName("PK__staff_fu__9E2397E041CAA775");
 
             entity.ToTable("staff_fulfillment_log");
 
@@ -345,7 +345,7 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<StaffSalesDaily>(entity =>
         {
-            entity.HasKey(e => e.ReportId).HasName("PK__staff_sa__779B7C58AE3A767E");
+            entity.HasKey(e => e.ReportId).HasName("PK__staff_sa__779B7C58CC9B5956");
 
             entity.ToTable("staff_sales_daily");
 
@@ -367,7 +367,7 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<StaffSalesLog>(entity =>
         {
-            entity.HasKey(e => e.LogId).HasName("PK__staff_sa__9E2397E0F405F86B");
+            entity.HasKey(e => e.LogId).HasName("PK__staff_sa__9E2397E086E6445E");
 
             entity.ToTable("staff_sales_logs");
 
@@ -401,7 +401,7 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<StaffSalesMonthly>(entity =>
         {
-            entity.HasKey(e => e.MonthlyReportId).HasName("PK__staff_sa__7FC77387CDBC7558");
+            entity.HasKey(e => e.MonthlyReportId).HasName("PK__staff_sa__7FC773875FE5E151");
 
             entity.ToTable("staff_sales_monthly");
 
@@ -424,11 +424,11 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<StoreSalesDaily>(entity =>
         {
-            entity.HasKey(e => e.DailySummaryId).HasName("PK__store_sa__D4ACC3565C2FEFD3");
+            entity.HasKey(e => e.DailySummaryId).HasName("PK__store_sa__D4ACC356C87F0811");
 
             entity.ToTable("store_sales_daily");
 
-            entity.HasIndex(e => e.ReportDate, "UQ__store_sa__7BFFBECF4E77FA0D").IsUnique();
+            entity.HasIndex(e => e.ReportDate, "UQ__store_sa__7BFFBECF8DA84555").IsUnique();
 
             entity.Property(e => e.DailySummaryId).HasColumnName("daily_summary_id");
             entity.Property(e => e.ActiveStaffCount).HasColumnName("active_staff_count");
@@ -441,7 +441,7 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<StoreSalesMonthly>(entity =>
         {
-            entity.HasKey(e => e.MonthlySummaryId).HasName("PK__store_sa__6AFCE4A89412DC77");
+            entity.HasKey(e => e.MonthlySummaryId).HasName("PK__store_sa__6AFCE4A8ABC6DEE9");
 
             entity.ToTable("store_sales_monthly");
 
@@ -458,11 +458,11 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__users__B9BE370FF3CDD5D2");
+            entity.HasKey(e => e.UserId).HasName("PK__users__B9BE370F40808BE1");
 
             entity.ToTable("users");
 
-            entity.HasIndex(e => e.Email, "UQ__users__AB6E6164123BF915").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__users__AB6E61649B16A59D").IsUnique();
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.Address)
@@ -488,6 +488,10 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(255)
                 .IsUnicode(false)
                 .HasColumnName("password_hash");
+            entity.Property(e => e.PhoneNumber)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("phone_number");
             entity.Property(e => e.Role)
                 .HasMaxLength(20)
                 .IsUnicode(false)
@@ -497,7 +501,7 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<Wishlist>(entity =>
         {
-            entity.HasKey(e => e.WishlistId).HasName("PK__wishlist__6151514E78CDBBB5");
+            entity.HasKey(e => e.WishlistId).HasName("PK__wishlist__6151514EDCD8BD54");
 
             entity.ToTable("wishlists");
 

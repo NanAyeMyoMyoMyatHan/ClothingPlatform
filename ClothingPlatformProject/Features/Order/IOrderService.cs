@@ -6,5 +6,7 @@ namespace ClothingPlatformProject.Features.Order
     {
         List<OrderHistoryDto> GetUserOrderHistory(int userId);
         OrderResultDto PlaceOrderTransaction(CheckoutRequest model);
+
+        Task<List<OrderDashboardDto>> GetAllOrder();
     }
 }

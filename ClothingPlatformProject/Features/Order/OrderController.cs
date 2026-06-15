@@ -31,5 +31,11 @@ namespace ClothingPlatformProject.Features.Order
             }
             return Ok(result);
         }
+
+        [HttpGet("{getAllOrder}")]
+        public async Task<ActionResult<List<OrderDashboardDto>>> GetAllOrdersAsync()
+        {
+            return await _orderService.GetAllOrder();
+        }
     }
 }

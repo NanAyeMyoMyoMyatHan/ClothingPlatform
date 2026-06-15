@@ -1,0 +1,99 @@
+﻿<nav aria-label="Page navigation">
+    <ul class="pagination mb-0">
+
+        @if (CurrentPage == 1)
+        {
+            <li class="page-item disabled">
+                <span class="page-link">Previous</span>
+            </li>
+        }
+        else
+        {
+            <li class="page-item">
+                <button class="page-link" @onclick="() => OnPageClick(CurrentPage - 1)">Previous</button>
+            </li>
+        }
+
+        @if (CurrentPage > 3 && CurrentPage < TotalPages - 2)
+        {
+            <li class="page-item">
+                <button class="page-link" @onclick="() => OnPageClick(1)">1</button>
+            </li>
+
+            <li class="page-item disabled">
+                <span class="page-link">...</span>
+            </li>
+
+            @for (int i = CurrentPage - 2; i <= CurrentPage + 2; i++)
+            {
+                var pageNumber = i;
+                <li class="page-item @(CurrentPage == pageNumber ? "active" : "")">
+                    <button class="page-link" @onclick="() => OnPageClick(pageNumber)">@pageNumber</button>
+                </li>
+            }
+
+            <li class="page-item disabled">
+                <span class="page-link">...</span>
+            </li>
+
+            <li class="page-item">
+                <button class="page-link" @onclick="() => OnPageClick(TotalPages)">@TotalPages</button>
+            </li>
+        }
+        else
+        {
+            @for (int i = 1; i <= Math.Min(4, TotalPages); i++)
+            {
+                var pageNumber = i;
+                <li class="page-item @(CurrentPage == pageNumber ? "active" : "")">
+                    <button class="page-link" @onclick="() => OnPageClick(pageNumber)">@pageNumber</button>
+                </li>
+            }
+
+            @if (TotalPages > 4)
+            {
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+
+                @for (int i = Math.Max(5, TotalPages - 3); i <= TotalPages; i++)
+                {
+                    var pageNumber = i;
+                    <li class="page-item @(CurrentPage == pageNumber ? "active" : "")">
+                        <button class="page-link" @onclick="() => OnPageClick(pageNumber)">@pageNumber</button>
+                    </li>
+                }
+            }
+        }
+
+        @if (CurrentPage == TotalPages || TotalPages == 0)
+        {
+            <li class="page-item disabled">
+                <span class="page-link">Next</span>
+            </li>
+        }
+        else
+        {
+            <li class="page-item">
+                <button class="page-link" @onclick="() => OnPageClick(CurrentPage + 1)">Next</button>
+            </li>
+        }
+
+    </ul>
+</nav>
+
+@code {
+    // 💡 အပြင်ကနေ Model အစား Parameter တွေနဲ့ လှမ်းထိန်းကျောင်းရန် ကြေညာခြင်း
+    [Parameter] public int CurrentPage { get; set; } = 1; // pageNo နှင့် ညီမျှသည်
+    [Parameter] public int TotalPages { get; set; } = 1;  // pageCount နှင့် ညီမျှသည်
+    [Parameter] public EventCallback<int> CurrentPageChanged { get; set; }
+
+    private async Task OnPageClick(int page)
+    {
+        if (page >= 1 && page <= TotalPages && page != CurrentPage)
+        {
+            // ခလုတ်နှိပ်လိုက်လျှင် မိခင် Parent Page ဆီသို့ စာမျက်နှာနံပါတ်အသစ် ပို့ပေးခြင်း
+            await CurrentPageChanged.InvokeAsync(page);
+        }
+    }
+}
