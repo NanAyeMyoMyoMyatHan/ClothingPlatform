@@ -44,7 +44,7 @@
 
         public DateTime? OrderDate { get; set; }
         public decimal TotalAmount { get; set; }
-        public string OrderStatus { get; set; } = "pending"; // pending, processing, shipped, delivered, cancelled
+        public string OrderStatus { get; set; }  // pending, processing, shipped, delivered, cancelled
         public string PaymentStatus { get; set; } = "unpaid";  // unpaid, paid, refunded, completed
 
         // Shipping Details

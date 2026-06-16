@@ -514,19 +514,16 @@
                             @foreach (var order in Pagedorders)
                             {
                                 <tr>
-                                    <td><strong>#ORD-@order.OrderId.ToString("D4")</strong></td>
+                                    <td><strong>ORD-@order.OrderId.ToString("D4")</strong></td>
                                     <td>@order.User.FirstName @order.User.LastName</td>
                                     <td>@order.ShippingAddress</td>
                                     <td>@order.TotalAmount.ToString("N0") MMK</td>
                                     <td>
-                                        @if (order.OrderStatus.ToLower() == "completed" || order.OrderStatus.ToLower() == "delivered")
+                                        @if (order.OrderStatus.ToLower() == "delivered")
                                         {
                                             <span class="badge badge-delivered px-3 py-2 rounded-pill text-success">Delivered</span>
                                         }
-                                        else if (order.OrderStatus.ToLower() == "processing")
-                                        {
-                                            <span class="badge badge-processing px-3 py-2 rounded-pill text-primary">Processing</span>
-                                        }
+                                       
                                         else
                                         {
                                             <span class="badge badge-pending px-3 py-2 rounded-pill text-warning">@order.OrderStatus</span>
@@ -565,7 +562,7 @@
 
                     <div class="mb-3">
                         <label class="form-label text-muted small uppercase fw-bold">Base Price (MMK)</label>
-                        <input type="number" class="luxury-input" @bind-value="model.BasePrice" placeholder="e.g., 75000" />
+                        <input type="number" class="luxury-input" @bind-value="model.BasePrice" placeholder="e.g., 75,000" />
                     </div>
 
                     <div class="mb-3">
@@ -578,18 +575,18 @@
                             }
                         </select>
                     </div>
+<div class="mb-3">
+    <label class="form-label text-muted small uppercase fw-bold">Upload Product Image</label>
+    <InputFile OnChange="HandleFileSelected" class="form-control" accept=".jpg,.jpeg,.png" />
+</div>
 
-                    <div class="mb-3">
-                        <label class="form-label text-muted small uppercase fw-bold">Image URL</label>
-                       
+<div class="mb-3">
+    <label class="form-label text-muted small uppercase fw-bold">Image URL / File Name</label>
+    <input type="text" class="luxury-input" @bind="imageUrl" placeholder="images/products/...jpg" />
+</div>
+                   
                         
-                            <input type="text" class="luxury-input" @bind="imageUrl" placeholder="images/products/...jpg" />
-                        
-                       
-                    </div>
-                        
-                    @if (editingProduct == null)
-                    {
+                    
                         <div class="mb-3">
                             <label class="form-label text-muted small uppercase fw-bold">Create Sizes (Comma-separated)</label>
                             <input type="text" class="luxury-input" @bind="selectedSizesString" placeholder="XS, S, M, L, XL" />
@@ -602,9 +599,9 @@
 
                         <div class="mb-3">
                             <label class="form-label text-muted small uppercase fw-bold">Quantity</label>
-                            <input type="text" class="luxury-input" @bind="quantity" placeholder="1,2,3" />
+                            <input type="text" class="luxury-input" @bind="selectedquantity" placeholder="1,2,3" />
                         </div>
-                    }
+                    
 
                     <div class="mt-4 d-grid gap-2">
                         @if (editingProduct == null)
@@ -630,6 +627,7 @@
                                 <th>Category</th>
                                 <th>Base Price</th>
                                 <th>Variants</th>
+                                <th>Quantity</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -644,7 +642,19 @@
                             {
                                 @foreach (var prod in PagedProducts)
                                 {
-                                    var primaryImg = prod.ProductImages?.FirstOrDefault(i => (bool)i.IsPrimary)?.ImageUrl ?? "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80";
+                                    var primaryImg = "";
+                                    var imgObj = prod.ProductImages?.FirstOrDefault(i => i.IsPrimary == true);
+
+                                    if (imgObj != null && !string.IsNullOrWhiteSpace(imgObj.ImageUrl))
+                                    {
+                                        // DB ထဲက လာတဲ့ File Name ရဲ့ ရှေ့မှာ Folder လမ်းကြောင်းကို တွဲပေးလိုက်တာပါ
+                                        primaryImg = $"images/products/{imgObj.ImageUrl.Trim()}";
+                                    }
+                                    else
+                                    {
+                                        
+                                        primaryImg = $"images/products/stdCoat.jpg";
+                                    }
                                     <tr>
                                         <td>
                                             <img src="@primaryImg" style="width: 48px; height: 60px; object-fit: cover; border-radius: 4px;" alt="Product Thumb" />
@@ -657,6 +667,9 @@
                                         <td>@prod.BasePrice.ToString("N0") MMK</td>
                                         <td>
                                             <span class="badge bg-secondary">@prod.ProductVariants.Count variants</span>
+                                        </td>
+                                        <td>
+                                            @prod.ProductVariants.FirstOrDefault()?.StockQuantity
                                         </td>
                                         <td>
                                             <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditProduct(prod)"><i class="bi bi-pencil"></i></button>
@@ -683,7 +696,7 @@
                 <div class="filter-buttons">
                     <button class="btn-luxury @(orderFilter == "All" ? "btn-luxury-solid text-white" : "") me-2" @onclick='() => FilterOrders("All")'>All Orders</button>
                     <button class="btn-luxury @(orderFilter == "pending" ? "btn-luxury-solid text-white" : "") me-2" @onclick='() => FilterOrders("pending")'>Pending</button>
-                    <button class="btn-luxury @(orderFilter == "processing" ? "btn-luxury-solid text-white" : "") me-2" @onclick='() => FilterOrders("processing")'>Processing</button>
+                    
                     <button class="btn-luxury @(orderFilter == "delivered" ? "btn-luxury-solid text-white" : "")" @onclick='() => FilterOrders("delivered")'>Delivered</button>
                 </div>
                 <span class="text-muted small">Queue Count: @filteredOrders.Count</span>
@@ -715,7 +728,7 @@
                             {
                                 var payInfo = order.Payments.FirstOrDefault()?.PaymentMethod ?? "COD";
                                 <tr>
-                                    <td><strong>#ORD-@order.OrderId.ToString("D4")</strong></td>
+                                    <td><strong>ORD-@order.OrderId.ToString("D4")</strong></td>
                                     <td>
                                         <div>@order.User.FirstName @order.User.LastName</div>
                                         <div class="small text-muted">@order.User.Email</div>
@@ -724,21 +737,18 @@
                                     <td><span class="badge bg-light text-dark border">@payInfo.ToUpper()</span></td>
                                     <td><strong>@order.TotalAmount.ToString("N0") MMK</strong></td>
                                     <td>
-                                        @if (order.OrderStatus.ToLower() == "completed" || order.OrderStatus.ToLower() == "delivered")
+                                        @if ( order.OrderStatus.ToLower() == "delivered")
                                         {
                                             <span class="badge badge-delivered px-3 py-2 rounded-pill text-success">Delivered</span>
                                         }
-                                        else if (order.OrderStatus.ToLower() == "processing")
-                                        {
-                                            <span class="badge badge-processing px-3 py-2 rounded-pill text-primary">Processing</span>
-                                        }
+                                       
                                         else
                                         {
                                             <span class="badge badge-pending px-3 py-2 rounded-pill text-warning">@order.OrderStatus</span>
                                         }
                                     </td>
                                     <td>
-                                        @if (order.OrderStatus.ToLower() == "completed" || order.OrderStatus.ToLower() == "delivered")
+                                        @if (order.OrderStatus.ToLower() == "delivered")
                                         {
                                             <span class="text-muted small"><i class="bi bi-lock-fill"></i> Locked</span>
                                         }
@@ -746,7 +756,7 @@
                                         {
                                             <select class="luxury-select py-1 px-2 small d-inline-block" style="width: 140px; font-size: 0.85rem;" @onchange="(e) => UpdateOrderStatus(order, e.Value?.ToString() ?? string.Empty)">
                                                 <option value="pending" selected="@(order.OrderStatus.ToLower() == "pending")">Pending</option>
-                                                <option value="processing" selected="@(order.OrderStatus.ToLower() == "processing")">Processing</option>
+                                                
                                                 <option value="delivered" selected="@(order.OrderStatus.ToLower() == "delivered")">Delivered</option>
                                             </select>
                                         }
@@ -772,7 +782,7 @@
                             <th>User ID</th>
                             <th>First Name</th>
                             <th>Last Name</th>
-                            <th>Email Address</th
+                            <th>Email Address</th>
                              <th>Role</th>
                             <th>Default Delivery Address</th>
                             <th>Registration Date</th>
@@ -790,7 +800,7 @@
                             @foreach (var cust in PageCustomer)
                             {
                                 <tr>
-                                    <td><strong>#USR-@cust.Id.ToString("D4")</strong></td>
+                                    <td><strong>USR-@cust.Id.ToString("D4")</strong></td>
                                     <td>@cust.First_Name</td>
                                     <td>@cust.Last_Name</td>
                                     <td>@cust.Email</td>
@@ -817,7 +827,7 @@
                             <th>User ID</th>
                             <th>First Name</th>
                             <th>Last Name</th>
-                            <th>Email Address</th
+                            <th>Email Address</th>
                              <th>Role</th>
                             <th>Default Delivery Address</th>
                             <th>Registration Date</th>
@@ -835,7 +845,7 @@
                             @foreach (var cust in PageStaff)
                             {
                                 <tr>
-                                    <td><strong>#USR-@cust.Id.ToString("D4")</strong></td>
+                                    <td><strong>USR-@cust.Id.ToString("D4")</strong></td>
                                     <td>@cust.First_Name</td>
                                     <td>@cust.Last_Name</td>
                                     <td>@cust.Email</td>

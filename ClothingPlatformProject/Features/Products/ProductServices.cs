@@ -68,20 +68,16 @@ namespace ClothingPlatformProject.Features.Product
                             context.ProductVariants.AddRange(newVariants);
                         }
 
-                        // ၄။ Image နှင့် Variants ဒေတာများကိုပါ ဒုတိယအကြိမ် သိမ်းဆည်းခြင်း
                         await context.SaveChangesAsync();
 
-                        // ၅။ ဇယားအားလုံး အောင်မြင်စွာ ဝင်သွားပြီဖြစ်၍ Transaction ကို အတည်ပြု (Commit) လုပ်ခြင်း
                         await transaction.CommitAsync();
 
                         return newProductId;
                     }
                     catch (Exception ex)
                     {
-                        // 🛑 တစ်ခုခု မှားယွင်းခဲ့ပါက ဒေတာအားလုံးကို Rollback လုပ်၍ မူလအတိုင်း ပြန်ဖြစ်စေခြင်း
                         await transaction.RollbackAsync();
 
-                        // 🟢 အကောင်းဆုံး အဆင့်မြှင့်တင်ချက်- တကယ့် SQL Inner Exception Error အစစ်အမှန်ကို ဆွဲထုတ်ပြီး အပြင်သို့ ပစ်ပေးခြင်း
                         var innerMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
                         throw new Exception($"Database Save Failed: {innerMessage}");
                     }
@@ -89,160 +85,96 @@ namespace ClothingPlatformProject.Features.Product
             }
         }
 
-        public async Task<bool> UpdateStepByStepAsync(ProductModel model)
+        public async Task<ProductDto?> GetByIdAsync(int id)
         {
-            using (var context = new AppDbContext())
+            var dto = await _db.Products
+                .Include(p=>p.Category)
+             .Include(p => p.ProductVariants)
+            .Include(p => p.ProductImages)
+            .Where(p => p.ProductId == id)
+            .Select(p => new ProductDto
+             {
+        Id = p.ProductId,
+        Name = p.Name,
+        Description = p.Description,
+        BasePrice = p.BasePrice,
+        CategoryName = p.Category.Name,
+        CategoryId = p.CategoryId,
+        VariantsDto = p.ProductVariants.Select(v => new VariantDto
+        {
+            VariantId = v.VariantId,
+            Size = v.Size,
+            Color = v.Color,
+            StockQuantity = v.StockQuantity
+        }).ToList(),
+
+        ImageDto = p.ProductImages
+            .Where(i => i.IsPrimary == true)
+            .Select(i => i.ImageUrl)
+            .FirstOrDefault()
+    })
+    .FirstOrDefaultAsync();
+       
+            return dto;
+        
+  }
+
+        public async Task<bool> UpdateProductAsync(UpdateProductRequest request)
+        {
+            var product = await _db.Products
+                .Include(p => p.ProductVariants)
+                .Include(p => p.ProductImages)
+                .FirstOrDefaultAsync(p => p.ProductId == request.ProductId);
+
+            if (product == null)
+                return false;
+
+            // 🔹 Product update
+            product.Name = request.Name;
+            product.Description = request.Description;
+            product.BasePrice = request.BasePrice;
+            product.CategoryId = request.CategoryId;
+
+            // 🔹 Image update
+            var primaryImg = product.ProductImages
+                .FirstOrDefault(i => i.IsPrimary == true);
+
+            if (primaryImg != null)
             {
-                using (var transaction = await context.Database.BeginTransactionAsync())
+                primaryImg.ImageUrl = request.ImageUrl;
+            }
+            else if (!string.IsNullOrWhiteSpace(request.ImageUrl))
+            {
+                product.ProductImages.Add(new ProductImage
                 {
-                    try
-                    {
-                        // ၁။ မူရင်း Product ရှိ၊ မရှိ Database ထဲတွင် အရင်ရှာပါ
-                        var existingProduct = await context.Products
-                            .FirstOrDefaultAsync(p => p.ProductId == model.Id); // သင့် PK အတိုင်း ညှိပေးပါ (model.Id သို့မဟုတ် model.ProductId)
+                    ImageUrl = request.ImageUrl,
+                    IsPrimary = true
+                });
+            }
 
-                        if (existingProduct == null)
-                        {
-                            throw new Exception($"Product with ID {model.Id} not found.");
-                        }
+            // 🔹 Variants update
+            foreach (var v in request.Variants)
+            {
+                var dbVariant = product.ProductVariants
+                    .FirstOrDefault(x => x.VariantId == v.VariantId);
 
-                        // ၂။ Main Product အချက်အလက်များကို Update လုပ်ခြင်း
-                        existingProduct.Name = model.Name;
-                        existingProduct.Description = model.Description;
-                        existingProduct.CategoryId = model.CategoryId;
-                        existingProduct.BasePrice = model.BasePrice;
-                        // existingProduct.UpdatedAt = DateTime.Now; // သင့် DB မှာ ပါဝင်ပါက ဖွင့်ပေးနိုင်ပါသည်
-
-                        // ၃။ Image ကို Update လုပ်ခြင်း
-                        if (model.ImageDto != null)
-                        {
-                            // ရှိပြီးသား ပုံ ရှိ၊ မရှိ စစ်ဆေးခြင်း
-                            var existingImage = await context.ProductImages
-                                .FirstOrDefaultAsync(img => img.ProductId == existingProduct.ProductId);
-
-                            if (existingImage != null)
-                            {
-                                // ရှိပြီးသားပုံဆိုလျှင် URL အသစ်လဲခြင်း
-                                existingImage.ImageUrl = model.ImageDto.ImageUrl;
-                            }
-                            else
-                            {
-                                // မူလက ပုံမရှိခဲ့ဖူးပါက အသစ်တစ်ခု Add ပေးခြင်း
-                                var newImage = new ProductImage
-                                {
-                                    ProductId = existingProduct.ProductId,
-                                    ImageUrl = model.ImageDto.ImageUrl
-                                };
-                                context.ProductImages.Add(newImage);
-                            }
-                        }
-
-                        // ၄။ Variants များကို Sync လုပ်ခြင်း (အဟောင်းများကို ဖျက်၍ အသစ်များ အစားထိုးခြင်း - အရှင်းဆုံးနည်းလမ်း)
-                        if (model.VariantsDto != null)
-                        {
-                            // (က) ဒီ Product နဲ့ ပတ်သက်ပြီး DB ထဲမှာ ရှိနေပြီးသား Variant အဟောင်းတွေကို အရင်လိုက်ရှာပြီး ဖျက်ပစ်ပါမယ်
-                            var oldVariants = context.ProductVariants
-                                .Where(v => v.ProductId == existingProduct.ProductId);
-
-                            context.ProductVariants.RemoveRange(oldVariants);
-
-                            // (ခ) UI က တက်လာတဲ့ Variants အသစ်တွေကို စုစည်းပြီး အစားထိုး ထည့်သွင်းခြင်း
-                            var updatedVariants = model.VariantsDto.Select(v => new ProductVariant
-                            {
-                                ProductId = existingProduct.ProductId,
-                                Size = v.Size,
-                                Color = v.Color,
-                                StockQuantity = v.StockQuantity,
-                                // SKU မပါလာပါက Auto-Regenerate ပြန်လုပ်ပေးခြင်း၊ ပါလာပါက ၎င်းအတိုင်း သုံးခြင်း
-                                Sku = string.IsNullOrWhiteSpace(v.Sku)
-                                    ? $"{model.Name.Replace(" ", "").ToUpper()}-{v.Size.Replace(" ", "").ToUpper()}-{v.Color.Replace(" ", "").ToUpper()}-{Random.Shared.Next(1000, 9999)}"
-                                    : v.Sku
-                            }).ToList();
-
-                            context.ProductVariants.AddRange(updatedVariants);
-                        }
-
-                        // ၅။ အပြောင်းအလဲ အားလုံးကို Database ထဲသို့ Save လုပ်ခြင်း
-                        await context.SaveChangesAsync();
-
-                        // ၆။ အားလုံး အောင်မြင်ပါက Transaction အတည်ပြုခြင်း
-                        await transaction.CommitAsync();
-                        return true;
-                    }
-                    catch (Exception ex)
-                    {
-                        // တစ်ခုခု မှားယွင်းပါက မူလအတိုင်း Rollback ပြန်လုပ်ခြင်း
-                        await transaction.RollbackAsync();
-
-                        var innerMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
-                        throw new Exception($"Database Update Failed: {innerMessage}");
-                    }
+                if (dbVariant != null)
+                {
+                    dbVariant.Size = v.Size;
+                    dbVariant.Color = v.Color;
+                    dbVariant.StockQuantity = v.StockQuantity;
                 }
             }
+
+            await _db.SaveChangesAsync();
+            return true;
         }
 
-        public ProductDto? GetProductById(int id)
-        {
-            var product = _db.Products.AsNoTracking().FirstOrDefault(x => x.ProductId == id);
-            if (product == null) return null;
+         
+            
+              
 
-            return new ProductDto
-            {
-                Id = product.ProductId,
-                Name = product.Name,
-                Description = product.Description,
-                CategoryId = product.CategoryId,
-                BasePrice = product.BasePrice
-            };
-        }
-        public List<ProductModel> GetAllProducts()
-        {
-            // 💡 အဆင့်မြှင့်ချက် ၁- .Include() တွေ အကုန်ဖြုတ်လိုက်လို့ ကုဒ်လည်းသန့်၊ ပိုလည်း မြန်သွားပါပြီ။
-            return _db.Products
-                .AsNoTracking()
-                .Select(x => new ProductModel
-                {
-                    Id = x.ProductId, // 💡 ရှေ့မှာပြင်ခဲ့တဲ့အတိုင်း Product ရဲ့ PK က 'Id' ဖြစ်ရင် x.Id လို့ ပြောင်းသုံးပေးပါ
-                    Name = x.Name,
-                    Description = x.Description,
-                    CategoryId = x.CategoryId,
-                    BasePrice = x.BasePrice,
-                    IsFeatured = true,
-                    
-
-                    // 💡 အဆင့်မြှင့်ချက် ၂- _db ကို ထပ်မခေါ်ဘဲ Navigation Property ဖြစ်တဲ့ 'x.ProductVariants' ကို တိုက်ရိုက် သုံးခြင်း
-                    VariantsDto = x.ProductVariants.Select(v => new VariantDto
-                    {
-                        VariantId = v.VariantId, // သင့် Variant Table ရဲ့ PK နာမည်အတိုင်း ညှိပေးပါ (ဥပမာ- v.Id သို့မဟုတ် v.VariantId)
-                        Size = v.Size,
-                        Color = v.Color,
-                        StockQuantity = v.StockQuantity
-                    }).ToList(),
-
-                    // 💡 အဆင့်မြှင့်ချက် ၃- Image အတွက်လည်း 'x.ProductImage' (1-to-1) သို့မဟုတ် Navigation လမ်းကြောင်းကို တိုက်ရိုက်သုံးခြင်း
-                    // 🟢 ဘယ်ဘက်က Property နာမည်ကို Image ဟု ပြောင်းလဲပြီး ညာဘက်ကို ပြည့်စုံအောင် ရေးခြင်း
-                    ImageDto = x.ProductImages != null && x.ProductImages.Any()
-                ? new ProductImageModel
-                {
-                    ImageUrl = x.ProductImages.Select(i => i.ImageUrl).FirstOrDefault() ?? string.Empty
-                }
-                : null // 💡 တကယ်လို့ Image မရှိရင် null ထည့်ပေးရန်
-                })
-                .ToList();
-        }
-        public void UpdateProduct(int id, ProductUpdateRequest model)
-        {
-            var item = _db.Products.FirstOrDefault(x => x.ProductId == id);
-            if (item == null) return;
-
-            item.Name = model.Name;
-            item.Description = model.Description;
-            item.CategoryId = model.CategoryId;
-            item.BasePrice = model.BasePrice;
-
-            _db.SaveChanges();
-        }
-
+       
         public async Task<bool> DeleteProductAsync(int productId)
         {
             var product = await _db.Products
@@ -270,40 +202,84 @@ namespace ClothingPlatformProject.Features.Product
             return true;
         }
 
-        public async Task<List<BestSellerDto>> GetAllBestSellersAsync()
+        public async Task<PagedResult<BestSellerDto>> GetAllBestSellersAsync(
+    int page,
+    int pageSize)
         {
-            return await _db.OrderItems
-        .Include(x => x.Variant)
-            .ThenInclude(v => v.Product)
-                .ThenInclude(p => p.ProductImages)
-        .GroupBy(x => x.Variant.ProductId)
-        .Select(g => new BestSellerDto
-        {
-            ProductId = g.Key,
-            Name = g.First().Variant.Product.Name,
-            TotalSold = g.Sum(x => x.Quantity),
-            BasePrice = g.First().Variant.Product.BasePrice,
-            CategoryName = g.First().Variant.Product.Category.Name,
-            ImageDto = g.First().Variant.Product.ProductImages
-                        .Select(i => i.ImageUrl)
-                        .FirstOrDefault()
+            var query = _db.OrderItems
+    .Include(x => x.Variant)
+        .ThenInclude(v => v.Product)
+            .ThenInclude(p => p.ProductImages)
 
+    .Include(x => x.Variant)
+        .ThenInclude(v => v.Product)
+            .ThenInclude(p => p.ProductVariants)
+
+    .Include(x => x.Variant)
+        .ThenInclude(v => v.Product)
+            .ThenInclude(p => p.Category)
+
+    .GroupBy(x => x.Variant.ProductId)
+                .Select(g => new BestSellerDto
+                {
+                    ProductId = g.Key,
+                    Name = g.First().Variant.Product.Name,
+                    TotalSold = g.Sum(x => x.Quantity),
+                    BasePrice = g.First().Variant.Product.BasePrice,
+                    CategoryName = g.First().Variant.Product.Category.Name,
+
+                    Description = g.First().Variant.Product.Description ?? string.Empty,
+
+                    ImageDto = g.First().Variant.Product.ProductImages
+        .Where(i => i.IsPrimary==true)
+        .Select(i => i.ImageUrl)
+        .FirstOrDefault()
+        ?? g.First().Variant.Product.ProductImages
+            .Select(i => i.ImageUrl)
+            .FirstOrDefault(),
+
+                    VariantsDto = g.First().Variant.Product.ProductVariants
+        .Select(v => new VariantDto
+        {
+            VariantId = v.VariantId,
+            Size = v.Size,
+            Color = v.Color,
+            StockQuantity = v.StockQuantity
         })
-        .OrderByDescending(x => x.TotalSold)
-        .ToListAsync();
+        .ToList()
+                })
+                .OrderByDescending(x => x.TotalSold);
+
+            var totalCount = await query.CountAsync();
+
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PagedResult<BestSellerDto>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
         }
 
-        public async Task<List<NewCreationDto>> GetAllNewCreationAsync()
+        public async Task<PagedResult<NewCreationDto>> GetAllNewCreationAsync(int page, int pageSize)
         {
-            return await _db.Products
+            var query = _db.Products
                 .AsNoTracking()
-                .Include(p => p.Category)
-                .Include(p => p.ProductImages)
-                .Include(p => p.ProductVariants)
-                .OrderByDescending(p => p.CreatedAt)
-                
-                .Take(10)// or ProductId if preferred
-                
+                .Include(p => p.Category)          // ✅ add this
+                .Include(p => p.ProductImages)     // ✅ add this
+                .Include(p => p.ProductVariants)   // ✅ add this
+                .OrderByDescending(p => p.ProductId);
+
+            var totalCount = await query.CountAsync();
+
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(p => new NewCreationDto
                 {
                     ProductId = p.ProductId,
@@ -315,7 +291,7 @@ namespace ClothingPlatformProject.Features.Product
                         : "General",
 
                     ImageDto = p.ProductImages
-                        .Where(i => i.IsPrimary==true)
+                        .Where(i => i.IsPrimary == true)
                         .Select(i => i.ImageUrl)
                         .FirstOrDefault()
                         ?? p.ProductImages
@@ -333,6 +309,64 @@ namespace ClothingPlatformProject.Features.Product
                         .ToList()
                 })
                 .ToListAsync();
+
+            return new PagedResult<NewCreationDto>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
+        }
+
+        public async Task<PagedResult<ProductDto>> GetAllProduct(int page, int pageSize)
+        {
+            var query = _db.Products
+                .AsNoTracking();
+                
+
+            var totalCount = await query.CountAsync();
+
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(p => new ProductDto
+                {
+                    Id = p.ProductId,
+                    Name = p.Name,
+                    BasePrice = p.BasePrice,
+                    Description = p.Description ?? string.Empty,
+                    CategoryName = p.Category != null
+                        ? p.Category.Name
+                        : "General",
+
+                    ImageDto = p.ProductImages
+                        .Where(i => i.IsPrimary == true)
+                        .Select(i => i.ImageUrl)
+                        .FirstOrDefault()
+                        ?? p.ProductImages
+                            .Select(i => i.ImageUrl)
+                            .FirstOrDefault(),
+
+                    VariantsDto = p.ProductVariants
+                        .Select(v => new VariantDto
+                        {
+                            VariantId = v.VariantId,
+                            Size = v.Size,
+                            Color = v.Color,
+                            StockQuantity = v.StockQuantity
+                        })
+                        .ToList()
+                })
+                .ToListAsync();
+
+            return new PagedResult<ProductDto>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
         }
     }
    

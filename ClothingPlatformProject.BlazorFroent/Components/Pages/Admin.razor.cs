@@ -3,6 +3,7 @@ using ClothingPlatformProject.BlazorFroent.Services;
 using ClothingPlatformProject.Models.Order;
 using ClothingPlatformProject.Models.User;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
@@ -33,13 +34,13 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
         // Lists
         private List<Order> allOrders = new();
-        private List<OrderDashboardDto> orders = new();
-        private List<Order> filteredOrders = new();
+        public List<OrderDashboardDto> orders = new();
+        private List<OrderDashboardDto> filteredOrders = new();
         private List<Product> allProducts = new();
         private List<Category> allCategories = new();
         private List<User> customers = new();
         private List<StaffActivityLog> activityLogs = new();
-      
+        private List<VariantDto> variants = new();
         private ProductModel model = new ProductModel();
         private bool showDeleteAlert = false;
         // Dashboard Stats
@@ -58,8 +59,9 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private decimal newProductBasePrice;
         private int newProductCategoryId;
         private string newProductImgUrl = "";
-        private string selectedSizesString = "S, M, L";
-        private string selectedColorsString = "Cream Beige, Midnight Black, Blush Pink";
+        private string selectedSizesString = "";
+        private string selectedColorsString = "";
+        private int selectedquantity;
 
         // Reports stats
         private decimal storeDailyRevenue;
@@ -130,6 +132,8 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                     .Include(p => p.ProductVariants)
                     .OrderByDescending(p => p.ProductId)
                     .ToListAsync();
+                 
+
 
                 // Load orders with users and payments
                 var response = await HttpClientServices.ExecuteAsync
@@ -162,6 +166,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                     .Take(productPageSize)
                     .AsNoTracking()
                     .ToListAsync();
+                
                 var result = await HttpClientServices.ExecuteAsync<PagedResult<UserModel>>(
                 $"api/user/customers?page={customerPage}&pageSize={customerPageSize}",
                 null,
@@ -227,9 +232,9 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                     .ToListAsync();
 
                 // Compute dashboard KPI stats
-                TotalRevenue = allOrders.Where(o => o.OrderStatus.ToLower() == "completed" || o.OrderStatus.ToLower() == "processing" || o.OrderStatus.ToLower() == "delivered").Sum(o => o.TotalAmount);
-                TotalOrders = allOrders.Count;
-                PendingOrders = allOrders.Count(o => o.OrderStatus.ToLower() == "pending");
+                TotalRevenue = orders.Where(o => o.OrderStatus.ToLower() == "delivered").Sum(o => o.TotalAmount);
+                TotalOrders = orders.Count;
+                PendingOrders = orders.Count(o => o.OrderStatus.ToLower() == "pending");
                 TotalCustomers = customers.Count;
 
                 // Load report lists
@@ -284,22 +289,28 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         }
 
         // Order methods
-        private void ApplyOrderFilter()
+        private async void ApplyOrderFilter()
         {
             if (orderFilter == "All")
             {
-                filteredOrders = allOrders;
+                filteredOrders = orders;
             }
             else
             {
-                filteredOrders = allOrders.Where(o => o.OrderStatus.Equals(orderFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+                filteredOrders = orders
+                    .Where(o => o.OrderStatus?.Trim()
+                        .Equals(orderFilter.Trim(), StringComparison.OrdinalIgnoreCase) == true)
+                    .ToList();
             }
+
+            
         }
 
         private async Task FilterOrders(string status)
         {
             orderFilter = status;
             ApplyOrderFilter();
+            await LoadData();
             await Task.CompletedTask;
         }
 
@@ -312,16 +323,6 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                 {
                     dbOrder.OrderStatus = newStatus;
                     
-                    // Add fulfillment log
-                    var log = new StaffFulfillmentLog
-                    {
-                        OrderId = order.OrderId,
-                        StaffId = Session.CurrentUser!.UserId,
-                        ActionTaken = $"Status updated to {newStatus}",
-                        Notes = "Status updated from Admin portal."
-                    };
-                    _db.StaffFulfillmentLogs.Add(log);
-
                     await _db.SaveChangesAsync();
                     successMessage = $"Order #{order.OrderId} status updated to {newStatus}.";
                     await LoadData();
@@ -400,7 +401,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                         {
                             Size = size,
                             Color = color,
-                            StockQuantity = quantity,
+                            StockQuantity = selectedquantity,
                             Sku = "" // Backend ရောက်မှ Auto-Gen လုပ်မှာမို့လို့ ဤနေရာတွင် အလွတ်ပေးခဲ့နိုင်သည် (Required ပြဿနာရှင်းပြီး)
                         });
                     }
@@ -452,63 +453,154 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                 editingProduct.Category = allCategories.FirstOrDefault(c => c.CategoryId == selectedId);
             }
         }
-        private void EditProduct(Product prod)
+
+        private async Task HandleFileSelected(InputFileChangeEventArgs e)
         {
-            editingProduct = prod;
-            model = new ProductModel
+            var file = e.File;
+            if (file != null)
             {
-                Name = prod.Name,
-                Description = prod.Description,
-                BasePrice = prod.BasePrice
-            };
-            
-            newProductCategoryId = prod.CategoryId;
-            newProductImgUrl = prod.ProductImages.FirstOrDefault(i => (bool)i.IsPrimary)?.ImageUrl ?? "";
+                // ၁။ ပုံရဲ့ နာမည်ရင်းကို ယူပါတယ် (ဥပမာ - my_dress.jpg)
+                imageUrl = $"images/products/{file.Name}";
+
+                // (သတိပြုရန်) အကယ်၍ Server ပေါ်က Folder လမ်းကြောင်းပါ တွဲချင်ရင် ဒီလို ရေးနိုင်ပါတယ်
+                // imageUrl = $"images/products/{file.Name}";
+
+                // ----------------------------------------------------
+                // 💡 အကယ်၍ ပုံကိုပါ တစ်ခါတည်း Server ပေါ် တင်ချင်ရင် (သို့) Byte ပြောင်းချင်ရင်
+                // အောက်က ကုဒ်ကို ဆက်သုံးနိုင်ပါတယ် (မလိုရင် ဖြုတ်ထားနိုင်ပါတယ်)
+                long maxFileSize = 1024 * 1024 * 5; // 5MB
+                using var stream = file.OpenReadStream(maxFileSize);
+                using var memoryStream = new MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+                var imageData = memoryStream.ToArray();
+                // ----------------------------------------------------
+            }
         }
 
+        private async Task EditProduct(Product prod)
+        {
+            editingProduct = prod;
+
+            var product = await HttpClientServices.ExecuteAsync<ProductDto>(
+                $"api/product/{prod.ProductId}",
+                null,
+                EnumHttpMethod.Get);
+
+            model = new ProductModel
+            {
+                Name = product.Name,
+                Description = product.Description,
+                BasePrice = product.BasePrice,
+            };
+
+            newProductCategoryId = prod.CategoryId;
+
+            newProductImgUrl = prod.ProductImages
+                .FirstOrDefault(i => (bool)i.IsPrimary)?.ImageUrl ?? "";
+
+            // =========================
+            // ✅ VARIANTS → INPUT FIELDS
+            // =========================
+
+            selectedColorsString = string.Join(", ",
+                product.VariantsDto?
+                    .Select(v => v.Color)
+                    .Distinct() ?? new List<string>());
+
+            selectedSizesString = string.Join(", ",
+                product.VariantsDto?
+                    .Select(v => v.Size)
+                    .Distinct() ?? new List<string>());
+
+            selectedquantity = product.VariantsDto?.FirstOrDefault()?.StockQuantity ?? 0;
+        }
         private async Task HandleUpdateProduct()
         {
             errorMessage = "";
             successMessage = "";
 
-            if (editingProduct == null) return;
+            // 💡 ခံစစ်ကုဒ် - Category မရွေးထားရင် ဆက်သွားခွင့်မပြုခြင်း
+            if (newProductCategoryId == 0)
+            {
+                errorMessage = "Please select a valid category.";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(model.Name) || model.BasePrice <= 0)
+            {
+                errorMessage = "Product name and positive base price are required.";
+                return;
+            }
 
             try
             {
-
-                var dbProd = await _db.Products.FirstOrDefaultAsync(p => p.ProductId == editingProduct.ProductId);
-                if (dbProd != null)
+                // ၁။ ဒေတာအသစ် ဆောက်မည့် မော်ဒယ်ကို အောက်ခြေက List တွေပါ တစ်ခါတည်း Instance ဆောက်ခဲ့ခြင်း
+                var product = new ProductModel
                 {
-                    dbProd.Name = model.Name;
-                    dbProd.Description = model.Description;
-                    dbProd.BasePrice = model.BasePrice;
-                    dbProd.CategoryId = newProductCategoryId;
-                    _db.Products.Update(dbProd);
-                    // Update Image
-                    var primaryImg = await _db.ProductImages.FirstOrDefaultAsync(i => i.ProductId == dbProd.ProductId && (bool)i.IsPrimary);
-                    if (primaryImg != null)
+                    Name = model.Name,
+                    Description = model.Description,
+                    BasePrice = model.BasePrice,
+                    CategoryId = newProductCategoryId,
+                    IsFeatured = true,
+                    CreatedAt = DateTime.Now,
+                    VariantsDto = new List<VariantDto>() // Null Error မတက်အောင် တစ်ခါတည်း ဆောက်ပေးခြင်း
+                };
+
+                product.ImageDto = new ProductImageModel
+                {
+                    ImageUrl = !string.IsNullOrWhiteSpace(imageUrl)
+                        ? imageUrl.Trim()
+                        : "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80"
+                };
+
+                var sizes = selectedSizesString.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+                var colors = selectedColorsString.Split(',').Select(c => c.Trim()).Where(c => !string.IsNullOrEmpty(c)).ToList();
+               
+                foreach (var size in sizes)
+                {
+                    foreach (var color in colors)
                     {
-                        primaryImg.ImageUrl = imageUrl;
-                    }
-                    else if (!string.IsNullOrWhiteSpace(imageUrl))
-                    {
-                        _db.ProductImages.Add(new ProductImage
+                        product.VariantsDto.Add(new VariantDto
                         {
-                            ProductId = dbProd.ProductId,
-                            ImageUrl = imageUrl,
-                            IsPrimary = true
+                            Size = size,
+                            Color = color,
+                            StockQuantity = selectedquantity,
+                            Sku = "" 
                         });
                     }
-                    await _db.SaveChangesAsync();
-                    successMessage = $"Product '{dbProd.Name}' updated successfully.";
+                }
+
+                var result = await HttpClientServices.ExecuteAsync<ProductModel>(
+                    "api/product",
+                    product,
+                    EnumHttpMethod.Post
+                );
+
+                if (result != null)
+                {
+                    successMessage = $"Product '{product.Name}' created successfully with its variants!";
+
+                    // UI Form ကို မူလအတိုင်း ပြန်ရှင်းခြင်း
+                    newProductCategoryId = 0;
+                    imageUrl = "";
+                    selectedSizesString = "";
+                    selectedColorsString = "";
+                    selectedquantity = 0;
+
                     ResetProductForm();
-                    await LoadData();
+                    await LoadData(); // ဇယားအသစ်ကို ပြန်ဆွဲတင်ခြင်း
+                    StateHasChanged();
+                }
+                else
+                {
+                    errorMessage = "Failed to save product. Please check API server logs.";
                 }
             }
             catch (Exception ex)
             {
-                errorMessage = "Error updating product: " + ex.Message;
+                errorMessage = "Error creating product: " + ex.Message;
             }
+
         }
         private async Task DeleteProduct(int productId)
         {
@@ -518,8 +610,6 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
             if (isConfirm)
             {
-
-
                 try
                 {
                     var response = await HttpClientServices.ExecuteAsync<bool>(

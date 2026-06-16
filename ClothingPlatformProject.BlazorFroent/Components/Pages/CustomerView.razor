@@ -54,7 +54,7 @@
     #site-header {
         position: sticky;
         top: 0;
-        z-index: 900;
+        z-index: 700;
         background: rgba(253,251,251,0.96);
         backdrop-filter: blur(12px);
         border-bottom: 1px solid var(--border);
@@ -610,6 +610,8 @@
         .cart-backdrop.open {
             display: block;
             animation: fadeIn 0.25s;
+            
+           
         }
 
     .cart-drawer {
@@ -1479,13 +1481,11 @@
         </a>
 
         <div class="header-actions">
-            <!-- Search Trigger -->
             <div class="d-none d-md-flex align-items-center border px-3 py-1 bg-white" style="border-radius: 20px;">
-                <input type="text" @bind="searchQuery" @bind:event="oninput" @onkeyup="ApplyProductFilters" placeholder="Search creations..." class="border-0 small" style="outline:none; width:150px; font-size:0.8rem;" />
+                <input type="text" @bind="searchQuery" @onkeyup="ApplyProductFilters" placeholder="Search creations..." class="border-0 small" style="outline:none; width:150px; font-size:0.8rem;" />
                 <i class="bi bi-search text-muted" @onclick='() => Navigate("shop")' style="cursor:pointer;"></i>
             </div>
 
-            <!-- Cart Trigger -->
             <button class="btn-bag" @onclick="ToggleCart">
                 <i class="bi bi-bag"></i>
                 @if (CartCount > 0)
@@ -1494,10 +1494,9 @@
                 }
             </button>
 
-            <!-- User Nav -->
             @if (Session.CurrentUser != null)
             {
-            <span class="text-muted small d-none d-sm-inline">Mingalarpar, <strong>@currentUser?.FirstName</strong></span>
+                <span class="text-muted small d-none d-sm-inline">Mingalarpar, <strong>@Session.CurrentUser.FirstName</strong></span>
             }
             else
             {
@@ -1506,24 +1505,22 @@
         </div>
     </div>
 
-    <!-- Main Navigation Tabs -->
-    <nav class="nav-tabs-bar">
+    <nav class="nav-tabs-bar" style="overflow-x: auto; display: flex; white-space: nowrap; -webkit-overflow-scrolling: touch;">
         <button class="nav-tab @(activeTab == "home" ? "active" : "")" @onclick='() => Navigate("home")'>Home</button>
         <button class="nav-tab @(activeTab == "best" ? "active" : "")" @onclick='() => Navigate("best")'>Best Seller</button>
         <button class="nav-tab @(activeTab == "shop" ? "active" : "")" @onclick='() => Navigate("shop")'>The Collection</button>
         <button class="nav-tab @(activeTab == "history" ? "active" : "")" @onclick='() => Navigate("history")'>My Purchases</button>
         <button class="nav-tab @(activeTab == "profile" ? "active" : "")" @onclick='() => Navigate("profile")'>My Profile</button>
-        @if (Session.CurrentUser != null)
-            {
-        <button class="nav-tab text-danger" @onclick="Logout" style="margin-left: auto;">Sign Out</button>
-            }
+       @if (Session.CurrentUser != null)
+        {
+            <button class="nav-tab text-danger" @onclick="Logout" style="margin-left: auto; padding-left: 20px;">Sign Out</button>
+        }
         else
         {
-            <button class="nav-tab text-danger" @onclick="Logout" style="margin-left: auto;">Sign in</button>
+            <button class="nav-tab text-danger" @onclick="Logout" style="margin-left: auto; padding-left: 20px;">Sign in</button>
         }
     </nav>
 </header>
-
 <main class="view-wrapper">
     <!-- ═══════════════ VIEW: HOME ═══════════════ -->
     @if (activeTab == "home")
@@ -1571,6 +1568,9 @@
                 
             }
         </div>
+        <Pagination CurrentPage="@PageNoC"
+                    TotalPages="@TotalPagesC"
+                    CurrentPageChanged="@ChangePage" />
         
     }
 
@@ -1622,12 +1622,16 @@
                 }
             }
         </div>
+
+        <Pagination CurrentPage="@PageNoB"
+                    TotalPages="@TotalPagesB"
+                    CurrentPageChanged="@ChangeBPage" />
     }
     
     else if (activeTab == "shop")
     {
     <div class="section-head">
-        <h2 class="section-title">The <span>Atelier Collection</span></h2>
+        <h2 class="section-title">The <span>The Collection</span></h2>
         <span class="section-count">@filteredProducts.Count creations found</span>
     </div>
 
@@ -1641,26 +1645,40 @@
         }
         else
         {
-            @foreach (var prod in filteredProducts)
+                @foreach (var prod in filteredProduct)
             {
-                // Safely extract the primary image string using a defensive null check
-                var primaryImg = prod.ProductImages?.FirstOrDefault(i => i.IsPrimary == true)?.ImageUrl
-                                 ?? "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80";
+                var primaryImg = !string.IsNullOrEmpty(prod.ImageDto)
+                                     ? prod.ImageDto
+                                     : "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80";
 
-                <div class="product-card" @onclick="() => OpenQuickView(prod)">
+                <div class="product-card best-seller" @onclick="() => OpenQuickView(prod)">
+
                     <div class="card-img-wrap">
                         <img src="@primaryImg" alt="@prod.Name" />
+
+                        <span class="badge-best">🔥New Arrival</span>
+
                         <button class="card-quick">Quick View</button>
                     </div>
+
                     <div class="card-body">
-                        <p class="card-collection">@prod.Category?.Name</p>
+                        <p class="card-collection">@prod.CategoryName</p>
                         <h3 class="card-name">@prod.Name</h3>
-                        <p class="card-price">@prod.BasePrice.ToString("N0") <span class="currency">MMK</span></p>
+
+                        <p class="card-price">
+                            @prod.BasePrice.ToString("N0")
+                            <span class="currency">MMK</span>
+                        </p>
                     </div>
+
                 </div>
+                
             }
         }
     </div>
+        <Pagination CurrentPage="@PageNo"
+                    TotalPages="@TotalPages"
+                    CurrentPageChanged="@ChangePageAll" />
     }
     
     else if (activeTab == "checkout")
@@ -1829,21 +1847,31 @@
                             </div>
                             <span class="history-total">@order.TotalAmount.ToString("N0") MMK</span>
                         </div>
-                        <div class="history-items">
-                            @foreach (var item in order.OrderItems)
-                            {
-                                var primaryImg = item.Variant.Product.ProductImages.FirstOrDefault(i => (bool)i.IsPrimary)?.ImageUrl
-                                  ?? "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80";
-                                <div class="history-item-row">
-                                    <img class="history-item-img" src="@primaryImg" alt="@item.Variant.Product.Name" />
-                                    <div>
-                                        <p class="history-item-name">@item.Variant.Product.Name</p>
-                                        <p class="history-item-meta">Size: @item.Variant.Size · Color: @item.Variant.Color · Qty: @item.Quantity</p>
-                                        <p class="history-item-price">@((item.PriceAtPurchase * item.Quantity).ToString("N0")) MMK</p>
+                            <div class="history-items">
+                                @foreach (var item in order.OrderItems)
+                                {
+                                    // 💡 ၁။ ပုံရှိမရှိကို အဆင့်ဆင့် ဘေးကင်းစွာ အရင်စစ်ထုတ်ပါတယ်
+                                    var imgObj = item.Variant?.Product?.ProductImages?.FirstOrDefault(i => i.IsPrimary == true);
+
+                                    // 💡 ၂။ ပုံရှိရင် /images/products/ လမ်းကြောင်းနဲ့ တွဲပါတယ်။ (ရှေ့က / ထည့်ပေးဖို့ အရေးကြီးပါတယ်)
+                                    var primaryImg = (imgObj != null && !string.IsNullOrWhiteSpace(imgObj.ImageUrl))
+                                        ? $"/images/products/{imgObj.ImageUrl.Trim()}"
+                                        : "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80";
+
+                                    <div class="history-item-row">
+                                        <img class="history-item-img" src="@primaryImg" alt="@(item.Variant?.Product?.Name ?? "Product")" />
+                                        <div>
+                                            <h4 class="history-item-name">@(item.Variant?.Product?.Name ?? "Unknown Product")</h4>
+                                            <p class="history-item-meta">
+                                                Size: @(item.Variant?.Size ?? "-") ·
+                                                Color: @(item.Variant?.Color ?? "-") ·
+                                                Qty: @item.Quantity
+                                            </p>
+                                            <p class="history-item-price">@((item.PriceAtPurchase * item.Quantity).ToString("N0")) MMK</p>
+                                        </div>
                                     </div>
-                                </div>
-                            }
-                        </div>
+                                }
+                            </div>
                     </div>
                 }
             }
@@ -1859,7 +1887,7 @@
             <div class="history-card" >
                 <div class="section-head px-0">
                     <h2 class="section-title">Your <span>Authentication required. Please log in to access your profile page.</span></h2>
-                    <button class="nav-tab text-danger" @onclick="Logout" style="margin-left: auto;">Login</button>
+                    <button class="nav-tab text-danger" @onclick="GotoLogin" style="margin-left: auto;">Login</button>
                 </div>
             </div>
 
@@ -1952,7 +1980,7 @@
 
                         <div class="form-group">
                             <label class="form-label-custom">Phone Number</label>
-                            <input type="text" class="form-control-custom" @bind="profPhone" />
+                            <input type="text" class="form-control-custom" @bind="coPhone" />
                         </div>
 
                         <div class="form-group">
@@ -1973,99 +2001,70 @@
     }
 </main>
 
-<!-- ═══════════════ QUICK VIEW MODAL ═══════════════ -->
 <div class="modal-overlay @(isModalOpen ? "open" : "")">
-    @if (selectedProduct != null)
+    @if (modalProduct != null)
     {
-        var primaryImg = selectedProduct.ProductImages.FirstOrDefault(i => (bool)i.IsPrimary)?.ImageUrl ?? "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80";
+        var primaryImg = !string.IsNullOrEmpty(modalProduct.ImageDto)
+            ? modalProduct.ImageDto
+            : "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80";
 
         <div class="product-modal">
-            <button class="modal-close" @onclick="CloseQuickView"><i class="bi bi-x-lg"></i></button>
+            <button class="modal-close" @onclick="CloseQuickView">
+                <i class="bi bi-x-lg"></i>
+            </button>
+
             <div class="modal-img-col">
-                <img src="@primaryImg" alt="@selectedProduct.Name" />
+                <img src="@primaryImg" alt="@modalProduct.Name" />
             </div>
+
             <div class="modal-info-col">
-                <p class="modal-collection">@selectedProduct.Category.Name</p>
-                <h2 class="modal-name">@selectedProduct.Name</h2>
-                <p class="modal-price">@selectedProduct.BasePrice.ToString("N0") <span class="currency">MMK</span></p>
-                <p class="modal-desc">@selectedProduct.Description</p>
+                <p class="modal-collection">@modalProduct.CategoryName</p>
+                <h2 class="modal-name">@modalProduct.Name</h2>
+                <p class="modal-price">
+                    @modalProduct.BasePrice.ToString("N0")
+                    <span class="currency">MMK</span>
+                </p>
+                <p class="modal-desc">@modalProduct.Description</p>
 
-                <label class="option-label">Select Size</label>
-                <div class="size-btns">
-                    @foreach (var size in selectedProduct.ProductVariants.Select(v => v.Size).Distinct())
-                    {
-                        <button class="size-btn @(selectedSize == size ? "selected" : "")" @onclick="() => SelectSize(size)">@size</button>
-                    }
-                </div>
 
-                <label class="option-label">Select Color</label>
-                <div class="color-btns">
-                    @foreach (var color in selectedProduct.ProductVariants.Select(v => v.Color).Distinct())
-                    {
-                        <button class="size-btn @(selectedColor == color ? "selected" : "")" @onclick="() => SelectColor(color)">@color</button>
-                    }
-                </div>
+                @if(modalProduct.VariantsDto != null)
+                {
+                    <label class="option-label">Select Size</label>
+                    <div class="size-btns">
+                        @foreach (var size in modalProduct.VariantsDto.Select(v => v.Size).Distinct())
+                        {
+                            <button class="size-btn @(selectedSize == size ? "selected" : "")" @onclick="() => SelectSize(size)">@size</button>
+                        }
+                    </div>
+
+                    <label class="option-label">Select Color</label>
+                    <div class="color-btns">
+                        @foreach (var color in modalProduct.VariantsDto.Select(v => v.Color).Distinct())
+                        {
+                            <button class="size-btn @(selectedColor == color ? "selected" : "")" @onclick="() => SelectColor(color)">@color</button>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p>There is no size and color</p>
+                }
 
                 @if (!string.IsNullOrEmpty(modalErrorMessage))
                 {
-                    <p class="modal-error"><i class="bi bi-exclamation-triangle"></i> @modalErrorMessage</p>
+                    <p class="modal-error">
+                        <i class="bi bi-exclamation-triangle"></i> @modalErrorMessage
+                    </p>
                 }
 
-                <button class="btn-add-bag" @onclick="AddToBagAsync">Add to Bag</button>
+                <button class="btn-add-bag" @onclick="AddToBagUnified">Add to Bag</button>
             </div>
         </div>
     }
 </div>
-
-<!-- ═══════════════ QUICK VIEW MODAL ═══════════════ -->
-<div class="modal-overlay @(isModalOpen ? "open" : "")">
-    @if (selectedProducts != null)
-    {
-        var primaryImg = !string.IsNullOrEmpty(selectedProducts.ImageDto)
-                                     ? selectedProducts.ImageDto
-                                     : "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80";
-
-        <div class="product-modal">
-            <button class="modal-close" @onclick="CloseQuickView"><i class="bi bi-x-lg"></i></button>
-            <div class="modal-img-col">
-                <img src="@primaryImg" alt="@selectedProducts.Name" />
-            </div>
-            <div class="modal-info-col">
-                <p class="modal-collection">@selectedProducts.CategoryName</p>
-                <h2 class="modal-name">@selectedProducts.Name</h2>
-                <p class="modal-price">@selectedProducts.BasePrice.ToString("N0") <span class="currency">MMK</span></p>
-                <p class="modal-desc">@selectedProducts.Description</p>
-
-                <label class="option-label">Select Size</label>
-                <div class="size-btns">
-                    @foreach (var size in selectedProducts.VariantsDto.Select(v => v.Size).Distinct())
-                    {
-                        <button class="size-btn @(selectedSize == size ? "selected" : "")" @onclick="() => SelectSize(size)">@size</button>
-                    }
-                </div>
-
-                <label class="option-label">Select Color</label>
-                <div class="color-btns">
-                    @foreach (var color in selectedProducts.VariantsDto.Select(v => v.Color).Distinct())
-                    {
-                        <button class="size-btn @(selectedColor == color ? "selected" : "")" @onclick="() => SelectColor(color)">@color</button>
-                    }
-                </div>
-
-                @if (!string.IsNullOrEmpty(modalErrorMessage))
-                {
-                    <p class="modal-error"><i class="bi bi-exclamation-triangle"></i> @modalErrorMessage</p>
-                }
-
-                <button class="btn-add-bag" @onclick="AddToBagAsync">Add to Bag</button>
-            </div>
-        </div>
-    }
-</div>
-
 
 <!-- ═══════════════ CART DRAWER ═══════════════ -->
-<div class="cart-backdrop @(isCartOpen ? "open" : "")" @onclick="ToggleCart"></div>
+<div class="cart-backdrop mt-3 @(isCartOpen ? "open" : "")" @onclick="ToggleCart"></div>
 <div class="cart-drawer @(isCartOpen ? "open" : "")">
     <div class="cart-header">
         <span class="cart-title">Shopping Bag</span>

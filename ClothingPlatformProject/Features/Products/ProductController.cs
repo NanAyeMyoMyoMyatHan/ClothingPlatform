@@ -15,39 +15,36 @@ namespace ClothingPlatformProject.Features.Product
             _productService = productService;
         }
 
-        [HttpGet]
-        public IActionResult GetAllProducts()
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
         {
-            return Ok(_productService.GetAllProducts());
+            var product = await _productService.GetByIdAsync(id);
+
+            if (product == null)
+                return NotFound();
+
+            return Ok(product);
         }
 
-        [HttpGet("{id:int}")]
-        public IActionResult GetProductById(int id)
-        {
-            var result = _productService.GetProductById(id);
-            if (result == null) return NotFound();
-            return Ok(result);
-        }
-        
-      
-
+        // UPDATE product
         [HttpPut("{id}")]
-        public IActionResult UpdateProduct(int id, ProductUpdateRequest model)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateProductRequest request)
         {
-            _productService.UpdateProduct(id, model);
-            return Ok("Update Success");
-        }
+            if (id != request.ProductId)
+                return BadRequest("ID mismatch");
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProduct(int id)
-        {
-            var result = await _productService.DeleteProductAsync(id);
+            var result = await _productService.UpdateProductAsync(request);
 
             if (!result)
                 return NotFound();
 
-            return Ok(true);
+            return Ok(new
+            {
+                message = "Product updated successfully"
+            });
         }
+
+
         [HttpPost] // 💡 အနောက်မှာ ဘာမှ ထပ်မထည့်ပါနဲ့။ ဒါဆိုရင် Base URL "api/product" အတိုင်း အလုပ်လုပ်ပါလိမ့်မယ်။
         public async Task<IActionResult> SaveProduct([FromBody] ProductModel model)
         {
@@ -58,18 +55,30 @@ namespace ClothingPlatformProject.Features.Product
             return Ok(new { id = generatedProductId, message = "Product saved successfully!" });
         }
         // ၁။ Best Sellers ဆွဲထုတ်မည့် API (URL လမ်းကြောင်း: api/product/bestsellers)
-        [HttpGet("bestsellers")] // 🟢 တွန့်ကွင်းဖြုတ်ပြီး နာမည်တိုက်ရိုက်ပေးလိုက်ပါပြီ
-        public async Task<ActionResult<List<BestSellerDto>>> GetBestSellers()
+        [HttpGet("bestSeller")]
+        public async Task<IActionResult> GetBestSellers(
+     int page = 1,
+     int pageSize = 5)
         {
-            var result = await _productService.GetAllBestSellersAsync();
-            return Ok(result); // 💡 ActionResult နှင့် Ok() သုံးပေးခြင်းက ပိုမိုစနစ်ကျပါသည်
+            var result = await _productService.GetAllBestSellersAsync(page, pageSize);
+            return Ok(result);
         }
 
         // ၂။ New Creations ဆွဲထုတ်မည့် API (URL လမ်းကြောင်း: api/product/new-creations)
-        [HttpGet("new-creations")] // 🟢 တွန့်ကွင်းဖြုတ်ပြီး လမ်းကြောင်းသီးသန့်ခွဲလိုက်ပါပြီ
-        public async Task<ActionResult<List<NewCreationDto>>> GetNewCreation()
+        [HttpGet("newCreation")]
+        public async Task<IActionResult> GetNewCreations(
+    int page = 1,
+    int pageSize = 5)
         {
-            var result = await _productService.GetAllNewCreationAsync();
+            var result = await _productService.GetAllNewCreationAsync(page, pageSize);
+            return Ok(result);
+        }
+
+        [HttpGet("allcollection")]
+        public async Task<IActionResult> GetAllCollection(int page = 1,
+    int pageSize = 5)
+        {
+            var result = await _productService.GetAllProduct(page, pageSize);
             return Ok(result);
         }
     }

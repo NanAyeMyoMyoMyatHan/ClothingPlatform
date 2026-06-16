@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -30,6 +31,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private string activeTab = "home";
         private List<Product> allProducts = new();
         private List<Product> filteredProducts = new();
+        private List<ProductDto> filteredProduct = new();
         private List<Category> allCategories = new();
         private List<Order> userOrders = new();
         private User? currentUser;
@@ -37,12 +39,21 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         // Search & filter
         private int selectedCategoryId = 0;
         private string searchQuery = "";
-        private int PageNo = 1;
+        private int PageNoB = 1;
+        private int PageNoC = 1;
         private int PageSize = 5;
+        private int TotalPageCountB;
+        private int TotalPageCountC;
+        private int TotalPagesB;
+        private int TotalPagesC;
+
+        private int PageNo = 1;
         private int TotalPageCount;
-        private int TotalPages => (int)Math.Ceiling((double)TotalPageCount / PageSize);
+        private int TotalPages;
+        private int pageSize = 5;
         // Quick View Modal
         private Product? selectedProduct;
+        private ProductDto? selectedProductDto;
         private string selectedSize = "";
         private string selectedColor = "";
         private string modalErrorMessage = "";
@@ -90,28 +101,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         {
             // Seed sample products/categories if empty
             DbSeeder.Seed(_db);
-            try
-            {
-                // API မှ Best Sellers လှမ်းဆွဲခြင်း
-                var bestResult = await httpClientServices.ExecuteAsync<List<BestSellerDto>>("api/product/bestsellers", null, EnumHttpMethod.Get);
-                if (bestResult != null)
-                {
-                    bestSeller = bestResult;
-                }
-
-                // API မှ New Creations လှမ်းဆွဲခြင်း
-                var newResult = await httpClientServices.ExecuteAsync<List<NewCreationDto>>("api/product/new-creations", null, EnumHttpMethod.Get);
-                if (newResult != null)
-                {
-                    newCreation = newResult;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error loading UI Data: {ex.Message}");
-            }
-
-
+            
 
             // Authentication check
             if (!Session.IsLoggedIn)
@@ -121,7 +111,10 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
             currentUser = Session.CurrentUser;
             LoadProfileFields();
-            await LoadData();
+            await LoadData();         // loads categories, products, orders
+            await LoadNewCreation();  // loads new creation page 1
+            await LoadBestSeller();   // loads best seller page 1
+            await LoadCollection();
         }
 
         private void LoadProfileFields()
@@ -137,17 +130,84 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                 // Pre-fill checkout details
                 coName = $"{currentUser.FirstName} {currentUser.LastName}";
                 coAddress = currentUser.Address ?? "";
-                coPhone = profPhone;
+                coPhone = currentUser.PhoneNumber;
                 coCity = profCity;
+            }
+            else
+            {
+                return;
             }
 
         }
+        private async Task LoadCollection()
+        {
+            var res = await httpClientServices.ExecuteAsync<PagedResult<ProductDto>>(
+                $"api/product/allcollection?page={PageNo}&pageSize={pageSize}",
+                null,
+                EnumHttpMethod.Get);
 
+            if (res != null)
+            {
+                filteredProduct = res.Items;
+                TotalPageCount = res.TotalCount;
+                TotalPages = (int)Math.Ceiling((double)TotalPageCount / pageSize);
+            }
+        }
+
+        // Separate method just for new creation pagination
+        private async Task LoadNewCreation()
+        {
+            var results = await httpClientServices.ExecuteAsync<PagedResult<NewCreationDto>>(
+                $"api/product/newCreation?page={PageNoC}&pageSize={PageSize}",
+                null,
+                EnumHttpMethod.Get);
+
+            if (results != null)
+            {
+                newCreation = results.Items;
+                TotalPageCountC = results.TotalCount;
+                TotalPagesC = (int)Math.Ceiling((double)TotalPageCountC / PageSize);
+            }
+        }
+
+        // Separate method just for best seller pagination
+        private async Task LoadBestSeller()
+        {
+            var result = await httpClientServices.ExecuteAsync<PagedResult<BestSellerDto>>(
+                $"api/product/bestSeller?page={PageNoB}&pageSize={PageSize}",
+                null,
+                EnumHttpMethod.Get);
+
+            if (result != null)
+            {
+                bestSeller = result.Items;
+                TotalPageCountB = result.TotalCount;
+                TotalPagesB = (int)Math.Ceiling((double)result.TotalCount / PageSize);
+            }
+        }
+
+        // Update ChangePage to only reload what's needed
         private async Task ChangePage(int newPage)
         {
-            PageNo = newPage;
-            await LoadData(); // စာမျက်နှာပြောင်းရင် ဒေတာ ပြန်မောင်းတင်မယ်
+            PageNoC = newPage;
+            await LoadNewCreation();
+            StateHasChanged();
         }
+
+        private async Task ChangePageAll(int newPage)
+        {
+            PageNo = newPage;
+            await LoadCollection();
+            StateHasChanged();
+        }
+
+        private async Task ChangeBPage(int newPage)
+        {
+            PageNoB = newPage;
+            await LoadBestSeller();
+            StateHasChanged(); // ⚠️ you were also missing this!
+        }
+
         private async Task LoadData()
         {
             try
@@ -174,8 +234,6 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                         .Where(o => o.UserId == currentUser.UserId)
                         .OrderByDescending(o => o.OrderId)
                         .ToListAsync();
-
-                   
 
                     // Calculate loyalty points: 1 point per 100 MMK spent on completed/delivered orders
                     var totalSpent = userOrders
@@ -228,43 +286,84 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         }
 
         // Quick View Modal methods
-        private void OpenQuickView(Product product)
-        {
-            selectedProduct = product;
-            selectedSize = "";
-            selectedColor = "";
-            modalErrorMessage = "";
-            isModalOpen = true;
-        }
-
+       
        
 
         // 🟢 အမှန်ပြင်ဆင်ရန်ပုံစံ (Type ကို BestSellerDto သို့ ပြောင်းလဲလိုက်ပါပြီ):
         private BestSellerDto? selectedProducts;
 
-        private void OpenQuickViews(BestSellerDto product)
-        {
-            selectedProducts = product; // 🤝 အမျိုးအစား တူသွားပြီဖြစ်လို့ အနီလိုင်း ချက်ချင်း ပျောက်သွားပါလိမ့်မည်
-            selectedSize = "";
-            selectedColor = "";
-            modalErrorMessage = "";
-            isModalOpen = true;
-        }
+        
         private NewCreationDto? selectedProductss;
 
-        private void OpenQuickViewss(NewCreationDto product)
+        private void OpenQuickView(ProductDto prod)
         {
-            selectedProductss = product; // 🤝 အမျိုးအစား တူသွားပြီဖြစ်လို့ အနီလိုင်း ချက်ချင်း ပျောက်သွားပါလိမ့်မည်
+            modalProduct = new ModalProductDto
+            {
+                Name = prod.Name,
+                CategoryName = prod.CategoryName,
+                BasePrice = prod.BasePrice,
+                Description = prod.Description,
+                ImageDto = prod.ImageDto,
+                VariantsDto = prod.VariantsDto,
+                AddToBagMethod = "collection"
+            };
             selectedSize = "";
             selectedColor = "";
             modalErrorMessage = "";
             isModalOpen = true;
         }
+
+        private void OpenQuickViews(BestSellerDto prod)
+        {
+            modalProduct = new ModalProductDto
+            {
+                Name = prod.Name,
+                CategoryName = prod.CategoryName,
+                BasePrice = prod.BasePrice,
+                Description = prod.Description,
+                ImageDto = prod.ImageDto,
+                VariantsDto = prod.VariantsDto ?? new List<VariantDto>(), // ✅ null guard
+                AddToBagMethod = "bestseller"
+            };
+            selectedSize = "";
+            selectedColor = "";
+            modalErrorMessage = "";
+            isModalOpen = true;
+
+        }
+
+        private void OpenQuickViewss(NewCreationDto prod)
+        {
+            modalProduct = new ModalProductDto
+            {
+                Name = prod.Name,
+                CategoryName = prod.CategoryName,
+                BasePrice = prod.BasePrice,
+                Description = prod.Description,
+                ImageDto = prod.ImageDto,
+                VariantsDto = prod.VariantsDto ?? new List<VariantDto>(), // ✅ null guard
+                AddToBagMethod = "newcreation"
+            };
+
+            selectedSize = "";
+            selectedColor = "";
+            modalErrorMessage = "";
+            isModalOpen = true;
+        }
+
+
 
         private void CloseQuickView()
         {
             isModalOpen = false;
-            selectedProduct = null;
+            modalProduct = null;
+        }
+
+        private async Task AddToBagUnified()
+        {
+            
+                    await AddToBagAsync();
+       
         }
 
         private void SelectSize(string size)
@@ -285,81 +384,66 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             isCartOpen = !isCartOpen;
         }
 
-        
+
         private async Task AddToBagAsync()
         {
-            if (Session.CurrentUser== null)
+            if (Session.CurrentUser == null)
             {
-                string message = $"You are not logging in.Please login to make order";
-                var isComfirm = await JSRuntime.InvokeAsync<bool>("confirm", message);
-                if (isComfirm)
+                string message = "You are not logging in. Please login to make order";
+                var isConfirm = await JSRuntime.InvokeAsync<bool>("confirm", message);
+                if (isConfirm)
                 {
                     Nav.NavigateTo("login?returnUrl=" + Uri.EscapeDataString(Nav.Uri));
-                    return;
                 }
+                return;
+            }
 
-               
+            if (modalProduct == null) return;
+
+            if (string.IsNullOrEmpty(selectedSize) || string.IsNullOrEmpty(selectedColor))
+            {
+                modalErrorMessage = "Please select both a size and color before adding to bag.";
+                return;
+            }
+
+            var variant = modalProduct.VariantsDto
+                .FirstOrDefault(v => v.Size == selectedSize && v.Color == selectedColor);
+
+            if (variant == null)
+            {
+                modalErrorMessage = "Selected combination is currently unavailable.";
+                return;
+            }
+
+            if (variant.StockQuantity <= 0)
+            {
+                modalErrorMessage = "This variant is currently out of stock.";
+                return;
+            }
+
+            var cartItem = cart.FirstOrDefault(i => i.VariantId == variant.VariantId);
+            if (cartItem != null)
+            {
+                cartItem.Qty++;
             }
             else
             {
-
-
-                if (selectedProduct == null) return;
-
-                if (string.IsNullOrEmpty(selectedSize) || string.IsNullOrEmpty(selectedColor))
+                cart.Add(new CartItemModel
                 {
-                    modalErrorMessage = "Please select both a size and color before adding to bag.";
-                    return;
-                }
-
-                var variant = selectedProduct.ProductVariants
-                    .FirstOrDefault(v => v.Size == selectedSize && v.Color == selectedColor);
-
-                if (variant == null)
-                {
-                    modalErrorMessage = "Selected combination is currently unavailable.";
-                    return;
-                }
-
-                if (variant.StockQuantity <= 0)
-                {
-                    modalErrorMessage = "This variant is currently out of stock.";
-                    return;
-                }
-
-                var cartItem = cart.FirstOrDefault(i => i.VariantId == variant.VariantId);
-                if (cartItem != null)
-                {
-                    if (cartItem.Qty + 1 > variant.StockQuantity)
-                    {
-                        modalErrorMessage = $"Cannot add more items. Only {variant.StockQuantity} items in stock.";
-                        return;
-                    }
-                    cartItem.Qty++;
-                }
-                else
-                {
-                    var primaryImg = selectedProduct.ProductImages.FirstOrDefault(i => (bool)i.IsPrimary)?.ImageUrl
-                        ?? "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80";
-
-                    cart.Add(new CartItemModel
-                    {
-                        VariantId = variant.VariantId,
-                        Name = selectedProduct.Name,
-                        Size = selectedSize,
-                        Color = selectedColor,
-                        Price = selectedProduct.BasePrice + (variant.PriceModifier ?? 0.00m),
-                        Qty = 1,
-                        ImgUrl = primaryImg
-                    });
-                }
-
-                ShowToast($"Added {selectedProduct.Name} to bag!");
-                CloseQuickView();
-                isCartOpen = true;
+                    VariantId = variant.VariantId,
+                    Name = modalProduct.Name,
+                    Size = selectedSize,
+                    Color = selectedColor,
+                    Price = modalProduct.BasePrice,
+                    Qty = 1,
+                    ImgUrl = modalProduct.ImageDto ?? ""
+                });
             }
-        }
 
+            ShowToast($"Added {modalProduct.Name} to bag!");
+            CloseQuickView();
+            isCartOpen = true;
+        }
         private void UpdateQty(CartItemModel item, int change)
         {
             // Verify stock
@@ -420,91 +504,104 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
         private async Task PlaceOrder()
         {
-            if (string.IsNullOrWhiteSpace(coName) || string.IsNullOrWhiteSpace(coPhone) || 
-                string.IsNullOrWhiteSpace(coAddress) || string.IsNullOrWhiteSpace(coCity))
+            string message = "Are you sure you want to comfirm you purchase??";
+            var isConfirm = await JSRuntime.InvokeAsync<bool>("confirm", message);
+            if (isConfirm)
             {
-                ShowToast("Please fill in all delivery details");
-                return;
-            }
 
-            if (string.IsNullOrEmpty(selectedPayment))
-            {
-                ShowToast("Please select a payment method");
-                return;
-            }
 
-            if (!slipUploaded)
-            {
-                ShowToast("Please upload your payment screenshot");
-                return;
-            }
 
-            if (!cart.Any())
-            {
-                ShowToast("Your bag is empty");
-                return;
-            }
 
-            try
-            {
-                // Create checkout order via transactions
-                var total = CartTotal;
-
-                var order = new Order
+                if (string.IsNullOrWhiteSpace(coName) || string.IsNullOrWhiteSpace(coPhone) ||
+                    string.IsNullOrWhiteSpace(coAddress) || string.IsNullOrWhiteSpace(coCity))
                 {
-                    UserId = currentUser!.UserId,
-                    TotalAmount = total,
-                    OrderStatus = "pending",
-                    PaymentStatus = selectedPayment == "cod" ? "unpaid" : "pending",
-                    ShippingAddress = $"{coAddress}, {coCity} (Phone: {coPhone})",
-                    CreatedAt = DateTime.Now
-                };
-
-                _db.Orders.Add(order);
-                await _db.SaveChangesAsync(); // generate OrderId
-
-                // Add OrderItems and deduct stock
-                foreach (var item in cart)
-                {
-                    _db.OrderItems.Add(new OrderItem
-                    {
-                        OrderId = order.OrderId,
-                        VariantId = item.VariantId,
-                        Quantity = item.Qty,
-                        PriceAtPurchase = item.Price
-                    });
-
-                    // Decrement variant stock
-                    var variant = await _db.ProductVariants.FirstOrDefaultAsync(v => v.VariantId == item.VariantId);
-                    if (variant != null)
-                    {
-                        variant.StockQuantity = Math.Max(0, variant.StockQuantity - item.Qty);
-                    }
+                    ShowToast("Please fill in all delivery details");
+                    return;
                 }
 
-                // Add Payment entry
-                _db.Payments.Add(new Payment
+                if (string.IsNullOrEmpty(selectedPayment))
                 {
-                    OrderId = order.OrderId,
-                    PaymentMethod = selectedPayment.ToUpper(),
-                    PaymentStatus = selectedPayment == "cod" ? "pending" : "completed",
-                    Amount = total,
-                    TransactionId = selectedPayment == "cod" ? "COD" : "TXN-" + Guid.NewGuid().ToString().Substring(0, 8).ToUpper(),
-                    CreatedAt = DateTime.Now
-                });
+                    ShowToast("Please select a payment method");
+                    return;
+                }
 
-                await _db.SaveChangesAsync();
+                if (!slipUploaded)
+                {
+                    ShowToast("Please upload your payment screenshot");
+                    return;
+                }
 
-                pointsEarnedInOrder = (int)(total / 100);
-                confirmedOrderId = $"ORD-{order.OrderId:D4}";
-                isSuccessOpen = true;
+                if (!cart.Any())
+                {
+                    ShowToast("Your bag is empty");
+                    return;
+                }
+
+                try
+                {
+                    // Create checkout order via transactions
+                    var total = CartTotal;
+
+                    var order = new Order
+                    {
+                        UserId = currentUser!.UserId,
+                        TotalAmount = total,
+                        OrderStatus = "pending",
+                        PaymentStatus = selectedPayment == "cod" ? "unpaid" : "pending",
+                        ShippingAddress = $"{coAddress}, {coCity} (Phone: {coPhone})",
+                        CreatedAt = DateTime.Now
+                    };
+
+                    _db.Orders.Add(order);
+                    await _db.SaveChangesAsync(); // generate OrderId
+
+                    // Add OrderItems and deduct stock
+                    foreach (var item in cart)
+                    {
+                        _db.OrderItems.Add(new OrderItem
+                        {
+                            OrderId = order.OrderId,
+                            VariantId = item.VariantId,
+                            Quantity = item.Qty,
+                            PriceAtPurchase = item.Price
+                        });
+
+                        // Decrement variant stock
+                        var variant = await _db.ProductVariants.FirstOrDefaultAsync(v => v.VariantId == item.VariantId);
+                        if (variant != null)
+                        {
+                            variant.StockQuantity = Math.Max(0, variant.StockQuantity - item.Qty);
+                        }
+                    }
+
+                    // Add Payment entry
+                    _db.Payments.Add(new Payment
+                    {
+                        OrderId = order.OrderId,
+                        PaymentMethod = selectedPayment.ToUpper(),
+                        PaymentStatus = selectedPayment == "cod" ? "pending" : "completed",
+                        Amount = total,
+                        TransactionId = selectedPayment == "cod" ? "COD" : "TXN-" + Guid.NewGuid().ToString().Substring(0, 8).ToUpper(),
+                        CreatedAt = DateTime.Now
+                    });
+
+                    await _db.SaveChangesAsync();
+
+                    pointsEarnedInOrder = (int)(total / 100);
+                    confirmedOrderId = $"ORD-{order.OrderId:D4}";
+                    isSuccessOpen = true;
+                }
+                catch (Exception ex)
+                {
+                    ShowToast("Error placing order: " + ex.Message);
+                }
+                
             }
-            catch (Exception ex)
+            else
             {
-                ShowToast("Error placing order: " + ex.Message);
+                return;
             }
         }
-
         private async Task AfterOrder()
         {
             isSuccessOpen = false;
@@ -559,7 +656,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             {
                 coName = string.IsNullOrWhiteSpace(coName) ? $"{currentUser.FirstName} {currentUser.LastName}" : coName;
                 coAddress = string.IsNullOrWhiteSpace(coAddress) ? currentUser.Address : coAddress;
-                coPhone = string.IsNullOrWhiteSpace(coPhone) ? profPhone : coPhone;
+                coPhone = string.IsNullOrWhiteSpace(coPhone) ? currentUser.PhoneNumber : coPhone;
                 coCity = string.IsNullOrWhiteSpace(coCity) ? profCity : coCity;
             }
         }
@@ -578,8 +675,14 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             });
         }
 
+        private void GotoLogin()
+        {
+            Nav.NavigateTo("/login");
+        }
         private void Logout()
         {
+            
+            currentUser = null;
             Session.Logout();
             Nav.NavigateTo("/login");
         }
@@ -595,10 +698,19 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             public int Qty { get; set; }
             public string ImgUrl { get; set; } = "";
         }
-
-        private async Task BestSeller()
+        // Unified modal model
+        private class ModalProductDto
         {
-            var result = await httpClientServices.ExecuteAsync<List<BestSellerDto>>("api/order", EnumHttpMethod.Get);
+            public string Name { get; set; } = "";
+            public string CategoryName { get; set; } = "";
+            public decimal BasePrice { get; set; }
+            public string Description { get; set; } = "";
+            public string? ImageDto { get; set; }
+            public List<VariantDto> VariantsDto { get; set; } = new();
+            public string AddToBagMethod { get; set; } = ""; // "collection", "bestseller", "newcreation"
         }
+
+        private ModalProductDto? modalProduct = null;
+
     }
 }

@@ -53,7 +53,7 @@ namespace ClothingPlatformProject.Features.User
             var totalCount = await query.CountAsync();
 
             var users = await query
-                .OrderByDescending(u => u.UserId)
+                
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Where(u => u.Role == "staff")
