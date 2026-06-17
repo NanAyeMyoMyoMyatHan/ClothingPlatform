@@ -46,8 +46,9 @@ namespace ClothingPlatformProject.Features.Product
                         {
                             var newImage = new ProductImage
                             {
-                                ProductId = newProductId, // အပေါ်မှ ရလာသော ID အစစ်ကို သုံးခြင်း
-                                ImageUrl = model.ImageDto.ImageUrl
+                                ProductId = newProductId,
+                                ImageUrl = model.ImageDto.ImageUrl,
+                                IsPrimary = true  // ← ဒါထည့်ပါ
                             };
                             context.ProductImages.Add(newImage);
                         }
@@ -171,10 +172,6 @@ namespace ClothingPlatformProject.Features.Product
         }
 
          
-            
-              
-
-       
         public async Task<bool> DeleteProductAsync(int productId)
         {
             var product = await _db.Products
@@ -203,23 +200,24 @@ namespace ClothingPlatformProject.Features.Product
         }
 
         public async Task<PagedResult<BestSellerDto>> GetAllBestSellersAsync(
-    int page,
-    int pageSize)
+    int page, int pageSize, string? search = null, int categoryId = 0)
         {
             var query = _db.OrderItems
-    .Include(x => x.Variant)
-        .ThenInclude(v => v.Product)
-            .ThenInclude(p => p.ProductImages)
+                .AsNoTracking()
+                .Where(x => x.Variant != null && x.Variant.Product != null); // safety guard
 
-    .Include(x => x.Variant)
-        .ThenInclude(v => v.Product)
-            .ThenInclude(p => p.ProductVariants)
+            // Filter BEFORE GroupBy
+            if (categoryId > 0)
+                query = query.Where(x => x.Variant.Product.CategoryId == categoryId);
 
-    .Include(x => x.Variant)
-        .ThenInclude(v => v.Product)
-            .ThenInclude(p => p.Category)
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(x =>
+                    x.Variant.Product.Name.Contains(search) ||
+                    (x.Variant.Product.Description != null &&
+                     x.Variant.Product.Description.Contains(search)));
 
-    .GroupBy(x => x.Variant.ProductId)
+            var grouped = query
+                .GroupBy(x => x.Variant.ProductId)
                 .Select(g => new BestSellerDto
                 {
                     ProductId = g.Key,
@@ -227,32 +225,29 @@ namespace ClothingPlatformProject.Features.Product
                     TotalSold = g.Sum(x => x.Quantity),
                     BasePrice = g.First().Variant.Product.BasePrice,
                     CategoryName = g.First().Variant.Product.Category.Name,
-
                     Description = g.First().Variant.Product.Description ?? string.Empty,
-
                     ImageDto = g.First().Variant.Product.ProductImages
-        .Where(i => i.IsPrimary==true)
-        .Select(i => i.ImageUrl)
-        .FirstOrDefault()
-        ?? g.First().Variant.Product.ProductImages
-            .Select(i => i.ImageUrl)
-            .FirstOrDefault(),
-
+                        .Where(i => i.IsPrimary == true)
+                        .Select(i => i.ImageUrl)
+                        .FirstOrDefault()
+                        ?? g.First().Variant.Product.ProductImages
+                            .Select(i => i.ImageUrl)
+                            .FirstOrDefault(),
                     VariantsDto = g.First().Variant.Product.ProductVariants
-        .Select(v => new VariantDto
-        {
-            VariantId = v.VariantId,
-            Size = v.Size,
-            Color = v.Color,
-            StockQuantity = v.StockQuantity
-        })
-        .ToList()
+                        .Select(v => new VariantDto
+                        {
+                            VariantId = v.VariantId,
+                            Size = v.Size,
+                            Color = v.Color,
+                            StockQuantity = v.StockQuantity
+                        })
+                        .ToList()
                 })
                 .OrderByDescending(x => x.TotalSold);
 
-            var totalCount = await query.CountAsync();
+            var totalCount = await grouped.CountAsync();
 
-            var items = await query
+            var items = await grouped
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
@@ -266,18 +261,26 @@ namespace ClothingPlatformProject.Features.Product
             };
         }
 
-        public async Task<PagedResult<NewCreationDto>> GetAllNewCreationAsync(int page, int pageSize)
+        public async Task<PagedResult<NewCreationDto>> GetAllNewCreationAsync(
+    int page, int pageSize, string? search = null, int categoryId = 0)
         {
             var query = _db.Products
                 .AsNoTracking()
-                .Include(p => p.Category)          // ✅ add this
-                .Include(p => p.ProductImages)     // ✅ add this
-                .Include(p => p.ProductVariants)   // ✅ add this
-                .OrderByDescending(p => p.ProductId);
+                .AsQueryable();
+
+            // Filters FIRST
+            if (categoryId > 0)
+                query = query.Where(p => p.CategoryId == categoryId);
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(p =>
+                    p.Name.Contains(search) ||
+                    (p.Description != null && p.Description.Contains(search)));
 
             var totalCount = await query.CountAsync();
 
             var items = await query
+                .OrderByDescending(p => p.ProductId) // order AFTER filtering
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(p => new NewCreationDto
@@ -286,10 +289,7 @@ namespace ClothingPlatformProject.Features.Product
                     Name = p.Name,
                     BasePrice = p.BasePrice,
                     Description = p.Description ?? string.Empty,
-                    CategoryName = p.Category != null
-                        ? p.Category.Name
-                        : "General",
-
+                    CategoryName = p.Category != null ? p.Category.Name : "General",
                     ImageDto = p.ProductImages
                         .Where(i => i.IsPrimary == true)
                         .Select(i => i.ImageUrl)
@@ -297,7 +297,6 @@ namespace ClothingPlatformProject.Features.Product
                         ?? p.ProductImages
                             .Select(i => i.ImageUrl)
                             .FirstOrDefault(),
-
                     VariantsDto = p.ProductVariants
                         .Select(v => new VariantDto
                         {
@@ -319,13 +318,23 @@ namespace ClothingPlatformProject.Features.Product
             };
         }
 
-        public async Task<PagedResult<ProductDto>> GetAllProduct(int page, int pageSize)
+        public async Task<PagedResult<ProductDto>> GetAllProduct(
+    int page, int pageSize, string? search = null, int categoryId = 0)
         {
             var query = _db.Products
-                .AsNoTracking();
-                
+                .AsNoTracking()
+                .AsQueryable();
 
-            var totalCount = await query.CountAsync();
+            // Apply filters BEFORE count and pagination
+            if (categoryId > 0)
+                query = query.Where(p => p.CategoryId == categoryId);
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(p =>
+                    p.Name.Contains(search) ||
+                    (p.Description != null && p.Description.Contains(search)));
+
+            var totalCount = await query.CountAsync(); // count AFTER filtering
 
             var items = await query
                 .Skip((page - 1) * pageSize)
@@ -339,7 +348,6 @@ namespace ClothingPlatformProject.Features.Product
                     CategoryName = p.Category != null
                         ? p.Category.Name
                         : "General",
-
                     ImageDto = p.ProductImages
                         .Where(i => i.IsPrimary == true)
                         .Select(i => i.ImageUrl)
@@ -347,7 +355,6 @@ namespace ClothingPlatformProject.Features.Product
                         ?? p.ProductImages
                             .Select(i => i.ImageUrl)
                             .FirstOrDefault(),
-
                     VariantsDto = p.ProductVariants
                         .Select(v => new VariantDto
                         {

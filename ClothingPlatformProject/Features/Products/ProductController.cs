@@ -9,7 +9,7 @@ namespace ClothingPlatformProject.Features.Product
     public class ProductController : ControllerBase
     {
         private readonly IProductService _productService;
-
+        private IWebHostEnvironment _env;
         public ProductController(IProductService productService)
         {
             _productService = productService;
@@ -57,29 +57,49 @@ namespace ClothingPlatformProject.Features.Product
         // ၁။ Best Sellers ဆွဲထုတ်မည့် API (URL လမ်းကြောင်း: api/product/bestsellers)
         [HttpGet("bestSeller")]
         public async Task<IActionResult> GetBestSellers(
-     int page = 1,
-     int pageSize = 5)
+     int page = 1, int pageSize = 10,
+            string? search = null, int categoryId = 0)
         {
-            var result = await _productService.GetAllBestSellersAsync(page, pageSize);
+            var result = await _productService.GetAllBestSellersAsync(page, pageSize,search,categoryId);
             return Ok(result);
         }
 
         // ၂။ New Creations ဆွဲထုတ်မည့် API (URL လမ်းကြောင်း: api/product/new-creations)
         [HttpGet("newCreation")]
         public async Task<IActionResult> GetNewCreations(
-    int page = 1,
-    int pageSize = 5)
+    int page = 1, int pageSize = 10,
+            string? search = null, int categoryId = 0)
         {
-            var result = await _productService.GetAllNewCreationAsync(page, pageSize);
+            var result = await _productService.GetAllNewCreationAsync(page, pageSize, search, categoryId);
             return Ok(result);
         }
 
         [HttpGet("allcollection")]
-        public async Task<IActionResult> GetAllCollection(int page = 1,
-    int pageSize = 5)
+        public async Task<IActionResult> GetAllCollection(
+            int page = 1, int pageSize = 10,
+            string? search = null, int categoryId = 0)
         {
-            var result = await _productService.GetAllProduct(page, pageSize);
+            var result = await _productService.GetAllProduct(page, pageSize, search, categoryId);
             return Ok(result);
+        }
+
+        [HttpPost("upload-image")]
+        public async Task<IActionResult> UploadImage(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file.");
+
+            var folder = Path.Combine(_env.WebRootPath, "images", "products");
+            Directory.CreateDirectory(folder);
+
+            // filename သာ သိမ်း၊ path မပါ
+            var fileName = $"{Guid.NewGuid()}_{file.FileName}";
+            var filePath = Path.Combine(folder, fileName);
+
+            using var stream = new FileStream(filePath, FileMode.Create);
+            await file.CopyToAsync(stream);
+
+            return Ok(new { FileName = fileName }); // "abc123_longwhite.jpg" သာ return
         }
     }
 }

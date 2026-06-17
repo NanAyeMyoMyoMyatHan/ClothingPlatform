@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Net.Http.Headers;
 
 namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 {
@@ -110,7 +111,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         {
             // First run seeder to populate sample data if DB is empty
             DbSeeder.Seed(_db);
-            
+            Console.WriteLine("Component");
             if(model.ImageDto == null)
             {
                 model.ImageDto = new ProductImageModel();
@@ -440,41 +441,58 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             }
         }
 
-
-        // Dropdown ကနေ တစ်ခုခုရွေးလိုက်ရင် ဒီကောင် အလုပ်လုပ်ပါမယ်
-        private void OnCategoryChanged(int selectedId)
+        private async Task HandleFileSelected(InputFileChangeEventArgs e)
         {
-            newProductCategoryId = selectedId; // ရွေးလိုက်တဲ့ ID (int) ကို ထည့်လိုက်ခြင်း
-
-            // တကယ်လို့ သင့်မှာ ပြင်ဆင်နေတဲ့ Product Object (ဥပမာ- editingProduct) ရှိရင်
-            if (editingProduct != null)
+            try
             {
-                editingProduct.CategoryId = selectedId; // Model ထဲကိုပါ တစ်ခါတည်း ထည့်ပေးလိုက်ပါ
-                editingProduct.Category = allCategories.FirstOrDefault(c => c.CategoryId == selectedId);
+                var file = e.File;
+                if (file == null)
+                {
+                    errorMessage = "No file selected";
+                    return;
+                }
+
+                errorMessage = "";
+                successMessage = $"File selected: {file.Name}"; // UI မှာ တွေ့ရမယ်
+                StateHasChanged();
+
+                using var content = new MultipartFormDataContent();
+                using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+                using var streamContent = new StreamContent(stream);
+                streamContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+                content.Add(streamContent, "file", file.Name);
+
+                var response = await Http.PostAsync("api/product/upload-image", content);
+                var raw = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // raw ဘာပြတာလဲ UI မှာ ပြမယ်
+                    successMessage = $"Upload OK: {raw}";
+                    var result = System.Text.Json.JsonSerializer.Deserialize<UploadResult>(
+                        raw, new System.Text.Json.JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        });
+                    imageUrl = result?.FileName ?? "";
+                    StateHasChanged();
+                }
+                else
+                {
+                    errorMessage = $"Upload failed {response.StatusCode}: {raw}";
+                    StateHasChanged();
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Exception: {ex.Message}";
+                StateHasChanged();
             }
         }
 
-        private async Task HandleFileSelected(InputFileChangeEventArgs e)
+        public class UploadResult
         {
-            var file = e.File;
-            if (file != null)
-            {
-                // ၁။ ပုံရဲ့ နာမည်ရင်းကို ယူပါတယ် (ဥပမာ - my_dress.jpg)
-                imageUrl = $"images/products/{file.Name}";
-
-                // (သတိပြုရန်) အကယ်၍ Server ပေါ်က Folder လမ်းကြောင်းပါ တွဲချင်ရင် ဒီလို ရေးနိုင်ပါတယ်
-                // imageUrl = $"images/products/{file.Name}";
-
-                // ----------------------------------------------------
-                // 💡 အကယ်၍ ပုံကိုပါ တစ်ခါတည်း Server ပေါ် တင်ချင်ရင် (သို့) Byte ပြောင်းချင်ရင်
-                // အောက်က ကုဒ်ကို ဆက်သုံးနိုင်ပါတယ် (မလိုရင် ဖြုတ်ထားနိုင်ပါတယ်)
-                long maxFileSize = 1024 * 1024 * 5; // 5MB
-                using var stream = file.OpenReadStream(maxFileSize);
-                using var memoryStream = new MemoryStream();
-                await stream.CopyToAsync(memoryStream);
-                var imageData = memoryStream.ToArray();
-                // ----------------------------------------------------
-            }
+            public string FileName { get; set; } = "";
         }
 
         private async Task EditProduct(Product prod)

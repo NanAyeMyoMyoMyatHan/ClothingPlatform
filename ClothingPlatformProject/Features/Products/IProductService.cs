@@ -9,17 +9,15 @@ namespace ClothingPlatformProject.Features.Product
         
         Task<PagedResult<ProductDto>> GetAllProduct(
     int page,
-    int pageSize);
+    int pageSize,string? search = null, int categoryId = 0);
        
         Task<bool> DeleteProductAsync(int id);
         //void CreateProductImage(ProductImage image);
         Task<PagedResult<BestSellerDto>> GetAllBestSellersAsync(
-     int page,
-     int pageSize);
+    int page, int pageSize, string? search = null, int categoryId = 0);
 
         Task<PagedResult<NewCreationDto>> GetAllNewCreationAsync(
-            int page,
-            int pageSize);
+            int page, int pageSize, string? search = null, int categoryId = 0);
 
         Task<bool> UpdateProductAsync(UpdateProductRequest request);
         Task<ProductDto?> GetByIdAsync(int id);

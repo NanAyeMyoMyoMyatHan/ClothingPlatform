@@ -2,6 +2,7 @@ using ClothingPlatform.DB.AppDbModels;
 using ClothingPlatformProject.BlazorFroent.Services;
 using ClothingPlatformProject.Models.Order;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Mvc.Razor.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
@@ -35,6 +36,14 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private List<Category> allCategories = new();
         private List<Order> userOrders = new();
         private User? currentUser;
+
+
+        private List<ProductDto> allProduct = new();
+        private List<BestSellerDto> allBestSellers = new();
+        private List<NewCreationDto> allNewCreations = new();
+
+        
+
 
         // Search & filter
         private int selectedCategoryId = 0;
@@ -139,48 +148,56 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             }
 
         }
-        private async Task LoadCollection()
+
+        private async Task LoadCollection(string search = "", int categoryId = 0)
         {
+            var query = $"api/product/allcollection?page={PageNo}&pageSize={pageSize}";
+            if (!string.IsNullOrWhiteSpace(search)) query += $"&search={Uri.EscapeDataString(search)}";
+            if (categoryId > 0) query += $"&categoryId={categoryId}";
+
             var res = await httpClientServices.ExecuteAsync<PagedResult<ProductDto>>(
-                $"api/product/allcollection?page={PageNo}&pageSize={pageSize}",
-                null,
-                EnumHttpMethod.Get);
+                query, null, EnumHttpMethod.Get);
 
             if (res != null)
             {
-                filteredProduct = res.Items;
+                allProduct = res.Items;
+                filteredProduct = allProduct.ToList();
                 TotalPageCount = res.TotalCount;
                 TotalPages = (int)Math.Ceiling((double)TotalPageCount / pageSize);
             }
         }
 
         // Separate method just for new creation pagination
-        private async Task LoadNewCreation()
+        private async Task LoadNewCreation(string search = "", int categoryId = 0)
         {
-            var results = await httpClientServices.ExecuteAsync<PagedResult<NewCreationDto>>(
-                $"api/product/newCreation?page={PageNoC}&pageSize={PageSize}",
-                null,
-                EnumHttpMethod.Get);
+            var query = $"api/product/newCreation?page={PageNoC}&pageSize={PageSize}";
+            if (!string.IsNullOrWhiteSpace(search)) query += $"&search={Uri.EscapeDataString(search)}";
+            if (categoryId > 0) query += $"&categoryId={categoryId}";
+            var results =  await httpClientServices.ExecuteAsync<PagedResult<NewCreationDto>>(
+                query, null, EnumHttpMethod.Get);
 
             if (results != null)
             {
-                newCreation = results.Items;
+                allNewCreations = results.Items;
+                newCreation = allNewCreations.ToList();
                 TotalPageCountC = results.TotalCount;
                 TotalPagesC = (int)Math.Ceiling((double)TotalPageCountC / PageSize);
             }
         }
 
         // Separate method just for best seller pagination
-        private async Task LoadBestSeller()
+        private async Task LoadBestSeller(string search = "", int categoryId = 0)
         {
+            var query = $"api/product/bestSeller?page={PageNoB}&pageSize={PageSize}";
+            if (!string.IsNullOrWhiteSpace(search)) query += $"&search={Uri.EscapeDataString(search)}";
+            if (categoryId > 0) query += $"&categoryId={categoryId}";
             var result = await httpClientServices.ExecuteAsync<PagedResult<BestSellerDto>>(
-                $"api/product/bestSeller?page={PageNoB}&pageSize={PageSize}",
-                null,
-                EnumHttpMethod.Get);
+                query,null,  EnumHttpMethod.Get);
 
             if (result != null)
             {
-                bestSeller = result.Items;
+                allBestSellers = result.Items;
+                bestSeller = allBestSellers.ToList();
                 TotalPageCountB = result.TotalCount;
                 TotalPagesB = (int)Math.Ceiling((double)result.TotalCount / PageSize);
             }
@@ -239,7 +256,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                     var totalSpent = userOrders
                         .Where(o => o.OrderStatus.ToLower() == "completed" || o.OrderStatus.ToLower() == "processing" || o.OrderStatus.ToLower() == "delivered")
                         .Sum(o => o.TotalAmount);
-                    loyaltyPoints = (int)(totalSpent / 100);
+                    loyaltyPoints = (int)(totalSpent / 5000);
                 }
             }
             catch (Exception ex)
@@ -247,23 +264,40 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                 ShowToast("Error loading catalog: " + ex.Message);
             }
         }
+        private string _searchQuery = "";
 
-        private void ApplyProductFilters()
+
+        private async Task ApplyProductFilters()
         {
-            var query = allProducts.AsEnumerable();
-           
-            if (selectedCategoryId > 0)
-            {
-                query = query.Where(p => p.CategoryId == selectedCategoryId);
-            }
+            // Reset to page 1 when search changes
+            PageNo = 1;
+            PageNoB = 1;
+            PageNoC = 1;
 
-            if (!string.IsNullOrWhiteSpace(searchQuery))
-            {
-                var q = searchQuery.ToLower().Trim();
-                query = query.Where(p => p.Name.ToLower().Contains(q) || (p.Description != null && p.Description.ToLower().Contains(q)));
-            }
+            await Task.WhenAll(
+                LoadCollection(searchQuery, selectedCategoryId),
+                LoadNewCreation(searchQuery, selectedCategoryId),
+                LoadBestSeller(searchQuery, selectedCategoryId)
+            );
 
-            filteredProducts = query.ToList();
+            StateHasChanged();
+        }
+        private CancellationTokenSource? _searchCts;
+
+        private async Task OnSearchInput(ChangeEventArgs e)
+        {
+            searchQuery = e.Value?.ToString() ?? "";
+
+            _searchCts?.Cancel();
+            _searchCts = new CancellationTokenSource();
+            var token = _searchCts.Token;
+
+            try
+            {
+                await Task.Delay(350, token);
+                await ApplyProductFilters();
+            }
+            catch (TaskCanceledException) { }
         }
 
         private void Navigate(string tab)

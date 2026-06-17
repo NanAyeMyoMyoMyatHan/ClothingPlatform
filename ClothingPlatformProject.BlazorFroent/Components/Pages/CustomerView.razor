@@ -1264,8 +1264,8 @@
         }
 
     .history-item-img {
-        width: 52px;
-        height: 65px;
+        width: 70px;
+        height: 95px;
         object-fit: cover;
         background: var(--rose-pale);
         flex-shrink: 0;
@@ -1482,7 +1482,13 @@
 
         <div class="header-actions">
             <div class="d-none d-md-flex align-items-center border px-3 py-1 bg-white" style="border-radius: 20px;">
-                <input type="text" @bind="searchQuery" @onkeyup="ApplyProductFilters" placeholder="Search creations..." class="border-0 small" style="outline:none; width:150px; font-size:0.8rem;" />
+                <!-- Replace @onkeyup with the debounced handler -->
+                <input type="text"
+                       value="@searchQuery"
+                       @oninput="OnSearchInput"
+                       placeholder="Search creations..."
+                       class="border-0 small"
+                       style="outline:none; width:150px; font-size:0.8rem;" />
                 <i class="bi bi-search text-muted" @onclick='() => Navigate("shop")' style="cursor:pointer;"></i>
             </div>
 
@@ -1578,7 +1584,7 @@
     {
         <div class="section-head">
             <h2 class="section-title">The <span>Best Collection</span></h2>
-            <span class="section-count">@filteredProducts.Count best seller found</span>
+            <span class="section-count">@bestSeller.Count best seller found</span>
         </div>
 
         <div class="products-grid">
@@ -1632,11 +1638,11 @@
     {
     <div class="section-head">
         <h2 class="section-title">The <span>The Collection</span></h2>
-        <span class="section-count">@filteredProducts.Count creations found</span>
+        <span class="section-count">@filteredProduct.Count creations found</span>
     </div>
 
     <div class="products-grid">
-        @if (!filteredProducts.Any())
+        @if (!filteredProduct.Any())
         {
             <div class="col-12 text-center py-5 text-muted">
                 <i class="bi bi-inbox" style="font-size:2rem; display:block;"></i>
@@ -1812,7 +1818,7 @@
     {
     <div class="history-view">
         <div class="section-head px-0">
-            <h2 class="section-title">Your <span>Atelier Purchases</span></h2>
+            <h2 class="section-title">Your <span>Your Purchases History</span></h2>
             <span class="section-count">@userOrders.Count orders logged</span>
         </div>
 
@@ -1828,7 +1834,7 @@
                     <div class="history-card">
                         <div class="history-card-header">
                             <div>
-                                <p class="history-order-id">Order #ORD-@order.OrderId.ToString("D4")</p>
+                                <p class="history-order-id">Order ORD-@order.OrderId.ToString("D4")</p>
                                 <p class="history-date">@(order.CreatedAt?.ToString("dd MMM yyyy HH:mm") ?? "N/A")</p>
                             </div>
                             <div>
@@ -1854,9 +1860,25 @@
                                     var imgObj = item.Variant?.Product?.ProductImages?.FirstOrDefault(i => i.IsPrimary == true);
 
                                     // 💡 ၂။ ပုံရှိရင် /images/products/ လမ်းကြောင်းနဲ့ တွဲပါတယ်။ (ရှေ့က / ထည့်ပေးဖို့ အရေးကြီးပါတယ်)
-                                    var primaryImg = (imgObj != null && !string.IsNullOrWhiteSpace(imgObj.ImageUrl))
-                                        ? $"/images/products/{imgObj.ImageUrl.Trim()}"
-                                        : "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80";
+                                    var rawUrl = imgObj?.ImageUrl?.Trim() ?? "";
+
+                                    string primaryImg;
+
+                                    if (string.IsNullOrWhiteSpace(rawUrl))
+                                    {
+                                        primaryImg = "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80";
+                                    }
+                                    else if (rawUrl.StartsWith("http"))
+                                    {
+                                        primaryImg = rawUrl;
+                                    }
+                                    else
+                                    {
+                                        var clean = rawUrl.TrimStart('/');
+                                        primaryImg = clean.StartsWith("images/products/")
+                                            ? $"/{clean}"
+                                            : $"/images/products/{clean}";
+                                    }
 
                                     <div class="history-item-row">
                                         <img class="history-item-img" src="@primaryImg" alt="@(item.Variant?.Product?.Name ?? "Product")" />
@@ -1917,7 +1939,7 @@
                             <span class="profile-tier-badge">Salon Member (Bronze)</span>
                         }
 
-                        <p class="profile-joined">Joined Atelier: @(currentUser?.CreatedAt?.ToString("MMM yyyy") ?? "June 2026")</p>
+                        <p class="profile-joined">Joined On: @(currentUser?.CreatedAt?.ToString("MMM yyyy") ?? "June 2026")</p>
 
                         <div class="loyalty-points-box">
                             <div class="points-header">
@@ -1951,7 +1973,7 @@
                         <div class="alert bg-light border text-start p-3 small" style="line-height: 1.6;">
                             <strong>⭐ Membership Privileges:</strong>
                             <ul class="ps-3 mt-1 m-0">
-                                <li>Earn 1 Point for every 100 MMK spent.</li>
+                                <li>Earn 1 Point for every 5000 MMK spent.</li>
                                 <li>Silver members get 5% off items automatically.</li>
                                 <li>Gold members unlock free shipping & early access.</li>
                             </ul>

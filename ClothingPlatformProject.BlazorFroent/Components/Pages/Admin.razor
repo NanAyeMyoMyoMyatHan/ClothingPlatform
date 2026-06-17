@@ -2,6 +2,7 @@
 @using ClothingPlatformProject.BlazorFroent.Components.Partial
 @inject IJSRuntime JSRuntime
 @inject HttpClientServices HttpClientServices
+@inject HttpClient Http
 
 <style>
     :root {
@@ -575,18 +576,11 @@
                             }
                         </select>
                     </div>
-<div class="mb-3">
-    <label class="form-label text-muted small uppercase fw-bold">Upload Product Image</label>
-    <InputFile OnChange="HandleFileSelected" class="form-control" accept=".jpg,.jpeg,.png" />
-</div>
+                    <div class="mb-3">
+                         <label class="form-label text-muted small uppercase fw-bold">Upload Product Image</label>
+                             <InputFile OnChange="HandleFileSelected" class="form-control" accept=".jpg,.jpeg,.png" />
+                            </div>
 
-<div class="mb-3">
-    <label class="form-label text-muted small uppercase fw-bold">Image URL / File Name</label>
-    <input type="text" class="luxury-input" @bind="imageUrl" placeholder="images/products/...jpg" />
-</div>
-                   
-                        
-                    
                         <div class="mb-3">
                             <label class="form-label text-muted small uppercase fw-bold">Create Sizes (Comma-separated)</label>
                             <input type="text" class="luxury-input" @bind="selectedSizesString" placeholder="XS, S, M, L, XL" />

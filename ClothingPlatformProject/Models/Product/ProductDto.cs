@@ -71,6 +71,7 @@ public class BestSellerDto
     public int TotalSold { get; set; }
     public decimal BasePrice { get; set; }
     public string CategoryName { get; set; }
+    public int? CategoryId { get; set; }
     public string? ImageDto { get; set; }
     public string Description { get; set; }
     public List<VariantDto> VariantsDto { get; set; } = new();
@@ -82,9 +83,10 @@ public class NewCreationDto
     public string Name { get; set; } = string.Empty;
     public int TotalSold { get; set; }
     public decimal BasePrice { get; set; }
-    public string CategoryName { get; set; }
+    public string? CategoryName { get; set; }
+    public int? CategoryId { get; set; }
     public string? ImageDto { get; set; }
-    public string Description { get; set; }
+    public string? Description { get; set; }
     public List<VariantDto> VariantsDto { get; set; } = new();
 
 }
