@@ -25,6 +25,12 @@ builder.Services.AddHttpClient("admin", client =>
 });
 builder.Services.AddScoped<HttpClientServices>();
 
+builder.Services.AddScoped(sp => new HttpClient
+{
+    BaseAddress = new Uri("https://localhost:7065/")
+});
+
+
 var app = builder.Build();
 
 

@@ -1546,9 +1546,12 @@
         <div class="products-grid">
             @foreach (var prod in newCreation)
             {
-                var primaryImg = !string.IsNullOrEmpty(prod.ImageDto)
-                                     ? prod.ImageDto
-                                     : "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80";
+                var rawImg = prod.ImageDto?.Trim() ?? "";
+                var primaryImg = string.IsNullOrWhiteSpace(rawImg)
+                    ? "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80"
+                    : rawImg.StartsWith("http")
+                        ? rawImg
+                        : $"/images/products/{rawImg.TrimStart('/')}";
 
                 <div class="product-card best-seller" @onclick="() => OpenQuickViewss(prod)">
 
@@ -1600,9 +1603,12 @@
                 @foreach (var prod in bestSeller)
                 {
                  
-                    var primaryImg = !string.IsNullOrEmpty(prod.ImageDto)
-                                     ? prod.ImageDto
-                                     : "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80";
+                    var rawImg = prod.ImageDto?.Trim() ?? "";
+                    var primaryImg = string.IsNullOrWhiteSpace(rawImg)
+                        ? "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80"
+                        : rawImg.StartsWith("http")
+                            ? rawImg
+                            : $"/images/products/{rawImg.TrimStart('/')}";
 
                     <div class="product-card best-seller" @onclick="() => OpenQuickViews(prod)">
 
@@ -1653,9 +1659,12 @@
         {
                 @foreach (var prod in filteredProduct)
             {
-                var primaryImg = !string.IsNullOrEmpty(prod.ImageDto)
-                                     ? prod.ImageDto
-                                     : "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80";
+                    var rawImg = prod.ImageDto?.Trim() ?? "";
+                    var primaryImg = string.IsNullOrWhiteSpace(rawImg)
+                        ? "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=600&q=80"
+                        : rawImg.StartsWith("http")
+                            ? rawImg
+                            : $"/images/products/{rawImg.TrimStart('/')}";
 
                 <div class="product-card best-seller" @onclick="() => OpenQuickView(prod)">
 
@@ -1874,10 +1883,10 @@
                                     }
                                     else
                                     {
-                                        var clean = rawUrl.TrimStart('/');
-                                        primaryImg = clean.StartsWith("images/products/")
-                                            ? $"/{clean}"
-                                            : $"/images/products/{clean}";
+                                        var clean = rawUrl.TrimStart('/').Replace("images/products/","");
+                                        primaryImg = rawUrl.StartsWith("http")
+                                        ?rawUrl
+                                        : $"/images/products/{clean}";
                                     }
 
                                     <div class="history-item-row">

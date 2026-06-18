@@ -1,4 +1,5 @@
-﻿using ClothingPlatformProject.Models.User;
+﻿using ClothingPlatformProject.Models.Staff;
+using ClothingPlatformProject.Models.User;
 
 namespace ClothingPlatformProject.Features.User
 {
@@ -15,5 +16,6 @@ namespace ClothingPlatformProject.Features.User
         void UpdateUser(int userId,UpdateRequestModel model);
 
         void DeleteUser(int userId);
+        Task<StaffDashboardDto> GetDashboardAsync();
     }
 }

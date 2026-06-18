@@ -19,11 +19,14 @@ public class ProductModel
     public int CategoryId { get; set; }
     public decimal BasePrice { get; set; }
     public List<VariantDto> VariantsDto { get; set; } = new();
-    public ProductImageModel ImageDto { get; set; }
+    public ProductImageModel? ImageDto { get; set; }
+    public string? ImageBase64 { get; set; } // 🌟 Base64 စာသားအရှည်ကြီး သိမ်းရန်
+    public string? ImageFileName { get; set; }
 }
 public class ProductImageModel
 {
     public string ImageUrl { get; set; }
+
     public byte IsPrimary { get; set; }
 }
 // GET Product By ID အတွက် DTO
@@ -45,16 +48,17 @@ public class ProductDto
 // PUT Request အတွက် Model
 public class UpdateProductRequest
 {
-    public int ProductId { get; set; }
-
-    public string Name { get; set; } = "";
-    public string Description { get; set; } = "";
-    public decimal BasePrice { get; set; }
+    public int Id { get; set; }
+    public bool IsFeatured { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
     public int CategoryId { get; set; }
-
-    public string ImageUrl { get; set; } = "";
-
-    public List<UpdateVariantDto> Variants { get; set; } = new();
+    public decimal BasePrice { get; set; }
+    public List<VariantDto> VariantsDto { get; set; } = new();
+    public ProductImageModel? ImageDto { get; set; }
+    public string? ImageBase64 { get; set; } // 🌟 Base64 စာသားအရှည်ကြီး သိမ်းရန်
+    public string? ImageFileName { get; set; }
 }
 
 public class UpdateVariantDto

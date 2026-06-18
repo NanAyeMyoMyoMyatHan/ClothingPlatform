@@ -16,19 +16,19 @@ namespace ClothingPlatformProject.Features.Auth
         }
 
         [HttpPost("login")]
-        public IActionResult loginUser(LoginRequest request)
+        public async Task<IActionResult> loginUser(AuthRequest request)
         {
-            var result = _authService.loginuser(request);
+            var result = await _authService.LoginAsync(request);
+
             if (result == null)
             {
                 return Unauthorized(new
                 {
                     Message = "Email or Password is incorrect."
-
                 });
             }
+
             return Ok(result);
-   
         }
     }
 }

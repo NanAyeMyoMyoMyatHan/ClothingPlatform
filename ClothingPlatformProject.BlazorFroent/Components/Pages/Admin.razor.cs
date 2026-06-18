@@ -42,14 +42,14 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private List<User> customers = new();
         private List<StaffActivityLog> activityLogs = new();
         private List<VariantDto> variants = new();
-        private ProductModel model = new ProductModel();
+        public ProductModel model = new ProductModel();
         private bool showDeleteAlert = false;
         // Dashboard Stats
         private decimal TotalRevenue;
         private int TotalOrders;
         private int PendingOrders;
         private int TotalCustomers;
-        private string imageUrl = string.Empty;
+        public string imageUrl = string.Empty;
         // Order Filter
         private string orderFilter = "All";
         private int quantity = 0;
@@ -59,7 +59,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private string newProductDesc = "";
         private decimal newProductBasePrice;
         private int newProductCategoryId;
-        private string newProductImgUrl = "";
+        public string newProductImgUrl = "";
         private string selectedSizesString = "";
         private string selectedColorsString = "";
         private int selectedquantity;
@@ -68,6 +68,12 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private decimal storeDailyRevenue;
         private int storeDailySalesCount;
         private List<DailySummaryModel> dailyReportList = new();
+
+
+        // ─── Staff Creation ───────────────────────────────────────────────────────
+        private StaffFormModel staffForm = new();
+        private bool isCreatingStaff = false;
+        private List<UserModel> recentStaff = new();
 
         //Pagination parameters
         private int staffPage = 1;
@@ -105,7 +111,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private List<Order> Pagedorders { get; set; } = new();
         private List<UserModel> PageCustomer { get; set; } = new();
         private List<UserModel> PageStaff { get; set; } = new();
-
+        private List<ProductImageModel> imageModel { get; set; } = new();
         // စာမျက်နှာ နံပါတ်နှိပ်လိုက်ရင် ပြောင်းပေးမည့် Methods
         protected override async Task OnInitializedAsync()
         {
@@ -341,10 +347,10 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             editingProduct = null;
             model = new();
             newProductCategoryId = allCategories.FirstOrDefault()?.CategoryId ?? 0;
-            newProductImgUrl = "";
+            imageUrl = "";
             selectedSizesString = "S, M, L";
             selectedColorsString = "Cream Beige, Midnight Black, Blush Pink";
-            
+            selectedquantity = 0;
         }
 
         private async Task HandleCreateProduct()
@@ -352,7 +358,6 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             errorMessage = "";
             successMessage = "";
 
-            // 💡 ခံစစ်ကုဒ် - Category မရွေးထားရင် ဆက်သွားခွင့်မပြုခြင်း
             if (newProductCategoryId == 0)
             {
                 errorMessage = "Please select a valid category.";
@@ -367,7 +372,17 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
             try
             {
-                // ၁။ ဒေတာအသစ် ဆောက်မည့် မော်ဒယ်ကို အောက်ခြေက List တွေပါ တစ်ခါတည်း Instance ဆောက်ခဲ့ခြင်း
+                // Image upload အရင်လုပ်
+                if (!string.IsNullOrEmpty(imageBase64))
+                {
+                    var content = new MultipartFormDataContent();
+                    var fileBytes = Convert.FromBase64String(imageBase64);
+                    var fileContent = new ByteArrayContent(fileBytes);
+                    fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+                    content.Add(fileContent, "file", imageFileName);
+
+                }
+
                 var product = new ProductModel
                 {
                     Name = model.Name,
@@ -376,24 +391,20 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                     CategoryId = newProductCategoryId,
                     IsFeatured = true,
                     CreatedAt = DateTime.Now,
-                    VariantsDto = new List<VariantDto>() // Null Error မတက်အောင် တစ်ခါတည်း ဆောက်ပေးခြင်း
+                    VariantsDto = new List<VariantDto>(),
+                    ImageBase64 = imageBase64,
+                    ImageFileName = imageFileName,
+                    ImageDto = new ProductImageModel
+                    {
+                        ImageUrl =""
+                    }
                 };
-
-                // ၂။ Image သတ်မှတ်ခြင်း (မပါလာလျှင် default link ပေးခြင်း)
-                product.ImageDto = new ProductImageModel
-                {
-                    ImageUrl = !string.IsNullOrWhiteSpace(imageUrl)
-                        ? imageUrl.Trim()
-                        : "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80"
-                };
-
-                // ၃။ Comma-separated စာသားများကို ခွဲထုတ်ပြီး ဒေတာထဲ ထည့်သွင်းခြင်း
-                var sizes = selectedSizesString.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
-                var colors = selectedColorsString.Split(',').Select(c => c.Trim()).Where(c => !string.IsNullOrEmpty(c)).ToList();
 
                 
 
-                // ၄။ Size နဲ့ Color ကို Loop ပတ်ပြီး API ကို မပို့ခင် Variants list ထဲ တစ်ခါတည်း စုထည့်ခြင်း
+                var sizes = selectedSizesString.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+                var colors = selectedColorsString.Split(',').Select(c => c.Trim()).Where(c => !string.IsNullOrEmpty(c)).ToList();
+
                 foreach (var size in sizes)
                 {
                     foreach (var color in colors)
@@ -403,89 +414,56 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                             Size = size,
                             Color = color,
                             StockQuantity = selectedquantity,
-                            Sku = "" // Backend ရောက်မှ Auto-Gen လုပ်မှာမို့လို့ ဤနေရာတွင် အလွတ်ပေးခဲ့နိုင်သည် (Required ပြဿနာရှင်းပြီး)
+                            Sku = ""
                         });
                     }
                 }
 
-                // ၅။ ပြီးပြည့်စုံသွားတဲ့ product ပါဆယ်ထုပ်ကြီးကို Backend API ဆီသို့ တိုက်ရိုက် ပို့လိုက်ခြင်း
                 var result = await HttpClientServices.ExecuteAsync<ProductModel>(
-                    "api/product",
-                    product,
-                    EnumHttpMethod.Post
-                );
+                    "api/product", product, EnumHttpMethod.Post);
 
                 if (result != null)
                 {
-                    successMessage = $"Product '{product.Name}' created successfully with its variants!";
-
-                    // UI Form ကို မူလအတိုင်း ပြန်ရှင်းခြင်း
-                    newProductCategoryId = 0;
+                    successMessage = $"Product '{product.Name}' created successfully!";
                     imageUrl = "";
+                    imageBase64 = "";
+                    imageFileName = "";
+                    previewImageUrl = "";
+                    newProductCategoryId = 0;
                     selectedSizesString = "";
                     selectedColorsString = "";
-                    quantity = 0;
-
+                    selectedquantity = 0;
                     ResetProductForm();
-                    await LoadData(); // ဇယားအသစ်ကို ပြန်ဆွဲတင်ခြင်း
+                    await LoadData();
                     StateHasChanged();
                 }
                 else
                 {
-                    errorMessage = "Failed to save product. Please check API server logs.";
+                    errorMessage = "Failed to save product.";
                 }
             }
             catch (Exception ex)
             {
-                errorMessage = "Error creating product: " + ex.Message;
+                errorMessage = "Error: " + ex.Message;
             }
         }
 
+        private string imageBase64 = "";
+        private string imageFileName = "";
+        private string previewImageUrl = "";
+
         private async Task HandleFileSelected(InputFileChangeEventArgs e)
         {
-            try
+            var file = e.File;
+            if (file != null)
             {
-                var file = e.File;
-                if (file == null)
-                {
-                    errorMessage = "No file selected";
-                    return;
-                }
-
-                errorMessage = "";
-                successMessage = $"File selected: {file.Name}"; // UI မှာ တွေ့ရမယ်
-                StateHasChanged();
-
-                using var content = new MultipartFormDataContent();
-                using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
-                using var streamContent = new StreamContent(stream);
-                streamContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
-                content.Add(streamContent, "file", file.Name);
-
-                var response = await Http.PostAsync("api/product/upload-image", content);
-                var raw = await response.Content.ReadAsStringAsync();
-
-                if (response.IsSuccessStatusCode)
-                {
-                    // raw ဘာပြတာလဲ UI မှာ ပြမယ်
-                    successMessage = $"Upload OK: {raw}";
-                    var result = System.Text.Json.JsonSerializer.Deserialize<UploadResult>(
-                        raw, new System.Text.Json.JsonSerializerOptions
-                        {
-                            PropertyNameCaseInsensitive = true
-                        });
-                    imageUrl = result?.FileName ?? "";
-                    StateHasChanged();
-                }
-                else
-                {
-                    errorMessage = $"Upload failed {response.StatusCode}: {raw}";
-                    StateHasChanged();
-                }
-            }
-            catch (Exception ex)
-            {
-                errorMessage = $"Exception: {ex.Message}";
+                imageFileName = file.Name;
+                using var ms = new MemoryStream();
+                await file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(ms);
+                var bytes = ms.ToArray();
+                imageBase64 = Convert.ToBase64String(bytes);
+                previewImageUrl = $"data:{file.ContentType};base64,{imageBase64}";
+                successMessage = $"File selected: {file.Name}";
                 StateHasChanged();
             }
         }
@@ -506,6 +484,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
             model = new ProductModel
             {
+                Id = product.Id,
                 Name = product.Name,
                 Description = product.Description,
                 BasePrice = product.BasePrice,
@@ -536,8 +515,14 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         {
             errorMessage = "";
             successMessage = "";
+            if (model.Id <= 0)
+            {
+                // တကယ်လို့ ဒီနေရာမှာ 0 ဖြစ်နေရင် EditProduct ထဲက model = new ProductModel မှာတင်မကဘဲ 
+                // လက်ရှိ သုံးနေတဲ့ မော်ဒယ်က ကွဲလွဲနေတာ သေချာပါတယ်။
+                errorMessage = "Error: Product ID is missing in the Front-end form model.";
+                return;
+            }
 
-            // 💡 ခံစစ်ကုဒ် - Category မရွေးထားရင် ဆက်သွားခွင့်မပြုခြင်း
             if (newProductCategoryId == 0)
             {
                 errorMessage = "Please select a valid category.";
@@ -552,73 +537,73 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
             try
             {
-                // ၁။ ဒေတာအသစ် ဆောက်မည့် မော်ဒယ်ကို အောက်ခြေက List တွေပါ တစ်ခါတည်း Instance ဆောက်ခဲ့ခြင်း
-                var product = new ProductModel
+                var updateModel = new UpdateProductRequest
                 {
+                    Id= model.Id,
                     Name = model.Name,
                     Description = model.Description,
                     BasePrice = model.BasePrice,
                     CategoryId = newProductCategoryId,
                     IsFeatured = true,
                     CreatedAt = DateTime.Now,
-                    VariantsDto = new List<VariantDto>() // Null Error မတက်အောင် တစ်ခါတည်း ဆောက်ပေးခြင်း
+                    VariantsDto = new List<VariantDto>(),
+                    ImageBase64 = imageBase64,
+                    ImageFileName = imageFileName,
+                    ImageDto = new ProductImageModel
+                    {
+                        ImageUrl = ""
+                    }
                 };
 
-                product.ImageDto = new ProductImageModel
-                {
-                    ImageUrl = !string.IsNullOrWhiteSpace(imageUrl)
-                        ? imageUrl.Trim()
-                        : "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80"
-                };
+
 
                 var sizes = selectedSizesString.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
                 var colors = selectedColorsString.Split(',').Select(c => c.Trim()).Where(c => !string.IsNullOrEmpty(c)).ToList();
-               
+
                 foreach (var size in sizes)
                 {
                     foreach (var color in colors)
                     {
-                        product.VariantsDto.Add(new VariantDto
+                        updateModel.VariantsDto.Add(new VariantDto
                         {
                             Size = size,
                             Color = color,
                             StockQuantity = selectedquantity,
-                            Sku = "" 
+                            Sku = ""
                         });
                     }
                 }
 
                 var result = await HttpClientServices.ExecuteAsync<ProductModel>(
-                    "api/product",
-                    product,
-                    EnumHttpMethod.Post
-                );
+            "api/product",
+            updateModel,
+            EnumHttpMethod.Put // 🌟 PUT မက်သတ် သုံးထားပါတယ်
+        );
 
                 if (result != null)
                 {
-                    successMessage = $"Product '{product.Name}' created successfully with its variants!";
-
-                    // UI Form ကို မူလအတိုင်း ပြန်ရှင်းခြင်း
-                    newProductCategoryId = 0;
+                    successMessage = $"Product '{updateModel.Name}' created successfully!";
                     imageUrl = "";
+                    imageBase64 = "";
+                    imageFileName = "";
+                    previewImageUrl = "";
+                    newProductCategoryId = 0;
                     selectedSizesString = "";
                     selectedColorsString = "";
                     selectedquantity = 0;
-
                     ResetProductForm();
-                    await LoadData(); // ဇယားအသစ်ကို ပြန်ဆွဲတင်ခြင်း
+                    await LoadData();
                     StateHasChanged();
                 }
                 else
                 {
-                    errorMessage = "Failed to save product. Please check API server logs.";
+                    errorMessage = "Failed to save product.";
                 }
             }
             catch (Exception ex)
             {
-                errorMessage = "Error creating product: " + ex.Message;
+                errorMessage = "Error: " + ex.Message;
             }
-
         }
         private async Task DeleteProduct(int productId)
         {
@@ -704,6 +689,119 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             Session.Logout();
             Nav.NavigateTo("/login");
         }
+        private async Task HandleCreateStaff()
+        {
+            errorMessage = "";
+            successMessage = "";
+
+            // ── Validation ───────────────────────────────────────────────────────
+            if (string.IsNullOrWhiteSpace(staffForm.FirstName))
+            {
+                errorMessage = "First name is required.";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(staffForm.LastName))
+            {
+                errorMessage = "Last name is required.";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(staffForm.Email))
+            {
+                errorMessage = "Email address is required.";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(staffForm.Password) || staffForm.Password.Length < 6)
+            {
+                errorMessage = "Password must be at least 6 characters.";
+                return;
+            }
+
+            // ── Duplicate email check ─────────────────────────────────────────────
+            bool emailExists = await _db.Users.AnyAsync(u =>
+                u.Email.ToLower() == staffForm.Email.Trim().ToLower());
+
+            if (emailExists)
+            {
+                errorMessage = "A user with this email address already exists.";
+                return;
+            }
+
+            isCreatingStaff = true;
+            StateHasChanged();
+
+            try
+            {
+                var newStaff = new User
+                {
+                    FirstName = staffForm.FirstName.Trim(),
+                    LastName = staffForm.LastName.Trim(),
+                    Email = staffForm.Email.Trim().ToLower(),
+                    PasswordHash = staffForm.Password,
+                    Role = "staff",
+                    PhoneNumber = staffForm.Phone?.Trim() ?? string.Empty,
+                    Address = staffForm.Address?.Trim() ?? string.Empty,
+                    CreatedAt = DateTime.Now
+                };
+
+                await _db.Users.AddAsync(newStaff);
+                await _db.SaveChangesAsync();
+
+                successMessage = $"Staff account for {newStaff.FirstName} {newStaff.LastName} created successfully.";
+                ResetStaffForm();
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                errorMessage = "Error creating staff account: " + ex.Message;
+                Console.WriteLine(ex);
+            }
+            finally
+            {
+                isCreatingStaff = false;
+                StateHasChanged();
+            }
+        }
+
+        /// <summary>
+        /// Deletes a staff user by their UserId after admin confirmation.
+        /// </summary>
+        private async Task DeleteStaff(int userId)
+        {
+            var confirmed = await JSRuntime.InvokeAsync<bool>(
+                "confirm", "This staff account will be permanently deleted. Are you sure?");
+
+            if (!confirmed) return;
+
+            try
+            {
+                var user = await _db.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+                if (user == null)
+                {
+                    errorMessage = "Staff account not found.";
+                    return;
+                }
+
+                _db.Users.Remove(user);
+                await _db.SaveChangesAsync();
+
+                successMessage = $"Staff account for {user.FirstName} {user.LastName} has been removed.";
+                await LoadData();
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Error deleting staff account: {ex.Message}";
+            }
+        }
+
+        private void ResetStaffForm()
+        {
+            staffForm = new StaffFormModel();
+        }
+
 
         // Inner model for reports aggregation table
         public class DailySummaryModel
@@ -712,5 +810,16 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             public int OrdersCount { get; set; }
             public decimal Revenue { get; set; }
         }
+
+        public class StaffFormModel
+        {
+            public string FirstName { get; set; } = "";
+            public string LastName { get; set; } = "";
+            public string Email { get; set; } = "";
+            public string Password { get; set; } = "";
+            public string Phone { get; set; } = "";
+            public string Address { get; set; } = "";
+        }
+
     }
 }

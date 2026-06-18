@@ -61,5 +61,12 @@ namespace ClothingPlatformProject.Features.User
             _userService.DeleteUser(id);
             return Ok("Delete Successfully");
         }
+
+        [HttpGet("dashboard")]
+        public async Task<IActionResult> Dashboard()
+        {
+            var result = await _userService.GetDashboardAsync();
+            return Ok(result);
+        }
     }
 }

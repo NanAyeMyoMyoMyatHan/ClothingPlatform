@@ -355,6 +355,34 @@
             grid-template-columns: 1fr;
         }
     }
+    /* Staff creation form grid */
+    .staff-grid {
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        gap: 1.5rem;
+        align-items: start;
+    }
+
+    @@media(max-width: 992px) {
+        .staff-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .staff-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent-main), var(--accent-hover));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+
 </style>
 
 <div class="dashboard-container">
@@ -397,6 +425,13 @@
                 <a class="nav-item-link @(activeView == "staffs" ? "active" : "")" @onclick='() => SetView("staffs")'>
                     <i class="bi bi-people"></i>
                     Staffs
+                </a>
+            </li>
+
+            <li>
+                <a class="nav-item-link @(activeView == "staffs" ? "active" : "")" @onclick='() => SetView("createstaff")'>
+                    <i class="bi bi-people"></i>
+                    CreateStaffs
                 </a>
             </li>
 
@@ -578,7 +613,15 @@
                     </div>
                     <div class="mb-3">
                          <label class="form-label text-muted small uppercase fw-bold">Upload Product Image</label>
-                             <InputFile OnChange="HandleFileSelected" class="form-control" accept=".jpg,.jpeg,.png" />
+                        <InputFile OnChange="HandleFileSelected" 
+           class="form-control" 
+           accept=".jpg,.jpeg,.png"
+           title="Upload Product Image" />
+
+@if (!string.IsNullOrEmpty(previewImageUrl))
+{
+    <img src="@previewImageUrl" style="width:100px; height:100px; object-fit:cover; margin-top:8px;" />
+}
                             </div>
 
                         <div class="mb-3">
@@ -604,7 +647,7 @@
                         }
                         else
                         {
-                            <button class="btn-luxury-solid" @onclick="HandleUpdateProduct">Save Changes</button>
+                            <button class="btn-luxury-solid" @onclick=" HandleUpdateProduct">Save Changes</button>
                             <button class="btn-luxury" @onclick="ResetProductForm">Cancel</button>
                         }
                     </div>
@@ -636,22 +679,17 @@
                             {
                                 @foreach (var prod in PagedProducts)
                                 {
-                                    var primaryImg = "";
-                                    var imgObj = prod.ProductImages?.FirstOrDefault(i => i.IsPrimary == true);
+                                    var raw = prod.ProductImages?
+                                    .FirstOrDefault(i => i.IsPrimary == true)?.ImageUrl?.Trim() ?? "";
 
-                                    if (imgObj != null && !string.IsNullOrWhiteSpace(imgObj.ImageUrl))
-                                    {
-                                        // DB ထဲက လာတဲ့ File Name ရဲ့ ရှေ့မှာ Folder လမ်းကြောင်းကို တွဲပေးလိုက်တာပါ
-                                        primaryImg = $"images/products/{imgObj.ImageUrl.Trim()}";
-                                    }
-                                    else
-                                    {
-                                        
-                                        primaryImg = $"images/products/stdCoat.jpg";
-                                    }
+                                    var imgSrc = string.IsNullOrWhiteSpace(raw)
+                                        ? "/images/products/default.jpg"
+                                        : raw.StartsWith("http")
+                                            ? raw
+                                            : $"/images/products/{raw.Replace("images/products/", "").TrimStart('/')}";
                                     <tr>
                                         <td>
-                                            <img src="@primaryImg" style="width: 48px; height: 60px; object-fit: cover; border-radius: 4px;" alt="Product Thumb" />
+                                            <img src="@imgSrc" alt="@prod.Name" style="width:60px;height:60px;object-fit:cover;" />
                                         </td>
                                         <td>
                                             <strong>@prod.Name</strong>
@@ -856,7 +894,111 @@
                             CurrentPageChanged="@ChangeStaffPage" />
             </div>
         }
-       
+        
+        else if (activeView == "createstaff")
+        {
+            <div class="staff-grid">
+                <!-- Staff Creation Form -->
+                <div class="luxury-card">
+                    <h4><i class="bi bi-person-plus me-2" style="color: var(--accent-main);"></i>Create Staff Account</h4>
+                    <p class="text-muted small mb-3">New staff members will receive the <strong>staff</strong> role with access to boutique operations.</p>
+                    <hr />
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small text-uppercase fw-bold">First Name <span class="text-danger">*</span></label>
+                        <input type="text" class="luxury-input" @bind="staffForm.FirstName" placeholder="e.g., Amara " required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Last Name <span class="text-danger">*</span></label>
+                        <input type="text" class="luxury-input" @bind="staffForm.LastName" placeholder="e.g., Nguyen" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Email Address <span class="text-danger">*</span></label>
+                        <input type="email" class="luxury-input" @bind="staffForm.Email" placeholder="staff@chicboutique.com" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Password <span class="text-danger">*</span></label>
+                        <input type="password" class="luxury-input" @bind="staffForm.Password" placeholder="Min. 6 characters" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Phone Number</label>
+                        <input type="text" class="luxury-input" @bind="staffForm.Phone" placeholder="+95 9 xxx xxx xxx" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Address</label>
+                        <textarea class="luxury-input" @bind="staffForm.Address" rows="2" placeholder="Staff residential address..." required></textarea>
+                    </div>
+
+                    <div class="mt-4 d-grid gap-2">
+                        <button class="btn-luxury-solid" @onclick="HandleCreateStaff" disabled="@isCreatingStaff">
+                            @if (isCreatingStaff)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                <span>Creating Account...</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-person-check me-1"></i>
+                                <span>Create Staff Account</span>
+                            }
+                        </button>
+                        <button class="btn-luxury" @onclick="ResetStaffForm">Clear Form</button>
+                    </div>
+                </div>
+
+                <!-- Recently Created Staff Preview -->
+                <div class="table-responsive-wrapper">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="m-0">Recently Added Staff</h4>
+                        <button class="btn-luxury" @onclick='() => SetView("staffs")'>View All Staff</button>
+                    </div>
+                    <table class="table luxury-table">
+                        <thead>
+                            <tr>
+                                <th>Staff Member</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Joined</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!recentStaff.Any())
+                            {
+                                <tr><td colspan="4" class="text-center py-4 text-muted">No staff accounts yet. Create the first one!</td></tr>
+                            }
+                            else
+                            {
+                                @foreach (var s in recentStaff)
+                                {
+                                    var initials = $"{s.First_Name?.FirstOrDefault()}{s.Last_Name?.FirstOrDefault()}".ToUpper();
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="staff-avatar">@initials</div>
+                                                <div class="fw-semibold">@s.First_Name @s.Last_Name</div>
+                                            </div>
+                                        </td>
+                                        <td class="small text-muted">@s.Email</td>
+                                        <td><span class="badge bg-light text-dark border text-uppercase">@s.Role</span></td>
+                                        <td class="small">@(s.CreatedAt?.ToString("dd/MM/yyyy") ?? "N/A")</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <Pagination CurrentPage="@staffPage"
+                            TotalPages="@staffTotalPage"
+                            CurrentPageChanged="@ChangeStaffPage" />
+            </div>
+        }
+
+
         else if (activeView == "reports")
         {
             <div class="row g-4 mb-4">

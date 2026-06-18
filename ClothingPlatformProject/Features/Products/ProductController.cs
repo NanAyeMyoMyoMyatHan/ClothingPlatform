@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using ClothingPlatformProject.Filters;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ClothingPlatformProject.Features.Product
@@ -27,25 +29,48 @@ namespace ClothingPlatformProject.Features.Product
         }
 
         // UPDATE product
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] UpdateProductRequest request)
+        [HttpPut]
+        
+        public async Task<IActionResult> Update([FromBody] UpdateProductRequest model)
         {
-            if (id != request.ProductId)
-                return BadRequest("ID mismatch");
+            Console.WriteLine($"[API DEBUG] Received ProductId: {model?.Id}");
 
-            var result = await _productService.UpdateProductAsync(request);
-
-            if (!result)
-                return NotFound();
-
-            return Ok(new
+            // ခံစစ်ကို model အလွတ်ဖြစ်ခြင်း တစ်ခုတည်းကိုပဲ အဓိက စစ်လိုက်ပါမယ်
+            if (model == null)
             {
-                message = "Product updated successfully"
-            });
+                return BadRequest("Product data cannot be null.");
+            }
+
+            // တကယ်လို့ model.ProductId က 0 ဖြစ်နေသေးရင် Service ထဲရောက်မှ Model ထဲက အချက်အလက်တွေနဲ့ ထပ်ရှာလို့ရအောင် ခွင့်ပြုပေးလိုက်မယ်
+            try
+            {
+                bool isUpdated = await _productService.UpdateProductAsync(model);
+
+                if (isUpdated)
+                {
+                    return Ok(new { Message = $"Product '{model.Name}' updated successfully!" });
+                }
+
+                return StatusCode(500, "Update operation failed at database level.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"API Error: {ex.Message}");
+            }
         }
 
+        [HttpDelete("{productId}")]
+        
+        public async Task<IActionResult> DeleteProduct(int productId)
+        {
+            var result = await _productService.DeleteProductAsync(productId);
+            if (!result)
+                return NotFound("Product not found.");
+            return Ok(true);
+        }
 
-        [HttpPost] // 💡 အနောက်မှာ ဘာမှ ထပ်မထည့်ပါနဲ့။ ဒါဆိုရင် Base URL "api/product" အတိုင်း အလုပ်လုပ်ပါလိမ့်မယ်။
+        [HttpPost]
+       
         public async Task<IActionResult> SaveProduct([FromBody] ProductModel model)
         {
             // 💡 သင့်ရဲ့ Product Service ထဲက ဒေတာအသစ်ထည့်တဲ့ မက်သဒ်ကို လှမ်းခေါ်ပြီး ID ပြန်ယူခြင်း
@@ -54,7 +79,6 @@ namespace ClothingPlatformProject.Features.Product
             // အောင်မြင်ကြောင်း ID နှင့်တကွ ပြန်ပေးခြင်း
             return Ok(new { id = generatedProductId, message = "Product saved successfully!" });
         }
-        // ၁။ Best Sellers ဆွဲထုတ်မည့် API (URL လမ်းကြောင်း: api/product/bestsellers)
         [HttpGet("bestSeller")]
         public async Task<IActionResult> GetBestSellers(
      int page = 1, int pageSize = 10,
@@ -86,20 +110,37 @@ namespace ClothingPlatformProject.Features.Product
         [HttpPost("upload-image")]
         public async Task<IActionResult> UploadImage(IFormFile file)
         {
+            // ၁။ File ရှိမရှိနှင့် အလွတ်ဖြစ်နေသလား အရင်စစ်မယ်
             if (file == null || file.Length == 0)
-                return BadRequest("No file.");
+                return BadRequest("No file uploaded.");
 
+            // ၂။ ပုံမှန် Image Format ဟုတ်မဟုတ် စစ်မယ် (Security အတွက်)
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+            if (!allowedExtensions.Contains(extension))
+                return BadRequest("Invalid image format. Only JPG, JPEG, PNG, and WEBP are allowed.");
+
+            // ၃။ Folder လမ်းကြောင်း သတ်မှတ်ပြီး မရှိရင် ဆောက်မယ်
             var folder = Path.Combine(_env.WebRootPath, "images", "products");
-            Directory.CreateDirectory(folder);
+            if (!Directory.Exists(folder))
+            {
+                Directory.CreateDirectory(folder);
+            }
 
-            // filename သာ သိမ်း၊ path မပါ
-            var fileName = $"{Guid.NewGuid()}_{file.FileName}";
+            // ၄။ Path Injection ကာကွယ်ဖို့ File Name သီးသန့်ကိုပဲ ယူပြီး Guid နဲ့ တွဲမယ်
+            var safeFileName = Path.GetFileName(file.FileName);
+            var fileName = $"{Guid.NewGuid()}_{safeFileName}";
             var filePath = Path.Combine(folder, fileName);
 
-            using var stream = new FileStream(filePath, FileMode.Create);
-            await file.CopyToAsync(stream);
+            // ၅။ File ကို Server ပေါ် သိမ်းဆည်းမယ်
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            } // ဒီနေရာမှာ stream က သေချာပေါက် auto-closed ဖြစ်သွားပါပြီ
 
-            return Ok(new { FileName = fileName }); // "abc123_longwhite.jpg" သာ return
+            // ၆။ Database မှာ သိမ်းဖို့အတွက် File Name သာ return ပြန်မယ်
+            return Ok(new { FileName = fileName });
         }
     }
 }

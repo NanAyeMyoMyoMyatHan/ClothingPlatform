@@ -86,6 +86,23 @@
         public DateTime? PaymentDate { get; set; }
         public string Status { get; set; } = string.Empty;
     }
+    public class OrderDto
+    {
 
+        public int OrderId { get; set; }
+
+        public string CustomerName { get; set; }
+
+        public decimal TotalAmount { get; set; }
+
+        public string OrderStatus { get; set; }
+
+        public string PaymentMethod { get; set; }
+
+        public int ItemCount { get; set; }
+
+        public DateTime? CreatedAt { get; set; }
+
+    }
 
 }

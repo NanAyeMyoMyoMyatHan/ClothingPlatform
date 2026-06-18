@@ -1,4 +1,7 @@
 ﻿using ClothingPlatform.DB.AppDbModels;
+using ClothingPlatformProject.Models.Order;
+using ClothingPlatformProject.Models.Product;
+using ClothingPlatformProject.Models.Staff;
 using ClothingPlatformProject.Models.User;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
@@ -112,7 +115,48 @@ namespace ClothingPlatformProject.Features.User
             _db.Add(user);
             _db.SaveChanges();
         }
+        public async Task<StaffDashboardDto> GetDashboardAsync()
+        {
+            var orders = await _db.Orders
+                .Include(x => x.User)
+                .Include(x => x.Payments)
+                .Include(x => x.OrderItems)
+                .OrderByDescending(x => x.OrderId)
+                .Select(x => new OrderDto
+                {
+                    OrderId = x.OrderId,
+                    CustomerName = x.User.FirstName + " " + x.User.LastName,
+                    TotalAmount = x.TotalAmount,
+                    OrderStatus = x.OrderStatus,
 
+                    PaymentMethod =
+                        x.Payments.Select(p => p.PaymentMethod)
+                        .FirstOrDefault() ?? "COD",
+
+                    ItemCount = x.OrderItems.Count,
+                    CreatedAt = x.CreatedAt
+                })
+                .ToListAsync();
+
+            var inventory = await _db.ProductVariants
+                .Include(x => x.Product)
+                .Select(x => new InventoryDto
+                {
+                    VariantId = x.VariantId,
+                    Sku = x.Sku,
+                    ProductName = x.Product.Name,
+                    Size = x.Size,
+                    Color = x.Color,
+                    StockQuantity = x.StockQuantity
+                })
+                .ToListAsync();
+
+            return new StaffDashboardDto
+            {
+                Orders = orders,
+                Inventory = inventory
+            };
+        }
         public void UpdateUser(int userId,UpdateRequestModel model)
         {
             var item = _db.Users.AsNoTracking()

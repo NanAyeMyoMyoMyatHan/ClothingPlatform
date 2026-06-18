@@ -8,6 +8,7 @@
         public string Email { get; set; }
         public string Address { get; set; }
         public string PhoneNo { get; set; }
+        public string Password { get; set; }
         public string Role { get; set; }
         public DateTime? CreatedAt { get; set; }
     }
@@ -17,6 +18,15 @@
         public int TotalCount { get; set; }
         public int Page { get; set; }
         public int PageSize { get; set; }
+    }
+    public class StaffFormModel
+    {
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Password { get; set; } = "";
+        public string Phone { get; set; } = "";
+        public string Address { get; set; } = "";
     }
 
     public class CreatRquestModel
@@ -35,5 +45,9 @@
         public string Email { get; set; }
         public string Address { get; set; }
         public string Role { get; set; }
+    }
+    public class TblRole
+    {
+        public string RoleName { get; set; }
     }
 }

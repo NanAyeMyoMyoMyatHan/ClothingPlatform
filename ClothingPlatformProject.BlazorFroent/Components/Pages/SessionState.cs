@@ -6,6 +6,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
     {
         public User? CurrentUser { get; private set; }
         public bool IsLoggedIn => CurrentUser != null;
+      //  public string Role => CurrentUser?.Role.RoleName ?? "";
 
         public void Login(User user)
         {
@@ -16,5 +17,9 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         {
             CurrentUser = null;
         }
+        //public bool isInRole (string role)
+        //{
+        //    return Role.Equals(role, StringComparison.OrdinalIgnoreCase);
+        //}
     }
 }

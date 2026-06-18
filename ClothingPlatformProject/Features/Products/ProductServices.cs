@@ -11,78 +11,85 @@ namespace ClothingPlatformProject.Features.Product
     public class ProductServices: IProductService
     {
         private readonly AppDbContext _db;
-
-        public ProductServices(AppDbContext db)
+        private readonly  IWebHostEnvironment _env;
+        public ProductServices(AppDbContext db, IWebHostEnvironment env)
         {
             _db = db;
+            _env = env;
         }
 
         public async Task<int> InsertStepByStepAsync(ProductModel model)
         {
-            using (var context = new AppDbContext())
+            using var context = new AppDbContext();
+            using var transaction = await context.Database.BeginTransactionAsync();
+
+            try
             {
-                using (var transaction = await context.Database.BeginTransactionAsync())
+                var newProduct = new ClothingPlatform.DB.AppDbModels.Product
                 {
-                    try
+                    Name = model.Name,
+                    Description = model.Description,
+                    CategoryId = model.CategoryId,
+                    BasePrice = model.BasePrice
+                };
+                context.Products.Add(newProduct);
+                await context.SaveChangesAsync();
+
+                int newProductId = newProduct.ProductId;
+                string imageUrl = "stdCoat.jpg";
+
+                // 🌟 WebRootPath မရှိရင် ContentRootPath ထဲက wwwroot ကို လှမ်းယူခိုင်းလိုက်တာပါ (စိတ်အချရဆုံး)
+                var webRootPath = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
+
+                if (!string.IsNullOrEmpty(model.ImageBase64) && !string.IsNullOrEmpty(model.ImageFileName))
+                {
+                    // အပေါ်က ရှာဖွေထားတဲ့ webRootPath ကို သုံးမယ်
+                    var folder = Path.Combine(webRootPath, "images", "products");
+
+                    // Folder အဆင့်ဆင့် ရှိမရှိ သေချာအောင် စစ်ပြီး မရှိရင် ဆောက်မယ်
+                    if (!Directory.Exists(folder))
                     {
-                        // ၁။ Main Product ကို အရင်ဆုံး တည်ဆောက်ခြင်း
-                        var newProduct = new ClothingPlatform.DB.AppDbModels.Product
-                        {
-                            Name = model.Name,
-                            Description = model.Description,
-                            CategoryId = model.CategoryId,
-                            BasePrice = model.BasePrice
-                            // 💡 တကယ်လို့ Database Table ထဲမှာ CreatedAt သို့မဟုတ် IsFeatured တွေ NOT NULL ဖြစ်နေရင် ဤနေရာတွင် တစ်ပါတည်း ထည့်ပေးရပါမည်
-                        };
-
-                        context.Products.Add(newProduct);
-                        await context.SaveChangesAsync(); // SQL က Auto-Increment ID ထုတ်ပေးရန် ပထမအကြိမ် သိမ်းခြင်း
-
-                        // ⚠️ သတိပြုရန်- သင့် Product Table ရဲ့ PK နာမည်သည် 'Id' ဖြစ်ပါက newProduct.Id ဟု ပြောင်းရေးပေးပါ
-                        int newProductId = newProduct.ProductId;
-
-                        // ၂။ Image ရှိပါက ProductId နှင့် ချိတ်ဆက်ထည့်သွင်းခြင်း
-                        if (model.ImageDto != null)
-                        {
-                            var newImage = new ProductImage
-                            {
-                                ProductId = newProductId,
-                                ImageUrl = model.ImageDto.ImageUrl,
-                                IsPrimary = true  // ← ဒါထည့်ပါ
-                            };
-                            context.ProductImages.Add(newImage);
-                        }
-
-                        // ၃။ Variants များ ရှိပါက ProductId နှင့် ချိတ်ဆက်ပြီး Auto-SKU တွက်ချက်ထည့်သွင်းခြင်း
-                        if (model.VariantsDto != null && model.VariantsDto.Any())
-                        {
-                            var newVariants = model.VariantsDto.Select(v => new ProductVariant
-                            {
-                                ProductId = newProductId, // အပေါ်မှ ရလာသော ID အစစ်ကို သုံးခြင်း
-                                Size = v.Size,
-                                Color = v.Color,
-                                StockQuantity = v.StockQuantity,
-                                // 🟢 Space များကို ဖယ်ထုတ်ပြီး ရှင်းလင်းသော Auto-Generated SKU ဖန်တီးခြင်း
-                                Sku = $"{model.Name.Replace(" ", "").ToUpper()}-{v.Size.Replace(" ", "").ToUpper()}-{v.Color.Replace(" ", "").ToUpper()}-{Random.Shared.Next(1000, 9999)}"
-                            }).ToList();
-
-                            context.ProductVariants.AddRange(newVariants);
-                        }
-
-                        await context.SaveChangesAsync();
-
-                        await transaction.CommitAsync();
-
-                        return newProductId;
+                        Directory.CreateDirectory(folder);
                     }
-                    catch (Exception ex)
-                    {
-                        await transaction.RollbackAsync();
 
-                        var innerMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
-                        throw new Exception($"Database Save Failed: {innerMessage}");
-                    }
+                    var fileName = $"{Guid.NewGuid()}_{model.ImageFileName}";
+                    var filePath = Path.Combine(folder, fileName);
+
+                    var bytes = Convert.FromBase64String(model.ImageBase64);
+                    await File.WriteAllBytesAsync(filePath, bytes);
+
+                    imageUrl = fileName;
                 }
+
+                context.ProductImages.Add(new ProductImage
+                {
+                    ProductId = newProductId,
+                    ImageUrl = imageUrl,
+                    IsPrimary = true
+                });
+
+                if (model.VariantsDto != null && model.VariantsDto.Any())
+                {
+                    var newVariants = model.VariantsDto.Select(v => new ProductVariant
+                    {
+                        ProductId = newProductId,
+                        Size = v.Size,
+                        Color = v.Color,
+                        StockQuantity = v.StockQuantity,
+                        Sku = $"{model.Name.Replace(" ", "").ToUpper()}-{v.Size.Replace(" ", "").ToUpper()}-{v.Color.Replace(" ", "").ToUpper()}-{Random.Shared.Next(1000, 9999)}"
+                    }).ToList();
+
+                    context.ProductVariants.AddRange(newVariants);
+                }
+
+                await context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return newProductId;
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                throw new Exception($"Database Save Failed: {ex.InnerException?.Message ?? ex.Message}");
             }
         }
 
@@ -122,56 +129,101 @@ namespace ClothingPlatformProject.Features.Product
 
         public async Task<bool> UpdateProductAsync(UpdateProductRequest request)
         {
-            var product = await _db.Products
-                .Include(p => p.ProductVariants)
-                .Include(p => p.ProductImages)
-                .FirstOrDefaultAsync(p => p.ProductId == request.ProductId);
+            using var context = new AppDbContext();
+            using var transaction = await context.Database.BeginTransactionAsync();
 
-            if (product == null)
-                return false;
-
-            // 🔹 Product update
-            product.Name = request.Name;
-            product.Description = request.Description;
-            product.BasePrice = request.BasePrice;
-            product.CategoryId = request.CategoryId;
-
-            // 🔹 Image update
-            var primaryImg = product.ProductImages
-                .FirstOrDefault(i => i.IsPrimary == true);
-
-            if (primaryImg != null)
+            try
             {
-                primaryImg.ImageUrl = request.ImageUrl;
-            }
-            else if (!string.IsNullOrWhiteSpace(request.ImageUrl))
-            {
-                product.ProductImages.Add(new ProductImage
+                // ၁။ ပြင်မယ့် Product ရှိ၊ မရှိ ID ဖြင့် အရင်ရှာမယ် (ဒီနေရာမှာ model.ProductId ပါလာရပါမယ်)
+                var existingProduct = await context.Products.FindAsync(request.Id);
+                if (existingProduct == null)
                 {
-                    ImageUrl = request.ImageUrl,
-                    IsPrimary = true
-                });
-            }
-
-            // 🔹 Variants update
-            foreach (var v in request.Variants)
-            {
-                var dbVariant = product.ProductVariants
-                    .FirstOrDefault(x => x.VariantId == v.VariantId);
-
-                if (dbVariant != null)
-                {
-                    dbVariant.Size = v.Size;
-                    dbVariant.Color = v.Color;
-                    dbVariant.StockQuantity = v.StockQuantity;
+                    throw new Exception($"Product with ID {request.Id} not found.");
                 }
-            }
 
-            await _db.SaveChangesAsync();
-            return true;
+                // ၂။ အချက်အလက်အသစ်များ အစားထိုး ပြင်ဆင်ခြင်း
+                existingProduct.Name = request.Name;
+                existingProduct.Description = request.Description;
+                existingProduct.CategoryId = request.CategoryId;
+                existingProduct.BasePrice = request.BasePrice;
+
+                // ၃။ Image ကို စစ်ဆေးပြီး အစားထိုး ပြင်ဆင်ခြင်း
+                // User က ပုံအသစ် ရွေးပေးလိုက်မှသာ (Base64 ပါလာမှသာ) ပုံအသစ် သွားသိမ်းမယ်
+                if (!string.IsNullOrEmpty(request.ImageBase64) && !string.IsNullOrEmpty(request.ImageFileName))
+                {
+                    var webRootPath = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
+                    var folder = Path.Combine(webRootPath, "images", "products");
+
+                    if (!Directory.Exists(folder))
+                    {
+                        Directory.CreateDirectory(folder);
+                    }
+
+                    var fileName = $"{Guid.NewGuid()}_{request.ImageFileName}";
+                    var filePath = Path.Combine(folder, fileName);
+
+                    var bytes = Convert.FromBase64String(request.ImageBase64);
+                    await File.WriteAllBytesAsync(filePath, bytes);
+
+                    try { File.SetLastWriteTime(filePath, DateTime.Now.AddSeconds(-5)); } catch { }
+
+                    var existingImage = context.ProductImages.FirstOrDefault(i => i.ProductId == request.Id && i.IsPrimary == true);
+
+                    if (existingImage != null)
+                    {
+                        existingImage.ImageUrl = fileName;
+                    }
+                    else
+                    {
+                        context.ProductImages.Add(new ProductImage
+                        {
+                            ProductId = request.Id,
+                            ImageUrl = fileName,
+                            IsPrimary = true
+                        });
+                    }
+                }
+
+                var oldVariants = context.ProductVariants.Where(v => v.ProductId == request.Id).ToList();
+                if (oldVariants.Any())
+                {
+                    context.ProductVariants.RemoveRange(oldVariants);
+                }
+
+                if (request.VariantsDto != null && request.VariantsDto.Any())
+                {
+                    var newVariants = request.VariantsDto.Select(v => {
+                        var safeSize = string.IsNullOrWhiteSpace(v.Size) ? "FREE" : v.Size.Trim();
+                        var safeColor = string.IsNullOrWhiteSpace(v.Color) ? "MIX" : v.Color.Trim();
+                        var safeProdName = string.IsNullOrWhiteSpace(request.Name) ? "PROD" : request.Name.Replace(" ", "");
+
+                        var sku = $"{safeProdName.ToUpper()}-{safeSize.Replace(" ", "").ToUpper()}-{safeColor.Replace(" ", "").ToUpper()}-{Random.Shared.Next(1000, 9999)}";
+
+                        return new ProductVariant
+                        {
+                            ProductId = request.Id, // သက်ဆိုင်ရာ Product ID အဟောင်းအတိုင်း ထည့်မယ်
+                            Size = safeSize,
+                            Color = safeColor,
+                            StockQuantity = v.StockQuantity,
+                            Sku = sku
+                        };
+                    }).ToList();
+
+                    context.ProductVariants.AddRange(newVariants);
+                }
+
+                await context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return true; // အောင်မြင်ရင် true ပြန်မယ်
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                throw new Exception($"Database Update Failed: {ex.InnerException?.Message ?? ex.Message}");
+            }
         }
 
-         
         public async Task<bool> DeleteProductAsync(int productId)
         {
             var product = await _db.Products

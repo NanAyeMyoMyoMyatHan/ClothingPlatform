@@ -1,7 +1,4 @@
 ﻿@page "/staff"
-@inject AppDbContext Db
-@inject SessionState Session
-@inject NavigationManager Nav
 <PageTitle>The Boutique — Staff Portal</PageTitle>
 <style>
     /* ═══════════ TOKENS ═══════════ */
@@ -23,9 +20,14 @@
         --green-light: #DCFCE7;
         --red: #DC2626;
         --red-light: #FEE2E2;
+        --blue: #3B82F6;
+        --blue-light: #DBEAFE;
+        --purple: #7C3AED;
+        --purple-light: #EDE9FE;
         --sidebar-w: 240px;
         --topbar-h: 60px;
         --radius: 10px;
+        --radius-lg: 14px;
         --shadow-sm: 0 1px 4px rgba(30,58,138,.07);
         --shadow-md: 0 4px 20px rgba(30,58,138,.10);
         --shadow-lg: 0 8px 32px rgba(30,58,138,.14);
@@ -45,6 +47,7 @@
         height: 100vh;
         overflow: hidden;
     }
+
     /* ───── SIDEBAR ───── */
     #sidebar {
         width: var(--sidebar-w);
@@ -165,7 +168,6 @@
         font-family: 'Cormorant Garamond', serif;
         font-size: .95rem;
         color: #fff;
-        font-weight: 400;
     }
 
     .staff-name {
@@ -180,6 +182,7 @@
         color: rgba(255,255,255,.38);
         letter-spacing: .05em;
     }
+
     /* ───── MAIN AREA ───── */
     #mainArea {
         flex: 1;
@@ -187,7 +190,7 @@
         flex-direction: column;
         overflow: hidden;
     }
-    /* TOP BAR */
+
     #topbar {
         height: var(--topbar-h);
         background: var(--white);
@@ -204,7 +207,6 @@
         font-family: 'Cormorant Garamond', serif;
         font-size: 1.25rem;
         color: var(--navy);
-        font-weight: 400;
     }
 
         .topbar-greeting span {
@@ -233,12 +235,13 @@
         font-size: .75rem;
         color: var(--slate-light);
     }
-    /* CONTENT */
+
     #content {
         flex: 1;
         overflow-y: auto;
         padding: 1.8rem;
     }
+
     /* ───── VIEW SECTIONS ───── */
     .view-section {
         display: none;
@@ -247,6 +250,7 @@
         .view-section.active {
             display: block;
         }
+
     /* ───── PAGE HEADER ───── */
     .page-header {
         margin-bottom: 1.6rem;
@@ -274,6 +278,7 @@
         margin-top: .5rem;
         border-radius: 2px;
     }
+
     /* ───── KPI CARDS ───── */
     .kpi-grid {
         display: grid;
@@ -376,12 +381,15 @@
         align-items: center;
         gap: .3rem;
     }
-    /* ALL ORDERS RESET BUTTON */
+
+    /* ───── TABLE ───── */
     .filter-bar {
         display: flex;
         align-items: center;
         justify-content: space-between;
         margin-bottom: .9rem;
+        flex-wrap: wrap;
+        gap: .6rem;
     }
 
     .filter-label {
@@ -404,7 +412,7 @@
         align-items: center;
         gap: .3rem;
     }
-    /* ───── TABLE ───── */
+
     .table-card {
         background: var(--white);
         border-radius: var(--radius);
@@ -443,6 +451,7 @@
                 .table-card .table tbody tr:hover {
                     background: rgba(248,250,252,.8);
                 }
+
     /* Status badges */
     .status-badge {
         display: inline-flex;
@@ -476,7 +485,22 @@
         color: #475569;
         cursor: not-allowed;
     }
-    /* Status select dropdown */
+
+    .badge-paid {
+        background: var(--green-light);
+        color: #15803D;
+    }
+
+    .badge-unpaid {
+        background: var(--red-light);
+        color: var(--red);
+    }
+
+    .badge-cod {
+        background: var(--amber-light);
+        color: #92400E;
+    }
+
     .status-select {
         font-size: .76rem;
         font-family: 'DM Sans', sans-serif;
@@ -494,7 +518,7 @@
             border-color: var(--rose);
             box-shadow: 0 0 0 2px rgba(200,131,122,.15);
         }
-    /* Payment badge */
+
     .pay-badge {
         font-size: .7rem;
         color: var(--slate);
@@ -502,6 +526,387 @@
         padding: .2rem .55rem;
         border-radius: 5px;
     }
+
+    /* ═══════════ CREATE ORDER — REDESIGNED ═══════════ */
+    .ob-wrapper {
+        max-width: 860px;
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+    }
+
+    /* Step cards */
+    .ob-card {
+        background: var(--white);
+        border: 1px solid var(--slate-border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        transition: box-shadow var(--transition);
+    }
+
+        .ob-card:focus-within {
+            box-shadow: var(--shadow-md);
+        }
+
+    .ob-card-header {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        padding: 1rem 1.4rem;
+        background: linear-gradient(90deg, rgba(30,58,138,.03), transparent);
+        border-bottom: 1px solid var(--slate-border);
+    }
+
+    .ob-step-dot {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: 0;
+    }
+
+    .dot-customer {
+        background: var(--rose-light);
+        color: var(--rose-dark);
+    }
+
+    .dot-items {
+        background: var(--blue-light);
+        color: #1D4ED8;
+    }
+
+    .dot-delivery {
+        background: var(--purple-light);
+        color: var(--purple);
+    }
+
+    .dot-payment {
+        background: var(--green-light);
+        color: var(--green);
+    }
+
+    .ob-card-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.05rem;
+        color: var(--navy);
+        font-weight: 500;
+    }
+
+    .ob-card-subtitle {
+        font-size: .71rem;
+        color: var(--slate-light);
+        margin-top: .05rem;
+    }
+
+    .ob-card-body {
+        padding: 1.4rem;
+    }
+
+    /* Form fields inside cards */
+    .ob-form-label {
+        font-size: .69rem;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--slate);
+        font-weight: 600;
+        margin-bottom: .3rem;
+        display: block;
+    }
+
+    .ob-input {
+        width: 100%;
+        font-family: 'DM Sans', sans-serif;
+        font-size: .85rem;
+        border: 1.5px solid var(--slate-border);
+        border-radius: 8px;
+        padding: .6rem .9rem;
+        background: var(--white);
+        color: #1e293b;
+        transition: border-color var(--transition), box-shadow var(--transition);
+        box-sizing: border-box;
+    }
+
+        .ob-input:focus {
+            outline: none;
+            border-color: var(--rose);
+            box-shadow: 0 0 0 3px rgba(200,131,122,.13);
+        }
+
+    .ob-select {
+        width: 100%;
+        font-family: 'DM Sans', sans-serif;
+        font-size: .82rem;
+        border: 1.5px solid var(--slate-border);
+        border-radius: 8px;
+        padding: .58rem .85rem;
+        background: var(--white);
+        color: #1e293b;
+        cursor: pointer;
+        transition: border-color var(--transition), box-shadow var(--transition);
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right .8rem center;
+        padding-right: 2.2rem;
+    }
+
+        .ob-select:focus {
+            outline: none;
+            border-color: var(--rose);
+            box-shadow: 0 0 0 3px rgba(200,131,122,.13);
+        }
+
+    .ob-textarea {
+        width: 100%;
+        font-family: 'DM Sans', sans-serif;
+        font-size: .85rem;
+        border: 1.5px solid var(--slate-border);
+        border-radius: 8px;
+        padding: .65rem .9rem;
+        background: var(--white);
+        color: #1e293b;
+        resize: vertical;
+        min-height: 72px;
+        transition: border-color var(--transition), box-shadow var(--transition);
+        box-sizing: border-box;
+    }
+
+        .ob-textarea:focus {
+            outline: none;
+            border-color: var(--rose);
+            box-shadow: 0 0 0 3px rgba(200,131,122,.13);
+        }
+
+    /* Items section */
+    .ob-items-header {
+        display: grid;
+        grid-template-columns: 2fr 70px 100px 100px 36px;
+        gap: .6rem;
+        padding: .55rem .6rem;
+        font-size: .63rem;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: var(--slate-light);
+        font-weight: 600;
+        border-bottom: 1px dashed var(--slate-border);
+        margin-bottom: .4rem;
+    }
+
+    .ob-item-row {
+        display: grid;
+        grid-template-columns: 2fr 70px 100px 100px 36px;
+        gap: .6rem;
+        align-items: center;
+        padding: .55rem .4rem;
+        border-radius: 8px;
+        transition: background var(--transition);
+    }
+
+        .ob-item-row:hover {
+            background: var(--off-white);
+        }
+
+    .ob-qty-input {
+        font-family: 'DM Sans', sans-serif;
+        font-size: .82rem;
+        border: 1.5px solid var(--slate-border);
+        border-radius: 7px;
+        padding: .5rem .5rem;
+        text-align: center;
+        width: 100%;
+        box-sizing: border-box;
+        transition: border-color var(--transition);
+    }
+
+        .ob-qty-input:focus {
+            outline: none;
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+        }
+
+    .ob-price-cell {
+        font-size: .82rem;
+        color: var(--slate);
+    }
+
+    .ob-total-cell {
+        font-size: .85rem;
+        font-weight: 700;
+        color: var(--navy);
+    }
+
+    .ob-remove-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 7px;
+        border: none;
+        background: transparent;
+        color: var(--slate-light);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .85rem;
+        transition: background var(--transition), color var(--transition);
+    }
+
+        .ob-remove-btn:hover {
+            background: var(--red-light);
+            color: var(--red);
+        }
+
+    .ob-add-btn {
+        width: 100%;
+        margin-top: .75rem;
+        font-size: .78rem;
+        font-weight: 600;
+        font-family: 'DM Sans', sans-serif;
+        color: var(--navy);
+        background: none;
+        border: 1.5px dashed var(--slate-border);
+        border-radius: 8px;
+        padding: .6rem 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .4rem;
+        transition: all var(--transition);
+    }
+
+        .ob-add-btn:hover {
+            border-color: var(--rose);
+            color: var(--rose-dark);
+            background: var(--rose-light);
+        }
+
+    /* Total summary bar */
+    .ob-summary-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: linear-gradient(90deg, var(--navy-xdark), var(--navy));
+        border-radius: 10px;
+        padding: 1rem 1.4rem;
+        margin-top: .2rem;
+        color: #fff;
+    }
+
+    .ob-summary-label {
+        font-size: .72rem;
+        text-transform: uppercase;
+        letter-spacing: .12em;
+        color: rgba(255,255,255,.55);
+    }
+
+    .ob-summary-amount {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.7rem;
+        color: #fff;
+        line-height: 1;
+    }
+
+    .ob-summary-items {
+        font-size: .75rem;
+        color: rgba(255,255,255,.5);
+    }
+
+    /* Payment pill selectors */
+    .ob-pill-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+    }
+
+    .ob-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        padding: .4rem 1rem;
+        border-radius: 20px;
+        border: 1.5px solid var(--slate-border);
+        background: var(--white);
+        font-size: .76rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all var(--transition);
+        color: var(--slate);
+        font-family: 'DM Sans', sans-serif;
+    }
+
+        .ob-pill:hover {
+            border-color: var(--navy);
+            color: var(--navy);
+        }
+
+        .ob-pill.ob-pill-active {
+            border-color: var(--navy);
+            background: var(--navy);
+            color: #fff;
+        }
+
+            .ob-pill.ob-pill-active i {
+                color: #fff;
+            }
+
+    /* Submit button */
+    .ob-submit-btn {
+        font-size: .82rem;
+        font-weight: 700;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        background: linear-gradient(135deg, var(--navy-dark), var(--navy));
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: .85rem 2.2rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        transition: transform var(--transition), box-shadow var(--transition), filter var(--transition);
+        font-family: 'DM Sans', sans-serif;
+        box-shadow: 0 4px 14px rgba(30,58,138,.25);
+    }
+
+        .ob-submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(30,58,138,.32);
+            filter: brightness(1.05);
+        }
+
+        .ob-submit-btn:active {
+            transform: translateY(0);
+        }
+
+    /* Inline toast */
+    .inline-toast {
+        font-size: .8rem;
+        padding: .7rem 1rem;
+        border-radius: 8px;
+        display: none;
+        align-items: center;
+        gap: .45rem;
+    }
+
+        .inline-toast.success {
+            background: var(--green-light);
+            color: #15803D;
+            display: flex;
+        }
+
+        .inline-toast.error {
+            background: var(--red-light);
+            color: var(--red);
+            display: flex;
+        }
+
     /* ───── DASHBOARD ───── */
     .dash-grid {
         display: grid;
@@ -553,7 +958,6 @@
             font-size: 7rem;
             color: rgba(255,255,255,.06);
             line-height: 1;
-            font-weight: 300;
             pointer-events: none;
         }
 
@@ -588,43 +992,14 @@
     }
 
     .section-title {
-        font-size: 1rem;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.2rem;
         color: var(--navy);
         font-weight: 500;
         margin-bottom: .9rem;
-        font-family: 'Cormorant Garamond', serif;
-        font-size: 1.2rem;
     }
+
     /* ───── INVENTORY ───── */
-    .inv-controls {
-        display: flex;
-        align-items: center;
-        gap: .5rem;
-    }
-
-    .qty-btn {
-        width: 28px;
-        height: 28px;
-        border: 1px solid var(--slate-border);
-        border-radius: 6px;
-        background: var(--white);
-        color: var(--navy);
-        font-size: .9rem;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background var(--transition), color var(--transition);
-        font-weight: 600;
-        font-family: 'DM Sans', sans-serif;
-    }
-
-        .qty-btn:hover {
-            background: var(--navy);
-            color: #fff;
-            border-color: var(--navy);
-        }
-
     .qty-display {
         min-width: 38px;
         text-align: center;
@@ -654,6 +1029,7 @@
         letter-spacing: .06em;
         text-transform: uppercase;
     }
+
     /* ───── PROFILE ───── */
     .profile-card {
         background: var(--white);
@@ -761,29 +1137,37 @@
         color: var(--slate-light);
         margin-bottom: .75rem;
     }
-    /* Inline toast */
-    .inline-toast {
-        font-size: .8rem;
-        padding: .6rem 1rem;
-        border-radius: 8px;
-        display: none;
-        align-items: center;
-        gap: .45rem;
-        margin-top: .8rem;
+
+    /* ───── SALES REPORT ───── */
+    .report-meta {
+        padding: 1.2rem 1.4rem .9rem;
+        border-bottom: 1px solid #F1F5F9;
     }
 
-        .inline-toast.success {
-            background: var(--green-light);
-            color: #15803D;
-            display: flex;
+    .report-date-input {
+        font-size: .8rem;
+        font-family: 'DM Sans', sans-serif;
+        border: 1px solid var(--slate-border);
+        border-radius: 7px;
+        padding: .35rem .7rem;
+        background: var(--white);
+        color: var(--navy);
+        margin-left: .55rem;
+    }
+
+        .report-date-input:focus {
+            outline: none;
+            border-color: var(--rose);
+            box-shadow: 0 0 0 2px rgba(200,131,122,.15);
         }
 
-        .inline-toast.error {
-            background: var(--red-light);
-            color: var(--red);
-            display: flex;
-        }
-    /* ───── TOAST NOTIFICATION ───── */
+    .scope-note {
+        font-size: .74rem;
+        color: var(--slate-light);
+        margin-top: .35rem;
+    }
+
+    /* ───── TOAST ───── */
     #toastContainer {
         position: fixed;
         bottom: 1.5rem;
@@ -804,37 +1188,77 @@
         gap: .65rem;
         min-width: 260px;
         border-left: 3px solid var(--green);
-        transition: transform .35s cubic-bezier(.34,1.56,.64,1), opacity .28s ease;
         font-size: .82rem;
-        opacity: 1;
     }
 
         .app-toast.toast-error {
             border-color: var(--red);
         }
 
-    .toast-ico {
-        font-size: 1.1rem;
-    }
-
     .toast-msg {
         flex: 1;
         color: var(--navy);
         font-weight: 500;
     }
+
+    /* ── Tab switcher for Order Management ── */
+    .om-tabs {
+        display: flex;
+        gap: .4rem;
+        margin-bottom: 1.2rem;
+    }
+
+    .om-tab {
+        font-size: .76rem;
+        font-weight: 600;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        padding: .45rem 1.1rem;
+        border-radius: 20px;
+        cursor: pointer;
+        border: 1.5px solid var(--slate-border);
+        background: var(--white);
+        color: var(--slate);
+        font-family: 'DM Sans', sans-serif;
+        transition: all var(--transition);
+    }
+
+        .om-tab:hover {
+            border-color: var(--navy);
+            color: var(--navy);
+        }
+
+        .om-tab.om-tab-active {
+            background: var(--navy);
+            border-color: var(--navy);
+            color: #fff;
+        }
+
+    /* Guest order tag */
+    .guest-tag {
+        font-size: .64rem;
+        font-weight: 700;
+        background: var(--purple-light);
+        color: var(--purple);
+        padding: .15rem .5rem;
+        border-radius: 4px;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+        margin-left: .35rem;
+    }
 </style>
+
 <!-- ═══════════ TOAST CONTAINER ═══════════ -->
 <div id="toastContainer">
     @foreach (var toast in activeToasts)
     {
         <div class="app-toast @(toast.IsError ? "toast-error" : "")">
-            <div class="toast-ico">
-                <i class="bi @(toast.IsError ? "bi-x-circle text-danger" : "bi-check-circle text-success")"></i>
-            </div>
+            <i class="bi @(toast.IsError ? "bi-x-circle text-danger" : "bi-check-circle text-success")" style="font-size:1.1rem"></i>
             <div class="toast-msg">@HtmlRaw(toast.Message)</div>
         </div>
     }
 </div>
+
 <!-- ═══════════ APP SHELL ═══════════ -->
 <div id="appShell">
     <!-- ── SIDEBAR ── -->
@@ -850,11 +1274,17 @@
                 <i class="bi bi-grid-1x2"></i> Dashboard
             </div>
             <div class="nav-section-label">Operations</div>
+            <div class="nav-item @(activeView == "createorder" ? "active" : "")" @onclick='() => NavigateTo("createorder")'>
+                <i class="bi bi-telephone-plus"></i> Create Order (Phone)
+            </div>
             <div class="nav-item @(activeView == "orders" ? "active" : "")" @onclick='() => NavigateTo("orders")'>
                 <i class="bi bi-bag-check"></i> Order Management
             </div>
             <div class="nav-item @(activeView == "inventory" ? "active" : "")" @onclick='() => NavigateTo("inventory")'>
                 <i class="bi bi-archive"></i> Stock Control
+            </div>
+            <div class="nav-item @(activeView == "salesreport" ? "active" : "")" @onclick='async () => await NavigateTo("salesreport")'>
+                <i class="bi bi-graph-up-arrow"></i> Daily Sales Report
             </div>
             <div class="nav-section-label">Account</div>
             <div class="nav-item @(activeView == "profile" ? "active" : "")" @onclick='() => NavigateTo("profile")'>
@@ -871,9 +1301,9 @@
             </div>
         </div>
     </aside>
+
     <!-- ── MAIN AREA ── -->
     <div id="mainArea">
-        <!-- TOP BAR -->
         <div id="topbar">
             <div class="topbar-greeting">Hello, <span>@staffFirstName @staffLastName</span></div>
             <div class="topbar-right">
@@ -881,8 +1311,9 @@
                 <span class="topbar-badge">@staffRole</span>
             </div>
         </div>
-        <!-- CONTENT PANE -->
+
         <div id="content">
+
             <!-- ──────────── DASHBOARD VIEW ──────────── -->
             <section class="view-section @(activeView == "dashboard" ? "active" : "")">
                 <div class="welcome-banner">
@@ -925,137 +1356,361 @@
                             @foreach (var ord in recentOrders)
                             {
                                 <tr>
-                                    <td style="font-family:'DM Sans',monospace;font-weight:600;color:var(--navy);">#ORD-@ord.OrderId.ToString("D4")</td>
+                                    <td style="font-family:monospace;font-weight:600;color:var(--navy)">#ORD-@ord.OrderId.ToString("D4")</td>
                                     <td>@ord.User.FirstName @ord.User.LastName</td>
                                     <td>@ord.TotalAmount.ToString("N0")</td>
-                                    <td>
-                                        @if (ord.OrderStatus.ToLower() == "delivered")
-                                        {
-                                            <span class="status-badge badge-delivered"><i class="bi bi-check-circle"></i>Delivered</span>
-                                        }
-                                        else if (ord.OrderStatus.ToLower() == "processing")
-                                        {
-                                            <span class="status-badge badge-processing"><i class="bi bi-arrow-repeat"></i>Processing</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="status-badge badge-pending"><i class="bi bi-hourglass-split"></i>Pending</span>
-                                        }
-                                    </td>
+                                    <td>@StatusBadge(ord.OrderStatus)</td>
                                 </tr>
                             }
                         </tbody>
                     </table>
                 </div>
             </section>
-            <!-- ──────────── ORDERS VIEW ──────────── -->
+
+            <!-- ──────────── CREATE ORDER (PHONE) VIEW ──────────── -->
+            <section class="view-section @(activeView == "createorder" ? "active" : "")">
+                <div class="page-header">
+                    <div class="page-sub">Operations</div>
+                    <h1 class="page-title">Create Order — Phone Customer</h1>
+                    <div class="page-divider"></div>
+                </div>
+
+                <div class="ob-wrapper">
+
+                    <!-- ① Guest Customer -->
+                    <div class="ob-card">
+                        <div class="ob-card-header">
+                            <div class="ob-step-dot dot-customer">1</div>
+                            <div>
+                                <div class="ob-card-title">Guest Customer</div>
+                                <div class="ob-card-subtitle">Enter caller's name and phone number</div>
+                            </div>
+                        </div>
+                        <div class="ob-card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="ob-form-label">Customer Name</label>
+                                    <input type="text" class="ob-input" placeholder="e.g. Thiri San" @bind="guestCustomerName" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="ob-form-label">Phone Number</label>
+                                    <input type="tel" class="ob-input" placeholder="09xxxxxxxxx" @bind="guestPhoneNumber" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ② Items -->
+                    <div class="ob-card">
+                        <div class="ob-card-header">
+                            <div class="ob-step-dot dot-items">2</div>
+                            <div>
+                                <div class="ob-card-title">Order Items</div>
+                                <div class="ob-card-subtitle">Select products and quantities</div>
+                            </div>
+                        </div>
+                        <div class="ob-card-body">
+
+                            <div class="ob-items-header">
+                                <div>Product / SKU</div>
+                                <div style="text-align:center">Qty</div>
+                                <div style="text-align:right">Unit Price</div>
+                                <div style="text-align:right">Subtotal</div>
+                                <div></div>
+                            </div>
+
+                            @foreach (var line in orderLines)
+                            {
+                                <div class="ob-item-row">
+                                    <select class="ob-select" value="@line.VariantId"
+                                            @onchange="(e) => OnLineVariantChanged(line, e.Value?.ToString())">
+                                        <option value="0">— Select item —</option>
+                                        @foreach (var v in inventoryVariants.Where(x => x.StockQuantity > 0 || x.VariantId == line.VariantId))
+                                        {
+                                            <option value="@v.VariantId">@v.Sku — @v.Product.Name (@v.Size / @v.Color) · @v.StockQuantity left</option>
+                                        }
+                                    </select>
+                                    <input type="number" min="1" class="ob-qty-input" value="@line.Quantity"
+                                           @onchange="(e) => OnLineQtyChanged(line, e.Value?.ToString())" />
+                                    <div class="ob-price-cell" style="text-align:right">@GetVariantUnitPrice(line.VariantId).ToString("N0")</div>
+                                    <div class="ob-total-cell" style="text-align:right">@GetLineTotal(line).ToString("N0")</div>
+                                    <button class="ob-remove-btn" @onclick="() => RemoveOrderLine(line)">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </div>
+                            }
+
+                            <button class="ob-add-btn" @onclick="AddOrderLine">
+                                <i class="bi bi-plus-circle"></i> Add Another Item
+                            </button>
+
+                            <div class="ob-summary-bar" style="margin-top:1rem">
+                                <div>
+                                    <div class="ob-summary-label">Order Total</div>
+                                    <div class="ob-summary-amount">@OrderLinesTotal.ToString("N0") <span style="font-size:.9rem;opacity:.7">MMK</span></div>
+                                </div>
+                                <div style="text-align:right">
+                                    <div class="ob-summary-label">Items</div>
+                                    <div class="ob-summary-items">@orderLines.Where(l => l.VariantId > 0).Sum(l => l.Quantity) pcs</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ③ Delivery -->
+                    <div class="ob-card">
+                        <div class="ob-card-header">
+                            <div class="ob-step-dot dot-delivery">3</div>
+                            <div>
+                                <div class="ob-card-title">Delivery Address</div>
+                                <div class="ob-card-subtitle">Where should this order be shipped?</div>
+                            </div>
+                        </div>
+                        <div class="ob-card-body">
+                            <label class="ob-form-label">Shipping / Contact Address</label>
+                            <textarea class="ob-textarea" rows="3"
+                                      placeholder="No.123, Bo Yar Nyunt Street, Dagon Township, Yangon"
+                                      @bind="newOrderShippingAddress"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- ④ Payment -->
+                    <div class="ob-card">
+                        <div class="ob-card-header">
+                            <div class="ob-step-dot dot-payment">4</div>
+                            <div>
+                                <div class="ob-card-title">Payment Details</div>
+                                <div class="ob-card-subtitle">Select method and confirm payment status</div>
+                            </div>
+                        </div>
+                        <div class="ob-card-body">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="ob-form-label">Payment Method</label>
+                                    <div class="ob-pill-group" style="margin-top:.35rem">
+                                        @foreach (var m in new[] { ("COD", "bi-cash-coin", "Cash on Delivery"), ("KBZ Pay", "bi-phone", "KBZ Pay"), ("Wave Pay", "bi-phone-fill", "Wave Pay"), ("Bank Transfer", "bi-bank", "Bank Transfer") })
+                                        {
+                                            <button class="ob-pill @(guestPaymentMethod == m.Item1 ? "ob-pill-active" : "")"
+                                                    @onclick='() => guestPaymentMethod = m.Item1'>
+                                                <i class="bi @m.Item2"></i> @m.Item3
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="ob-form-label">Payment Status</label>
+                                    <div class="ob-pill-group" style="margin-top:.35rem">
+                                        <button class="ob-pill @(guestPaymentStatus == "unpaid" ? "ob-pill-active" : "")"
+                                                @onclick='() => guestPaymentStatus = "unpaid"'>
+                                            <i class="bi bi-clock-history"></i> Unpaid
+                                        </button>
+                                        <button class="ob-pill @(guestPaymentStatus == "paid" ? "ob-pill-active" : "")"
+                                                @onclick='() => guestPaymentStatus = "paid"'>
+                                            <i class="bi bi-check-circle"></i> Paid
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Error + Submit -->
+                    @if (!string.IsNullOrEmpty(createOrderError))
+                    {
+                        <div class="inline-toast error" style="display:flex">
+                            <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;@createOrderError
+                        </div>
+                    }
+
+                    <div style="display:flex;align-items:center;gap:1rem">
+                        <button class="ob-submit-btn" @onclick="SubmitPhoneOrder">
+                            <i class="bi bi-bag-check-fill"></i> Confirm &amp; Create Order
+                        </button>
+                        <button style="font-size:.76rem;color:var(--slate);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif" @onclick="ResetCreateOrderForm">
+                            <i class="bi bi-arrow-counterclockwise"></i> Reset Form
+                        </button>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ──────────── ORDER MANAGEMENT VIEW ──────────── -->
             <section class="view-section @(activeView == "orders" ? "active" : "")">
                 <div class="page-header">
                     <div class="page-sub">Operations</div>
                     <h1 class="page-title">Order Management</h1>
                     <div class="page-divider"></div>
                 </div>
-                <!-- KPI Cards -->
-                <div class="kpi-grid">
-                    <div class="kpi-card kpi-pending @(currentFilter == "pending" ? "kpi-active" : "")" @onclick='() => FilterOrders("pending")'>
-                        <div class="kpi-icon"><i class="bi bi-hourglass-split"></i></div>
-                        <div class="kpi-count">@pendingCount</div>
-                        <div class="kpi-label">Pending Orders</div>
-                        <div class="kpi-hint"><i class="bi bi-hand-index"></i> Click to filter</div>
-                    </div>
-                    <div class="kpi-card kpi-processing @(currentFilter == "processing" ? "kpi-active" : "")" @onclick='() => FilterOrders("processing")'>
-                        <div class="kpi-icon"><i class="bi bi-arrow-repeat"></i></div>
-                        <div class="kpi-count">@processingCount</div>
-                        <div class="kpi-label">Processing Orders</div>
-                        <div class="kpi-hint"><i class="bi bi-hand-index"></i> Click to filter</div>
-                    </div>
-                    <div class="kpi-card kpi-delivered @(currentFilter == "delivered" ? "kpi-active" : "")" @onclick='() => FilterOrders("delivered")'>
-                        <div class="kpi-icon"><i class="bi bi-check-circle"></i></div>
-                        <div class="kpi-count">@deliveredCount</div>
-                        <div class="kpi-label">Delivered Orders</div>
-                        <div class="kpi-hint"><i class="bi bi-hand-index"></i> Click to filter</div>
-                    </div>
-                </div>
-                <!-- Filter Bar -->
-                <div class="filter-bar">
-                    <div class="filter-label">
-                        Showing: <strong>@(string.IsNullOrEmpty(currentFilter) ? "All Orders" : char.ToUpper(currentFilter[0]) + currentFilter.Substring(1) + " Orders")</strong>
-                    </div>
-                    @if (!string.IsNullOrEmpty(currentFilter))
-                    {
-                        <button id="resetFilterBtn" @onclick='() => FilterOrders("")'>
-                            <i class="bi bi-x-circle"></i> Show All
-                        </button>
-                    }
-                </div>
-                <!-- Orders Table -->
-                <div class="table-card">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Order ID</th>
-                                <th>Customer Name</th>
-                                <th>Amount (MMK)</th>
-                                <th>Payment</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if (!filteredOrders.Any())
-                            {
-                                <tr>
-                                    <td colspan="6" style="text-align:center;padding:2rem;color:var(--slate-light)">
-                                        <i class="bi bi-inbox" style="font-size:1.6rem;display:block;margin-bottom:.4rem"></i>No orders found.
-                                    </td>
-                                </tr>
-                            }
-                            else
-                            {
-                                @foreach (var ord in filteredOrders)
-                                {
-                                    var payMethod = ord.Payments.FirstOrDefault()?.PaymentMethod ?? "COD";
 
-                                    <tr>
-                                        <td style="font-family:'DM Sans',monospace;font-weight:600;color:var(--navy);font-size:.8rem">#ORD-@ord.OrderId.ToString("D4")</td>
-                                        <td>@ord.User.FirstName @ord.User.LastName</td>
-                                        <td style="font-weight:500">@ord.TotalAmount.ToString("N0")</td>
-                                        <td><span class="pay-badge">@payMethod.ToUpper()</span></td>
-                                        <td>
-                                            @if (ord.OrderStatus.ToLower() == "delivered")
-                                            {
-                                                <span class="status-badge badge-delivered"><i class="bi bi-check-circle"></i>Delivered</span>
-                                            }
-                                            else if (ord.OrderStatus.ToLower() == "processing")
-                                            {
-                                                <span class="status-badge badge-processing"><i class="bi bi-arrow-repeat"></i>Processing</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="status-badge badge-pending"><i class="bi bi-hourglass-split"></i>Pending</span>
-                                            }
-                                        </td>
-                                        <td>
-                                            @if (ord.OrderStatus.ToLower() == "delivered")
-                                            {
-                                                <span class="status-badge badge-locked"><i class="bi bi-lock-fill"></i>Delivered — Locked</span>
-                                            }
-                                            else
-                                            {
-                                                <select class="status-select" value="@ord.OrderStatus" @onchange="(e) => UpdateOrderStatus(ord, e.Value?.ToString())">
-                                                    <option value="pending">Pending</option>
-                                                    <option value="processing">Processing</option>
-                                                    <option value="delivered">Delivered</option>
-                                                </select>
-                                            }
-                                        </td>
-                                    </tr>
-                                }
-                            }
-                        </tbody>
-                    </table>
+                <!-- Tab switcher: Regular / Guest -->
+                <div class="om-tabs">
+                    <button class="om-tab @(ordersTab == "regular" ? "om-tab-active" : "")" @onclick='() => ordersTab = "regular"'>
+                        <i class="bi bi-bag"></i> Regular Orders (@allOrders.Count)
+                    </button>
+                    <button class="om-tab @(ordersTab == "guest" ? "om-tab-active" : "")" @onclick='() => ordersTab = "guest"'>
+                        <i class="bi bi-telephone"></i> Phone / Guest Orders (@allGuestOrders.Count)
+                    </button>
                 </div>
+
+                <!-- ── REGULAR ORDERS TAB ── -->
+                @if (ordersTab == "regular")
+                {
+                    <div class="kpi-grid">
+                        <div class="kpi-card kpi-pending @(currentFilter == "pending" ? "kpi-active" : "")" @onclick='() => FilterOrders("pending")'>
+                            <div class="kpi-icon"><i class="bi bi-hourglass-split"></i></div>
+                            <div class="kpi-count">@pendingCount</div>
+                            <div class="kpi-label">Pending Orders</div>
+                            <div class="kpi-hint"><i class="bi bi-hand-index"></i> Click to filter</div>
+                        </div>
+                        <div class="kpi-card kpi-processing @(currentFilter == "processing" ? "kpi-active" : "")" @onclick='() => FilterOrders("processing")'>
+                            <div class="kpi-icon"><i class="bi bi-arrow-repeat"></i></div>
+                            <div class="kpi-count">@processingCount</div>
+                            <div class="kpi-label">Processing Orders</div>
+                            <div class="kpi-hint"><i class="bi bi-hand-index"></i> Click to filter</div>
+                        </div>
+                        <div class="kpi-card kpi-delivered @(currentFilter == "delivered" ? "kpi-active" : "")" @onclick='() => FilterOrders("delivered")'>
+                            <div class="kpi-icon"><i class="bi bi-check-circle"></i></div>
+                            <div class="kpi-count">@deliveredCount</div>
+                            <div class="kpi-label">Delivered Orders</div>
+                            <div class="kpi-hint"><i class="bi bi-hand-index"></i> Click to filter</div>
+                        </div>
+                    </div>
+                    <div class="filter-bar">
+                        <div class="filter-label">
+                            Showing: <strong>@(string.IsNullOrEmpty(currentFilter) ? "All Orders" : char.ToUpper(currentFilter[0]) + currentFilter.Substring(1) + " Orders")</strong>
+                        </div>
+                        @if (!string.IsNullOrEmpty(currentFilter))
+                        {
+                            <button id="resetFilterBtn" @onclick='() => FilterOrders("")'>
+                                <i class="bi bi-x-circle"></i> Show All
+                            </button>
+                        }
+                    </div>
+                    <div class="table-card">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Amount (MMK)</th>
+                                    <th>Payment</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!filteredOrders.Any())
+                                {
+                                    <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--slate-light)"><i class="bi bi-inbox" style="font-size:1.6rem;display:block;margin-bottom:.4rem"></i>No orders found.</td></tr>
+                                }
+                                else
+                                {
+                                    @foreach (var ord in filteredOrders)
+                                    {
+                                        var payMethod = ord.Payments.FirstOrDefault()?.PaymentMethod ?? "COD";
+                                        <tr>
+                                            <td style="font-family:monospace;font-weight:600;color:var(--navy);font-size:.8rem">#ORD-@ord.OrderId.ToString("D4")</td>
+                                            <td>@ord.User.FirstName @ord.User.LastName</td>
+                                            <td style="font-weight:500">@ord.TotalAmount.ToString("N0")</td>
+                                            <td><span class="pay-badge">@payMethod.ToUpper()</span></td>
+                                            <td>@StatusBadge(ord.OrderStatus)</td>
+                                            <td>
+                                                @if (ord.OrderStatus.ToLower() == "delivered")
+                                                {
+                                                    <span class="status-badge badge-locked"><i class="bi bi-lock-fill"></i> Locked</span>
+                                                }
+                                                else
+                                                {
+                                                    <select class="status-select" value="@ord.OrderStatus" @onchange="(e) => UpdateOrderStatus(ord, e.Value?.ToString())">
+                                                        <option value="pending">Pending</option>
+                                                        <option value="processing">Processing</option>
+                                                        <option value="delivered">Delivered</option>
+                                                    </select>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+
+                <!-- ── GUEST / PHONE ORDERS TAB ── -->
+                @if (ordersTab == "guest")
+                {
+                    <div class="filter-bar">
+                        <div class="filter-label">
+                            Showing: <strong>All Phone / Guest Orders</strong>
+                            <span class="guest-tag" style="margin-left:.5rem">Guest</span>
+                        </div>
+                    </div>
+                    <div class="table-card">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer Name</th>
+                                    <th>Phone</th>
+                                    <th>Amount (MMK)</th>
+                                    <th>Payment Method</th>
+                                    <th>Payment Status</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!allGuestOrders.Any())
+                                {
+                                    <tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--slate-light)"><i class="bi bi-telephone-x" style="font-size:1.6rem;display:block;margin-bottom:.4rem"></i>No phone orders yet.</td></tr>
+                                }
+                                else
+                                {
+                                    @foreach (var go in allGuestOrders)
+                                    {
+                                        <tr>
+                                            <td style="font-family:monospace;font-weight:600;color:var(--purple);font-size:.8rem">#GORD-@go.GuestOrderId.ToString("D4")</td>
+                                            <td>@go.CustomerName</td>
+                                            <td style="font-size:.78rem;color:var(--slate)">@go.PhoneNumber</td>
+                                            <td style="font-weight:500">@go.TotalAmount.ToString("N0")</td>
+                                            <td><span class="pay-badge">@(go.PaymentMethod ?? "COD")</span></td>
+                                            <td>
+                                                @{
+                                                    var ps = (go.PaymentStatus ?? "unpaid").ToLower();
+                                                    if (ps == "paid")
+                                                    {
+                                                        <span class="status-badge badge-paid"><i class="bi bi-check-circle"></i> Paid</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="status-badge badge-unpaid"><i class="bi bi-clock-history"></i> Unpaid</span>
+                                                    }
+                                                }
+                                            </td>
+                                            <td>@StatusBadge(go.OrderStatus ?? "pending")</td>
+                                            <td>
+                                                @if ((go.OrderStatus ?? "").ToLower() == "delivered")
+                                                {
+                                                    <span class="status-badge badge-locked"><i class="bi bi-lock-fill"></i> Locked</span>
+                                                }
+                                                else
+                                                {
+                                                    <select class="status-select" value="@go.OrderStatus" @onchange="(e) => UpdateGuestOrderStatus(go, e.Value?.ToString())">
+                                                        <option value="pending">Pending</option>
+                                                        <option value="processing">Processing</option>
+                                                        <option value="delivered">Delivered</option>
+                                                    </select>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
             </section>
+
             <!-- ──────────── INVENTORY VIEW ──────────── -->
             <section class="view-section @(activeView == "inventory" ? "active" : "")">
                 <div class="page-header">
@@ -1067,26 +1722,23 @@
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>#</th>
+                                <th>No</th>
                                 <th>SKU</th>
                                 <th>Product Name</th>
                                 <th>Size</th>
                                 <th>Color</th>
                                 <th>Qty</th>
                                 <th>Stock Status</th>
-                                <th>Adjust</th>
                             </tr>
                         </thead>
                         <tbody>
                             @for (int i = 0; i < inventoryVariants.Count; i++)
                             {
-                                var idx = i;
-                                var variant = inventoryVariants[idx];
+                                var variant = inventoryVariants[i];
                                 bool isLow = variant.StockQuantity < 5;
-
-                                <tr class="@(isLow ? "low-stock-row" : "")">
-                                    <td>@(idx + 1)</td>
-                                    <td style="font-family: monospace; font-weight: 500;">@variant.Sku</td>
+                                <tr>
+                                    <td>@(i + 1)</td>
+                                    <td style="font-family:monospace;font-weight:500">@variant.Sku</td>
                                     <td>@variant.Product.Name</td>
                                     <td>@variant.Size</td>
                                     <td>@variant.Color</td>
@@ -1094,7 +1746,7 @@
                                     <td>
                                         @if (variant.StockQuantity == 0)
                                         {
-                                            <span class="low-stock-badge" style="background-color: var(--red-light); color: var(--red);">Out of Stock</span>
+                                            <span class="low-stock-badge" style="background:var(--red-light);color:var(--red)">Out of Stock</span>
                                         }
                                         else if (isLow)
                                         {
@@ -1105,18 +1757,98 @@
                                             <span class="in-stock-badge">In Stock</span>
                                         }
                                     </td>
-                                    <td>
-                                        <div class="inv-controls">
-                                            <button class="qty-btn" @onclick="() => AdjustStock(variant, -1)">-</button>
-                                            <button class="qty-btn" @onclick="() => AdjustStock(variant, 1)">+</button>
-                                        </div>
-                                    </td>
                                 </tr>
                             }
                         </tbody>
                     </table>
                 </div>
             </section>
+
+            <!-- ──────────── SALES REPORT VIEW ──────────── -->
+            <section class="view-section @(activeView == "salesreport" ? "active" : "")">
+                <div class="page-header">
+                    <div class="page-sub">Reports</div>
+                    <h1 class="page-title">Staff Daily Sales Report</h1>
+                    <div class="page-divider"></div>
+                </div>
+                <div class="table-card">
+                    <div class="report-meta">
+                        <div class="filter-bar" style="margin-bottom:.3rem">
+                            <div class="filter-label">
+                                <strong>Report Date:</strong>
+                                <input type="date" class="report-date-input"
+                                       value="@selectedReportDate.ToString("yyyy-MM-dd")"
+                                       max="@DateTime.Today.ToString("yyyy-MM-dd")"
+                                       @onchange="OnReportDateChanged" />
+                                @if (selectedReportDate.Date == DateTime.Today)
+                                {
+                                    <span class="topbar-badge" style="margin-left:.5rem">Today</span>
+                                }
+                            </div>
+                            @if (selectedReportDate.Date != DateTime.Today)
+                            {
+                                <button id="resetFilterBtn" @onclick="ResetReportToToday">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Back to Today
+                                </button>
+                            }
+                        </div>
+                        <p style="margin-bottom:.2rem"><strong>Staff Name:</strong> @staffName</p>
+                        <div class="scope-note">
+                            <i class="bi bi-shield-lock"></i> Showing only orders you personally processed — other staff members' work is not shown here.
+                        </div>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer Name</th>
+                                <th>Items</th>
+                                <th>Total Amount</th>
+                                <th>Payment Method</th>
+                                <th>Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!reportOrders.Any() && !reportGuestOrders.Any())
+                            {
+                                <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--slate-light)"><i class="bi bi-inbox" style="font-size:1.6rem;display:block;margin-bottom:.4rem"></i>No orders found for @selectedReportDate.ToString("MMMM dd, yyyy").</td></tr>
+                            }
+                            else
+                            {
+                                @foreach (var ord in reportOrders)
+                                {
+                                    <tr>
+                                        <td style="font-family:monospace;font-weight:600;color:var(--navy);font-size:.8rem">#ORD-@ord.OrderId.ToString("D4")</td>
+                                        <td>@ord.User.FirstName @ord.User.LastName</td>
+                                        <td>@ord.OrderItems.Count</td>
+                                        <td>@ord.TotalAmount.ToString("N0") MMK</td>
+                                        <td>@(ord.Payments.FirstOrDefault()?.PaymentMethod ?? "Cash")</td>
+                                        <td><span class="pay-badge">Regular</span></td>
+                                    </tr>
+                                }
+                                @foreach (var go in reportGuestOrders)
+                                {
+                                    <tr>
+                                        <td style="font-family:monospace;font-weight:600;color:var(--purple);font-size:.8rem">#GORD-@go.GuestOrderId.ToString("D4")</td>
+                                        <td>@go.CustomerName</td>
+                                        <td>@go.TotalQuantity</td>
+                                        <td>@go.TotalAmount.ToString("N0") MMK</td>
+                                        <td>@(go.PaymentMethod ?? "COD")</td>
+                                        <td><span class="guest-tag" style="margin-left:0">Guest</span></td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="2">Total Orders: @reportOrderCount</th>
+                                <th colspan="4">Total Sales: @reportRevenue.ToString("N0") MMK</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </section>
+
             <!-- ──────────── PROFILE VIEW ──────────── -->
             <section class="view-section @(activeView == "profile" ? "active" : "")">
                 <div class="page-header">
@@ -1153,7 +1885,7 @@
                         @if (profileSaved)
                         {
                             <div class="inline-toast success">
-                                <i class="bi bi-check-circle"></i> Profile changes saved in system registers.
+                                <i class="bi bi-check-circle"></i> Profile changes saved successfully.
                             </div>
                         }
                         <div style="margin-top:1.4rem">
@@ -1164,197 +1896,13 @@
                     </div>
                     <div class="profile-divider"></div>
                     <div class="profile-section-title">Session</div>
-                    <p style="font-size:.8rem;color:var(--slate);margin-bottom:1rem">
-                        Logging out will clear your session state from this portal instance.
-                    </p>
+                    <p style="font-size:.8rem;color:var(--slate);margin-bottom:1rem">Logging out will clear your session from this portal.</p>
                     <button class="btn-logout" @onclick="Logout">
                         <i class="bi bi-box-arrow-right"></i> Logout
                     </button>
                 </div>
             </section>
+
         </div><!-- /content -->
     </div><!-- /mainArea -->
 </div><!-- /appShell -->
-@code {
-    private string activeView = "dashboard";
-    private string currentFilter = "";
-    private string currentDateString = "";
-    private bool profileSaved = false;
-    // Staff details state
-    private string staffFirstName = "Thiri";
-    private string staffLastName = "San";
-    private string staffEmail = "thiri@boutique.com";
-    private string staffPhone = "09222333444";
-    private string staffRole = "Senior Staff";
-    private string staffInitials => (staffFirstName.Length > 0 ? staffFirstName[0].ToString() : "") + (staffLastName.Length > 0 ? staffLastName[0].ToString() : "");
-    // Database aggregates
-    private int totalOrdersCount = 0;
-    private decimal totalRevenue = 0;
-    private int totalSkusCount = 0;
-    private int lowStockCount = 0;
-    private int pendingCount = 0;
-    private int processingCount = 0;
-    private int deliveredCount = 0;
-    // Lists
-    private List<Order> allOrders = new();
-    private List<Order> filteredOrders = new();
-    private List<Order> recentOrders = new();
-    private List<ProductVariant> inventoryVariants = new();
-    // Custom Toast ToastItem
-    private class ToastItem
-    {
-        public string Message { get; set; } = "";
-        public bool IsError { get; set; }
-    }
-    private List<ToastItem> activeToasts = new();
-    protected override void OnInitialized()
-    {
-        // Enforce user sign-in check
-        if (!Session.IsLoggedIn)
-        {
-            var defaultStaff = Db.Users.FirstOrDefault(u => u.Role == "staff");
-            if (defaultStaff != null)
-            {
-                Session.Login(defaultStaff);
-            }
-            else
-            {
-                Nav.NavigateTo("/login");
-                return;
-            }
-        }
-        var user = Session.CurrentUser!;
-        staffFirstName = user.FirstName;
-        staffLastName = user.LastName;
-        staffEmail = user.Email;
-        
-        staffRole = user.Role == "admin" ? "Boutique Owner" : "Senior Staff";
-        currentDateString = DateTime.Now.ToString("ddd, d MMM yyyy");
-        LoadStaffDashboardData();
-    }
-    private void LoadStaffDashboardData()
-    {
-        allOrders = Db.Orders
-            .Include(o => o.User)
-            .Include(o => o.Payments)
-            .OrderByDescending(o => o.OrderId)
-            .ToList();
-        recentOrders = allOrders.Take(5).ToList();
-
-        inventoryVariants = Db.ProductVariants
-                    .Include(v => v.Product)
-                    .OrderBy(v => v.Sku)
-                    .ToList();
-        // Recalculate KPI aggregates
-        totalOrdersCount = allOrders.Count;
-        totalRevenue = allOrders.Sum(o => o.TotalAmount);
-        totalSkusCount = inventoryVariants.Count;
-        lowStockCount = inventoryVariants.Count(v => v.StockQuantity < 5);
-        pendingCount = allOrders.Count(o => o.OrderStatus.ToLower() == "pending");
-        processingCount = allOrders.Count(o => o.OrderStatus.ToLower() == "processing");
-        deliveredCount = allOrders.Count(o => o.OrderStatus.ToLower() == "delivered");
-        ApplyFilter();
-    }
-    private void NavigateTo(string view)
-    {
-        activeView = view;
-        profileSaved = false;
-        LoadStaffDashboardData();
-    }
-    private void FilterOrders(string status)
-    {
-        currentFilter = status;
-        ApplyFilter();
-    }
-    private void ApplyFilter()
-    {
-        if (string.IsNullOrEmpty(currentFilter))
-        {
-            filteredOrders = allOrders;
-        }
-        else
-        {
-            filteredOrders = allOrders.Where(o => o.OrderStatus.ToLower() == currentFilter).ToList();
-        }
-    }
-    private void UpdateOrderStatus(Order order, string? newStatus)
-    {
-        if (string.IsNullOrEmpty(newStatus)) return;
-
-        var dbOrder = Db.Orders.FirstOrDefault(o => o.OrderId == order.OrderId);
-        if (dbOrder != null)
-        {
-            dbOrder.OrderStatus = newStatus;
-
-            // Also log staff fulfillment action
-            var log = new StaffFulfillmentLog
-            {
-                OrderId = order.OrderId,
-                StaffId = Session.CurrentUser!.UserId,
-                ActionTaken = char.ToUpper(newStatus[0]) + newStatus.Substring(1),
-                Notes = $"Status changed by operational staff member."
-            };
-            Db.StaffFulfillmentLogs.Add(log);
-            Db.SaveChanges();
-            LoadStaffDashboardData();
-            TriggerToast($"Order #ORD-{order.OrderId:D4} updated to <strong>{newStatus.ToUpper()}</strong>");
-        }
-    }
-    private void AdjustStock(ProductVariant variant, int adjustment)
-    {
-        var dbVariant = Db.ProductVariants.FirstOrDefault(v => v.VariantId == variant.VariantId);
-        if (dbVariant != null)
-        {
-            int oldQty = dbVariant.StockQuantity;
-            dbVariant.StockQuantity = Math.Max(0, dbVariant.StockQuantity + adjustment);
-
-            // Record activity log
-            var log = new StaffActivityLog
-            {
-                StaffId = Session.CurrentUser!.UserId,
-                TargetTable = "product_variants",
-                TargetId = variant.VariantId,
-                ActionType = "update",
-                Description = $"Adjusted SKU {variant.Sku} stock from {oldQty} to {dbVariant.StockQuantity}."
-            };
-            Db.StaffActivityLogs.Add(log);
-            Db.SaveChanges();
-            LoadStaffDashboardData();
-            TriggerToast($"Stock adjusted for SKU <strong>{variant.Sku}</strong> ({oldQty} &rarr; {dbVariant.StockQuantity})");
-        }
-    }
-    private void SaveProfile()
-    {
-        var user = Db.Users.FirstOrDefault(u => u.UserId == Session.CurrentUser!.UserId);
-        if (user != null)
-        {
-            user.FirstName = staffFirstName;
-            user.LastName = staffLastName;
-            user.Email = staffEmail;
-            
-            Db.SaveChanges();
-
-            // Sync session
-            Session.Login(user);
-            profileSaved = true;
-            TriggerToast("System staff details saved successfully.");
-        }
-    }
-    private void Logout()
-    {
-        Session.Logout();
-        Nav.NavigateTo("/login");
-    }
-    private void TriggerToast(string msg, bool isError = false)
-    {
-        var toast = new ToastItem { Message = msg, IsError = isError };
-        activeToasts.Add(toast);
-        StateHasChanged();
-        Task.Delay(3000).ContinueWith(_ =>
-        {
-            activeToasts.Remove(toast);
-            InvokeAsync(StateHasChanged);
-        });
-    }
-    private MarkupString HtmlRaw(string value) => new MarkupString(value);
-}

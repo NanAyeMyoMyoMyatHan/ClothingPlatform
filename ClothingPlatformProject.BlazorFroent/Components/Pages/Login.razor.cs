@@ -1,6 +1,7 @@
 ﻿using ClothingPlatform.DB.AppDbModels;
 using ClothingPlatformProject.Models.Auth;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Identity.Data;
 
 namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 {
@@ -11,8 +12,8 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         [Inject]
         public SessionState Session { get; set; }
         [Inject]
-        public NavigationManager Nav {  get; set; }
-        public LoginRequest data { get; set; } = new();
+        public NavigationManager Nav { get; set; }
+        public AuthRequest data { get; set; } = new();
 
 
         private string currentPanel = "login";
@@ -151,7 +152,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                 regEmailErrorMsg = "Email address is required.";
                 isValid = false;
             }
-           
+
 
 
             else if (!IsValidEmail(regEmail))
@@ -219,7 +220,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
             regFirstName = "";
             regLastName = "";
-            regEmail = ""; 
+            regEmail = "";
             regPhone = "";
             regPassword = "";
             regConfirmPassword = "";
@@ -229,5 +230,4 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         }
         private MarkupString HtmlRaw(string value) => new MarkupString(value);
     }
-    }
-    
+}

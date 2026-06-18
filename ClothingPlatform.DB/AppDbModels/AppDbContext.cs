@@ -19,6 +19,10 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Category> Categories { get; set; }
 
+    public virtual DbSet<GuestOrder> GuestOrders { get; set; }
+
+    public virtual DbSet<GuestOrderItem> GuestOrderItems { get; set; }
+
     public virtual DbSet<Order> Orders { get; set; }
 
     public virtual DbSet<OrderItem> OrderItems { get; set; }
@@ -44,6 +48,14 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<StoreSalesDaily> StoreSalesDailies { get; set; }
 
     public virtual DbSet<StoreSalesMonthly> StoreSalesMonthlies { get; set; }
+
+    public virtual DbSet<TblPermission> TblPermissions { get; set; }
+
+    public virtual DbSet<TblRole> TblRoles { get; set; }
+
+    public virtual DbSet<TblRolePermission> TblRolePermissions { get; set; }
+
+    public virtual DbSet<TblUser> TblUsers { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
 
@@ -99,6 +111,68 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.Parent).WithMany(p => p.InverseParent)
                 .HasForeignKey(d => d.ParentId)
                 .HasConstraintName("FK_Categories_Parent");
+        });
+
+        modelBuilder.Entity<GuestOrder>(entity =>
+        {
+            entity.HasKey(e => e.GuestOrderId).HasName("PK__guest_or__78B1CA5877E4BD07");
+
+            entity.ToTable("guest_orders");
+
+            entity.Property(e => e.GuestOrderId).HasColumnName("guest_order_id");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("created_at");
+            entity.Property(e => e.CustomerName)
+                .HasMaxLength(150)
+                .HasColumnName("customer_name");
+            entity.Property(e => e.OrderStatus)
+                .HasMaxLength(50)
+                .HasDefaultValue("Pending")
+                .HasColumnName("order_status");
+            entity.Property(e => e.PaymentMethod)
+                .HasMaxLength(50)
+                .HasDefaultValue("COD");
+            entity.Property(e => e.PaymentStatus)
+                .HasMaxLength(50)
+                .HasDefaultValue("Unpaid");
+            entity.Property(e => e.PhoneNumber)
+                .HasMaxLength(20)
+                .HasColumnName("phone_number");
+            entity.Property(e => e.ShippingAddress).HasColumnName("shipping_address");
+            entity.Property(e => e.TotalAmount)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("total_amount");
+            entity.Property(e => e.TotalQuantity)
+                .HasDefaultValue(1)
+                .HasColumnName("total_quantity");
+        });
+
+        modelBuilder.Entity<GuestOrderItem>(entity =>
+        {
+            entity.HasKey(e => e.GuestOrderItemId).HasName("PK__guest_or__027A3BE1777300BE");
+
+            entity.ToTable("guest_order_items");
+
+            entity.Property(e => e.GuestOrderItemId).HasColumnName("guest_order_item_id");
+            entity.Property(e => e.GuestOrderId).HasColumnName("guest_order_id");
+            entity.Property(e => e.PriceAtPurchase)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("price_at_purchase");
+            entity.Property(e => e.Quantity)
+                .HasDefaultValue(1)
+                .HasColumnName("quantity");
+            entity.Property(e => e.VariantId).HasColumnName("variant_id");
+
+            entity.HasOne(d => d.GuestOrder).WithMany(p => p.GuestOrderItems)
+                .HasForeignKey(d => d.GuestOrderId)
+                .HasConstraintName("FK_GuestOrderItems_GuestOrders");
+
+            entity.HasOne(d => d.Variant).WithMany(p => p.GuestOrderItems)
+                .HasForeignKey(d => d.VariantId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_GuestOrderItems_ProductVariants");
         });
 
         modelBuilder.Entity<Order>(entity =>
@@ -255,8 +329,6 @@ public partial class AppDbContext : DbContext
 
             entity.ToTable("product_variants");
 
-            entity.HasIndex(e => e.Sku, "UQ__product___DDDF4BE78DBF58F2").IsUnique();
-
             entity.Property(e => e.VariantId).HasColumnName("variant_id");
             entity.Property(e => e.Color)
                 .HasMaxLength(50)
@@ -272,7 +344,7 @@ public partial class AppDbContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("size");
             entity.Property(e => e.Sku)
-                .HasMaxLength(100)
+                .HasMaxLength(1000)
                 .IsUnicode(false)
                 .HasColumnName("sku");
             entity.Property(e => e.StockQuantity).HasColumnName("stock_quantity");
@@ -454,6 +526,77 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.TotalRevenue)
                 .HasColumnType("decimal(10, 2)")
                 .HasColumnName("total_revenue");
+        });
+
+        modelBuilder.Entity<TblPermission>(entity =>
+        {
+            entity.HasKey(e => e.PermissionId).HasName("PK__Tbl_Perm__EFA6FB2F8202D7D7");
+
+            entity.ToTable("Tbl_Permissions");
+
+            entity.HasIndex(e => e.PermissionName, "UQ__Tbl_Perm__0FFDA35752B34B95").IsUnique();
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Description).HasMaxLength(255);
+            entity.Property(e => e.PermissionName).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<TblRole>(entity =>
+        {
+            entity.HasKey(e => e.RoleId).HasName("PK__Tbl_Role__8AFACE1A112BE116");
+
+            entity.ToTable("Tbl_Roles");
+
+            entity.HasIndex(e => e.RoleName, "UQ__Tbl_Role__8A2B616085D3A83C").IsUnique();
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Description).HasMaxLength(255);
+            entity.Property(e => e.RoleName).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<TblRolePermission>(entity =>
+        {
+            entity.HasKey(e => new { e.RoleId, e.PermissionId }).HasName("PK__Tbl_Role__6400A1A889303A12");
+
+            entity.ToTable("Tbl_RolePermissions");
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Permission).WithMany(p => p.TblRolePermissions)
+                .HasForeignKey(d => d.PermissionId)
+                .HasConstraintName("FK_RolePermissions_Permissions");
+
+            entity.HasOne(d => d.Role).WithMany(p => p.TblRolePermissions)
+                .HasForeignKey(d => d.RoleId)
+                .HasConstraintName("FK_RolePermissions_Roles");
+        });
+
+        modelBuilder.Entity<TblUser>(entity =>
+        {
+            entity.HasKey(e => e.UserId).HasName("PK__Tbl_User__1788CC4C1949D101");
+
+            entity.ToTable("Tbl_Users");
+
+            entity.HasIndex(e => e.Email, "UQ__Tbl_User__A9D10534B5681EFC").IsUnique();
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Email).HasMaxLength(150);
+            entity.Property(e => e.FirstName).HasMaxLength(100);
+            entity.Property(e => e.LastName).HasMaxLength(100);
+            entity.Property(e => e.PhoneNumber).HasMaxLength(20);
+
+            entity.HasOne(d => d.Role).WithMany(p => p.TblUsers)
+                .HasForeignKey(d => d.RoleId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Users_Roles");
         });
 
         modelBuilder.Entity<User>(entity =>
