@@ -2,6 +2,7 @@ using ClothingPlatform.DB.AppDbModels;
 using ClothingPlatformProject.BlazorFroent.Components;
 using ClothingPlatformProject.BlazorFroent.Components.Pages;
 using ClothingPlatformProject.BlazorFroent.Services;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,7 +30,9 @@ builder.Services.AddScoped(sp => new HttpClient
 {
     BaseAddress = new Uri("https://localhost:7065/")
 });
-
+builder.Services.AddScoped<CustomAuthStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
+    provider.GetRequiredService<CustomAuthStateProvider>());
 
 var app = builder.Build();
 

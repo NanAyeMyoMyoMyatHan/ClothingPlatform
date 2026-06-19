@@ -9,16 +9,18 @@
 
 <style>
     :root {
-        --rose: #C9979A;
-        --rose-light: #E8CECE;
-        --rose-pale: #F5ECEC;
-        --charcoal: #2B2B2B;
-        --charcoal-soft: #4A4A4A;
-        --bg: #FDFBFB;
+        --rose: #8B1A1A;
+        --rose-light: #EDD9D0;
+        --rose-pale: #F5ECD7;
+        --charcoal: #3C1F10;
+        --charcoal-soft: #7A5C50;
+        --bg: #F5ECD7;
+        --bg-start: #F5ECD7;
+        --bg-end: #F5ECD7;
         --white: #FFFFFF;
-        --border: #EDE5E5;
-        --shadow: rgba(180,140,140,0.13);
-        --gold: #C8A882;
+        --border: #EDD9D0;
+        --shadow: rgba(139,26,26,0.10);
+        --gold: #C9A96E;
         --success: #7DB99A;
     }
 
@@ -36,7 +38,6 @@
         overflow-x: hidden;
     }
 
-    /* Scrollbar */
     ::-webkit-scrollbar {
         width: 5px;
     }
@@ -55,7 +56,7 @@
         position: sticky;
         top: 0;
         z-index: 700;
-        background: rgba(253,251,251,0.96);
+        background: rgba(253,248,246,0.96);
         backdrop-filter: blur(12px);
         border-bottom: 1px solid var(--border);
     }
@@ -117,7 +118,7 @@
         top: 0;
         right: 0;
         background: var(--rose);
-        color: #fff;
+        color: #F5F0E8;
         font-size: 0.6rem;
         font-weight: 700;
         width: 17px;
@@ -187,7 +188,7 @@
 
     /* Hero */
     .hero {
-        background: linear-gradient(135deg, #f9f0f0 0%, #fdf7f4 50%, #f6edf3 100%);
+        background: linear-gradient(135deg, #F5ECD7 0%, #FAF0EE 50%, #F5EAE8 100%);
         padding: 80px 40px;
         display: flex;
         align-items: center;
@@ -198,14 +199,17 @@
         overflow: hidden;
     }
 
+        /* Overlay effect */
         .hero::before {
             content: '';
             position: absolute;
             inset: 0;
-            background: radial-gradient(ellipse 70% 60% at 60% 40%, rgba(200,152,130,0.12) 0%, transparent 70%);
+            background: radial-gradient( ellipse 70% 60% at 60% 40%, rgba(139,26,26,0.12) 0%, transparent 70% );
             pointer-events: none;
+            z-index: 0;
         }
 
+    /* Eyebrow text */
     .hero-eyebrow {
         font-size: 0.68rem;
         letter-spacing: 0.35em;
@@ -213,35 +217,136 @@
         font-weight: 500;
         text-transform: uppercase;
         margin-bottom: 18px;
+        position: relative;
+        z-index: 1;
     }
 
+    /* Title */
+    /* Title */
     .hero-title {
         font-family: 'Cormorant Garamond', serif;
         font-size: clamp(2.6rem, 6vw, 4.5rem);
         font-weight: 300;
         line-height: 1.1;
-        color: var(--charcoal);
+        color: var(--charcoal); /* အရင်အရောင် */
+        text-shadow: none; /* shadow မလိုချင်ရင် ဖယ် */
         margin-bottom: 20px;
+        position: relative;
+        z-index: 1;
     }
 
-        .hero-title em {
-            font-style: italic;
-            color: var(--rose);
-        }
-
+    /* Subtitle */
     .hero-sub {
         font-size: 0.88rem;
-        color: var(--charcoal-soft);
+        color: #ffffff; /* အမဲ */
+        text-shadow: 0 2px 6px rgba(255,255,255,0.6); /* အဖြူ glow ထည့် */
         font-weight: 300;
         letter-spacing: 0.05em;
         max-width: 420px;
         line-height: 1.7;
         margin-bottom: 36px;
+        position: relative;
+        z-index: 1;
     }
+
+    /* ── Logout confirmation modal ── */
+    .confirm-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15,32,80,.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .confirm-modal {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        padding: 1.8rem 2rem;
+        max-width: 360px;
+        width: 90%;
+        text-align: center;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .confirm-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: var(--red-light);
+        color: var(--red);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        margin: 0 auto .9rem;
+    }
+
+    .confirm-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.25rem;
+        color: var(--navy);
+        margin-bottom: .4rem;
+    }
+
+    .confirm-text {
+        font-size: .82rem;
+        color: var(--slate);
+        margin-bottom: 1.4rem;
+        line-height: 1.5;
+    }
+
+    .confirm-actions {
+        display: flex;
+        gap: .7rem;
+        justify-content: center;
+    }
+
+    .confirm-btn-cancel {
+        font-size: .78rem;
+        font-weight: 600;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        background: var(--off-white);
+        color: var(--slate);
+        border: 1px solid var(--slate-border);
+        border-radius: 8px;
+        padding: .55rem 1.3rem;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        transition: background var(--transition);
+    }
+
+        .confirm-btn-cancel:hover {
+            background: #EDF1F6;
+        }
+
+    .confirm-btn-confirm {
+        font-size: .78rem;
+        font-weight: 600;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        background: var(--red);
+        color: #000000;
+        border: none;
+        border-radius: 8px;
+        padding: .55rem 1.3rem;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        transition: background var(--transition), transform var(--transition);
+    }
+
+        .confirm-btn-confirm:hover {
+            background: #B91C1C;
+            transform: translateY(-1px);
+        }
+
+    
 
     .btn-primary-rose {
         background: var(--rose);
-        color: #fff;
+        color: #F5ECD7;
         border: none;
         font-family: 'Jost', sans-serif;
         font-size: 0.72rem;
@@ -254,7 +359,7 @@
     }
 
         .btn-primary-rose:hover {
-            background: #b8848a;
+            background: #6B0F0F;
             transform: translateY(-1px);
         }
 
@@ -330,7 +435,7 @@
         top: 14px;
         left: 14px;
         background: var(--rose);
-        color: #fff;
+        color: #F5ECD7;
         font-size: 0.58rem;
         letter-spacing: 0.18em;
         font-weight: 600;
@@ -343,8 +448,8 @@
         bottom: 0;
         left: 0;
         right: 0;
-        background: rgba(43,43,43,0.82);
-        color: #fff;
+        background: rgba(60,31,16,0.85);
+        color: #F5ECD7;
         border: none;
         font-family: 'Jost', sans-serif;
         font-size: 0.68rem;
@@ -525,7 +630,7 @@
         .size-btn:hover, .size-btn.selected {
             border-color: var(--rose);
             background: var(--rose);
-            color: #fff;
+            color: #F5ECD7;
         }
 
     .color-btn {
@@ -555,7 +660,7 @@
     .btn-add-bag {
         width: 100%;
         background: var(--charcoal);
-        color: var(--white);
+        color: #F5ECD7;
         border: none;
         font-family: 'Jost', sans-serif;
         font-size: 0.72rem;
@@ -577,7 +682,7 @@
         top: 14px;
         right: 14px;
         z-index: 10;
-        background: rgba(255,255,255,0.9);
+        background: #F5ECD7;
         border: 1px solid var(--border);
         width: 34px;
         height: 34px;
@@ -593,7 +698,7 @@
 
         .modal-close:hover {
             background: var(--rose);
-            color: #fff;
+            color: #F5ECD7;
             border-color: var(--rose);
         }
 
@@ -610,8 +715,6 @@
         .cart-backdrop.open {
             display: block;
             animation: fadeIn 0.25s;
-            
-           
         }
 
     .cart-drawer {
@@ -626,7 +729,7 @@
         transition: transform 0.38s cubic-bezier(.77,0,.175,1);
         display: flex;
         flex-direction: column;
-        box-shadow: -8px 0 48px rgba(0,0,0,0.12);
+        box-shadow: -8px 0 48px rgba(139,26,26,0.12);
     }
 
         .cart-drawer.open {
@@ -743,7 +846,7 @@
 
         .qty-btn:hover {
             background: var(--rose);
-            color: #fff;
+            color: #F5ECD7;
             border-color: var(--rose);
         }
 
@@ -752,6 +855,7 @@
         font-weight: 500;
         min-width: 20px;
         text-align: center;
+        color: var(--charcoal);
     }
 
     .cart-item-price {
@@ -813,7 +917,7 @@
     .btn-checkout {
         width: 100%;
         background: var(--rose);
-        color: #fff;
+        color: #F5ECD7;
         border: none;
         font-family: 'Jost', sans-serif;
         font-size: 0.72rem;
@@ -826,7 +930,7 @@
     }
 
         .btn-checkout:hover {
-            background: #b8848a;
+            background: #6B0F0F;
         }
 
     /* Checkout View */
@@ -888,7 +992,6 @@
             border-color: var(--rose);
         }
 
-    /* Payment options */
     .payment-option {
         border: 1px solid var(--border);
         padding: 16px 20px;
@@ -954,7 +1057,6 @@
         font-size: 0.9rem;
     }
 
-    /* Slip uploader */
     .slip-upload-zone {
         border: 2px dashed var(--rose-light);
         padding: 28px;
@@ -1007,7 +1109,6 @@
         gap: 6px;
     }
 
-    /* Order summary panel */
     .order-summary-panel {
         background: var(--white);
         border: 1px solid var(--border);
@@ -1079,7 +1180,7 @@
     .btn-place-order {
         width: 100%;
         background: var(--charcoal);
-        color: #fff;
+        color: #F5ECD7;
         border: none;
         font-family: 'Jost', sans-serif;
         font-size: 0.72rem;
@@ -1101,7 +1202,7 @@
         position: fixed;
         inset: 0;
         z-index: 2000;
-        background: rgba(253,251,251,0.97);
+        background: #F5ECD7);
         backdrop-filter: blur(8px);
         display: none;
         flex-direction: column;
@@ -1125,7 +1226,7 @@
         align-items: center;
         justify-content: center;
         font-size: 2.2rem;
-        color: #fff;
+        color: #F5ECD7;
         margin-bottom: 28px;
     }
 
@@ -1170,7 +1271,7 @@
 
         .btn-continue:hover {
             background: var(--charcoal);
-            color: #fff;
+            color: #F5ECD7;
         }
 
     /* Purchase History */
@@ -1219,7 +1320,7 @@
     }
 
     .badge-delivered {
-        background: #d5ede6;
+        background: #F5ECD7;
         color: #2e7d5e;
         font-size: 0.62rem;
         letter-spacing: 0.15em;
@@ -1229,7 +1330,7 @@
     }
 
     .badge-processing {
-        background: #fef3e4;
+        background: #F5ECD7;
         color: #c07826;
         font-size: 0.62rem;
         letter-spacing: 0.15em;
@@ -1239,8 +1340,8 @@
     }
 
     .badge-pending {
-        background: #e8eaf6;
-        color: #5c6bc0;
+        background: #F5ECD7;
+        color: #8B1A1A;
         font-size: 0.62rem;
         letter-spacing: 0.15em;
         font-weight: 600;
@@ -1304,7 +1405,7 @@
 
     .toast-msg {
         background: var(--charcoal);
-        color: #fff;
+        color: #F5ECD7;
         padding: 12px 20px;
         font-size: 0.78rem;
         letter-spacing: 0.06em;
@@ -1402,7 +1503,7 @@
         letter-spacing: 0.18em;
         font-weight: 700;
         text-transform: uppercase;
-        color: var(--white);
+        color: #F5ECD7;
         background: var(--rose);
         padding: 5px 14px;
         border-radius: 20px;
@@ -1415,7 +1516,6 @@
         margin-bottom: 24px;
     }
 
-    /* Loyalty Points */
     .loyalty-points-box {
         background: var(--bg);
         border: 1px solid var(--border);
@@ -1472,11 +1572,12 @@
     }
 </style>
 
+
 <!-- ═══════════════ HEADER ═══════════════ -->
 <header id="site-header">
     <div class="header-top">
         <a class="logo" @onclick='() => Navigate("home")'>
-            THE <span>BOUTIQUE</span>
+            CHIC <span>BOUTIQUE</span>
             <span class="logo-tagline">Atelier Coterie</span>
         </a>
 
@@ -1519,7 +1620,22 @@
         <button class="nav-tab @(activeTab == "profile" ? "active" : "")" @onclick='() => Navigate("profile")'>My Profile</button>
        @if (Session.CurrentUser != null)
         {
-            <button class="nav-tab text-danger" @onclick="Logout" style="margin-left: auto; padding-left: 20px;">Sign Out</button>
+            <button class="nav-tab text-danger mt-xxl-3" @onclick="RequestLogout" style="margin-left: auto; padding-left: 20px;">Sign Out</button>
+
+            @if (showLogoutConfirm)
+            {
+                <div class="confirm-overlay" @onclick="CancelLogout">
+                    <div class="confirm-modal" @onclick:stopPropagation="true">
+                        <div class="confirm-icon"><i class="bi bi-box-arrow-right"></i></div>
+                        <div class="confirm-title">Log Out?</div>
+                        <div class="confirm-text">Are you sure you want to log out of the Staff Portal?</div>
+                        <div class="confirm-actions">
+                            <button class="confirm-btn-cancel" @onclick="CancelLogout">Cancel</button>
+                            <button class="confirm-btn-confirm" @onclick="ConfirmLogout">Yes, Log Out</button>
+                        </div>
+                    </div>
+                </div>
+            }
         }
         else
         {
@@ -1531,11 +1647,40 @@
     <!-- ═══════════════ VIEW: HOME ═══════════════ -->
     @if (activeTab == "home")
     {
-        <section class="hero">
-            <span class="hero-eyebrow">Summer Coterie 2026</span>
-            <h1 class="hero-title">Timeless grace<br>crafted for <em>modern silhouettes</em></h1>
-            <p class="hero-sub">Discover lightweight fabrics and soft pastel gradients curated carefully for high-society Yangon events.</p>
-            <button class="btn-primary-rose" @onclick='() => Navigate("shop")'>Explore Catalog</button>
+        <section class="hero" style="
+            background: url('https://media.timeout.com/images/100661581/image.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            min-height: 420px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            ">
+
+            <!-- Overlay (optional for readability) -->
+            <div style="
+                position: absolute;
+                inset: 0;
+                background: rgba(245,236,215,0.4); /* semi-transparent beige overlay */
+                z-index: 0;">
+            </div>
+
+            <!-- Text block -->
+            <div style="
+                position: relative;
+                max-width: 520px;
+                text-align: center;
+                color: #2B2B2B;
+                z-index: 1;
+                padding: 20px;">
+
+                <span class="hero-eyebrow">Summer Coterie 2026</span>
+                <h1 class="hero-title">Timeless grace crafted for <em>modern silhouettes</em></h1>
+                <p class="hero-sub">Discover lightweight fabrics and soft pastel gradients curated carefully for high-society Yangon events.</p>
+                <button class="btn-primary-rose" @onclick='() => Navigate("shop")'>Explore Catalog</button>
+            </div>
         </section>
 
         <div class="section-head">
@@ -1587,7 +1732,7 @@
     {
         <div class="section-head">
             <h2 class="section-title">The <span>Best Collection</span></h2>
-            <span class="section-count">@bestSeller.Count best seller found</span>
+            <span class="section-count">Here are the best seller </span>
         </div>
 
         <div class="products-grid">
@@ -1644,7 +1789,7 @@
     {
     <div class="section-head">
         <h2 class="section-title">The <span>The Collection</span></h2>
-        <span class="section-count">@filteredProduct.Count creations found</span>
+        <span class="section-count">Here is the collection</span>
     </div>
 
     <div class="products-grid">
@@ -2032,6 +2177,170 @@
     }
 </main>
 
+ <!-- ═══════════════ CONTACT US ═══════════════ -->
+<section style="
+    background: #FDF8F6;
+    padding: 70px 40px;
+    border-top: 1px solid #EDD9D0;">
+
+    <div style="max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start;">
+
+        <!-- Left: Contact Info -->
+        <div>
+            <p style="font-size:0.68rem; letter-spacing:0.3em; text-transform:uppercase; color:#8B1A1A; margin-bottom:12px;">Get In Touch</p>
+            <h2 style="font-family:'Cormorant Garamond',serif; font-size:2.2rem; font-weight:400; color:#3C1F10; margin-bottom:16px; line-height:1.2;">
+                Contact <em style="color:#8B1A1A; font-style:italic;">Chic Boutique</em>
+            </h2>
+            <p style="font-size:0.88rem; color:#7A5C50; line-height:1.8; margin-bottom:32px;">
+                We would love to hear from you. Whether you have questions about our collections, sizing, or custom orders — our atelier team is here to assist.
+            </p>
+
+            <div style="display:flex; flex-direction:column; gap:20px;">
+                <div style="display:flex; align-items:center; gap:14px;">
+                    <div style="width:40px; height:40px; border-radius:50%; background:#FFF3EE; border:1px solid #EDD9D0; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i class="bi bi-geo-alt" style="color:#8B1A1A; font-size:1rem;"></i>
+                    </div>
+                    <div>
+                        <p style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:#7A5C50; font-weight:600; margin:0;">Location</p>
+                        <p style="font-size:0.88rem; color:#3C1F10; margin:0;">Golden Valley, Bahan Township, Yangon</p>
+                    </div>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:14px;">
+                    <div style="width:40px; height:40px; border-radius:50%; background:#FFF3EE; border:1px solid #EDD9D0; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i class="bi bi-telephone" style="color:#8B1A1A; font-size:1rem;"></i>
+                    </div>
+                    <div>
+                        <p style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:#7A5C50; font-weight:600; margin:0;">Phone</p>
+                        <p style="font-size:0.88rem; color:#3C1F10; margin:0;">09 252 522 525</p>
+                    </div>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:14px;">
+                    <div style="width:40px; height:40px; border-radius:50%; background:#FFF3EE; border:1px solid #EDD9D0; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i class="bi bi-envelope" style="color:#8B1A1A; font-size:1rem;"></i>
+                    </div>
+                    <div>
+                        <p style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:#7A5C50; font-weight:600; margin:0;">Email</p>
+                        <p style="font-size:0.88rem; color:#3C1F10; margin:0;">hello@theboutique.com.mm</p>
+                    </div>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:14px;">
+                    <div style="width:40px; height:40px; border-radius:50%; background:#FFF3EE; border:1px solid #EDD9D0; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i class="bi bi-clock" style="color:#8B1A1A; font-size:1rem;"></i>
+                    </div>
+                    <div>
+                        <p style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:#7A5C50; font-weight:600; margin:0;">Hours</p>
+                        <p style="font-size:0.88rem; color:#3C1F10; margin:0;">Mon – Sat: 10:00 AM – 7:00 PM</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Right: Message Form -->
+        <div style="background:#FFFFFF; border:1px solid #EDD9D0; border-radius:12px; padding:32px;">
+            <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.4rem; font-weight:400; color:#3C1F10; margin-bottom:24px;">Send a Message</h3>
+
+            <div style="margin-bottom:16px;">
+                <label style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; font-weight:600; color:#7A5C50; display:block; margin-bottom:6px;">Full Name</label>
+                <input type="text" placeholder="Your name" style="width:100%; border:1px solid #EDD9D0; border-radius:8px; padding:10px 14px; font-size:0.88rem; color:#3C1F10; background:#FDFAF8; outline:none; font-family:inherit;" />
+            </div>
+
+            <div style="margin-bottom:16px;">
+                <label style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; font-weight:600; color:#7A5C50; display:block; margin-bottom:6px;">Email Address</label>
+                <input type="email" placeholder="you@example.com" style="width:100%; border:1px solid #EDD9D0; border-radius:8px; padding:10px 14px; font-size:0.88rem; color:#3C1F10; background:#FDFAF8; outline:none; font-family:inherit;" />
+            </div>
+
+            <div style="margin-bottom:24px;">
+                <label style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; font-weight:600; color:#7A5C50; display:block; margin-bottom:6px;">Message</label>
+                <textarea placeholder="How can we assist you?" rows="4" style="width:100%; border:1px solid #EDD9D0; border-radius:8px; padding:10px 14px; font-size:0.88rem; color:#3C1F10; background:#FDFAF8; outline:none; font-family:inherit; resize:none;"></textarea>
+            </div>
+
+            <button style="width:100%; background:linear-gradient(135deg,#8B1A1A,#6B0F0F); color:#F5F0E8; border:none; border-radius:8px; padding:14px; font-size:0.78rem; letter-spacing:0.2em; text-transform:uppercase; font-weight:600; cursor:pointer;">
+                Send Message
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer style="background:#3C1F10; color:#F5F0E8; padding:60px 40px 30px;">
+
+    <div style="max-width:1100px; margin:0 auto;">
+
+        <!-- Top Row -->
+        <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:40px; margin-bottom:50px;">
+            <!-- Brand -->
+            <div>
+                <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.6rem; font-weight:400; letter-spacing:0.15em; color:#F5F0E8; margin-bottom:8px;">CHIC BOUTIQUE</h3>
+                <p style="font-size:0.62rem; letter-spacing:0.3em; text-transform:uppercase; color:#C8837A; margin-bottom:16px;">Atelier Coterie</p>
+                <p style="font-size:0.82rem; color:rgba(245,240,232,0.65); line-height:1.8; max-width:260px;">
+                    Curating timeless garments for the modern woman. Crafted with care, worn with grace.
+                </p>
+                <div style="display:flex; gap:12px; margin-top:20px;">
+                    <a href="https://www.facebook.com/share/17QQMv833X/" style="width:34px; height:34px; border-radius:50%; border:1px solid rgba(245,240,232,0.2); display:flex; align-items:center; justify-content:center; color:#F5F0E8; text-decoration:none; transition:all 0.2s;">
+                        <i class="bi bi-facebook" style="font-size:0.9rem;"></i>
+                    </a>
+                    <a href="https://www.instagram.com/y_for_youth_?igsh=MzF4M2U0ZWxveTRi" style="width:34px; height:34px; border-radius:50%; border:1px solid rgba(245,240,232,0.2); display:flex; align-items:center; justify-content:center; color:#F5F0E8; text-decoration:none;">
+                        <i class="bi bi-instagram" style="font-size:0.9rem;"></i>
+                    </a>
+                    <a href="#" style="width:34px; height:34px; border-radius:50%; border:1px solid rgba(245,240,232,0.2); display:flex; align-items:center; justify-content:center; color:#F5F0E8; text-decoration:none;">
+                        <i class="bi bi-tiktok" style="font-size:0.9rem;"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Collections -->
+            <div>
+                <h4 style="font-size:0.65rem; letter-spacing:0.2em; text-transform:uppercase; color:#C8837A; font-weight:600; margin-bottom:16px;">Collections</h4>
+                <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px;">
+                    <li><a @onclick='() => Navigate("shop")' style="font-size:0.82rem; color:rgba(245,240,232,0.65); text-decoration:none; cursor:pointer; transition:color 0.2s;">The Collection</a></li>
+                    <li><a @onclick='() => Navigate("best")' style="font-size:0.82rem; color:rgba(245,240,232,0.65); text-decoration:none; cursor:pointer;">Best Sellers</a></li>
+                    <li><a @onclick='() => Navigate("home")' style="font-size:0.82rem; color:rgba(245,240,232,0.65); text-decoration:none; cursor:pointer;">New Arrivals</a></li>
+                </ul>
+            </div>
+
+            <!-- Account -->
+            <div>
+                <h4 style="font-size:0.65rem; letter-spacing:0.2em; text-transform:uppercase; color:#C8837A; font-weight:600; margin-bottom:16px;">Account</h4>
+                <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px;">
+                    <li><a @onclick='() => Navigate("profile")' style="font-size:0.82rem; color:rgba(245,240,232,0.65); text-decoration:none; cursor:pointer;">My Profile</a></li>
+                    <li><a @onclick='() => Navigate("history")' style="font-size:0.82rem; color:rgba(245,240,232,0.65); text-decoration:none; cursor:pointer;">My Purchases</a></li>
+                    <li><a @onclick="ToggleCart" style="font-size:0.82rem; color:rgba(245,240,232,0.65); text-decoration:none; cursor:pointer;">Shopping Bag</a></li>
+                </ul>
+            </div>
+             <!-- Contact -->
+            <div>
+                <h4 style="font-size:0.65rem; letter-spacing:0.2em; text-transform:uppercase; color:#C8837A; font-weight:600; margin-bottom:16px;">Contact</h4>
+                <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px;">
+                    <li style="font-size:0.82rem; color:rgba(245,240,232,0.65);">
+                        <i class="bi bi-geo-alt" style="margin-right:6px; color:#C8837A;"></i>Golden Valley, Yangon
+                    </li>
+                    <li style="font-size:0.82rem; color:rgba(245,240,232,0.65);">
+                        <i class="bi bi-telephone" style="margin-right:6px; color:#C8837A;"></i>09 252 522 525
+                    </li>
+                    <li style="font-size:0.82rem; color:rgba(245,240,232,0.65);">
+                        <i class="bi bi-envelope" style="margin-right:6px; color:#C8837A;"></i>hello@theboutique.mm
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <div style="height:1px; background:rgba(245,240,232,0.12); margin-bottom:24px;"></div>
+
+        <!-- Bottom Row -->
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+            <p style="font-size:0.72rem; color:rgba(245,240,232,0.4); margin:0; letter-spacing:0.05em;">
+                © 2026 The Boutique Atelier Coterie. All rights reserved.
+            </p>
+            <p style="font-size:0.72rem; color:rgba(245,240,232,0.4); margin:0; letter-spacing:0.05em;">
+                Crafted with <span style="color:#C8837A;">♥️</span> in Yangon, Myanmar
+            </p>
+        </div>
+    </div>
+</footer>
+
 <div class="modal-overlay @(isModalOpen ? "open" : "")">
     @if (modalProduct != null)
     {
@@ -2158,7 +2467,7 @@
         }
         <br /><br />
         <span style="display:inline-block;background:var(--rose-pale);border:1px solid var(--rose-light);padding:8px 16px;color:var(--charcoal);font-weight:500;font-size:0.8rem;letter-spacing:0.04em;">
-            ⭐ YOU EARNED @pointsEarnedInOrder.ToString("N0") LOYALTY POINTS!
+            ⭐IF ORDER CONFIRM, YOU EARNED @pointsEarnedInOrder.ToString("N0") LOYALTY POINTS!
         </span>
     </p>
     <p class="success-order-id">ORDER #@confirmedOrderId</p>

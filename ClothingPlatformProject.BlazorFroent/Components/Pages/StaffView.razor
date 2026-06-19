@@ -1,16 +1,16 @@
 ﻿@page "/staff"
+@using ClothingPlatformProject.BlazorFroent.Components.Partial
 <PageTitle>The Boutique — Staff Portal</PageTitle>
 <style>
-    /* ═══════════ TOKENS ═══════════ */
     :root {
-        --navy: #1E3A8A;
-        --navy-dark: #152D6E;
-        --navy-xdark: #0F2050;
-        --slate: #64748B;
-        --slate-light: #94A3B8;
-        --slate-border: #CBD5E1;
+        --navy: #8B1A1A;
+        --navy-dark: #6B0F0F;
+        --navy-xdark: #4A0A0A;
+        --slate: #7A5C50;
+        --slate-light: #A0826D;
+        --slate-border: #EDD9D0;
         --white: #FFFFFF;
-        --off-white: #F8FAFC;
+        --off-white: #FDF8F6;
         --rose: #C8837A;
         --rose-light: #F2D8D5;
         --rose-dark: #A8615A;
@@ -20,24 +20,19 @@
         --green-light: #DCFCE7;
         --red: #DC2626;
         --red-light: #FEE2E2;
-        --blue: #3B82F6;
-        --blue-light: #DBEAFE;
-        --purple: #7C3AED;
-        --purple-light: #EDE9FE;
         --sidebar-w: 240px;
         --topbar-h: 60px;
         --radius: 10px;
-        --radius-lg: 14px;
-        --shadow-sm: 0 1px 4px rgba(30,58,138,.07);
-        --shadow-md: 0 4px 20px rgba(30,58,138,.10);
-        --shadow-lg: 0 8px 32px rgba(30,58,138,.14);
+        --shadow-sm: 0 1px 4px rgba(139,26,26,.07);
+        --shadow-md: 0 4px 20px rgba(139,26,26,.10);
+        --shadow-lg: 0 8px 32px rgba(139,26,26,.14);
         --transition: 0.22s cubic-bezier(.4,0,.2,1);
     }
 
     body {
         font-family: 'DM Sans', system-ui, sans-serif;
         background: var(--off-white);
-        color: #1e293b;
+        color: #3C1F10;
         font-size: .9rem;
         line-height: 1.55;
     }
@@ -52,7 +47,7 @@
     #sidebar {
         width: var(--sidebar-w);
         flex-shrink: 0;
-        background: linear-gradient(180deg, var(--navy-xdark) 0%, var(--navy-dark) 60%, var(--navy) 100%);
+        background: linear-gradient(180deg, #4A0A0A 0%, #6B0F0F 60%, #8B1A1A 100%);
         display: flex;
         flex-direction: column;
         border-right: 1px solid rgba(255,255,255,.06);
@@ -72,18 +67,18 @@
         width: 36px;
         height: 36px;
         border-radius: 50%;
-        border: 1.5px solid var(--rose);
-        background: rgba(200,131,122,.12);
+        border: 1.5px solid #F5F0E8;
+        background: rgba(245,240,232,.12);
         font-family: 'Cormorant Garamond', serif;
         font-size: 1rem;
-        color: var(--rose);
+        color: #F5F0E8;
         margin-bottom: .5rem;
     }
 
     .brand-title {
         font-family: 'Cormorant Garamond', serif;
         font-size: 1.15rem;
-        color: #fff;
+        color: #F5F0E8;
         font-weight: 400;
         letter-spacing: .06em;
     }
@@ -92,7 +87,7 @@
         font-size: .62rem;
         letter-spacing: .22em;
         text-transform: uppercase;
-        color: rgba(255,255,255,.38);
+        color: rgba(245,240,232,.5);
     }
 
     .sidebar-nav {
@@ -105,7 +100,7 @@
         font-size: .6rem;
         letter-spacing: .2em;
         text-transform: uppercase;
-        color: rgba(255,255,255,.3);
+        color: rgba(245,240,232,.4);
         padding: .9rem 1.2rem .3rem;
     }
 
@@ -117,7 +112,7 @@
         margin: 0 .5rem .15rem;
         border-radius: 8px;
         cursor: pointer;
-        color: rgba(255,255,255,.62);
+        color: rgba(245,240,232,.75);
         font-size: .82rem;
         font-weight: 400;
         transition: background var(--transition), color var(--transition);
@@ -131,18 +126,19 @@
         }
 
         .nav-item:hover {
-            background: rgba(255,255,255,.08);
-            color: rgba(255,255,255,.9);
+            background: rgba(245,240,232,.12);
+            color: #F5F0E8;
         }
 
         .nav-item.active {
-            background: rgba(200,131,122,.22);
-            color: #fff;
+            background: rgba(245,240,232,.2);
+            color: #F5F0E8;
             font-weight: 500;
+            border-left: 3px solid #F5F0E8;
         }
 
             .nav-item.active i {
-                color: var(--rose);
+                color: #F5F0E8;
             }
 
     .sidebar-footer {
@@ -161,25 +157,26 @@
         height: 32px;
         border-radius: 50%;
         flex-shrink: 0;
-        background: linear-gradient(135deg, var(--rose), var(--rose-dark));
+        background: linear-gradient(135deg, #F5F0E8, #EDD9D0);
         display: flex;
         align-items: center;
         justify-content: center;
         font-family: 'Cormorant Garamond', serif;
         font-size: .95rem;
-        color: #fff;
+        color: #8B1A1A;
+        font-weight: 600;
     }
 
     .staff-name {
         font-size: .78rem;
-        color: rgba(255,255,255,.82);
+        color: #F5F0E8;
         font-weight: 500;
         line-height: 1.2;
     }
 
     .staff-role {
         font-size: .65rem;
-        color: rgba(255,255,255,.38);
+        color: rgba(245,240,232,.5);
         letter-spacing: .05em;
     }
 
@@ -191,6 +188,7 @@
         overflow: hidden;
     }
 
+    /* TOP BAR */
     #topbar {
         height: var(--topbar-h);
         background: var(--white);
@@ -206,11 +204,12 @@
     .topbar-greeting {
         font-family: 'Cormorant Garamond', serif;
         font-size: 1.25rem;
-        color: var(--navy);
+        color: #3C1F10;
+        font-weight: 400;
     }
 
         .topbar-greeting span {
-            color: var(--rose-dark);
+            color: #8B1A1A;
             font-style: italic;
         }
 
@@ -224,8 +223,8 @@
         font-size: .68rem;
         letter-spacing: .12em;
         text-transform: uppercase;
-        background: var(--rose-light);
-        color: var(--rose-dark);
+        background: #8B1A1A;
+        color: #F5F0E8;
         padding: .25rem .65rem;
         border-radius: 20px;
         font-weight: 500;
@@ -233,9 +232,10 @@
 
     .topbar-date {
         font-size: .75rem;
-        color: var(--slate-light);
+        color: #3C1F10;
     }
 
+    /* CONTENT */
     #content {
         flex: 1;
         overflow-y: auto;
@@ -258,7 +258,7 @@
 
     .page-title {
         font-size: 1.6rem;
-        color: var(--navy);
+        color: #3C1F10;
         font-weight: 400;
         line-height: 1.1;
     }
@@ -273,7 +273,7 @@
 
     .page-divider {
         height: 2px;
-        background: linear-gradient(90deg, var(--rose), transparent);
+        background: linear-gradient(90deg, #8B1A1A, transparent);
         width: 48px;
         margin-top: .5rem;
         border-radius: 2px;
@@ -318,7 +318,7 @@
         }
 
         .kpi-card.kpi-delivered::before {
-            background: linear-gradient(90deg, var(--green), #4ADE80);
+            background: linear-gradient(90deg, #16A34A, #4ADE80);
         }
 
         .kpi-card:hover {
@@ -327,8 +327,8 @@
         }
 
         .kpi-card.kpi-active {
-            border-color: var(--navy);
-            box-shadow: 0 0 0 2px rgba(30,58,138,.18);
+            border-color: #8B1A1A;
+            box-shadow: 0 0 0 2px rgba(139,26,26,.18);
         }
 
     .kpi-icon {
@@ -360,7 +360,7 @@
     .kpi-count {
         font-family: 'Cormorant Garamond', serif;
         font-size: 2.2rem;
-        color: var(--navy);
+        color: #3C1F10;
         line-height: 1;
         margin-bottom: .2rem;
     }
@@ -382,19 +382,17 @@
         gap: .3rem;
     }
 
-    /* ───── TABLE ───── */
+    /* FILTER BAR */
     .filter-bar {
         display: flex;
         align-items: center;
         justify-content: space-between;
         margin-bottom: .9rem;
-        flex-wrap: wrap;
-        gap: .6rem;
     }
 
     .filter-label {
         font-size: .75rem;
-        color: var(--slate);
+        color: #3C1F10;
         font-weight: 500;
     }
 
@@ -404,7 +402,7 @@
         border-radius: 20px;
         border: 1px solid var(--slate-border);
         background: var(--white);
-        color: var(--slate);
+        color: #3C1F10;
         cursor: pointer;
         transition: all var(--transition);
         font-family: 'DM Sans', sans-serif;
@@ -413,6 +411,100 @@
         gap: .3rem;
     }
 
+    /* ── Logout confirmation modal ── */
+    .confirm-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15,32,80,.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .confirm-modal {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        padding: 1.8rem 2rem;
+        max-width: 360px;
+        width: 90%;
+        text-align: center;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .confirm-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: var(--red-light);
+        color: var(--red);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        margin: 0 auto .9rem;
+    }
+
+    .confirm-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.25rem;
+        color: var(--navy);
+        margin-bottom: .4rem;
+    }
+
+    .confirm-text {
+        font-size: .82rem;
+        color: var(--slate);
+        margin-bottom: 1.4rem;
+        line-height: 1.5;
+    }
+
+    .confirm-actions {
+        display: flex;
+        gap: .7rem;
+        justify-content: center;
+    }
+
+    .confirm-btn-cancel {
+        font-size: .78rem;
+        font-weight: 600;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        background: var(--off-white);
+        color: var(--slate);
+        border: 1px solid var(--slate-border);
+        border-radius: 8px;
+        padding: .55rem 1.3rem;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        transition: background var(--transition);
+    }
+
+        .confirm-btn-cancel:hover {
+            background: #EDF1F6;
+        }
+
+    .confirm-btn-confirm {
+        font-size: .78rem;
+        font-weight: 600;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        background: var(--red);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: .55rem 1.3rem;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        transition: background var(--transition), transform var(--transition);
+    }
+
+        .confirm-btn-confirm:hover {
+            background: #B91C1C;
+            transform: translateY(-1px);
+        }
+
+    /* ───── TABLE ───── */
     .table-card {
         background: var(--white);
         border-radius: var(--radius);
@@ -427,8 +519,8 @@
         }
 
             .table-card .table thead th {
-                background: var(--off-white);
-                color: var(--slate);
+                background: #FFF3EE;
+                color: #3C1F10;
                 font-weight: 600;
                 font-size: .68rem;
                 letter-spacing: .1em;
@@ -442,15 +534,12 @@
                 padding: .8rem 1rem;
                 vertical-align: middle;
                 border-color: #F1F5F9;
+                color: #3C1F10;
             }
 
-            .table-card .table tbody tr {
-                transition: background var(--transition);
+            .table-card .table tbody tr:hover {
+                background: #FFF5F0;
             }
-
-                .table-card .table tbody tr:hover {
-                    background: rgba(248,250,252,.8);
-                }
 
     /* Status badges */
     .status-badge {
@@ -486,21 +575,6 @@
         cursor: not-allowed;
     }
 
-    .badge-paid {
-        background: var(--green-light);
-        color: #15803D;
-    }
-
-    .badge-unpaid {
-        background: var(--red-light);
-        color: var(--red);
-    }
-
-    .badge-cod {
-        background: var(--amber-light);
-        color: #92400E;
-    }
-
     .status-select {
         font-size: .76rem;
         font-family: 'DM Sans', sans-serif;
@@ -508,404 +582,24 @@
         border-radius: 7px;
         padding: .3rem .6rem;
         background: var(--white);
-        color: var(--navy);
+        color: #3C1F10;
         cursor: pointer;
         transition: border-color var(--transition);
     }
 
         .status-select:focus {
             outline: none;
-            border-color: var(--rose);
-            box-shadow: 0 0 0 2px rgba(200,131,122,.15);
+            border-color: #8B1A1A;
+            box-shadow: 0 0 0 2px rgba(139,26,26,.15);
         }
 
     .pay-badge {
         font-size: .7rem;
-        color: var(--slate);
-        background: #F1F5F9;
+        color: #3C1F10;
+        background: #FDF8F6;
         padding: .2rem .55rem;
         border-radius: 5px;
     }
-
-    /* ═══════════ CREATE ORDER — REDESIGNED ═══════════ */
-    .ob-wrapper {
-        max-width: 860px;
-        display: flex;
-        flex-direction: column;
-        gap: 1.2rem;
-    }
-
-    /* Step cards */
-    .ob-card {
-        background: var(--white);
-        border: 1px solid var(--slate-border);
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-sm);
-        overflow: hidden;
-        transition: box-shadow var(--transition);
-    }
-
-        .ob-card:focus-within {
-            box-shadow: var(--shadow-md);
-        }
-
-    .ob-card-header {
-        display: flex;
-        align-items: center;
-        gap: .75rem;
-        padding: 1rem 1.4rem;
-        background: linear-gradient(90deg, rgba(30,58,138,.03), transparent);
-        border-bottom: 1px solid var(--slate-border);
-    }
-
-    .ob-step-dot {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        flex-shrink: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: .72rem;
-        font-weight: 700;
-        letter-spacing: 0;
-    }
-
-    .dot-customer {
-        background: var(--rose-light);
-        color: var(--rose-dark);
-    }
-
-    .dot-items {
-        background: var(--blue-light);
-        color: #1D4ED8;
-    }
-
-    .dot-delivery {
-        background: var(--purple-light);
-        color: var(--purple);
-    }
-
-    .dot-payment {
-        background: var(--green-light);
-        color: var(--green);
-    }
-
-    .ob-card-title {
-        font-family: 'Cormorant Garamond', serif;
-        font-size: 1.05rem;
-        color: var(--navy);
-        font-weight: 500;
-    }
-
-    .ob-card-subtitle {
-        font-size: .71rem;
-        color: var(--slate-light);
-        margin-top: .05rem;
-    }
-
-    .ob-card-body {
-        padding: 1.4rem;
-    }
-
-    /* Form fields inside cards */
-    .ob-form-label {
-        font-size: .69rem;
-        letter-spacing: .12em;
-        text-transform: uppercase;
-        color: var(--slate);
-        font-weight: 600;
-        margin-bottom: .3rem;
-        display: block;
-    }
-
-    .ob-input {
-        width: 100%;
-        font-family: 'DM Sans', sans-serif;
-        font-size: .85rem;
-        border: 1.5px solid var(--slate-border);
-        border-radius: 8px;
-        padding: .6rem .9rem;
-        background: var(--white);
-        color: #1e293b;
-        transition: border-color var(--transition), box-shadow var(--transition);
-        box-sizing: border-box;
-    }
-
-        .ob-input:focus {
-            outline: none;
-            border-color: var(--rose);
-            box-shadow: 0 0 0 3px rgba(200,131,122,.13);
-        }
-
-    .ob-select {
-        width: 100%;
-        font-family: 'DM Sans', sans-serif;
-        font-size: .82rem;
-        border: 1.5px solid var(--slate-border);
-        border-radius: 8px;
-        padding: .58rem .85rem;
-        background: var(--white);
-        color: #1e293b;
-        cursor: pointer;
-        transition: border-color var(--transition), box-shadow var(--transition);
-        appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right .8rem center;
-        padding-right: 2.2rem;
-    }
-
-        .ob-select:focus {
-            outline: none;
-            border-color: var(--rose);
-            box-shadow: 0 0 0 3px rgba(200,131,122,.13);
-        }
-
-    .ob-textarea {
-        width: 100%;
-        font-family: 'DM Sans', sans-serif;
-        font-size: .85rem;
-        border: 1.5px solid var(--slate-border);
-        border-radius: 8px;
-        padding: .65rem .9rem;
-        background: var(--white);
-        color: #1e293b;
-        resize: vertical;
-        min-height: 72px;
-        transition: border-color var(--transition), box-shadow var(--transition);
-        box-sizing: border-box;
-    }
-
-        .ob-textarea:focus {
-            outline: none;
-            border-color: var(--rose);
-            box-shadow: 0 0 0 3px rgba(200,131,122,.13);
-        }
-
-    /* Items section */
-    .ob-items-header {
-        display: grid;
-        grid-template-columns: 2fr 70px 100px 100px 36px;
-        gap: .6rem;
-        padding: .55rem .6rem;
-        font-size: .63rem;
-        letter-spacing: .1em;
-        text-transform: uppercase;
-        color: var(--slate-light);
-        font-weight: 600;
-        border-bottom: 1px dashed var(--slate-border);
-        margin-bottom: .4rem;
-    }
-
-    .ob-item-row {
-        display: grid;
-        grid-template-columns: 2fr 70px 100px 100px 36px;
-        gap: .6rem;
-        align-items: center;
-        padding: .55rem .4rem;
-        border-radius: 8px;
-        transition: background var(--transition);
-    }
-
-        .ob-item-row:hover {
-            background: var(--off-white);
-        }
-
-    .ob-qty-input {
-        font-family: 'DM Sans', sans-serif;
-        font-size: .82rem;
-        border: 1.5px solid var(--slate-border);
-        border-radius: 7px;
-        padding: .5rem .5rem;
-        text-align: center;
-        width: 100%;
-        box-sizing: border-box;
-        transition: border-color var(--transition);
-    }
-
-        .ob-qty-input:focus {
-            outline: none;
-            border-color: var(--blue);
-            box-shadow: 0 0 0 3px rgba(59,130,246,.12);
-        }
-
-    .ob-price-cell {
-        font-size: .82rem;
-        color: var(--slate);
-    }
-
-    .ob-total-cell {
-        font-size: .85rem;
-        font-weight: 700;
-        color: var(--navy);
-    }
-
-    .ob-remove-btn {
-        width: 30px;
-        height: 30px;
-        border-radius: 7px;
-        border: none;
-        background: transparent;
-        color: var(--slate-light);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: .85rem;
-        transition: background var(--transition), color var(--transition);
-    }
-
-        .ob-remove-btn:hover {
-            background: var(--red-light);
-            color: var(--red);
-        }
-
-    .ob-add-btn {
-        width: 100%;
-        margin-top: .75rem;
-        font-size: .78rem;
-        font-weight: 600;
-        font-family: 'DM Sans', sans-serif;
-        color: var(--navy);
-        background: none;
-        border: 1.5px dashed var(--slate-border);
-        border-radius: 8px;
-        padding: .6rem 1rem;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: .4rem;
-        transition: all var(--transition);
-    }
-
-        .ob-add-btn:hover {
-            border-color: var(--rose);
-            color: var(--rose-dark);
-            background: var(--rose-light);
-        }
-
-    /* Total summary bar */
-    .ob-summary-bar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: linear-gradient(90deg, var(--navy-xdark), var(--navy));
-        border-radius: 10px;
-        padding: 1rem 1.4rem;
-        margin-top: .2rem;
-        color: #fff;
-    }
-
-    .ob-summary-label {
-        font-size: .72rem;
-        text-transform: uppercase;
-        letter-spacing: .12em;
-        color: rgba(255,255,255,.55);
-    }
-
-    .ob-summary-amount {
-        font-family: 'Cormorant Garamond', serif;
-        font-size: 1.7rem;
-        color: #fff;
-        line-height: 1;
-    }
-
-    .ob-summary-items {
-        font-size: .75rem;
-        color: rgba(255,255,255,.5);
-    }
-
-    /* Payment pill selectors */
-    .ob-pill-group {
-        display: flex;
-        flex-wrap: wrap;
-        gap: .5rem;
-    }
-
-    .ob-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: .35rem;
-        padding: .4rem 1rem;
-        border-radius: 20px;
-        border: 1.5px solid var(--slate-border);
-        background: var(--white);
-        font-size: .76rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all var(--transition);
-        color: var(--slate);
-        font-family: 'DM Sans', sans-serif;
-    }
-
-        .ob-pill:hover {
-            border-color: var(--navy);
-            color: var(--navy);
-        }
-
-        .ob-pill.ob-pill-active {
-            border-color: var(--navy);
-            background: var(--navy);
-            color: #fff;
-        }
-
-            .ob-pill.ob-pill-active i {
-                color: #fff;
-            }
-
-    /* Submit button */
-    .ob-submit-btn {
-        font-size: .82rem;
-        font-weight: 700;
-        letter-spacing: .1em;
-        text-transform: uppercase;
-        background: linear-gradient(135deg, var(--navy-dark), var(--navy));
-        color: #fff;
-        border: none;
-        border-radius: 10px;
-        padding: .85rem 2.2rem;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: .5rem;
-        transition: transform var(--transition), box-shadow var(--transition), filter var(--transition);
-        font-family: 'DM Sans', sans-serif;
-        box-shadow: 0 4px 14px rgba(30,58,138,.25);
-    }
-
-        .ob-submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(30,58,138,.32);
-            filter: brightness(1.05);
-        }
-
-        .ob-submit-btn:active {
-            transform: translateY(0);
-        }
-
-    /* Inline toast */
-    .inline-toast {
-        font-size: .8rem;
-        padding: .7rem 1rem;
-        border-radius: 8px;
-        display: none;
-        align-items: center;
-        gap: .45rem;
-    }
-
-        .inline-toast.success {
-            background: var(--green-light);
-            color: #15803D;
-            display: flex;
-        }
-
-        .inline-toast.error {
-            background: var(--red-light);
-            color: var(--red);
-            display: flex;
-        }
 
     /* ───── DASHBOARD ───── */
     .dash-grid {
@@ -926,7 +620,7 @@
     .dash-stat-val {
         font-family: 'Cormorant Garamond', serif;
         font-size: 2rem;
-        color: var(--navy);
+        color: #3C1F10;
         line-height: 1;
     }
 
@@ -938,8 +632,9 @@
         margin-top: .25rem;
     }
 
+    /* WELCOME BANNER */
     .welcome-banner {
-        background: linear-gradient(135deg, var(--navy-xdark) 0%, var(--navy) 60%, rgba(200,131,122,.4) 100%);
+        background: linear-gradient(135deg, #4A0A0A 0%, #8B1A1A 60%, rgba(200,131,122,.4) 100%);
         border-radius: var(--radius);
         padding: 1.6rem 2rem;
         margin-bottom: 1.4rem;
@@ -958,54 +653,85 @@
             font-size: 7rem;
             color: rgba(255,255,255,.06);
             line-height: 1;
+            font-weight: 300;
             pointer-events: none;
         }
 
     .wb-greeting {
         font-family: 'Cormorant Garamond', serif;
         font-size: 1.55rem;
-        color: #fff;
+        color: #F5F0E8;
         font-weight: 300;
     }
 
         .wb-greeting strong {
             font-weight: 500;
-            color: var(--rose-light);
+            color: #F5F0E8;
         }
 
     .wb-sub {
         font-size: .75rem;
-        color: rgba(255,255,255,.55);
+        color: rgba(245,240,232,.7);
         margin-top: .2rem;
         letter-spacing: .04em;
     }
 
     .wb-badge {
-        background: rgba(200,131,122,.25);
-        border: 1px solid rgba(200,131,122,.4);
-        color: var(--rose-light);
+        background: #F5F0E8;
+        border: 1px solid #EDD9D0;
+        color: #8B1A1A;
         font-size: .7rem;
         padding: .35rem .85rem;
         border-radius: 20px;
         letter-spacing: .1em;
         text-transform: uppercase;
+        font-weight: 600;
     }
 
     .section-title {
-        font-family: 'Cormorant Garamond', serif;
         font-size: 1.2rem;
-        color: var(--navy);
+        color: #3C1F10;
         font-weight: 500;
         margin-bottom: .9rem;
+        font-family: 'Cormorant Garamond', serif;
     }
 
     /* ───── INVENTORY ───── */
+    .inv-controls {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+
+    .qty-btn {
+        width: 28px;
+        height: 28px;
+        border: 1px solid var(--slate-border);
+        border-radius: 6px;
+        background: var(--white);
+        color: #3C1F10;
+        font-size: .9rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background var(--transition), color var(--transition);
+        font-weight: 600;
+        font-family: 'DM Sans', sans-serif;
+    }
+
+        .qty-btn:hover {
+            background: #8B1A1A;
+            color: #F5F0E8;
+            border-color: #8B1A1A;
+        }
+
     .qty-display {
         min-width: 38px;
         text-align: center;
         font-weight: 600;
         font-size: .85rem;
-        color: var(--navy);
+        color: #3C1F10;
     }
 
     .low-stock-badge {
@@ -1044,22 +770,22 @@
         width: 72px;
         height: 72px;
         border-radius: 50%;
-        background: linear-gradient(135deg, var(--rose), var(--rose-dark));
+        background: linear-gradient(135deg, #8B1A1A, #6B0F0F);
         display: flex;
         align-items: center;
         justify-content: center;
         font-family: 'Cormorant Garamond', serif;
         font-size: 2rem;
-        color: #fff;
+        color: #F5F0E8;
         margin-bottom: 1.2rem;
-        box-shadow: 0 4px 16px rgba(200,131,122,.35);
+        box-shadow: 0 4px 16px rgba(139,26,26,.35);
     }
 
     .profile-form .form-label {
         font-size: .7rem;
         letter-spacing: .12em;
         text-transform: uppercase;
-        color: var(--slate);
+        color: #3C1F10;
         font-weight: 500;
         margin-bottom: .35rem;
     }
@@ -1070,12 +796,13 @@
         border: 1px solid var(--slate-border);
         border-radius: 8px;
         padding: .6rem .9rem;
+        color: #3C1F10;
         transition: border-color var(--transition), box-shadow var(--transition);
     }
 
         .profile-form .form-control:focus {
-            border-color: var(--rose);
-            box-shadow: 0 0 0 3px rgba(200,131,122,.14);
+            border-color: #8B1A1A;
+            box-shadow: 0 0 0 3px rgba(139,26,26,.14);
             outline: none;
         }
 
@@ -1084,20 +811,19 @@
         font-weight: 600;
         letter-spacing: .1em;
         text-transform: uppercase;
-        background: var(--navy);
-        color: #fff;
+        background: #8B1A1A;
+        color: #F5F0E8;
         border: none;
         border-radius: 8px;
         padding: .65rem 1.6rem;
         cursor: pointer;
-        transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+        transition: background var(--transition), transform var(--transition);
         font-family: 'DM Sans', sans-serif;
     }
 
         .btn-save:hover {
-            background: var(--navy-dark);
+            background: #6B0F0F;
             transform: translateY(-1px);
-            box-shadow: 0 4px 14px rgba(30,58,138,.25);
         }
 
     .btn-logout {
@@ -1114,14 +840,13 @@
         display: inline-flex;
         align-items: center;
         gap: .5rem;
-        transition: background var(--transition), color var(--transition), transform var(--transition);
+        transition: background var(--transition), color var(--transition);
         font-family: 'DM Sans', sans-serif;
     }
 
         .btn-logout:hover {
             background: var(--red);
             color: #fff;
-            transform: translateY(-1px);
         }
 
     .profile-divider {
@@ -1138,34 +863,27 @@
         margin-bottom: .75rem;
     }
 
-    /* ───── SALES REPORT ───── */
-    .report-meta {
-        padding: 1.2rem 1.4rem .9rem;
-        border-bottom: 1px solid #F1F5F9;
-    }
-
-    .report-date-input {
+    .inline-toast {
         font-size: .8rem;
-        font-family: 'DM Sans', sans-serif;
-        border: 1px solid var(--slate-border);
-        border-radius: 7px;
-        padding: .35rem .7rem;
-        background: var(--white);
-        color: var(--navy);
-        margin-left: .55rem;
+        padding: .6rem 1rem;
+        border-radius: 8px;
+        display: none;
+        align-items: center;
+        gap: .45rem;
+        margin-top: .8rem;
     }
 
-        .report-date-input:focus {
-            outline: none;
-            border-color: var(--rose);
-            box-shadow: 0 0 0 2px rgba(200,131,122,.15);
+        .inline-toast.success {
+            background: var(--green-light);
+            color: #15803D;
+            display: flex;
         }
 
-    .scope-note {
-        font-size: .74rem;
-        color: var(--slate-light);
-        margin-top: .35rem;
-    }
+        .inline-toast.error {
+            background: var(--red-light);
+            color: var(--red);
+            display: flex;
+        }
 
     /* ───── TOAST ───── */
     #toastContainer {
@@ -1189,64 +907,24 @@
         min-width: 260px;
         border-left: 3px solid var(--green);
         font-size: .82rem;
+        opacity: 1;
     }
 
         .app-toast.toast-error {
             border-color: var(--red);
         }
 
+    .toast-ico {
+        font-size: 1.1rem;
+    }
+
     .toast-msg {
         flex: 1;
-        color: var(--navy);
+        color: #3C1F10;
         font-weight: 500;
     }
-
-    /* ── Tab switcher for Order Management ── */
-    .om-tabs {
-        display: flex;
-        gap: .4rem;
-        margin-bottom: 1.2rem;
-    }
-
-    .om-tab {
-        font-size: .76rem;
-        font-weight: 600;
-        letter-spacing: .06em;
-        text-transform: uppercase;
-        padding: .45rem 1.1rem;
-        border-radius: 20px;
-        cursor: pointer;
-        border: 1.5px solid var(--slate-border);
-        background: var(--white);
-        color: var(--slate);
-        font-family: 'DM Sans', sans-serif;
-        transition: all var(--transition);
-    }
-
-        .om-tab:hover {
-            border-color: var(--navy);
-            color: var(--navy);
-        }
-
-        .om-tab.om-tab-active {
-            background: var(--navy);
-            border-color: var(--navy);
-            color: #fff;
-        }
-
-    /* Guest order tag */
-    .guest-tag {
-        font-size: .64rem;
-        font-weight: 700;
-        background: var(--purple-light);
-        color: var(--purple);
-        padding: .15rem .5rem;
-        border-radius: 4px;
-        letter-spacing: .05em;
-        text-transform: uppercase;
-        margin-left: .35rem;
-    }
 </style>
+
 
 <!-- ═══════════ TOAST CONTAINER ═══════════ -->
 <div id="toastContainer">
@@ -1258,6 +936,22 @@
         </div>
     }
 </div>
+
+<!-- ═══════════ LOGOUT CONFIRM MODAL ═══════════ -->
+@if (showLogoutConfirm)
+{
+    <div class="confirm-overlay" @onclick="CancelLogout">
+        <div class="confirm-modal" @onclick:stopPropagation="true">
+            <div class="confirm-icon"><i class="bi bi-box-arrow-right"></i></div>
+            <div class="confirm-title">Log Out?</div>
+            <div class="confirm-text">Are you sure you want to log out of the Staff Portal?</div>
+            <div class="confirm-actions">
+                <button class="confirm-btn-cancel" @onclick="CancelLogout">Cancel</button>
+                <button class="confirm-btn-confirm" @onclick="ConfirmLogout">Yes, Log Out</button>
+            </div>
+        </div>
+    </div>
+}
 
 <!-- ═══════════ APP SHELL ═══════════ -->
 <div id="appShell">
@@ -1309,6 +1003,9 @@
             <div class="topbar-right">
                 <span class="topbar-date">@currentDateString</span>
                 <span class="topbar-badge">@staffRole</span>
+                <button class="topbar-logout-btn" @onclick="RequestLogout" title="Logout">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
             </div>
         </div>
 
@@ -1353,18 +1050,26 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var ord in recentOrders)
+                            @if (!PagedRecentOrders.Any())
                             {
-                                <tr>
-                                    <td style="font-family:monospace;font-weight:600;color:var(--navy)">#ORD-@ord.OrderId.ToString("D4")</td>
-                                    <td>@ord.User.FirstName @ord.User.LastName</td>
-                                    <td>@ord.TotalAmount.ToString("N0")</td>
-                                    <td>@StatusBadge(ord.OrderStatus)</td>
-                                </tr>
+                                <tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--slate-light)"><i class="bi bi-inbox" style="font-size:1.6rem;display:block;margin-bottom:.4rem"></i>No orders yet.</td></tr>
+                            }
+                            else
+                            {
+                                @foreach (var ord in PagedRecentOrders)
+                                {
+                                    <tr>
+                                        <td style="font-family:monospace;font-weight:600;color:var(--navy)">#ORD-@ord.OrderId.ToString("D4")</td>
+                                        <td>@ord.User.FirstName @ord.User.LastName</td>
+                                        <td>@ord.TotalAmount.ToString("N0")</td>
+                                        <td>@StatusBadge(ord.OrderStatus)</td>
+                                    </tr>
+                                }
                             }
                         </tbody>
                     </table>
                 </div>
+                <Pagination CurrentPage="@recentOrderPage" TotalPages="@RecentOrderTotalPages" CurrentPageChanged="@ChangeRecentOrderPage" />
             </section>
 
             <!-- ──────────── CREATE ORDER (PHONE) VIEW ──────────── -->
@@ -1605,7 +1310,7 @@
                                 }
                                 else
                                 {
-                                    @foreach (var ord in filteredOrders)
+                                    @foreach (var ord in Pagedorders)
                                     {
                                         var payMethod = ord.Payments.FirstOrDefault()?.PaymentMethod ?? "COD";
                                         <tr>
@@ -1634,6 +1339,7 @@
                             </tbody>
                         </table>
                     </div>
+                    <Pagination CurrentPage="@orderPage" TotalPages="@OrderTotalPages" CurrentPageChanged="@ChangeOrderPage" />
                 }
 
                 <!-- ── GUEST / PHONE ORDERS TAB ── -->
@@ -1666,7 +1372,7 @@
                                 }
                                 else
                                 {
-                                    @foreach (var go in allGuestOrders)
+                                    @foreach (var go in PagedGuestOrders)
                                     {
                                         <tr>
                                             <td style="font-family:monospace;font-weight:600;color:var(--purple);font-size:.8rem">#GORD-@go.GuestOrderId.ToString("D4")</td>
@@ -1708,6 +1414,7 @@
                             </tbody>
                         </table>
                     </div>
+                    <Pagination CurrentPage="@guestOrderPage" TotalPages="@GuestOrderTotalPages" CurrentPageChanged="@ChangeGuestOrderPage" />
                 }
             </section>
 
@@ -1732,36 +1439,44 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @for (int i = 0; i < inventoryVariants.Count; i++)
+                            @if (!PagedInventoryVariants.Any())
                             {
-                                var variant = inventoryVariants[i];
-                                bool isLow = variant.StockQuantity < 5;
-                                <tr>
-                                    <td>@(i + 1)</td>
-                                    <td style="font-family:monospace;font-weight:500">@variant.Sku</td>
-                                    <td>@variant.Product.Name</td>
-                                    <td>@variant.Size</td>
-                                    <td>@variant.Color</td>
-                                    <td class="qty-display">@variant.StockQuantity</td>
-                                    <td>
-                                        @if (variant.StockQuantity == 0)
-                                        {
-                                            <span class="low-stock-badge" style="background:var(--red-light);color:var(--red)">Out of Stock</span>
-                                        }
-                                        else if (isLow)
-                                        {
-                                            <span class="low-stock-badge">Low Stock</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="in-stock-badge">In Stock</span>
-                                        }
-                                    </td>
-                                </tr>
+                                <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--slate-light)">No inventory items found.</td></tr>
+                            }
+                            else
+                            {
+                                @for (int i = 0; i < PagedInventoryVariants.Count; i++)
+                                {
+                                    var variant = PagedInventoryVariants[i];
+                                    bool isLow = variant.StockQuantity < 5;
+                                    <tr>
+                                        <td>@((inventoryPage - 1) * inventoryPageSize + i + 1)</td>
+                                        <td style="font-family:monospace;font-weight:500">@variant.Sku</td>
+                                        <td>@variant.Product.Name</td>
+                                        <td>@variant.Size</td>
+                                        <td>@variant.Color</td>
+                                        <td class="qty-display">@variant.StockQuantity</td>
+                                        <td>
+                                            @if (variant.StockQuantity == 0)
+                                            {
+                                                <span class="low-stock-badge" style="background:var(--red-light);color:var(--red)">Out of Stock</span>
+                                            }
+                                            else if (isLow)
+                                            {
+                                                <span class="low-stock-badge">Low Stock</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="in-stock-badge">In Stock</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
                             }
                         </tbody>
                     </table>
                 </div>
+                <Pagination CurrentPage="@inventoryPage" TotalPages="@InventoryTotalPages" CurrentPageChanged="@ChangeInventoryPage" />
             </section>
 
             <!-- ──────────── SALES REPORT VIEW ──────────── -->
@@ -1894,12 +1609,6 @@
                             </button>
                         </div>
                     </div>
-                    <div class="profile-divider"></div>
-                    <div class="profile-section-title">Session</div>
-                    <p style="font-size:.8rem;color:var(--slate);margin-bottom:1rem">Logging out will clear your session from this portal.</p>
-                    <button class="btn-logout" @onclick="Logout">
-                        <i class="bi bi-box-arrow-right"></i> Logout
-                    </button>
                 </div>
             </section>
 

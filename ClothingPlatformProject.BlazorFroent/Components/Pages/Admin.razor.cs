@@ -348,8 +348,8 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             model = new();
             newProductCategoryId = allCategories.FirstOrDefault()?.CategoryId ?? 0;
             imageUrl = "";
-            selectedSizesString = "S, M, L";
-            selectedColorsString = "Cream Beige, Midnight Black, Blush Pink";
+            selectedSizesString = "";
+            selectedColorsString = "";
             selectedquantity = 0;
         }
 

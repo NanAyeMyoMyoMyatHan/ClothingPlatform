@@ -1,6 +1,7 @@
 ﻿using ClothingPlatform.DB.AppDbModels;
 using ClothingPlatformProject.BlazorFroent.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,6 +43,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private int processingCount = 0;
         private int deliveredCount = 0;
 
+        // ─── Source lists (full data, loaded once from API) ───────────────────────
         private List<Order> allOrders = new();
         private List<Order> filteredOrders = new();
         private List<Order> recentOrders = new();
@@ -52,9 +54,6 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private decimal reportRevenue = 0;
         private int reportOrderCount = 0;
         private List<Order> reportOrders = new();
-        // FIX: this list was never populated before, so phone/guest orders
-        // were silently missing from the Daily Sales Report table even
-        // though they were already counted in reportOrderCount/reportRevenue.
         private List<GuestOrder> reportGuestOrders = new();
 
         private string guestCustomerName = "";
@@ -63,6 +62,34 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private string guestPaymentMethod = "COD";
         private string guestPaymentStatus = "unpaid";
         private string createOrderError = "";
+
+        // ─── Pagination: Orders (Order Management → Regular) ──────────────────────
+        private int orderPage = 1;
+        private int orderPageSize = 10;
+        private int orderTotalCount;
+        private int OrderTotalPages => (int)Math.Ceiling((double)orderTotalCount / orderPageSize);
+        private List<Order> Pagedorders { get; set; } = new();
+
+        // ─── Pagination: Guest Orders (Order Management → Phone/Guest) ────────────
+        private int guestOrderPage = 1;
+        private int guestOrderPageSize = 10;
+        private int guestOrderTotalCount;
+        private int GuestOrderTotalPages => (int)Math.Ceiling((double)guestOrderTotalCount / guestOrderPageSize);
+        private List<GuestOrder> PagedGuestOrders { get; set; } = new();
+
+        // ─── Pagination: Inventory (Stock Control) ─────────────────────────────────
+        private int inventoryPage = 1;
+        private int inventoryPageSize = 10;
+        private int inventoryTotalCount;
+        private int InventoryTotalPages => (int)Math.Ceiling((double)inventoryTotalCount / inventoryPageSize);
+        private List<ProductVariant> PagedInventoryVariants { get; set; } = new();
+
+        // ─── Pagination: Dashboard Recent Orders preview ───────────────────────────
+        private int recentOrderPage = 1;
+        private int recentOrderPageSize = 5;
+        private int recentOrderTotalCount;
+        private int RecentOrderTotalPages => (int)Math.Ceiling((double)recentOrderTotalCount / recentOrderPageSize);
+        private List<Order> PagedRecentOrders { get; set; } = new();
 
         private class OrderLineDraft
         {
@@ -73,6 +100,8 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
         private class ToastItem { public string Message { get; set; } = ""; public bool IsError { get; set; } }
         private List<ToastItem> activeToasts = new();
+
+        private bool showLogoutConfirm = false;
 
         protected override async Task OnInitializedAsync()
         {
@@ -87,11 +116,15 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             staffLastName = user.LastName;
             staffEmail = user.Email;
             staffName = $"{user.FirstName} {user.LastName}";
-            staffRole = user.Role == "admin" ? "Boutique Owner" : "Senior Staff";
+            staffRole = user.Role.RoleName == "admin" ? "Boutique Owner" : "Senior Staff";
             currentDateString = DateTime.Now.ToString("ddd, d MMM yyyy");
 
             await LoadStaffDashboardDataAsync();
         }
+
+        // ─────────────────────────────────────────────────────────────────────────
+        // LoadData
+        // ─────────────────────────────────────────────────────────────────────────
 
         private async Task LoadStaffDashboardDataAsync()
         {
@@ -130,7 +163,63 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             }
 
             ApplyFilter();
+            ApplyAllPaging();
             StateHasChanged();
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────
+        // Paging — recompute Paged* lists from in-memory source lists
+        // ─────────────────────────────────────────────────────────────────────────
+
+        private void ApplyAllPaging()
+        {
+            // Regular Orders (Order Management tab — respects currentFilter)
+            orderTotalCount = filteredOrders.Count;
+            if (orderPage > OrderTotalPages && OrderTotalPages > 0)
+                orderPage = OrderTotalPages;
+            if (orderPage < 1)
+                orderPage = 1;
+
+            Pagedorders = filteredOrders
+                .Skip((orderPage - 1) * orderPageSize)
+                .Take(orderPageSize)
+                .ToList();
+
+            // Guest / Phone Orders
+            guestOrderTotalCount = allGuestOrders.Count;
+            if (guestOrderPage > GuestOrderTotalPages && GuestOrderTotalPages > 0)
+                guestOrderPage = GuestOrderTotalPages;
+            if (guestOrderPage < 1)
+                guestOrderPage = 1;
+
+            PagedGuestOrders = allGuestOrders
+                .Skip((guestOrderPage - 1) * guestOrderPageSize)
+                .Take(guestOrderPageSize)
+                .ToList();
+
+            // Inventory (Stock Control)
+            inventoryTotalCount = inventoryVariants.Count;
+            if (inventoryPage > InventoryTotalPages && InventoryTotalPages > 0)
+                inventoryPage = InventoryTotalPages;
+            if (inventoryPage < 1)
+                inventoryPage = 1;
+
+            PagedInventoryVariants = inventoryVariants
+                .Skip((inventoryPage - 1) * inventoryPageSize)
+                .Take(inventoryPageSize)
+                .ToList();
+
+            // Dashboard Recent Orders preview
+            recentOrderTotalCount = allOrders.Count;
+            if (recentOrderPage > RecentOrderTotalPages && RecentOrderTotalPages > 0)
+                recentOrderPage = RecentOrderTotalPages;
+            if (recentOrderPage < 1)
+                recentOrderPage = 1;
+
+            PagedRecentOrders = allOrders
+                .Skip((recentOrderPage - 1) * recentOrderPageSize)
+                .Take(recentOrderPageSize)
+                .ToList();
         }
 
         private void LoadSalesReport() { }
@@ -159,7 +248,54 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             await LoadStaffDashboardDataAsync();
         }
 
-        private void FilterOrders(string status) { currentFilter = status; ApplyFilter(); }
+        // ─────────────────────────────────────────────────────────────────────────
+        // Pagination methods (Admin-style async signatures)
+        // ─────────────────────────────────────────────────────────────────────────
+
+        private Task ChangeOrderPage(int newPage)
+        {
+            orderPage = newPage;
+            ApplyAllPaging();
+            StateHasChanged();
+            return Task.CompletedTask;
+        }
+
+        private Task ChangeGuestOrderPage(int newPage)
+        {
+            guestOrderPage = newPage;
+            ApplyAllPaging();
+            StateHasChanged();
+            return Task.CompletedTask;
+        }
+
+        private Task ChangeInventoryPage(int newPage)
+        {
+            inventoryPage = newPage;
+            ApplyAllPaging();
+            StateHasChanged();
+            return Task.CompletedTask;
+        }
+
+        private Task ChangeRecentOrderPage(int newPage)
+        {
+            recentOrderPage = newPage;
+            ApplyAllPaging();
+            StateHasChanged();
+            return Task.CompletedTask;
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────
+        // Order methods
+        // ─────────────────────────────────────────────────────────────────────────
+
+        private void FilterOrders(string status)
+        {
+            currentFilter = status;
+            orderPage = 1; // reset to first page whenever the filter changes
+            ApplyFilter();
+            ApplyAllPaging();
+        }
+
         private void ApplyFilter()
         {
             filteredOrders = string.IsNullOrEmpty(currentFilter)
@@ -289,6 +425,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
                 activeView = "orders";
                 ordersTab = "guest";
+                guestOrderPage = 1; // jump to first page so the new order is visible
 
                 await LoadStaffDashboardDataAsync();
             }
@@ -319,6 +456,14 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             }
         }
 
+        private void RequestLogout() => showLogoutConfirm = true;
+        private void CancelLogout() => showLogoutConfirm = false;
+        private void ConfirmLogout()
+        {
+            showLogoutConfirm = false;
+            Logout();
+        }
+
         private void Logout() { Session.Logout(); Nav.NavigateTo("/login"); }
 
         private void TriggerToast(string msg, bool isError = false)
@@ -339,4 +484,3 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         };
     }
 }
-

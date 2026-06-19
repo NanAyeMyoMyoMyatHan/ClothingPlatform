@@ -1,7 +1,9 @@
 ﻿using ClothingPlatform.DB.AppDbModels;
 using ClothingPlatformProject.Models.Auth;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.EntityFrameworkCore;
+using ClothingPlatformProject.BlazorFroent.Services;
+using Microsoft.JSInterop;
 
 namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 {
@@ -13,6 +15,12 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         public SessionState Session { get; set; }
         [Inject]
         public NavigationManager Nav { get; set; }
+        [Inject]
+        public HttpClientServices HttpServices { get; set; }
+        [Inject]
+        public CustomAuthStateProvider AuthStateProvider { get; set; }
+        [Inject]
+        public Microsoft.JSInterop.IJSRuntime JSRuntime { get; set; }
         public AuthRequest data { get; set; } = new();
 
 
@@ -75,7 +83,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         {
             return System.Text.RegularExpressions.Regex.IsMatch(email.Trim(), @"^[^\s@]+@[^\s@]+\.[^\s@]+$");
         }
-        private void HandleLogin()
+        private async Task HandleLogin()
         {
             ClearAllErrors();
             loginErrorMessage = "";
@@ -99,23 +107,41 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                 isValid = false;
             }
             if (!isValid) return;
-            var user = _db.Users.FirstOrDefault(u => u.Email.ToLower() == loginEmail.Trim().ToLower() && u.PasswordHash == loginPassword);
-            if (user != null)
-            {
-                Session.Login(user);
-                showToast = true;
-                StateHasChanged();
 
-                // Redirect after a brief pause to match premium UX
-                Task.Delay(1500).ContinueWith(_ =>
+            try
+            {
+                var authRequest = new AuthRequest { Email = loginEmail.Trim(), Password = loginPassword };
+                var response = await HttpServices.ExecuteAsync<AuthResponse>("api/auth/login", authRequest, EnumHttpMethod.Post);
+
+                if (response != null && !string.IsNullOrWhiteSpace(response.AccessToken))
                 {
-                    InvokeAsync(() =>
+                    // Save token to localStorage
+                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", "authToken", response.AccessToken);
+
+                    // Notify authentication state provider
+                    AuthStateProvider.NotifyUserAuthentication(response.AccessToken);
+
+                    // Fetch user details from DB to initialize SessionState
+                    var user = _db.TblUsers
+                        .Include(u => u.Role)
+                            .ThenInclude(r => r.TblRolePermissions)
+                                .ThenInclude(rp => rp.Permission)
+                        .FirstOrDefault(u => u.Email.ToLower() == loginEmail.Trim().ToLower());
+
+                    if (user != null)
                     {
-                        if (user.Role == "admin")
+                        Session.Login(user, response.Permissions);
+                        showToast = true;
+                        StateHasChanged();
+
+                        // Redirect based on dynamic role
+                        await Task.Delay(1500);
+                        var roleName = response.Role.ToLower();
+                        if (roleName == "admin" )
                         {
-                            Nav.NavigateTo("/admin");
+                            Nav.NavigateTo("/dashboard");
                         }
-                        else if (user.Role == "staff")
+                        else if(roleName == "staff")
                         {
                             Nav.NavigateTo("/staff");
                         }
@@ -123,12 +149,20 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                         {
                             Nav.NavigateTo("/customer");
                         }
-                    });
-                });
+                    }
+                    else
+                    {
+                        loginErrorMessage = "User details could not be loaded from database.";
+                    }
+                }
+                else
+                {
+                    loginErrorMessage = "Invalid email or password. Please try again.";
+                }
             }
-            else
+            catch (Exception ex)
             {
-                loginErrorMessage = "Invalid email or password. Please try again.";
+                loginErrorMessage = $"Login error: {ex.Message}";
             }
         }
         private void HandleSignup()
@@ -152,16 +186,13 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                 regEmailErrorMsg = "Email address is required.";
                 isValid = false;
             }
-
-
-
             else if (!IsValidEmail(regEmail))
             {
                 regEmailInvalid = true;
                 regEmailErrorMsg = "Please enter a valid email address.";
                 isValid = false;
             }
-            else if (_db.Users.Any(u => u.Email.ToLower() == regEmail.Trim().ToLower()))
+            else if (_db.TblUsers.Any(u => u.Email.ToLower() == regEmail.Trim().ToLower()))
             {
                 regEmailInvalid = true;
                 regEmailErrorMsg = "An account with this email already exists.";
@@ -203,17 +234,27 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                 isValid = false;
             }
             if (!isValid) return;
-            var newUser = new User
+
+            // ✅ Dynamic RBAC: Look up "customer" role from TblRoles
+            var customerRole = _db.TblRoles.FirstOrDefault(r => r.RoleName.ToLower() == "customer");
+            if (customerRole == null)
+            {
+                signupErrorMessage = "Registration is currently unavailable. Please try again later.";
+                return;
+            }
+            string SecurePasswordHash = BCrypt.Net.BCrypt.HashPassword(regPassword);
+            var newUser = new TblUser
             {
                 FirstName = regFirstName,
                 LastName = regLastName,
                 Email = regEmail.Trim(),
                 Address = regAddress,
                 PhoneNumber = regPhone,
-                PasswordHash = regPassword,
-                Role = "customer"
+                PasswordHash = SecurePasswordHash,
+                RoleId = customerRole.RoleId,
+                CreatedAt = DateTime.Now
             };
-            _db.Users.Add(newUser);
+            _db.TblUsers.Add(newUser);
             _db.SaveChanges();
             // Save email, switch back to login panel and show success alert
             var registeredEmail = regEmail;

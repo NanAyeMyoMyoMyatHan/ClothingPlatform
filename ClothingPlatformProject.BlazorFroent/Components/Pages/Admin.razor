@@ -1,4 +1,4 @@
-@page "/admin"
+@page "/dashboard"
 @using ClothingPlatformProject.BlazorFroent.Components.Partial
 @inject IJSRuntime JSRuntime
 @inject HttpClientServices HttpClientServices
@@ -6,31 +6,32 @@
 
 <style>
     :root {
-        --bg-primary: #FAFAFA; /* Soft Pearl Off-White */
-        --bg-sidebar: #FFFFFF; /* Pure White Sidebar */
-        --bg-card: #FFFFFF; /* Pure White Cards */
-        --accent-main: #E5A9B4; /* Soft Rose Gold/Pink */
-        --accent-hover: #C2707F; /* Deeper Rose Pink for hovers */
-        --text-main: #3A3233; /* Elegant Dark Charcoal for text */
-        --text-muted: #888888; /* Soft Gray for muted text */
-        --border-color: #F0E2E4; /* Delicate Pinkish Gray Border */
-        --danger-color: #E25C5C;
+        --bg-primary: #FDF8F6;
+        --bg-sidebar: #8B1A1A; /* Blood Red sidebar background */
+        --bg-card: #FFFFFF;
+        --accent-main: #8B1A1A; /* Blood Red accent */
+        --accent-hover: #6B0F0F;
+        --text-main: #3C1F10; /* Chocolate Brown — primary text */
+        --text-muted: #7A5C50;
+        --border-color: #EDD9D0;
+        --danger-color: #C0392B;
         --success-color: #4BB543;
-        --warning-color: #F0AD4E;
-        --sidebar-active-bg: #FFF0F2; /* Very light pink for active menu */
+        --warning-color: #D4862A;
+        --sidebar-active-bg: #8B1A1A; /* Blood Red active menu */
+        --sidebar-text: #F5F0E8; /* Cream White for sidebar text */
     }
 
     body {
         font-family: 'Plus Jakarta Sans', sans-serif;
         background-color: var(--bg-primary);
-        color: var(--text-main);
+        color: #3C1F10; /* Chocolate Brown */
         overflow-x: hidden;
     }
 
     h1, h2, h3, h4, .luxury-text {
         font-family: 'Playfair Display', serif;
         letter-spacing: 0.5px;
-        color: var(--text-main);
+        color: #3C1F10; /* Chocolate Brown headings */
     }
 
     /* Scrollbar styling */
@@ -52,11 +53,12 @@
             background: var(--accent-main);
         }
 
-    /* Sidebar Navigation */
+    /* ── SIDEBAR ── */
     .sidebar {
         width: 260px;
-        background-color: var(--bg-sidebar);
-        border-right: 1px solid var(--border-color);
+        background-image: none !important;
+        background-color: #8B1A1A !important;
+        border-right: 1px solid #6B0F0F !important;
         min-height: 100vh;
         position: fixed;
         top: 0;
@@ -67,12 +69,12 @@
 
     .sidebar-brand {
         padding: 2.5rem 1.5rem;
-        border-bottom: 1px solid var(--border-color);
+        border-bottom: 1px solid rgba(245, 240, 232, 0.2);
         text-align: center;
     }
 
         .sidebar-brand h3 {
-            color: var(--accent-hover); /* Brand Name in Deeper Pink */
+            color: #F5F0E8; /* Cream White brand name */
             margin: 0;
             font-weight: 700;
             text-transform: uppercase;
@@ -84,9 +86,10 @@
             font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 3px;
-            color: var(--text-muted);
+            color: #F5F0E8; /* Cream White subtitle */
             display: block;
             margin-top: 5px;
+            opacity: 0.75;
         }
 
     .nav-list {
@@ -99,7 +102,7 @@
         display: flex;
         align-items: center;
         padding: 0.9rem 1.5rem;
-        color: #615557; /* Darker taupe/gray for menu */
+        color: #F5F0E8; /* Cream White nav text */
         text-decoration: none;
         font-size: 0.9rem;
         font-weight: 500;
@@ -113,33 +116,53 @@
             font-size: 1.1rem;
             margin-right: 1rem;
             transition: color 0.2s ease;
-            color: #A09092; /* Muted rose gray for icons */
+            color: #F5F0E8; /* Cream White nav icons */
+            opacity: 0.8;
         }
 
-        .nav-item-link:hover, .nav-item-link.active {
-            color: var(--accent-hover);
-            background-color: var(--sidebar-active-bg);
-            border-left-color: var(--accent-main);
+        .nav-item-link:hover,
+        .nav-item-link.active {
+            color: #F5F0E8;
+            background-color: rgba(245, 240, 232, 0.15); /* subtle cream overlay */
+            border-left-color: #F5F0E8;
         }
 
-            .nav-item-link:hover i, .nav-item-link.active i {
-                color: var(--accent-main);
+            .nav-item-link:hover i,
+            .nav-item-link.active i {
+                color: #F5F0E8;
+                opacity: 1;
             }
 
-    /* Main Workspace Content */
+        /* Sign Out link override */
+        .nav-item-link.text-danger {
+            color: #FFAAAA !important;
+        }
+
+            .nav-item-link.text-danger i {
+                color: #FFAAAA !important;
+            }
+
+    /* ── MAIN WORKSPACE ── */
     .main-workspace {
         margin-left: 260px;
         padding: 2rem;
         min-height: 100vh;
+        background-color: var(--bg-primary);
     }
 
-    /* Custom Cards styling */
+        /* Header text (Hello, Aye Aye / date) */
+        .main-workspace h1,
+        .main-workspace p.text-muted {
+            color: #3C1F10 !important; /* Chocolate Brown */
+        }
+
+    /* ── LUXURY CARDS ── */
     .luxury-card {
         background-color: var(--bg-card);
         border: 1px solid var(--border-color);
         border-radius: 12px;
         padding: 1.5rem;
-        box-shadow: 0 4px 15px rgba(229, 169, 180, 0.1); /* Soft pinkish shadow */
+        box-shadow: 0 4px 15px rgba(139, 26, 26, 0.08);
         position: relative;
         overflow: hidden;
         transition: transform 0.2s, border-color 0.2s;
@@ -152,14 +175,14 @@
         .luxury-card-clickable:hover {
             transform: translateY(-3px);
             border-color: var(--accent-main);
-            box-shadow: 0 8px 25px rgba(229, 169, 180, 0.2);
+            box-shadow: 0 8px 25px rgba(139, 26, 26, 0.15);
         }
 
     .kpi-title {
         font-size: 0.75rem;
         text-transform: uppercase;
         letter-spacing: 1.5px;
-        color: var(--text-muted);
+        color: #7A5C50;
         margin-bottom: 0.5rem;
         font-weight: 600;
     }
@@ -167,7 +190,7 @@
     .kpi-value {
         font-size: 1.75rem;
         font-weight: 700;
-        color: var(--text-main);
+        color: #3C1F10; /* Chocolate Brown */
         margin: 0;
     }
 
@@ -177,28 +200,28 @@
         top: 50%;
         transform: translateY(-50%);
         font-size: 2.2rem;
-        color: rgba(229, 169, 180, 0.2); /* Soft Rose icon background */
+        color: rgba(139, 26, 26, 0.15);
     }
 
-    /* Luxury Tables */
+    /* ── TABLES ── */
     .table-responsive-wrapper {
         background-color: var(--bg-card);
         border: 1px solid var(--border-color);
         border-radius: 12px;
         padding: 1rem;
-        box-shadow: 0 4px 15px rgba(229, 169, 180, 0.05);
+        box-shadow: 0 4px 15px rgba(139, 26, 26, 0.05);
     }
 
     .luxury-table {
-        color: var(--text-main);
+        color: #3C1F10;
         margin-bottom: 0;
         vertical-align: middle;
     }
 
         .luxury-table thead th {
-            background-color: var(--sidebar-active-bg); /* Light pink header */
+            background-color: #FFF3EE;
             border-bottom: 1px solid var(--border-color);
-            color: #615557;
+            color: #3C1F10; /* Chocolate Brown */
             font-size: 0.8rem;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -211,18 +234,18 @@
             border-bottom: 1px solid var(--border-color);
             font-size: 0.9rem;
             background-color: transparent !important;
-            color: var(--text-main) !important;
+            color: #3C1F10 !important; /* Chocolate Brown */
         }
 
         .luxury-table tbody tr:hover td {
-            background-color: #FFFAFB !important; /* Extremely faint pink on hover */
+            background-color: #FFF5F0 !important;
         }
 
-    /* Form Controls */
+    /* ── FORM CONTROLS ── */
     .luxury-input, .luxury-select {
         background-color: #FFFFFF !important;
         border: 1px solid var(--border-color) !important;
-        color: var(--text-main) !important;
+        color: #3C1F10 !important; /* Chocolate Brown */
         border-radius: 8px !important;
         padding: 0.6rem 1rem;
         width: 100%;
@@ -232,10 +255,15 @@
 
         .luxury-input:focus, .luxury-select:focus {
             border-color: var(--accent-main) !important;
-            box-shadow: 0 0 0 0.2rem rgba(229, 169, 180, 0.15) !important;
+            box-shadow: 0 0 0 0.2rem rgba(139, 26, 26, 0.12) !important;
         }
 
-    /* Buttons styling - Rose Gold Gradient */
+    /* Form labels */
+    .form-label {
+        color: #3C1F10 !important; /* Chocolate Brown */
+    }
+
+    /* ── BUTTONS ── */
     .btn-luxury {
         background-color: transparent;
         color: var(--accent-hover);
@@ -251,14 +279,14 @@
     }
 
         .btn-luxury:hover {
-            background-color: var(--sidebar-active-bg);
+            background-color: #FFF3EE;
             border-color: var(--accent-hover);
             color: var(--accent-hover);
         }
 
     .btn-luxury-solid {
-        background: linear-gradient(135deg, var(--accent-main) 0%, var(--accent-hover) 100%);
-        color: white;
+        background: linear-gradient(135deg, #8B1A1A 0%, #6B0F0F 100%); /* Blood Red */
+        color: #F5F0E8 !important; /* Cream White text */
         border: none;
         border-radius: 6px;
         padding: 0.5rem 1.25rem;
@@ -267,18 +295,18 @@
         text-transform: uppercase;
         font-weight: 700;
         transition: all 0.3s;
-        box-shadow: 0 4px 10px rgba(194, 112, 127, 0.2);
+        box-shadow: 0 4px 10px rgba(107, 15, 15, 0.25);
         cursor: pointer;
     }
 
         .btn-luxury-solid:hover {
             opacity: 0.9;
             transform: translateY(-1px);
-            box-shadow: 0 6px 15px rgba(194, 112, 127, 0.3);
-            color: white;
+            box-shadow: 0 6px 15px rgba(107, 15, 15, 0.35);
+            color: #F5F0E8 !important;
         }
 
-    /* Badges */
+    /* ── BADGES ── */
     .badge-pending {
         background-color: rgba(240, 173, 78, 0.15);
         color: var(--warning-color);
@@ -297,24 +325,24 @@
         border: 1px solid rgba(75, 181, 67, 0.2);
     }
 
-    /* Modals Styling */
+    /* ── MODALS ── */
     .modal-content-luxury {
         background-color: var(--bg-card);
         border: 1px solid var(--border-color);
         border-radius: 12px;
-        color: var(--text-main);
+        color: #3C1F10;
         box-shadow: 0 15px 50px rgba(0,0,0,0.1);
     }
 
     .modal-header-luxury {
         border-bottom: 1px solid var(--border-color);
         padding: 1.5rem;
-        background-color: var(--sidebar-active-bg);
+        background-color: #FFF3EE;
         border-radius: 12px 12px 0 0;
     }
 
         .modal-header-luxury .modal-title {
-            color: var(--accent-hover);
+            color: #8B1A1A;
         }
 
     .modal-footer-luxury {
@@ -322,7 +350,7 @@
         padding: 1.2rem;
     }
 
-    /* Alerts */
+    /* ── ALERTS ── */
     .alert-banner {
         border-radius: 8px;
         padding: 1rem;
@@ -331,9 +359,9 @@
     }
 
     .alert-banner-error {
-        background-color: #FDE8E8;
-        color: #9B1C1C;
-        border: 1px solid #F8B4B4;
+        background-color: #FDECEA;
+        color: #8B1A1A;
+        border: 1px solid #E8A0A0;
     }
 
     .alert-banner-success {
@@ -342,7 +370,7 @@
         border: 1px solid #BCF0DA;
     }
 
-    /* Split panel for CRUD form */
+    /* ── CRUD GRID ── */
     .crud-grid {
         display: grid;
         grid-template-columns: 320px 1fr;
@@ -355,35 +383,24 @@
             grid-template-columns: 1fr;
         }
     }
-    /* Staff creation form grid */
-    .staff-grid {
-        display: grid;
-        grid-template-columns: 380px 1fr;
-        gap: 1.5rem;
-        align-items: start;
+
+    /* ── MISC TEXT OVERRIDES ── */
+    .text-muted {
+        color: #7A5C50 !important;
     }
 
-    @@media(max-width: 992px) {
-        .staff-grid {
-            grid-template-columns: 1fr;
-        }
+    p, span, td, th, li, label, div {
+        color: #3C1F10;
     }
 
-    .staff-avatar {
-        width: 38px;
-        height: 38px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--accent-main), var(--accent-hover));
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: 700;
-        font-size: 0.85rem;
-        flex-shrink: 0;
+    /* List group for activity logs */
+    .list-group-item {
+        color: #3C1F10 !important;
+        background-color: transparent !important;
+        border-color: var(--border-color) !important;
     }
-
 </style>
+
 
 <div class="dashboard-container">
     <!-- ── SIDEBAR NAVIGATION ── -->
@@ -597,8 +614,9 @@
                     </div>
 
                     <div class="mb-3">
+
                         <label class="form-label text-muted small uppercase fw-bold">Base Price (MMK)</label>
-                        <input type="number" class="luxury-input" @bind-value="model.BasePrice" placeholder="e.g., 75,000" />
+                        <input type="text" class="luxury-input" @bind-value="model.BasePrice" placeholder="e.g., 75,000" />
                     </div>
 
                     <div class="mb-3">

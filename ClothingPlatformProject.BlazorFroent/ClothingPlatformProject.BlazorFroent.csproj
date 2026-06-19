@@ -15,4 +15,8 @@
     <Folder Include="Components\css\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
+  </ItemGroup>
+
 </Project>

@@ -7,7 +7,7 @@ namespace ClothingPlatformProject.Features.Order
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    
     public class OrderController : ControllerBase
     {
         private readonly IOrderService _orderService;

@@ -35,7 +35,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private List<ProductDto> filteredProduct = new();
         private List<Category> allCategories = new();
         private List<Order> userOrders = new();
-        private User? currentUser;
+        private TblUser? currentUser;
 
 
         private List<ProductDto> allProduct = new();
@@ -254,7 +254,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
                     // Calculate loyalty points: 1 point per 100 MMK spent on completed/delivered orders
                     var totalSpent = userOrders
-                        .Where(o => o.OrderStatus.ToLower() == "completed" || o.OrderStatus.ToLower() == "processing" || o.OrderStatus.ToLower() == "delivered")
+                        .Where(o => o.OrderStatus.ToLower() == "delivered")
                         .Sum(o => o.TotalAmount);
                     loyaltyPoints = (int)(totalSpent / 5000);
                 }
@@ -660,7 +660,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
             try
             {
-                var dbUser = await _db.Users.FirstOrDefaultAsync(u => u.UserId == currentUser!.UserId);
+                var dbUser = await _db.TblUsers.FirstOrDefaultAsync(u => u.UserId == currentUser!.UserId);
                 if (dbUser != null)
                 {
                     dbUser.FirstName = profFirstName.Trim();
@@ -708,18 +708,20 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                 InvokeAsync(StateHasChanged);
             });
         }
-
+        private bool showLogoutConfirm = false;
         private void GotoLogin()
         {
             Nav.NavigateTo("/login");
         }
-        private void Logout()
+        private void RequestLogout() => showLogoutConfirm = true;
+        private void CancelLogout() => showLogoutConfirm = false;
+        private void ConfirmLogout()
         {
-            
-            currentUser = null;
-            Session.Logout();
-            Nav.NavigateTo("/login");
+            showLogoutConfirm = false;
+            Logout();
         }
+
+        private void Logout() { Session.Logout(); Nav.NavigateTo("/login"); }
 
         // Client model for memory cart
         public class CartItemModel
