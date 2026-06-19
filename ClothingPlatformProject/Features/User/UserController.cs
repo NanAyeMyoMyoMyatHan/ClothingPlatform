@@ -1,4 +1,5 @@
 ﻿using ClothingPlatformProject.Models.User;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,6 +7,7 @@ namespace ClothingPlatformProject.Features.User
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "AdminOnly")]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;

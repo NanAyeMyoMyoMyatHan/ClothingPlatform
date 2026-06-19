@@ -1,7 +1,10 @@
 using ClothingPlatform.DB.AppDbModels;
 using ClothingPlatformProject.Features.Auth;
+using ClothingPlatformProject.Features.Cart;
+using ClothingPlatformProject.Features.Notifications;
 using ClothingPlatformProject.Features.Order;
 using ClothingPlatformProject.Features.Product;
+using ClothingPlatformProject.Features.Report;
 using ClothingPlatformProject.Features.User;
 using ClothingPlatformProject.Filters;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -18,8 +21,13 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<ClothingPlatformProject.Features.Staff.IStaffService, ClothingPlatformProject.Features.Staff.StaffServices>();
 builder.Services.AddScoped<IUserService, UserServices>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ICustomerAuthService, CustomerAuthService>();
 builder.Services.AddScoped<IProductService, ProductServices>();
 builder.Services.AddScoped<IOrderService, OrderServices>();
+builder.Services.AddScoped<ICartService, CartServices>();
+builder.Services.AddScoped<IReportService, ReportServices>();
+builder.Services.AddScoped<ICustomerNotificationService, CustomerNotificationService>();
+builder.Services.AddSignalR();
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -37,6 +45,18 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
     };
+});
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("admin"));
+    options.AddPolicy("StaffOnly", policy => policy.RequireRole("staff"));
+    options.AddPolicy("AdminOrStaff", policy => policy.RequireRole("admin", "staff"));
+    options.AddPolicy("Reports.Generate", policy =>
+    {
+        policy.RequireRole("admin");
+        policy.RequireClaim("permission", "Reports.Generate");
+    });
 });
 
 
@@ -68,5 +88,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<CustomerNotificationHub>("/hubs/customer-notifications");
 
 app.Run();

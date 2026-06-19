@@ -30,7 +30,10 @@
     <a class="dismiss">🗙</a>
 </div>
 @code{
-    private bool IsLoginPage => Navigation.Uri.EndsWith("/login", StringComparison.OrdinalIgnoreCase);
+    private bool IsLoginPage =>
+        Navigation.Uri.EndsWith("/login", StringComparison.OrdinalIgnoreCase) ||
+        Navigation.Uri.EndsWith("/portal-login", StringComparison.OrdinalIgnoreCase) ||
+        Navigation.Uri.EndsWith("/customer-login", StringComparison.OrdinalIgnoreCase);
 
     protected override void OnInitialized()
     {

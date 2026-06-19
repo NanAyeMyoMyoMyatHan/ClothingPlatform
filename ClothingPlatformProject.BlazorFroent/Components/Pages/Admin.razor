@@ -22,14 +22,14 @@
     }
 
     body {
-        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         background-color: var(--bg-primary);
         color: #3C1F10; /* Chocolate Brown */
         overflow-x: hidden;
     }
 
     h1, h2, h3, h4, .luxury-text {
-        font-family: 'Playfair Display', serif;
+        font-family: 'DM Sans', sans-serif;
         letter-spacing: 0.5px;
         color: #3C1F10; /* Chocolate Brown headings */
     }
@@ -319,7 +319,7 @@
         border: 1px solid rgba(60, 130, 246, 0.2);
     }
 
-    .badge-delivered {
+    .badge-confirm {
         background-color: rgba(75, 181, 67, 0.1);
         color: var(--success-color);
         border: 1px solid rgba(75, 181, 67, 0.2);
@@ -399,6 +399,12 @@
         background-color: transparent !important;
         border-color: var(--border-color) !important;
     }
+
+    .report-stat {
+        background: #FFFFFF;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+    }
 </style>
 
 
@@ -438,24 +444,17 @@
                 </a>
             </li>
 
-             <li>
-                <a class="nav-item-link @(activeView == "staffs" ? "active" : "")" @onclick='() => SetView("staffs")'>
-                    <i class="bi bi-people"></i>
-                    Staffs
-                </a>
-            </li>
-
             <li>
-                <a class="nav-item-link @(activeView == "staffs" ? "active" : "")" @onclick='() => SetView("createstaff")'>
-                    <i class="bi bi-people"></i>
-                    CreateStaffs
+                <a class="nav-item-link @(activeView == "staffs" ? "active" : "")" @onclick='() => SetView("staffs")'>
+                    <i class="bi bi-person-workspace"></i>
+                    Staff Menu
                 </a>
             </li>
 
             <li>
                 <a class="nav-item-link @(activeView == "reports" ? "active" : "")" @onclick='() => SetView("reports")'>
                     <i class="bi bi-bar-chart-line"></i>
-                    Sales Reports
+                    Admin Reports
                 </a>
             </li>
 
@@ -572,15 +571,7 @@
                                     <td>@order.ShippingAddress</td>
                                     <td>@order.TotalAmount.ToString("N0") MMK</td>
                                     <td>
-                                        @if (order.OrderStatus.ToLower() == "delivered")
-                                        {
-                                            <span class="badge badge-delivered px-3 py-2 rounded-pill text-success">Delivered</span>
-                                        }
-                                       
-                                        else
-                                        {
-                                            <span class="badge badge-pending px-3 py-2 rounded-pill text-warning">@order.OrderStatus</span>
-                                        }
+                                        <span class="badge @StatusBadgeClass(order.OrderStatus) px-3 py-2 rounded-pill">@NormalizeStatus(order.OrderStatus)</span>
                                     </td>
                                     <td>@(order.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")</td>
                                 </tr>
@@ -745,9 +736,9 @@
             <div class="mb-3 d-flex justify-content-between align-items-center">
                 <div class="filter-buttons">
                     <button class="btn-luxury @(orderFilter == "All" ? "btn-luxury-solid text-white" : "") me-2" @onclick='() => FilterOrders("All")'>All Orders</button>
-                    <button class="btn-luxury @(orderFilter == "pending" ? "btn-luxury-solid text-white" : "") me-2" @onclick='() => FilterOrders("pending")'>Pending</button>
-                    
-                    <button class="btn-luxury @(orderFilter == "delivered" ? "btn-luxury-solid text-white" : "")" @onclick='() => FilterOrders("delivered")'>Delivered</button>
+                    <button class="btn-luxury @(orderFilter == "Pending" ? "btn-luxury-solid text-white" : "") me-2" @onclick='() => FilterOrders("Pending")'>Pending</button>
+                    <button class="btn-luxury @(orderFilter == "Processing" ? "btn-luxury-solid text-white" : "") me-2" @onclick='() => FilterOrders("Processing")'>Processing</button>
+                    <button class="btn-luxury @(orderFilter == "Confirm" ? "btn-luxury-solid text-white" : "")" @onclick='() => FilterOrders("Confirm")'>Confirm</button>
                 </div>
                 <span class="text-muted small">Queue Count: @filteredOrders.Count</span>
             </div>
@@ -787,29 +778,24 @@
                                     <td><span class="badge bg-light text-dark border">@payInfo.ToUpper()</span></td>
                                     <td><strong>@order.TotalAmount.ToString("N0") MMK</strong></td>
                                     <td>
-                                        @if ( order.OrderStatus.ToLower() == "delivered")
-                                        {
-                                            <span class="badge badge-delivered px-3 py-2 rounded-pill text-success">Delivered</span>
-                                        }
-                                       
-                                        else
-                                        {
-                                            <span class="badge badge-pending px-3 py-2 rounded-pill text-warning">@order.OrderStatus</span>
-                                        }
+                                        <span class="badge @StatusBadgeClass(order.OrderStatus) px-3 py-2 rounded-pill">@NormalizeStatus(order.OrderStatus)</span>
                                     </td>
                                     <td>
-                                        @if (order.OrderStatus.ToLower() == "delivered")
+                                        @if (IsFinalStatus(order.OrderStatus))
                                         {
                                             <span class="text-muted small"><i class="bi bi-lock-fill"></i> Locked</span>
                                         }
                                         else
                                         {
                                             <select class="luxury-select py-1 px-2 small d-inline-block" style="width: 140px; font-size: 0.85rem;" @onchange="(e) => UpdateOrderStatus(order, e.Value?.ToString() ?? string.Empty)">
-                                                <option value="pending" selected="@(order.OrderStatus.ToLower() == "pending")">Pending</option>
-                                                
-                                                <option value="delivered" selected="@(order.OrderStatus.ToLower() == "delivered")">Delivered</option>
+                                                <option value="Pending" selected="@(NormalizeStatus(order.OrderStatus) == "Pending")">Pending</option>
+                                                <option value="Processing" selected="@(NormalizeStatus(order.OrderStatus) == "Processing")">Processing</option>
+                                                <option value="Confirm" selected="@(NormalizeStatus(order.OrderStatus) == "Confirm")">Confirm</option>
                                             </select>
                                         }
+                                        <button class="btn btn-sm btn-outline-danger ms-2" @onclick="() => DeleteOrder(order.OrderId)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
                                     </td>
                                 </tr>
                             }
@@ -868,63 +854,17 @@
             </div>
         }
 
-         else if (activeView == "staffs")
-        {
-            <div class="table-responsive-wrapper">
-                <table class="table luxury-table">
-                    <thead>
-                        <tr>
-                            <th>User ID</th>
-                            <th>First Name</th>
-                            <th>Last Name</th>
-                            <th>Email Address</th>
-                             <th>Role</th>
-                            <th>Default Delivery Address</th>
-                            <th>Registration Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (!PageStaff.Any())
-                        {
-                            <tr>
-                                <td colspan="6" class="text-center py-4 text-muted">No registered customers.</td>
-                            </tr>
-                        }
-                        else
-                        {
-                            @foreach (var cust in PageStaff)
-                            {
-                                <tr>
-                                    <td><strong>USR-@cust.Id.ToString("D4")</strong></td>
-                                    <td>@cust.First_Name</td>
-                                    <td>@cust.Last_Name</td>
-                                    <td>@cust.Email</td>
-                                    <td>@cust.Role</td>
-                                    <td>@cust.Address</td>
-                                    <td>@(cust.CreatedAt?.ToString("dd/MM/yyyy") ?? "N/A")</td>
-                                </tr>
-                            }
-                        }
-                    </tbody>
-                </table>
-                <Pagination CurrentPage="@staffPage"
-                            TotalPages="@staffTotalPage"
-                            CurrentPageChanged="@ChangeStaffPage" />
-            </div>
-        }
-        
-        else if (activeView == "createstaff")
+        else if (activeView == "staffs")
         {
             <div class="staff-grid">
-                <!-- Staff Creation Form -->
                 <div class="luxury-card">
-                    <h4><i class="bi bi-person-plus me-2" style="color: var(--accent-main);"></i>Create Staff Account</h4>
-                    <p class="text-muted small mb-3">New staff members will receive the <strong>staff</strong> role with access to boutique operations.</p>
+                    <h4><i class="bi bi-person-plus me-2" style="color: var(--accent-main);"></i>Staff Menu</h4>
+                    <p class="text-muted small mb-3">Add portal staff with the <strong>staff</strong> role for boutique operations.</p>
                     <hr />
 
                     <div class="mb-3">
                         <label class="form-label text-muted small text-uppercase fw-bold">First Name <span class="text-danger">*</span></label>
-                        <input type="text" class="luxury-input" @bind="staffForm.FirstName" placeholder="e.g., Amara " required />
+                        <input type="text" class="luxury-input" @bind="staffForm.FirstName" placeholder="e.g., Amara" required />
                     </div>
 
                     <div class="mb-3">
@@ -944,12 +884,12 @@
 
                     <div class="mb-3">
                         <label class="form-label text-muted small text-uppercase fw-bold">Phone Number</label>
-                        <input type="text" class="luxury-input" @bind="staffForm.Phone" placeholder="+95 9 xxx xxx xxx" required />
+                        <input type="text" class="luxury-input" @bind="staffForm.Phone" placeholder="+95 9 xxx xxx xxx" />
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label text-muted small text-uppercase fw-bold">Address</label>
-                        <textarea class="luxury-input" @bind="staffForm.Address" rows="2" placeholder="Staff residential address..." required></textarea>
+                        <textarea class="luxury-input" @bind="staffForm.Address" rows="2" placeholder="Staff residential address..."></textarea>
                     </div>
 
                     <div class="mt-4 d-grid gap-2">
@@ -957,68 +897,166 @@
                             @if (isCreatingStaff)
                             {
                                 <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                <span>Creating Account...</span>
+                                <span>Adding Staff...</span>
                             }
                             else
                             {
                                 <i class="bi bi-person-check me-1"></i>
-                                <span>Create Staff Account</span>
+                                <span>Add New Staff</span>
                             }
                         </button>
                         <button class="btn-luxury" @onclick="ResetStaffForm">Clear Form</button>
                     </div>
                 </div>
 
-                <!-- Recently Created Staff Preview -->
                 <div class="table-responsive-wrapper">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4 class="m-0">Recently Added Staff</h4>
-                        <button class="btn-luxury" @onclick='() => SetView("staffs")'>View All Staff</button>
+                        <h4 class="m-0">Staff List</h4>
+                        <span class="text-muted small">@staffTotalCount portal staff</span>
                     </div>
                     <table class="table luxury-table">
                         <thead>
                             <tr>
-                                <th>Staff Member</th>
-                                <th>Email</th>
+                                <th>User ID</th>
+                                <th>First Name</th>
+                                <th>Last Name</th>
+                                <th>Email Address</th>
                                 <th>Role</th>
-                                <th>Joined</th>
+                                <th>Address</th>
+                                <th>Registration Date</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @if (!recentStaff.Any())
+                            @if (!PageStaff.Any())
                             {
-                                <tr><td colspan="4" class="text-center py-4 text-muted">No staff accounts yet. Create the first one!</td></tr>
+                                <tr>
+                                    <td colspan="8" class="text-center py-4 text-muted">No staff accounts found.</td>
+                                </tr>
                             }
                             else
                             {
-                                @foreach (var s in recentStaff)
+                                @foreach (var cust in PageStaff)
                                 {
-                                    var initials = $"{s.First_Name?.FirstOrDefault()}{s.Last_Name?.FirstOrDefault()}".ToUpper();
                                     <tr>
+                                        <td><strong>STF-@cust.Id.ToString("D4")</strong></td>
+                                        <td>@cust.First_Name</td>
+                                        <td>@cust.Last_Name</td>
+                                        <td>@cust.Email</td>
+                                        <td>@cust.Role</td>
+                                        <td>@cust.Address</td>
+                                        <td>@(cust.CreatedAt?.ToString("dd/MM/yyyy") ?? "N/A")</td>
                                         <td>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <div class="staff-avatar">@initials</div>
-                                                <div class="fw-semibold">@s.First_Name @s.Last_Name</div>
-                                            </div>
+                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteStaff(cust.Id)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
                                         </td>
-                                        <td class="small text-muted">@s.Email</td>
-                                        <td><span class="badge bg-light text-dark border text-uppercase">@s.Role</span></td>
-                                        <td class="small">@(s.CreatedAt?.ToString("dd/MM/yyyy") ?? "N/A")</td>
                                     </tr>
                                 }
                             }
                         </tbody>
                     </table>
+                    <Pagination CurrentPage="@staffPage"
+                                TotalPages="@staffTotalPage"
+                                CurrentPageChanged="@ChangeStaffPage" />
                 </div>
-                <Pagination CurrentPage="@staffPage"
-                            TotalPages="@staffTotalPage"
-                            CurrentPageChanged="@ChangeStaffPage" />
             </div>
         }
-
-
         else if (activeView == "reports")
         {
+            <div class="luxury-card mb-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+                    <div>
+                        <h4 class="m-0">Admin Report</h4>
+                        <p class="text-muted small m-0">Admin-only order and payment summary.</p>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <input type="date" class="luxury-input" style="width: 160px;" @bind="reportFrom" />
+                        <input type="date" class="luxury-input" style="width: 160px;" @bind="reportTo" />
+                        <button class="btn-luxury-solid" @onclick="LoadAdminReport">
+                            <i class="bi bi-bar-chart-line me-1"></i> Generate
+                        </button>
+                        <button class="btn-luxury" @onclick="DownloadAdminReportCsv">
+                            <i class="bi bi-download me-1"></i> CSV
+                        </button>
+                    </div>
+                </div>
+
+                @if (adminReport is null)
+                {
+                    <div class="text-muted small">Choose a date range and generate a report.</div>
+                }
+                else
+                {
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-2">
+                            <div class="report-stat p-3">
+                                <div class="kpi-title">Orders</div>
+                                <div class="kpi-value">@adminReport.TotalOrders</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="report-stat p-3">
+                                <div class="kpi-title">Pending</div>
+                                <div class="kpi-value">@adminReport.PendingOrders</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="report-stat p-3">
+                                <div class="kpi-title">Processing</div>
+                                <div class="kpi-value">@adminReport.ProcessingOrders</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="report-stat p-3">
+                                <div class="kpi-title">Confirm</div>
+                                <div class="kpi-value">@adminReport.ConfirmOrders</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="report-stat p-3">
+                                <div class="kpi-title">Revenue</div>
+                                <div class="kpi-value">@adminReport.TotalRevenue.ToString("N0")</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="report-stat p-3">
+                                <div class="kpi-title">Paid</div>
+                                <div class="kpi-value">@adminReport.PaidRevenue.ToString("N0")</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive-wrapper">
+                        <table class="table table-sm luxury-table">
+                            <thead>
+                                <tr>
+                                    <th>Order</th>
+                                    <th>Date</th>
+                                    <th>Customer</th>
+                                    <th>Status</th>
+                                    <th>Payment</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var row in adminReport.Orders.Take(10))
+                                {
+                                    <tr>
+                                        <td>ORD-@row.OrderId.ToString("D4")</td>
+                                        <td>@(row.OrderDate?.ToString("dd/MM/yyyy") ?? "N/A")</td>
+                                        <td>@row.CustomerName</td>
+                                        <td><span class="badge @StatusBadgeClass(row.OrderStatus) px-3 py-1 rounded-pill">@NormalizeStatus(row.OrderStatus)</span></td>
+                                        <td>@row.PaymentMethod.ToUpper() / @row.PaymentStatus</td>
+                                        <td>@row.TotalAmount.ToString("N0") MMK</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+
             <div class="row g-4 mb-4">
                 <div class="col-md-6">
                     <div class="luxury-card">

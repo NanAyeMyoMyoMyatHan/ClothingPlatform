@@ -1,5 +1,6 @@
 ﻿using ClothingPlatform.DB.AppDbModels;
 using ClothingPlatformProject.BlazorFroent.Services;
+using ClothingPlatformProject.Models.Order;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -41,7 +42,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private int lowStockCount = 0;
         private int pendingCount = 0;
         private int processingCount = 0;
-        private int deliveredCount = 0;
+        private int confirmCount = 0;
 
         // ─── Source lists (full data, loaded once from API) ───────────────────────
         private List<Order> allOrders = new();
@@ -59,7 +60,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private string guestCustomerName = "";
         private string guestPhoneNumber = "";
         private string newOrderShippingAddress = "";
-        private string guestPaymentMethod = "COD";
+        private string guestPaymentMethod = "cod";
         private string guestPaymentStatus = "unpaid";
         private string createOrderError = "";
 
@@ -105,9 +106,9 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
-            if (!Session.IsLoggedIn)
+            if (!Session.IsLoggedIn || (!Session.IsStaff && !Session.IsAdmin))
             {
-                Nav.NavigateTo("/login");
+                Nav.NavigateTo("/portal-login");
                 return;
             }
 
@@ -151,9 +152,19 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                     totalRevenue = allOrders.Sum(o => o.TotalAmount);
                     totalSkusCount = inventoryVariants.Count;
                     lowStockCount = inventoryVariants.Count(v => v.StockQuantity < 5);
-                    pendingCount = allOrders.Count(o => o.OrderStatus == "pending");
-                    processingCount = allOrders.Count(o => o.OrderStatus == "processing");
-                    deliveredCount = allOrders.Count(o => o.OrderStatus == "delivered");
+                    foreach (var order in allOrders)
+                    {
+                        order.OrderStatus = OrderWorkflow.Normalize(order.OrderStatus);
+                    }
+
+                    foreach (var guestOrder in allGuestOrders)
+                    {
+                        guestOrder.OrderStatus = OrderWorkflow.Normalize(guestOrder.OrderStatus);
+                    }
+
+                    pendingCount = allOrders.Count(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Pending);
+                    processingCount = allOrders.Count(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Processing);
+                    confirmCount = allOrders.Count(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Confirm);
                 }
             }
             catch (Exception ex)
@@ -300,18 +311,25 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         {
             filteredOrders = string.IsNullOrEmpty(currentFilter)
                 ? allOrders
-                : allOrders.Where(o => (o.OrderStatus ?? "").ToLower() == currentFilter).ToList();
+                : allOrders.Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Normalize(currentFilter)).ToList();
         }
 
         private async Task UpdateOrderStatus(Order order, string? newStatus)
         {
             if (string.IsNullOrEmpty(newStatus)) return;
+            var normalizedStatus = OrderWorkflow.Normalize(newStatus);
+            if (!OrderWorkflow.CanMoveTo(order.OrderStatus, normalizedStatus))
+            {
+                TriggerToast("Order status can only move forward.", true);
+                return;
+            }
+
             var staffId = Session.CurrentUser!.UserId;
             try
             {
-                await HttpServices.ExecuteAsync<object>($"api/Staff/order/{order.OrderId}/status?staffId={staffId}&newStatus={newStatus}", null, ClothingPlatformProject.BlazorFroent.Services.EnumHttpMethod.Post);
+                await HttpServices.ExecuteAsync<object>($"api/Staff/order/{order.OrderId}/status?staffId={staffId}&newStatus={normalizedStatus}", null, ClothingPlatformProject.BlazorFroent.Services.EnumHttpMethod.Post);
                 await LoadStaffDashboardDataAsync();
-                TriggerToast($"Order #ORD-{order.OrderId:D4} updated to <strong>{newStatus.ToUpper()}</strong>");
+                TriggerToast($"Order #ORD-{order.OrderId:D4} updated to <strong>{normalizedStatus}</strong>");
             }
             catch (Exception ex)
             {
@@ -322,12 +340,19 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private async Task UpdateGuestOrderStatus(GuestOrder guestOrder, string? newStatus)
         {
             if (string.IsNullOrEmpty(newStatus)) return;
+            var normalizedStatus = OrderWorkflow.Normalize(newStatus);
+            if (!OrderWorkflow.CanMoveTo(guestOrder.OrderStatus, normalizedStatus))
+            {
+                TriggerToast("Order status can only move forward.", true);
+                return;
+            }
+
             var staffId = Session.CurrentUser!.UserId;
             try
             {
-                await HttpServices.ExecuteAsync<object>($"api/Staff/guestorder/{guestOrder.GuestOrderId}/status?staffId={staffId}&newStatus={newStatus}", null, ClothingPlatformProject.BlazorFroent.Services.EnumHttpMethod.Post);
+                await HttpServices.ExecuteAsync<object>($"api/Staff/guestorder/{guestOrder.GuestOrderId}/status?staffId={staffId}&newStatus={normalizedStatus}", null, ClothingPlatformProject.BlazorFroent.Services.EnumHttpMethod.Post);
                 await LoadStaffDashboardDataAsync();
-                TriggerToast($"Guest order #GORD-{guestOrder.GuestOrderId:D4} updated to <strong>{newStatus.ToUpper()}</strong>");
+                TriggerToast($"Guest order #GORD-{guestOrder.GuestOrderId:D4} updated to <strong>{normalizedStatus}</strong>");
             }
             catch (Exception ex)
             {
@@ -377,7 +402,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             guestCustomerName = "";
             guestPhoneNumber = "";
             newOrderShippingAddress = "";
-            guestPaymentMethod = "COD";
+            guestPaymentMethod = "cod";
             guestPaymentStatus = "unpaid";
             createOrderError = "";
             orderLines = new() { new OrderLineDraft() };
@@ -464,7 +489,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             Logout();
         }
 
-        private void Logout() { Session.Logout(); Nav.NavigateTo("/login"); }
+        private void Logout() { Session.Logout(); Nav.NavigateTo("/portal-login"); }
 
         private void TriggerToast(string msg, bool isError = false)
         {
@@ -476,10 +501,14 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
         private MarkupString HtmlRaw(string value) => new MarkupString(value);
 
-        private MarkupString StatusBadge(string status) => status.ToLower() switch
+        private static string NormalizeStatus(string? status) => OrderWorkflow.Normalize(status);
+
+        private static bool IsFinalStatus(string? status) => OrderWorkflow.IsFinal(status);
+
+        private MarkupString StatusBadge(string status) => OrderWorkflow.Normalize(status) switch
         {
-            "delivered" => new MarkupString("<span class=\"status-badge badge-delivered\"><i class=\"bi bi-check-circle\"></i> Delivered</span>"),
-            "processing" => new MarkupString("<span class=\"status-badge badge-processing\"><i class=\"bi bi-arrow-repeat\"></i> Processing</span>"),
+            OrderWorkflow.Confirm => new MarkupString("<span class=\"status-badge badge-confirm\"><i class=\"bi bi-check-circle\"></i> Confirm</span>"),
+            OrderWorkflow.Processing => new MarkupString("<span class=\"status-badge badge-processing\"><i class=\"bi bi-arrow-repeat\"></i> Processing</span>"),
             _ => new MarkupString("<span class=\"status-badge badge-pending\"><i class=\"bi bi-hourglass-split\"></i> Pending</span>")
         };
     }

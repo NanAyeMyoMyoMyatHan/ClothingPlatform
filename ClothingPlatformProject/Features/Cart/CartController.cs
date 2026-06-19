@@ -16,25 +16,39 @@ namespace ClothingPlatformProject.Features.Cart
         }
 
         [HttpGet("user/{userId}")]
-        public IActionResult GetCart(int userId)
+        public async Task<IActionResult> GetCart(int userId)
         {
-            var result = _cartService.GetUserCart(userId);
-            if (result == null) return NotFound("Cart is empty");
+            var result = await _cartService.GetUserCartAsync(userId);
             return Ok(result);
         }
 
         [HttpPost("add")]
-        public IActionResult AddToCart(AddToCartRequest model)
+        public async Task<IActionResult> AddToCart(AddToCartRequest model)
         {
-            _cartService.AddItemToCart(model);
-            return Ok("Added to Cart successfully");
+            var result = await _cartService.AddItemToCartAsync(model);
+            return Ok(result);
+        }
+
+        [HttpPut("item/{cartItemId}")]
+        public async Task<IActionResult> UpdateItem(int cartItemId, UpdateCartItemRequest model)
+        {
+            var result = await _cartService.UpdateItemQuantityAsync(cartItemId, model.Quantity);
+            if (result == null) return NotFound("Cart item not found.");
+            return Ok(result);
         }
 
         [HttpDelete("item/{cartItemId}")]
-        public IActionResult RemoveItem(int cartItemId)
+        public async Task<IActionResult> RemoveItem(int cartItemId)
         {
-            _cartService.RemoveItemFromCart(cartItemId);
+            await _cartService.RemoveItemFromCartAsync(cartItemId);
             return Ok("Item removed successfully");
+        }
+
+        [HttpDelete("user/{userId}/clear")]
+        public async Task<IActionResult> ClearCart(int userId)
+        {
+            await _cartService.ClearUserCartAsync(userId);
+            return Ok("Cart cleared successfully");
         }
     }
 }

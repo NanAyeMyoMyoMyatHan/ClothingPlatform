@@ -1,4 +1,5 @@
 ﻿using ClothingPlatform.DB.AppDbModels;
+using ClothingPlatformProject.Models.Order;
 using ClothingPlatformProject.Models.Report;
 using Microsoft.EntityFrameworkCore;
 using ClothingPlatformProject.Models;
@@ -223,6 +224,47 @@ namespace ClothingPlatformProject.Features.Report
                     CreatedAt = l.CreatedAt
                 })
                 .ToList();
+        }
+
+        public AdminReportSummaryDto GetAdminReport(DateTime from, DateTime to)
+        {
+            var start = from.Date;
+            var end = to.Date.AddDays(1);
+
+            var orders = _db.Orders
+                .AsNoTracking()
+                .Include(o => o.User)
+                .Include(o => o.Payments)
+                .Where(o => o.CreatedAt >= start && o.CreatedAt < end)
+                .OrderByDescending(o => o.CreatedAt)
+                .ToList();
+
+            var rows = orders.Select(o => new AdminReportOrderDto
+            {
+                OrderId = o.OrderId,
+                OrderDate = o.CreatedAt,
+                CustomerName = o.User != null ? $"{o.User.FirstName} {o.User.LastName}".Trim() : "Customer",
+                OrderStatus = OrderWorkflow.Normalize(o.OrderStatus),
+                PaymentStatus = o.PaymentStatus,
+                PaymentMethod = o.Payments.FirstOrDefault()?.PaymentMethod ?? "cod",
+                TotalAmount = o.TotalAmount
+            }).ToList();
+
+            return new AdminReportSummaryDto
+            {
+                From = start,
+                To = to.Date,
+                TotalOrders = rows.Count,
+                PendingOrders = rows.Count(o => o.OrderStatus == OrderWorkflow.Pending),
+                ProcessingOrders = rows.Count(o => o.OrderStatus == OrderWorkflow.Processing),
+                ConfirmOrders = rows.Count(o => o.OrderStatus == OrderWorkflow.Confirm),
+                TotalRevenue = rows.Sum(o => o.TotalAmount),
+                PaidRevenue = rows.Where(o =>
+                        string.Equals(o.PaymentStatus, "paid", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(o.PaymentStatus, "completed", StringComparison.OrdinalIgnoreCase))
+                    .Sum(o => o.TotalAmount),
+                Orders = rows
+            };
         }
     }
 }

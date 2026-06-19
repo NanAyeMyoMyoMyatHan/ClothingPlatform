@@ -1,7 +1,8 @@
-﻿
-@page "/login"
 
-<PageTitle>Chic Boutique — Atelier Access</PageTitle>
+@page "/login"
+@page "/portal-login"
+
+<PageTitle>Chic Boutique � Atelier Access</PageTitle>
 <style>
     :root {
         --bg-start: #FDF8F6;
@@ -18,7 +19,7 @@
         --shadow: 0 24px 64px rgba(139,26,26,0.1), 0 4px 16px rgba(139,26,26,0.05);
         --radius: 20px;
         --transition: 0.38s cubic-bezier(0.4,0,0.2,1);
-        --font-display: 'Cormorant Garamond', Georgia, serif;
+        --font-display: 'DM Sans', sans-serif;
         --font-body: 'DM Sans', system-ui, sans-serif;
     }
 
@@ -484,29 +485,29 @@
             color: var(--charcoal);
         }
 </style>
-<!-- ── TOAST ──────────────────────────────── -->
+<!-- -- TOAST -------------------------------- -->
 <div class="toast-container-custom">
     <div class="toast-boutique @(showToast ? "show" : "")">
         <div class="toast-icon"><i class="bi bi-check-lg"></i></div>
         <div class="toast-body-text">
             <strong>Authentication Successful</strong>
-            <span>Redirecting to Style Hub…</span>
+            <span>Redirecting to Style Hub�</span>
         </div>
     </div>
 </div>
-<!-- ── MAIN WRAPPER ────────────────────────── -->
+<!-- -- MAIN WRAPPER -------------------------- -->
 <div style="position:relative;z-index:1;width:100%;max-width:460px;">
     <!-- Brand Lockup -->
     <div class="brand-lockup">
         <div class="brand-monogram"><span>TB</span></div>
         <div class="brand-name">Chic Boutique</div>
-        <div class="brand-tagline">Atelier Membership</div>
+        <div class="brand-tagline">Admin & Staff Portal</div>
     </div>
     <!-- Auth Card -->
     <div class="auth-card">
         @if (currentPanel == "login")
         {
-            <!-- ── LOGIN PANEL ───────────────────── -->
+            <!-- -- LOGIN PANEL --------------------- -->
             <div class="form-panel">
                 @if (!string.IsNullOrEmpty(loginErrorMessage))
                 {
@@ -536,7 +537,7 @@
                 <div class="mb-field">
                     <label class="form-label">Password</label>
                     <div class="pw-wrapper">
-                        <input type="@(showLoginPw ? "text" : "password")" class="form-control @(pwInvalid ? "is-invalid" : "")" @bind="loginPassword" @bind:event="oninput" placeholder="••••••••" />
+                        <input type="@(showLoginPw ? "text" : "password")" class="form-control @(pwInvalid ? "is-invalid" : "")" @bind="loginPassword" @bind:event="oninput" placeholder="��������" />
                         <button type="button" class="pw-toggle" @onclick="() => showLoginPw = !showLoginPw" tabindex="-1">
                             <i class="bi @(showLoginPw ? "bi-eye-slash" : "bi-eye")"></i>
                         </button>
@@ -557,14 +558,14 @@
                     Enter the Boutique
                 </button>
                 <p class="switch-text">
-                    New to The Boutique?
-                    <a class="switch-link" @onclick='() => SwitchTo("signup")'>Create your account &rarr;</a>
+                    Shopping as a customer?
+                    <a class="switch-link" href="/customer-login">Customer sign in &rarr;</a>
                 </p>
             </div>
         }
         else
         {
-            <!-- ── SIGN-UP PANEL ─────────────────── -->
+            <!-- -- SIGN-UP PANEL ------------------- -->
             <div class="form-panel">
                 @if (!string.IsNullOrEmpty(signupErrorMessage))
                 {
@@ -664,7 +665,7 @@
             </div>
         }
     </div><!-- /auth-card -->
-    <div class="card-footer-note">Secure · Encrypted · Private</div>
+    <div class="card-footer-note">Secure � Encrypted � Private</div>
 </div><!-- /wrapper -->
 
 

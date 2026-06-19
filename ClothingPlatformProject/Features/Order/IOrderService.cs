@@ -8,5 +8,7 @@ namespace ClothingPlatformProject.Features.Order
         OrderResultDto PlaceOrderTransaction(CheckoutRequest model);
 
         Task<List<OrderDashboardDto>> GetAllOrder();
+
+        Task<bool> DeleteOrderAsync(int orderId);
     }
 }

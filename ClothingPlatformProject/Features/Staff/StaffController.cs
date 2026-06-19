@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ClothingPlatformProject.Features.Staff;
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Threading.Tasks;
 
@@ -7,6 +8,7 @@ namespace ClothingPlatformProject.Features.Staff
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "AdminOrStaff")]
     public class StaffController : ControllerBase
     {
         private readonly IStaffService _staffService;

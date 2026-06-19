@@ -1,4 +1,5 @@
 ﻿using ClothingPlatform.DB.AppDbModels;
+using ClothingPlatformProject.Features.Notifications;
 using ClothingPlatformProject.Models.Order;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,10 +8,12 @@ namespace ClothingPlatformProject.Features.Order
     public class OrderServices : IOrderService
     {
         private readonly AppDbContext _db;
+        private readonly ICustomerNotificationService _notificationService;
 
-        public OrderServices(AppDbContext db)
+        public OrderServices(AppDbContext db, ICustomerNotificationService notificationService)
         {
             _db = db;
+            _notificationService = notificationService;
         }
 
         public List<OrderHistoryDto> GetUserOrderHistory(int userId)
@@ -21,7 +24,7 @@ namespace ClothingPlatformProject.Features.Order
                 {
                     OrderId = o.OrderId,
                     TotalPrice = o.TotalAmount,
-                    OrderStatus = o.OrderStatus,
+                    OrderStatus = OrderWorkflow.Normalize(o.OrderStatus),
                     ShippingAddress = o.ShippingAddress,
                     CreatedAt = (DateTime)o.CreatedAt
                 }).ToList();
@@ -39,7 +42,7 @@ namespace ClothingPlatformProject.Features.Order
             {
                 UserId = model.UserId,
                 TotalAmount = model.TotalPrice,
-                OrderStatus = "processing",
+                OrderStatus = OrderWorkflow.Pending,
                 ShippingAddress = fullAddress
             };
             _db.Orders.Add(order);
@@ -68,9 +71,11 @@ namespace ClothingPlatformProject.Features.Order
             _db.Payments.Add(new Payment
             {
                 OrderId = order.OrderId,
-                PaymentMethod = model.PaymentMethod,
-                PaymentStatus = "completed",
-                Amount = model.TotalPrice
+                PaymentMethod = NormalizePaymentMethod(model.PaymentMethod),
+                PaymentStatus = NormalizePaymentMethod(model.PaymentMethod) == "cod" ? "pending" : "pending",
+                Amount = model.TotalPrice,
+                TransactionId = model.TransactionId,
+                SlipImageUrl = model.SlipImageUrl
             });
 
             _db.SaveChanges();
@@ -102,7 +107,7 @@ namespace ClothingPlatformProject.Features.Order
                         UserEmail = o.User != null ? o.User.Email : string.Empty,
                         OrderDate = o.CreatedAt,
                         TotalAmount = o.TotalAmount,
-                        OrderStatus = o.OrderStatus,
+                        OrderStatus = OrderWorkflow.Normalize(o.OrderStatus),
                         PaymentStatus = o.PaymentStatus,
                         ShippingAddress = o.ShippingAddress,
                         PhoneNumber = o.User.PhoneNumber,
@@ -134,6 +139,40 @@ namespace ClothingPlatformProject.Features.Order
                         }).ToList()
                     })
                     .ToListAsync();
+        }
+
+        public async Task<bool> DeleteOrderAsync(int orderId)
+        {
+            var order = await _db.Orders
+                .Include(o => o.OrderItems)
+                .Include(o => o.Payments)
+                .Include(o => o.StaffFulfillmentLogs)
+                .Include(o => o.StaffSalesLogs)
+                .FirstOrDefaultAsync(o => o.OrderId == orderId);
+
+            if (order == null) return false;
+
+            var userId = order.UserId;
+
+            _db.StaffSalesLogs.RemoveRange(order.StaffSalesLogs);
+            _db.StaffFulfillmentLogs.RemoveRange(order.StaffFulfillmentLogs);
+            _db.Payments.RemoveRange(order.Payments);
+            _db.OrderItems.RemoveRange(order.OrderItems);
+            _db.Orders.Remove(order);
+
+            await _db.SaveChangesAsync();
+            await _notificationService.CreateOrderDeletedNotificationAsync(userId, orderId);
+            return true;
+        }
+
+        private static string NormalizePaymentMethod(string? method)
+        {
+            return (method ?? "cod").Trim().ToLowerInvariant() switch
+            {
+                "kbz" or "kbzpay" or "kbz pay" or "kpay" => "kpay",
+                "wave" or "wavepay" or "wave pay" or "wave money" or "wavemoney" => "wave_money",
+                _ => "cod"
+            };
         }
 
     }

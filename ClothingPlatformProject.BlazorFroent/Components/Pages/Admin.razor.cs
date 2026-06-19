@@ -1,6 +1,7 @@
 using ClothingPlatform.DB.AppDbModels;
 using ClothingPlatformProject.BlazorFroent.Services;
 using ClothingPlatformProject.Models.Order;
+using ClothingPlatformProject.Models.Report;
 using ClothingPlatformProject.Models.User;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
@@ -11,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Net.Http;
 using System.Net.Http.Headers;
 
 namespace ClothingPlatformProject.BlazorFroent.Components.Pages
@@ -68,6 +70,9 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private decimal storeDailyRevenue;
         private int storeDailySalesCount;
         private List<DailySummaryModel> dailyReportList = new();
+        private DateTime reportFrom = DateTime.Today.AddDays(-30);
+        private DateTime reportTo = DateTime.Today;
+        private AdminReportSummaryDto? adminReport;
 
 
         // ─── Staff Creation ───────────────────────────────────────────────────────
@@ -115,6 +120,12 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         // စာမျက်နှာ နံပါတ်နှိပ်လိုက်ရင် ပြောင်းပေးမည့် Methods
         protected override async Task OnInitializedAsync()
         {
+            if (!Session.IsLoggedIn || !Session.IsAdmin)
+            {
+                Nav.NavigateTo("/portal-login");
+                return;
+            }
+
             // First run seeder to populate sample data if DB is empty
             DbSeeder.Seed(_db);
             Console.WriteLine("Component");
@@ -183,25 +194,44 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                 $"api/user/staffs?staffpage={staffPage}&staffpageSize={staffPageSize}",
                 null,
                 EnumHttpMethod.Get);
-                PageStaff = staff.Items;
-                PageCustomer = result.Items;
+                PageStaff = staff?.Items ?? new();
+                PageCustomer = result?.Items ?? new();
+                recentStaff = PageStaff.Take(5).ToList();
 
-                staffTotalCount = staff.TotalCount;
+                staffTotalCount = staff?.TotalCount ?? 0;
                 staffTotalPage = (int)Math.Ceiling((double)staffTotalCount / staffPageSize);
 
-                customerTotalCount = result.TotalCount;
+                customerTotalCount = result?.TotalCount ?? 0;
                  
                 customerTotalPage =(int)Math.Ceiling((double)customerTotalCount / customerPageSize);
 
-        IQueryable<Order> orderQuery = _db.Orders;
+                allOrders = await _db.Orders
+                    .Include(o => o.User)
+                    .Include(o => o.Payments)
+                    .OrderByDescending(o => o.OrderId)
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                foreach (var order in allOrders)
+                {
+                    order.OrderStatus = OrderWorkflow.Normalize(order.OrderStatus);
+                }
+
+                var filteredOrderRows = orderFilter == "All"
+                    ? allOrders
+                    : allOrders
+                        .Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Normalize(orderFilter))
+                        .ToList();
 
                 if (orderFilter != "All")
                 {
-                    orderQuery = orderQuery.Where(o => o.OrderStatus.ToLower() == orderFilter.ToLower());
+                    filteredOrderRows = filteredOrderRows
+                        .Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Normalize(orderFilter))
+                        .ToList();
                 }
 
                 // စုစုပေါင်း အရေအတွက်ကို ယူမယ်
-                orderTotalCount = await orderQuery.CountAsync();
+                orderTotalCount = filteredOrderRows.Count;
 
                 // Safety Checks
                 if (orderPage > OrderTotalPages && OrderTotalPages > 0)
@@ -214,14 +244,10 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                 }
 
                 // လက်ရှိ Page စာပဲ ဆွဲထုတ်ပြီး Pagedorders ထဲ ထည့်မယ်
-                Pagedorders = await orderQuery
-                    .Include(o => o.User)
-                    .Include(o => o.Payments)
-                    .OrderByDescending(o => o.OrderId)
+                Pagedorders = filteredOrderRows
                     .Skip((orderPage - 1) * orderPageSize)
                     .Take(orderPageSize)
-                    .AsNoTracking()
-                    .ToListAsync();
+                    .ToList();
 
                 await InvokeAsync(StateHasChanged);
 
@@ -239,9 +265,9 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                     .ToListAsync();
 
                 // Compute dashboard KPI stats
-                TotalRevenue = orders.Where(o => o.OrderStatus.ToLower() == "delivered").Sum(o => o.TotalAmount);
+                TotalRevenue = orders.Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Confirm).Sum(o => o.TotalAmount);
                 TotalOrders = orders.Count;
-                PendingOrders = orders.Count(o => o.OrderStatus.ToLower() == "pending");
+                PendingOrders = orders.Count(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Pending);
                 TotalCustomers = customers.Count;
 
                 // Load report lists
@@ -251,7 +277,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                     {
                         Date = g.Key,
                         OrdersCount = g.Count(),
-                        Revenue = g.Where(o => o.OrderStatus.ToLower() == "completed" || o.OrderStatus.ToLower() == "processing" || o.OrderStatus.ToLower() == "delivered").Sum(o => o.TotalAmount)
+                        Revenue = g.Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Confirm || OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Processing).Sum(o => o.TotalAmount)
                     })
                     .OrderByDescending(r => r.Date)
                     .ToList();
@@ -293,6 +319,11 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             successMessage = "";
             editingProduct = null;
             ResetProductForm();
+
+            if (viewName == "reports")
+            {
+                _ = LoadAdminReport();
+            }
         }
 
         // Order methods
@@ -305,8 +336,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             else
             {
                 filteredOrders = orders
-                    .Where(o => o.OrderStatus?.Trim()
-                        .Equals(orderFilter.Trim(), StringComparison.OrdinalIgnoreCase) == true)
+                    .Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Normalize(orderFilter))
                     .ToList();
             }
 
@@ -328,16 +358,49 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                 var dbOrder = await _db.Orders.FirstOrDefaultAsync(o => o.OrderId == order.OrderId);
                 if (dbOrder != null)
                 {
-                    dbOrder.OrderStatus = newStatus;
+                    var normalizedStatus = OrderWorkflow.Normalize(newStatus);
+                    if (!OrderWorkflow.CanMoveTo(dbOrder.OrderStatus, normalizedStatus))
+                    {
+                        errorMessage = "Order status can only move forward.";
+                        return;
+                    }
+
+                    dbOrder.OrderStatus = normalizedStatus;
                     
                     await _db.SaveChangesAsync();
-                    successMessage = $"Order #{order.OrderId} status updated to {newStatus}.";
+                    successMessage = $"Order #{order.OrderId} status updated to {normalizedStatus}.";
                     await LoadData();
                 }
             }
             catch (Exception ex)
             {
                 errorMessage = "Error updating order status: " + ex.Message;
+            }
+        }
+
+        private async Task DeleteOrder(int orderId)
+        {
+            var confirmed = await JSRuntime.InvokeAsync<bool>(
+                "confirm", $"Order ORD-{orderId:D4} will be deleted and the customer will be notified immediately. Continue?");
+
+            if (!confirmed) return;
+
+            try
+            {
+                var response = await HttpClientServices.ExecuteAsync<bool>(
+                    $"api/order/{orderId}",
+                    null,
+                    EnumHttpMethod.Delete);
+
+                if (response)
+                {
+                    successMessage = $"Order ORD-{orderId:D4} deleted and customer notified.";
+                    await LoadData();
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = "Error deleting order: " + ex.Message;
             }
         }
 
@@ -652,9 +715,8 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                 var todaysOrders = allOrders.Where(o =>
                     o.CreatedAt.HasValue &&
                     DateOnly.FromDateTime(o.CreatedAt.Value) == today &&
-                    (o.OrderStatus.ToLower() == "completed" ||
-                     o.OrderStatus.ToLower() == "processing" ||
-                     o.OrderStatus.ToLower() == "delivered")).ToList();
+                    (OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Confirm ||
+                     OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Processing)).ToList();
 
                 decimal todayRev = todaysOrders.Sum(o => o.TotalAmount);
                 int todaySold = todaysOrders.Count;
@@ -687,7 +749,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private void Logout()
         {
             Session.Logout();
-            Nav.NavigateTo("/login");
+            Nav.NavigateTo("/portal-login");
         }
         private async Task HandleCreateStaff()
         {
@@ -720,7 +782,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             }
 
             // ── Duplicate email check ─────────────────────────────────────────────
-            bool emailExists = await _db.Users.AnyAsync(u =>
+            bool emailExists = await _db.TblUsers.AnyAsync(u =>
                 u.Email.ToLower() == staffForm.Email.Trim().ToLower());
 
             if (emailExists)
@@ -734,19 +796,37 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
             try
             {
-                var newStaff = new User
+                var staffRole = await EnsurePortalRoleAsync("staff", "Staff operations access");
+
+                var newStaff = new TblUser
                 {
                     FirstName = staffForm.FirstName.Trim(),
                     LastName = staffForm.LastName.Trim(),
                     Email = staffForm.Email.Trim().ToLower(),
-                    PasswordHash = staffForm.Password,
-                    Role = "staff",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(staffForm.Password),
+                    RoleId = staffRole.RoleId,
                     PhoneNumber = staffForm.Phone?.Trim() ?? string.Empty,
                     Address = staffForm.Address?.Trim() ?? string.Empty,
                     CreatedAt = DateTime.Now
                 };
 
-                await _db.Users.AddAsync(newStaff);
+                await _db.TblUsers.AddAsync(newStaff);
+
+                if (!await _db.Users.AnyAsync(u => u.Email == newStaff.Email))
+                {
+                    await _db.Users.AddAsync(new User
+                    {
+                        FirstName = newStaff.FirstName,
+                        LastName = newStaff.LastName,
+                        Email = newStaff.Email,
+                        PasswordHash = newStaff.PasswordHash,
+                        Role = "staff",
+                        PhoneNumber = newStaff.PhoneNumber ?? string.Empty,
+                        Address = newStaff.Address ?? string.Empty,
+                        CreatedAt = DateTime.Now
+                    });
+                }
+
                 await _db.SaveChangesAsync();
 
                 successMessage = $"Staff account for {newStaff.FirstName} {newStaff.LastName} created successfully.";
@@ -777,14 +857,20 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
             try
             {
-                var user = await _db.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+                var user = await _db.TblUsers.FirstOrDefaultAsync(u => u.UserId == userId);
                 if (user == null)
                 {
                     errorMessage = "Staff account not found.";
                     return;
                 }
 
-                _db.Users.Remove(user);
+                var mirrorUser = await _db.Users.FirstOrDefaultAsync(u => u.Email == user.Email && u.Role == "staff");
+                if (mirrorUser != null)
+                {
+                    _db.Users.Remove(mirrorUser);
+                }
+
+                _db.TblUsers.Remove(user);
                 await _db.SaveChangesAsync();
 
                 successMessage = $"Staff account for {user.FirstName} {user.LastName} has been removed.";
@@ -801,6 +887,77 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         {
             staffForm = new StaffFormModel();
         }
+
+        private async Task<ClothingPlatform.DB.AppDbModels.TblRole> EnsurePortalRoleAsync(string roleName, string description)
+        {
+            var role = await _db.TblRoles.FirstOrDefaultAsync(r => r.RoleName == roleName);
+            if (role != null) return role;
+
+            role = new ClothingPlatform.DB.AppDbModels.TblRole
+            {
+                RoleName = roleName,
+                Description = description,
+                CreatedAt = DateTime.Now
+            };
+            _db.TblRoles.Add(role);
+            await _db.SaveChangesAsync();
+            return role;
+        }
+
+        private async Task LoadAdminReport()
+        {
+            try
+            {
+                adminReport = await HttpClientServices.ExecuteAsync<AdminReportSummaryDto>(
+                    $"api/report/admin?from={reportFrom:yyyy-MM-dd}&to={reportTo:yyyy-MM-dd}",
+                    null,
+                    EnumHttpMethod.Get);
+            }
+            catch (Exception ex)
+            {
+                errorMessage = "Error loading admin report: " + ex.Message;
+            }
+        }
+
+        private async Task DownloadAdminReportCsv()
+        {
+            try
+            {
+                var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
+                using var request = new HttpRequestMessage(
+                    HttpMethod.Get,
+                    $"api/report/admin.csv?from={reportFrom:yyyy-MM-dd}&to={reportTo:yyyy-MM-dd}");
+
+                if (!string.IsNullOrWhiteSpace(token))
+                {
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                }
+
+                var response = await Http.SendAsync(request);
+                response.EnsureSuccessStatusCode();
+                var csv = await response.Content.ReadAsStringAsync();
+                var dataUrl = "data:text/csv;charset=utf-8," + Uri.EscapeDataString(csv);
+                var fileName = $"admin-report-{reportFrom:yyyyMMdd}-{reportTo:yyyyMMdd}.csv";
+                await JSRuntime.InvokeVoidAsync("eval",
+                    $"const a=document.createElement('a');a.href='{dataUrl}';a.download='{fileName}';document.body.appendChild(a);a.click();a.remove();");
+            }
+            catch (Exception ex)
+            {
+                errorMessage = "Error downloading admin CSV report: " + ex.Message;
+            }
+        }
+
+        private static string NormalizeStatus(string? status) => OrderWorkflow.Normalize(status);
+
+        private static bool IsFinalStatus(string? status) =>
+            OrderWorkflow.IsFinal(OrderWorkflow.Normalize(status));
+
+        private static string StatusBadgeClass(string? status) => OrderWorkflow.Normalize(status) switch
+        {
+            OrderWorkflow.Confirm => "badge-confirm text-success",
+            OrderWorkflow.Processing => "badge-processing text-primary",
+            _ => "badge-pending text-warning"
+        };
 
 
         // Inner model for reports aggregation table

@@ -19,6 +19,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Category> Categories { get; set; }
 
+    public virtual DbSet<CustomerNotification> CustomerNotifications { get; set; }
+
     public virtual DbSet<GuestOrder> GuestOrders { get; set; }
 
     public virtual DbSet<GuestOrderItem> GuestOrderItems { get; set; }
@@ -73,6 +75,8 @@ public partial class AppDbContext : DbContext
 
             entity.ToTable("cart_items");
 
+            entity.HasIndex(e => new { e.UserId, e.VariantId }, "UX_CartItems_User_Variant").IsUnique();
+
             entity.Property(e => e.CartId).HasColumnName("cart_id");
             entity.Property(e => e.Quantity)
                 .HasDefaultValue(1)
@@ -87,6 +91,31 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.Variant).WithMany(p => p.CartItems)
                 .HasForeignKey(d => d.VariantId)
                 .HasConstraintName("FK_Cart_Variants");
+        });
+
+        modelBuilder.Entity<CustomerNotification>(entity =>
+        {
+            entity.HasKey(e => e.NotificationId).HasName("PK_customer_notifications");
+
+            entity.ToTable("customer_notifications");
+
+            entity.Property(e => e.NotificationId).HasColumnName("notification_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.OrderId).HasColumnName("order_id");
+            entity.Property(e => e.Title)
+                .HasMaxLength(120)
+                .HasColumnName("title");
+            entity.Property(e => e.Message).HasColumnName("message");
+            entity.Property(e => e.IsRead)
+                .HasDefaultValue(false)
+                .HasColumnName("is_read");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnName("created_at");
+
+            entity.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("FK_CustomerNotifications_Users");
         });
 
         modelBuilder.Entity<Category>(entity =>
@@ -260,6 +289,10 @@ public partial class AppDbContext : DbContext
                 .IsUnicode(false)
                 .HasDefaultValue("pending")
                 .HasColumnName("payment_status");
+            entity.Property(e => e.SlipImageUrl)
+                .HasMaxLength(255)
+                .IsUnicode(false)
+                .HasColumnName("slip_image_url");
             entity.Property(e => e.TransactionId)
                 .HasMaxLength(100)
                 .IsUnicode(false)

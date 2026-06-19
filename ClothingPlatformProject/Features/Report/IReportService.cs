@@ -20,5 +20,7 @@ namespace ClothingPlatformProject.Features.Report
 
         // ဝန်ထမ်းများ၏ စနစ်တွင်းအသုံးပြုမှု Activity Logs များအား စစ်ဆေးရန်
         List<StaffActivityLogDto> GetStaffActivityLogs(DateTime date);
+
+        AdminReportSummaryDto GetAdminReport(DateTime from, DateTime to);
     }
 }

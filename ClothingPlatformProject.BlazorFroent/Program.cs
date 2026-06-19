@@ -12,6 +12,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddScoped<SessionState>();
+builder.Services.AddScoped<CustomerSessionState>();
 
 string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 

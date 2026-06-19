@@ -1,6 +1,6 @@
-﻿@page "/staff"
+@page "/staff"
 @using ClothingPlatformProject.BlazorFroent.Components.Partial
-<PageTitle>The Boutique — Staff Portal</PageTitle>
+<PageTitle>The Boutique � Staff Portal</PageTitle>
 <style>
     :root {
         --navy: #8B1A1A;
@@ -43,7 +43,7 @@
         overflow: hidden;
     }
 
-    /* ───── SIDEBAR ───── */
+    /* ----- SIDEBAR ----- */
     #sidebar {
         width: var(--sidebar-w);
         flex-shrink: 0;
@@ -69,14 +69,14 @@
         border-radius: 50%;
         border: 1.5px solid #F5F0E8;
         background: rgba(245,240,232,.12);
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 1rem;
         color: #F5F0E8;
         margin-bottom: .5rem;
     }
 
     .brand-title {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 1.15rem;
         color: #F5F0E8;
         font-weight: 400;
@@ -161,7 +161,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: .95rem;
         color: #8B1A1A;
         font-weight: 600;
@@ -180,7 +180,7 @@
         letter-spacing: .05em;
     }
 
-    /* ───── MAIN AREA ───── */
+    /* ----- MAIN AREA ----- */
     #mainArea {
         flex: 1;
         display: flex;
@@ -202,7 +202,7 @@
     }
 
     .topbar-greeting {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 1.25rem;
         color: #3C1F10;
         font-weight: 400;
@@ -242,7 +242,7 @@
         padding: 1.8rem;
     }
 
-    /* ───── VIEW SECTIONS ───── */
+    /* ----- VIEW SECTIONS ----- */
     .view-section {
         display: none;
     }
@@ -251,7 +251,7 @@
             display: block;
         }
 
-    /* ───── PAGE HEADER ───── */
+    /* ----- PAGE HEADER ----- */
     .page-header {
         margin-bottom: 1.6rem;
     }
@@ -279,7 +279,7 @@
         border-radius: 2px;
     }
 
-    /* ───── KPI CARDS ───── */
+    /* ----- KPI CARDS ----- */
     .kpi-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -317,7 +317,7 @@
             background: linear-gradient(90deg, #3B82F6, #60A5FA);
         }
 
-        .kpi-card.kpi-delivered::before {
+        .kpi-card.kpi-confirm::before {
             background: linear-gradient(90deg, #16A34A, #4ADE80);
         }
 
@@ -352,13 +352,13 @@
         color: #2563EB;
     }
 
-    .kpi-delivered .kpi-icon {
+    .kpi-confirm .kpi-icon {
         background: var(--green-light);
         color: var(--green);
     }
 
     .kpi-count {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 2.2rem;
         color: #3C1F10;
         line-height: 1;
@@ -411,7 +411,7 @@
         gap: .3rem;
     }
 
-    /* ── Logout confirmation modal ── */
+    /* -- Logout confirmation modal -- */
     .confirm-overlay {
         position: fixed;
         inset: 0;
@@ -446,7 +446,7 @@
     }
 
     .confirm-title {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 1.25rem;
         color: var(--navy);
         margin-bottom: .4rem;
@@ -504,7 +504,7 @@
             transform: translateY(-1px);
         }
 
-    /* ───── TABLE ───── */
+    /* ----- TABLE ----- */
     .table-card {
         background: var(--white);
         border-radius: var(--radius);
@@ -564,7 +564,7 @@
         color: #1D4ED8;
     }
 
-    .badge-delivered {
+    .badge-confirm {
         background: var(--green-light);
         color: #15803D;
     }
@@ -601,7 +601,7 @@
         border-radius: 5px;
     }
 
-    /* ───── DASHBOARD ───── */
+    /* ----- DASHBOARD ----- */
     .dash-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -618,7 +618,7 @@
     }
 
     .dash-stat-val {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 2rem;
         color: #3C1F10;
         line-height: 1;
@@ -649,7 +649,7 @@
             content: 'TB';
             position: absolute;
             right: 2rem;
-            font-family: 'Cormorant Garamond', serif;
+            font-family: 'DM Sans', sans-serif;
             font-size: 7rem;
             color: rgba(255,255,255,.06);
             line-height: 1;
@@ -658,7 +658,7 @@
         }
 
     .wb-greeting {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 1.55rem;
         color: #F5F0E8;
         font-weight: 300;
@@ -693,10 +693,10 @@
         color: #3C1F10;
         font-weight: 500;
         margin-bottom: .9rem;
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
     }
 
-    /* ───── INVENTORY ───── */
+    /* ----- INVENTORY ----- */
     .inv-controls {
         display: flex;
         align-items: center;
@@ -756,7 +756,7 @@
         text-transform: uppercase;
     }
 
-    /* ───── PROFILE ───── */
+    /* ----- PROFILE ----- */
     .profile-card {
         background: var(--white);
         border-radius: var(--radius);
@@ -774,7 +774,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 2rem;
         color: #F5F0E8;
         margin-bottom: 1.2rem;
@@ -885,7 +885,7 @@
             display: flex;
         }
 
-    /* ───── TOAST ───── */
+    /* ----- TOAST ----- */
     #toastContainer {
         position: fixed;
         bottom: 1.5rem;
@@ -926,7 +926,7 @@
 </style>
 
 
-<!-- ═══════════ TOAST CONTAINER ═══════════ -->
+<!-- ----------- TOAST CONTAINER ----------- -->
 <div id="toastContainer">
     @foreach (var toast in activeToasts)
     {
@@ -937,7 +937,7 @@
     }
 </div>
 
-<!-- ═══════════ LOGOUT CONFIRM MODAL ═══════════ -->
+<!-- ----------- LOGOUT CONFIRM MODAL ----------- -->
 @if (showLogoutConfirm)
 {
     <div class="confirm-overlay" @onclick="CancelLogout">
@@ -953,9 +953,9 @@
     </div>
 }
 
-<!-- ═══════════ APP SHELL ═══════════ -->
+<!-- ----------- APP SHELL ----------- -->
 <div id="appShell">
-    <!-- ── SIDEBAR ── -->
+    <!-- -- SIDEBAR -- -->
     <aside id="sidebar">
         <div class="sidebar-brand">
             <div class="brand-monogram">TB</div>
@@ -977,9 +977,6 @@
             <div class="nav-item @(activeView == "inventory" ? "active" : "")" @onclick='() => NavigateTo("inventory")'>
                 <i class="bi bi-archive"></i> Stock Control
             </div>
-            <div class="nav-item @(activeView == "salesreport" ? "active" : "")" @onclick='async () => await NavigateTo("salesreport")'>
-                <i class="bi bi-graph-up-arrow"></i> Daily Sales Report
-            </div>
             <div class="nav-section-label">Account</div>
             <div class="nav-item @(activeView == "profile" ? "active" : "")" @onclick='() => NavigateTo("profile")'>
                 <i class="bi bi-person-circle"></i> My Profile
@@ -996,7 +993,7 @@
         </div>
     </aside>
 
-    <!-- ── MAIN AREA ── -->
+    <!-- -- MAIN AREA -- -->
     <div id="mainArea">
         <div id="topbar">
             <div class="topbar-greeting">Hello, <span>@staffFirstName @staffLastName</span></div>
@@ -1011,7 +1008,7 @@
 
         <div id="content">
 
-            <!-- ──────────── DASHBOARD VIEW ──────────── -->
+            <!-- ------------ DASHBOARD VIEW ------------ -->
             <section class="view-section @(activeView == "dashboard" ? "active" : "")">
                 <div class="welcome-banner">
                     <div>
@@ -1059,7 +1056,7 @@
                                 @foreach (var ord in PagedRecentOrders)
                                 {
                                     <tr>
-                                        <td style="font-family:monospace;font-weight:600;color:var(--navy)">#ORD-@ord.OrderId.ToString("D4")</td>
+                                        <td style="font-family:'DM Sans',sans-serif;font-weight:600;color:var(--navy)">#ORD-@ord.OrderId.ToString("D4")</td>
                                         <td>@ord.User.FirstName @ord.User.LastName</td>
                                         <td>@ord.TotalAmount.ToString("N0")</td>
                                         <td>@StatusBadge(ord.OrderStatus)</td>
@@ -1072,17 +1069,17 @@
                 <Pagination CurrentPage="@recentOrderPage" TotalPages="@RecentOrderTotalPages" CurrentPageChanged="@ChangeRecentOrderPage" />
             </section>
 
-            <!-- ──────────── CREATE ORDER (PHONE) VIEW ──────────── -->
+            <!-- ------------ CREATE ORDER (PHONE) VIEW ------------ -->
             <section class="view-section @(activeView == "createorder" ? "active" : "")">
                 <div class="page-header">
                     <div class="page-sub">Operations</div>
-                    <h1 class="page-title">Create Order — Phone Customer</h1>
+                    <h1 class="page-title">Create Order � Phone Customer</h1>
                     <div class="page-divider"></div>
                 </div>
 
                 <div class="ob-wrapper">
 
-                    <!-- ① Guest Customer -->
+                    <!-- ? Guest Customer -->
                     <div class="ob-card">
                         <div class="ob-card-header">
                             <div class="ob-step-dot dot-customer">1</div>
@@ -1105,7 +1102,7 @@
                         </div>
                     </div>
 
-                    <!-- ② Items -->
+                    <!-- ? Items -->
                     <div class="ob-card">
                         <div class="ob-card-header">
                             <div class="ob-step-dot dot-items">2</div>
@@ -1129,10 +1126,10 @@
                                 <div class="ob-item-row">
                                     <select class="ob-select" value="@line.VariantId"
                                             @onchange="(e) => OnLineVariantChanged(line, e.Value?.ToString())">
-                                        <option value="0">— Select item —</option>
+                                        <option value="0">� Select item �</option>
                                         @foreach (var v in inventoryVariants.Where(x => x.StockQuantity > 0 || x.VariantId == line.VariantId))
                                         {
-                                            <option value="@v.VariantId">@v.Sku — @v.Product.Name (@v.Size / @v.Color) · @v.StockQuantity left</option>
+                                            <option value="@v.VariantId">@v.Sku � @v.Product.Name (@v.Size / @v.Color) � @v.StockQuantity left</option>
                                         }
                                     </select>
                                     <input type="number" min="1" class="ob-qty-input" value="@line.Quantity"
@@ -1162,7 +1159,7 @@
                         </div>
                     </div>
 
-                    <!-- ③ Delivery -->
+                    <!-- ? Delivery -->
                     <div class="ob-card">
                         <div class="ob-card-header">
                             <div class="ob-step-dot dot-delivery">3</div>
@@ -1179,7 +1176,7 @@
                         </div>
                     </div>
 
-                    <!-- ④ Payment -->
+                    <!-- ? Payment -->
                     <div class="ob-card">
                         <div class="ob-card-header">
                             <div class="ob-step-dot dot-payment">4</div>
@@ -1193,7 +1190,7 @@
                                 <div class="col-md-6">
                                     <label class="ob-form-label">Payment Method</label>
                                     <div class="ob-pill-group" style="margin-top:.35rem">
-                                        @foreach (var m in new[] { ("COD", "bi-cash-coin", "Cash on Delivery"), ("KBZ Pay", "bi-phone", "KBZ Pay"), ("Wave Pay", "bi-phone-fill", "Wave Pay"), ("Bank Transfer", "bi-bank", "Bank Transfer") })
+                                        @foreach (var m in new[] { ("cod", "bi-cash-coin", "Cash on Delivery"), ("kpay", "bi-phone", "KBZPay (KPay)"), ("wave_money", "bi-phone-fill", "WaveMoney (WavePay)") })
                                         {
                                             <button class="ob-pill @(guestPaymentMethod == m.Item1 ? "ob-pill-active" : "")"
                                                     @onclick='() => guestPaymentMethod = m.Item1'>
@@ -1239,7 +1236,7 @@
                 </div>
             </section>
 
-            <!-- ──────────── ORDER MANAGEMENT VIEW ──────────── -->
+            <!-- ------------ ORDER MANAGEMENT VIEW ------------ -->
             <section class="view-section @(activeView == "orders" ? "active" : "")">
                 <div class="page-header">
                     <div class="page-sub">Operations</div>
@@ -1257,26 +1254,26 @@
                     </button>
                 </div>
 
-                <!-- ── REGULAR ORDERS TAB ── -->
+                <!-- -- REGULAR ORDERS TAB -- -->
                 @if (ordersTab == "regular")
                 {
                     <div class="kpi-grid">
-                        <div class="kpi-card kpi-pending @(currentFilter == "pending" ? "kpi-active" : "")" @onclick='() => FilterOrders("pending")'>
+                        <div class="kpi-card kpi-pending @(currentFilter == "Pending" ? "kpi-active" : "")" @onclick='() => FilterOrders("Pending")'>
                             <div class="kpi-icon"><i class="bi bi-hourglass-split"></i></div>
                             <div class="kpi-count">@pendingCount</div>
                             <div class="kpi-label">Pending Orders</div>
                             <div class="kpi-hint"><i class="bi bi-hand-index"></i> Click to filter</div>
                         </div>
-                        <div class="kpi-card kpi-processing @(currentFilter == "processing" ? "kpi-active" : "")" @onclick='() => FilterOrders("processing")'>
+                        <div class="kpi-card kpi-processing @(currentFilter == "Processing" ? "kpi-active" : "")" @onclick='() => FilterOrders("Processing")'>
                             <div class="kpi-icon"><i class="bi bi-arrow-repeat"></i></div>
                             <div class="kpi-count">@processingCount</div>
                             <div class="kpi-label">Processing Orders</div>
                             <div class="kpi-hint"><i class="bi bi-hand-index"></i> Click to filter</div>
                         </div>
-                        <div class="kpi-card kpi-delivered @(currentFilter == "delivered" ? "kpi-active" : "")" @onclick='() => FilterOrders("delivered")'>
+                        <div class="kpi-card kpi-confirm @(currentFilter == "Confirm" ? "kpi-active" : "")" @onclick='() => FilterOrders("Confirm")'>
                             <div class="kpi-icon"><i class="bi bi-check-circle"></i></div>
-                            <div class="kpi-count">@deliveredCount</div>
-                            <div class="kpi-label">Delivered Orders</div>
+                            <div class="kpi-count">@confirmCount</div>
+                            <div class="kpi-label">Confirm Orders</div>
                             <div class="kpi-hint"><i class="bi bi-hand-index"></i> Click to filter</div>
                         </div>
                     </div>
@@ -1314,22 +1311,22 @@
                                     {
                                         var payMethod = ord.Payments.FirstOrDefault()?.PaymentMethod ?? "COD";
                                         <tr>
-                                            <td style="font-family:monospace;font-weight:600;color:var(--navy);font-size:.8rem">#ORD-@ord.OrderId.ToString("D4")</td>
+                                            <td style="font-family:'DM Sans',sans-serif;font-weight:600;color:var(--navy);font-size:.8rem">#ORD-@ord.OrderId.ToString("D4")</td>
                                             <td>@ord.User.FirstName @ord.User.LastName</td>
                                             <td style="font-weight:500">@ord.TotalAmount.ToString("N0")</td>
                                             <td><span class="pay-badge">@payMethod.ToUpper()</span></td>
                                             <td>@StatusBadge(ord.OrderStatus)</td>
                                             <td>
-                                                @if (ord.OrderStatus.ToLower() == "delivered")
+                                                @if (IsFinalStatus(ord.OrderStatus))
                                                 {
                                                     <span class="status-badge badge-locked"><i class="bi bi-lock-fill"></i> Locked</span>
                                                 }
                                                 else
                                                 {
-                                                    <select class="status-select" value="@ord.OrderStatus" @onchange="(e) => UpdateOrderStatus(ord, e.Value?.ToString())">
-                                                        <option value="pending">Pending</option>
-                                                        <option value="processing">Processing</option>
-                                                        <option value="delivered">Delivered</option>
+                                                    <select class="status-select" value="@NormalizeStatus(ord.OrderStatus)" @onchange="(e) => UpdateOrderStatus(ord, e.Value?.ToString())">
+                                                        <option value="Pending">Pending</option>
+                                                        <option value="Processing">Processing</option>
+                                                        <option value="Confirm">Confirm</option>
                                                     </select>
                                                 }
                                             </td>
@@ -1342,7 +1339,7 @@
                     <Pagination CurrentPage="@orderPage" TotalPages="@OrderTotalPages" CurrentPageChanged="@ChangeOrderPage" />
                 }
 
-                <!-- ── GUEST / PHONE ORDERS TAB ── -->
+                <!-- -- GUEST / PHONE ORDERS TAB -- -->
                 @if (ordersTab == "guest")
                 {
                     <div class="filter-bar">
@@ -1375,7 +1372,7 @@
                                     @foreach (var go in PagedGuestOrders)
                                     {
                                         <tr>
-                                            <td style="font-family:monospace;font-weight:600;color:var(--purple);font-size:.8rem">#GORD-@go.GuestOrderId.ToString("D4")</td>
+                                            <td style="font-family:'DM Sans',sans-serif;font-weight:600;color:var(--purple);font-size:.8rem">#GORD-@go.GuestOrderId.ToString("D4")</td>
                                             <td>@go.CustomerName</td>
                                             <td style="font-size:.78rem;color:var(--slate)">@go.PhoneNumber</td>
                                             <td style="font-weight:500">@go.TotalAmount.ToString("N0")</td>
@@ -1395,16 +1392,16 @@
                                             </td>
                                             <td>@StatusBadge(go.OrderStatus ?? "pending")</td>
                                             <td>
-                                                @if ((go.OrderStatus ?? "").ToLower() == "delivered")
+                                                @if (IsFinalStatus(go.OrderStatus))
                                                 {
                                                     <span class="status-badge badge-locked"><i class="bi bi-lock-fill"></i> Locked</span>
                                                 }
                                                 else
                                                 {
-                                                    <select class="status-select" value="@go.OrderStatus" @onchange="(e) => UpdateGuestOrderStatus(go, e.Value?.ToString())">
-                                                        <option value="pending">Pending</option>
-                                                        <option value="processing">Processing</option>
-                                                        <option value="delivered">Delivered</option>
+                                                    <select class="status-select" value="@NormalizeStatus(go.OrderStatus)" @onchange="(e) => UpdateGuestOrderStatus(go, e.Value?.ToString())">
+                                                        <option value="Pending">Pending</option>
+                                                        <option value="Processing">Processing</option>
+                                                        <option value="Confirm">Confirm</option>
                                                     </select>
                                                 }
                                             </td>
@@ -1418,7 +1415,7 @@
                 }
             </section>
 
-            <!-- ──────────── INVENTORY VIEW ──────────── -->
+            <!-- ------------ INVENTORY VIEW ------------ -->
             <section class="view-section @(activeView == "inventory" ? "active" : "")">
                 <div class="page-header">
                     <div class="page-sub">Operations</div>
@@ -1451,7 +1448,7 @@
                                     bool isLow = variant.StockQuantity < 5;
                                     <tr>
                                         <td>@((inventoryPage - 1) * inventoryPageSize + i + 1)</td>
-                                        <td style="font-family:monospace;font-weight:500">@variant.Sku</td>
+                                        <td style="font-family:'DM Sans',sans-serif;font-weight:500">@variant.Sku</td>
                                         <td>@variant.Product.Name</td>
                                         <td>@variant.Size</td>
                                         <td>@variant.Color</td>
@@ -1479,92 +1476,7 @@
                 <Pagination CurrentPage="@inventoryPage" TotalPages="@InventoryTotalPages" CurrentPageChanged="@ChangeInventoryPage" />
             </section>
 
-            <!-- ──────────── SALES REPORT VIEW ──────────── -->
-            <section class="view-section @(activeView == "salesreport" ? "active" : "")">
-                <div class="page-header">
-                    <div class="page-sub">Reports</div>
-                    <h1 class="page-title">Staff Daily Sales Report</h1>
-                    <div class="page-divider"></div>
-                </div>
-                <div class="table-card">
-                    <div class="report-meta">
-                        <div class="filter-bar" style="margin-bottom:.3rem">
-                            <div class="filter-label">
-                                <strong>Report Date:</strong>
-                                <input type="date" class="report-date-input"
-                                       value="@selectedReportDate.ToString("yyyy-MM-dd")"
-                                       max="@DateTime.Today.ToString("yyyy-MM-dd")"
-                                       @onchange="OnReportDateChanged" />
-                                @if (selectedReportDate.Date == DateTime.Today)
-                                {
-                                    <span class="topbar-badge" style="margin-left:.5rem">Today</span>
-                                }
-                            </div>
-                            @if (selectedReportDate.Date != DateTime.Today)
-                            {
-                                <button id="resetFilterBtn" @onclick="ResetReportToToday">
-                                    <i class="bi bi-arrow-counterclockwise"></i> Back to Today
-                                </button>
-                            }
-                        </div>
-                        <p style="margin-bottom:.2rem"><strong>Staff Name:</strong> @staffName</p>
-                        <div class="scope-note">
-                            <i class="bi bi-shield-lock"></i> Showing only orders you personally processed — other staff members' work is not shown here.
-                        </div>
-                    </div>
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Order ID</th>
-                                <th>Customer Name</th>
-                                <th>Items</th>
-                                <th>Total Amount</th>
-                                <th>Payment Method</th>
-                                <th>Type</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if (!reportOrders.Any() && !reportGuestOrders.Any())
-                            {
-                                <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--slate-light)"><i class="bi bi-inbox" style="font-size:1.6rem;display:block;margin-bottom:.4rem"></i>No orders found for @selectedReportDate.ToString("MMMM dd, yyyy").</td></tr>
-                            }
-                            else
-                            {
-                                @foreach (var ord in reportOrders)
-                                {
-                                    <tr>
-                                        <td style="font-family:monospace;font-weight:600;color:var(--navy);font-size:.8rem">#ORD-@ord.OrderId.ToString("D4")</td>
-                                        <td>@ord.User.FirstName @ord.User.LastName</td>
-                                        <td>@ord.OrderItems.Count</td>
-                                        <td>@ord.TotalAmount.ToString("N0") MMK</td>
-                                        <td>@(ord.Payments.FirstOrDefault()?.PaymentMethod ?? "Cash")</td>
-                                        <td><span class="pay-badge">Regular</span></td>
-                                    </tr>
-                                }
-                                @foreach (var go in reportGuestOrders)
-                                {
-                                    <tr>
-                                        <td style="font-family:monospace;font-weight:600;color:var(--purple);font-size:.8rem">#GORD-@go.GuestOrderId.ToString("D4")</td>
-                                        <td>@go.CustomerName</td>
-                                        <td>@go.TotalQuantity</td>
-                                        <td>@go.TotalAmount.ToString("N0") MMK</td>
-                                        <td>@(go.PaymentMethod ?? "COD")</td>
-                                        <td><span class="guest-tag" style="margin-left:0">Guest</span></td>
-                                    </tr>
-                                }
-                            }
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <th colspan="2">Total Orders: @reportOrderCount</th>
-                                <th colspan="4">Total Sales: @reportRevenue.ToString("N0") MMK</th>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </section>
-
-            <!-- ──────────── PROFILE VIEW ──────────── -->
+            <!-- ------------ PROFILE VIEW ------------ -->
             <section class="view-section @(activeView == "profile" ? "active" : "")">
                 <div class="page-header">
                     <div class="page-sub">Account</div>

@@ -1,6 +1,9 @@
 using ClothingPlatform.DB.AppDbModels;
 using ClothingPlatformProject.BlazorFroent.Services;
+using ClothingPlatformProject.Models.Cart;
+using ClothingPlatformProject.Models.Notifications;
 using ClothingPlatformProject.Models.Order;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Mvc.Razor.Internal;
@@ -23,7 +26,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         public NavigationManager Nav { get; set; }
 
         [Inject]
-        public SessionState Session { get; set; }
+        public CustomerSessionState CustomerSession { get; set; }
 
         [Inject]
         public HttpClientServices httpClientServices { get; set; }
@@ -35,7 +38,10 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private List<ProductDto> filteredProduct = new();
         private List<Category> allCategories = new();
         private List<Order> userOrders = new();
-        private TblUser? currentUser;
+        private User? currentUser;
+        private bool initializedFromStorage;
+        private HubConnection? notificationHub;
+        private List<CustomerNotificationDto> notifications = new();
 
 
         private List<ProductDto> allProduct = new();
@@ -65,6 +71,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private ProductDto? selectedProductDto;
         private string selectedSize = "";
         private string selectedColor = "";
+        private int selectedQuantity = 1;
         private string modalErrorMessage = "";
         private bool isModalOpen = false;
         private bool isLoggedIn = false;
@@ -79,7 +86,8 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         private string coPhone = "";
         private string coAddress = "";
         private string coCity = "";
-        private string selectedPayment = ""; // "kbz", "wave", "cod"
+        private string selectedPayment = ""; // "kpay", "wave_money", "cod"
+        private string paymentReference = "";
         private bool slipUploaded = false;
         private string slipFileName = "";
         private int pointsEarnedInOrder = 0;
@@ -112,18 +120,51 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             DbSeeder.Seed(_db);
             
 
-            // Authentication check
-            if (!Session.IsLoggedIn)
-            {
-
-            }
-
-            currentUser = Session.CurrentUser;
+            currentUser = CustomerSession.CurrentUser;
             LoadProfileFields();
             await LoadData();         // loads categories, products, orders
             await LoadNewCreation();  // loads new creation page 1
             await LoadBestSeller();   // loads best seller page 1
             await LoadCollection();
+            if (currentUser != null)
+            {
+                await LoadCartAsync();
+                await LoadNotificationsAsync();
+            }
+        }
+
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (!firstRender || initializedFromStorage) return;
+            initializedFromStorage = true;
+
+            try
+            {
+                var customerIdValue = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "customerId");
+                if (int.TryParse(customerIdValue, out var customerId) && currentUser == null)
+                {
+                    var dbUser = await _db.Users.FirstOrDefaultAsync(u => u.UserId == customerId && u.Role == "customer");
+                    if (dbUser != null)
+                    {
+                        CustomerSession.Login(dbUser);
+                        currentUser = dbUser;
+                        LoadProfileFields();
+                        await LoadData();
+                        await LoadCartAsync();
+                        await LoadNotificationsAsync();
+                        await ConnectNotificationHubAsync();
+                        StateHasChanged();
+                    }
+                }
+                else if (currentUser != null)
+                {
+                    await ConnectNotificationHubAsync();
+                }
+            }
+            catch
+            {
+                // Local storage and SignalR are unavailable during prerendering.
+            }
         }
 
         private void LoadProfileFields()
@@ -238,7 +279,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                     .AsNoTracking()
                     .ToListAsync();
 
-                ApplyProductFilters();
+                await ApplyProductFilters();
 
                 if (currentUser != null)
                 {
@@ -252,9 +293,9 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                         .OrderByDescending(o => o.OrderId)
                         .ToListAsync();
 
-                    // Calculate loyalty points: 1 point per 100 MMK spent on completed/delivered orders
+                    // Calculate loyalty points for confirmed orders.
                     var totalSpent = userOrders
-                        .Where(o => o.OrderStatus.ToLower() == "delivered")
+                        .Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Confirm)
                         .Sum(o => o.TotalAmount);
                     loyaltyPoints = (int)(totalSpent / 5000);
                 }
@@ -343,6 +384,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             };
             selectedSize = "";
             selectedColor = "";
+            selectedQuantity = 1;
             modalErrorMessage = "";
             isModalOpen = true;
         }
@@ -361,6 +403,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             };
             selectedSize = "";
             selectedColor = "";
+            selectedQuantity = 1;
             modalErrorMessage = "";
             isModalOpen = true;
 
@@ -381,6 +424,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
             selectedSize = "";
             selectedColor = "";
+            selectedQuantity = 1;
             modalErrorMessage = "";
             isModalOpen = true;
         }
@@ -421,13 +465,13 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
         private async Task AddToBagAsync()
         {
-            if (Session.CurrentUser == null)
+            if (currentUser == null)
             {
-                string message = "You are not logging in. Please login to make order";
+                string message = "Please sign in to add items to your bag.";
                 var isConfirm = await JSRuntime.InvokeAsync<bool>("confirm", message);
                 if (isConfirm)
                 {
-                    Nav.NavigateTo("login?returnUrl=" + Uri.EscapeDataString(Nav.Uri));
+                    Nav.NavigateTo("customer-login?returnUrl=" + Uri.EscapeDataString(Nav.Uri));
                 }
                 return;
             }
@@ -455,30 +499,57 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                 return;
             }
 
-            var cartItem = cart.FirstOrDefault(i => i.VariantId == variant.VariantId);
-            if (cartItem != null)
+            if (selectedQuantity < 1)
             {
-                cartItem.Qty++;
+                selectedQuantity = 1;
             }
-            else
+
+            if (selectedQuantity > variant.StockQuantity)
             {
-                cart.Add(new CartItemModel
+                modalErrorMessage = "Cannot exceed available stock.";
+                return;
+            }
+
+            await httpClientServices.ExecuteAsync<CartDto>(
+                "api/cart/add",
+                new AddToCartRequest
                 {
+                    UserId = currentUser.UserId,
                     VariantId = variant.VariantId,
-                    Name = modalProduct.Name,
-                    Size = selectedSize,
-                    Color = selectedColor,
-                    Price = modalProduct.BasePrice,
-                    Qty = 1,
-                    ImgUrl = modalProduct.ImageDto ?? ""
-                });
-            }
+                    Quantity = selectedQuantity
+                },
+                EnumHttpMethod.Post);
+
+            await LoadCartAsync();
 
             ShowToast($"Added {modalProduct.Name} to bag!");
             CloseQuickView();
             isCartOpen = true;
         }
-        private void UpdateQty(CartItemModel item, int change)
+
+        private async Task LoadCartAsync()
+        {
+            if (currentUser == null)
+            {
+                cart.Clear();
+                return;
+            }
+
+            var result = await httpClientServices.ExecuteAsync<CartDto>($"api/cart/user/{currentUser.UserId}");
+            cart = result?.Items.Select(i => new CartItemModel
+            {
+                CartItemId = i.CartItemId,
+                VariantId = i.VariantId,
+                Name = i.ProductName,
+                Size = i.Size,
+                Color = i.Color,
+                Price = i.UnitPrice,
+                Qty = i.Quantity,
+                ImgUrl = NormalizeImageUrl(i.ImageUrl)
+            }).ToList() ?? new List<CartItemModel>();
+        }
+
+        private async Task UpdateQty(CartItemModel item, int change)
         {
             // Verify stock
             var dbVariant = _db.ProductVariants.FirstOrDefault(v => v.VariantId == item.VariantId);
@@ -491,17 +562,32 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                 }
             }
 
-            item.Qty += change;
-            if (item.Qty <= 0)
+            var nextQuantity = item.Qty + change;
+            if (nextQuantity <= 0)
             {
-                cart.Remove(item);
+                await RemoveItem(item);
+                return;
             }
+
+            await httpClientServices.ExecuteAsync<CartDto>(
+                $"api/cart/item/{item.CartItemId}",
+                new UpdateCartItemRequest { Quantity = nextQuantity },
+                EnumHttpMethod.Put);
+
+            await LoadCartAsync();
         }
 
-        private void RemoveItem(CartItemModel item)
+        private async Task RemoveItem(CartItemModel item)
         {
-            cart.Remove(item);
+            await httpClientServices.ExecuteAsync<string>($"api/cart/item/{item.CartItemId}", null, EnumHttpMethod.Delete);
+            await LoadCartAsync();
             ShowToast("Item removed from bag.");
+        }
+
+        private void ChangeSelectedQuantity(int change)
+        {
+            selectedQuantity = Math.Max(1, selectedQuantity + change);
+            modalErrorMessage = "";
         }
 
         private void GoCheckout()
@@ -522,10 +608,12 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             if (method == "cod")
             {
                 slipUploaded = true; // No upload needed for COD
+                paymentReference = "COD";
             }
             else
             {
                 slipUploaded = false; // Needs upload simulation
+                paymentReference = "";
             }
         }
 
@@ -565,6 +653,12 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                     return;
                 }
 
+                if (selectedPayment != "cod" && string.IsNullOrWhiteSpace(paymentReference))
+                {
+                    ShowToast("Please enter your payment transaction/reference number");
+                    return;
+                }
+
                 if (!cart.Any())
                 {
                     ShowToast("Your bag is empty");
@@ -580,8 +674,8 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                     {
                         UserId = currentUser!.UserId,
                         TotalAmount = total,
-                        OrderStatus = "pending",
-                        PaymentStatus = selectedPayment == "cod" ? "unpaid" : "pending",
+                        OrderStatus = OrderWorkflow.Pending,
+                        PaymentStatus = "unpaid",
                         ShippingAddress = $"{coAddress}, {coCity} (Phone: {coPhone})",
                         CreatedAt = DateTime.Now
                     };
@@ -612,10 +706,11 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                     _db.Payments.Add(new Payment
                     {
                         OrderId = order.OrderId,
-                        PaymentMethod = selectedPayment.ToUpper(),
-                        PaymentStatus = selectedPayment == "cod" ? "pending" : "completed",
+                        PaymentMethod = selectedPayment,
+                        PaymentStatus = "pending",
                         Amount = total,
-                        TransactionId = selectedPayment == "cod" ? "COD" : "TXN-" + Guid.NewGuid().ToString().Substring(0, 8).ToUpper(),
+                        TransactionId = selectedPayment == "cod" ? "COD" : paymentReference.Trim(),
+                        SlipImageUrl = selectedPayment == "cod" ? null : slipFileName,
                         CreatedAt = DateTime.Now
                     });
 
@@ -624,6 +719,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                     pointsEarnedInOrder = (int)(total / 100);
                     confirmedOrderId = $"ORD-{order.OrderId:D4}";
                     isSuccessOpen = true;
+                    await httpClientServices.ExecuteAsync<string>($"api/cart/user/{currentUser.UserId}/clear", null, EnumHttpMethod.Delete);
                 }
                 catch (Exception ex)
                 {
@@ -643,6 +739,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
             selectedPayment = "";
             slipUploaded = false;
             slipFileName = "";
+            paymentReference = "";
             
             await LoadData(); // reload history
             Navigate("history");
@@ -660,18 +757,19 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
 
             try
             {
-                var dbUser = await _db.TblUsers.FirstOrDefaultAsync(u => u.UserId == currentUser!.UserId);
+                var dbUser = await _db.Users.FirstOrDefaultAsync(u => u.UserId == currentUser!.UserId && u.Role == "customer");
                 if (dbUser != null)
                 {
                     dbUser.FirstName = profFirstName.Trim();
                     dbUser.LastName = profLastName.Trim();
                     dbUser.Email = profEmail.Trim();
                     dbUser.Address = profAddress.Trim();
+                    dbUser.PhoneNumber = coPhone.Trim();
 
                     await _db.SaveChangesAsync();
                     
                     // Sync session
-                    Session.Login(dbUser);
+                    CustomerSession.Login(dbUser);
                     currentUser = dbUser;
 
                     ShowToast("Profile updated successfully");
@@ -708,24 +806,73 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                 InvokeAsync(StateHasChanged);
             });
         }
+
+        private async Task LoadNotificationsAsync()
+        {
+            if (currentUser == null) return;
+
+            var result = await httpClientServices.ExecuteAsync<List<CustomerNotificationDto>>(
+                $"api/notifications/user/{currentUser.UserId}");
+            notifications = result ?? new List<CustomerNotificationDto>();
+        }
+
+        private async Task ConnectNotificationHubAsync()
+        {
+            if (currentUser == null || notificationHub != null) return;
+
+            notificationHub = new HubConnectionBuilder()
+                .WithUrl("https://localhost:7065/hubs/customer-notifications")
+                .WithAutomaticReconnect()
+                .Build();
+
+            notificationHub.On<CustomerNotificationDto>("CustomerNotification", notification =>
+            {
+                notifications.Insert(0, notification);
+                ShowToast(notification.Message);
+                InvokeAsync(StateHasChanged);
+            });
+
+            await notificationHub.StartAsync();
+            await notificationHub.InvokeAsync("JoinCustomerGroup", currentUser.UserId);
+        }
+
+        private static string NormalizeImageUrl(string? imageUrl)
+        {
+            if (string.IsNullOrWhiteSpace(imageUrl)) return "";
+            if (imageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase) ||
+                imageUrl.StartsWith("/", StringComparison.Ordinal))
+            {
+                return imageUrl;
+            }
+
+            return $"/images/products/{imageUrl}";
+        }
         private bool showLogoutConfirm = false;
         private void GotoLogin()
         {
-            Nav.NavigateTo("/login");
+            Nav.NavigateTo("/customer-login");
         }
         private void RequestLogout() => showLogoutConfirm = true;
         private void CancelLogout() => showLogoutConfirm = false;
-        private void ConfirmLogout()
+        private async Task ConfirmLogout()
         {
             showLogoutConfirm = false;
-            Logout();
+            await Logout();
         }
 
-        private void Logout() { Session.Logout(); Nav.NavigateTo("/login"); }
+        private async Task Logout()
+        {
+            CustomerSession.Logout();
+            currentUser = null;
+            cart.Clear();
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "customerId");
+            Nav.NavigateTo("/customer-login");
+        }
 
         // Client model for memory cart
         public class CartItemModel
         {
+            public int CartItemId { get; set; }
             public int VariantId { get; set; }
             public string Name { get; set; } = "";
             public string Size { get; set; } = "";

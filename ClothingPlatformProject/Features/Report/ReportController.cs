@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Text;
 
 namespace ClothingPlatformProject.Features.Report
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "Reports.Generate")]
     public class ReportController : ControllerBase
     {
         private readonly IReportService _reportService;
@@ -14,7 +17,6 @@ namespace ClothingPlatformProject.Features.Report
             _reportService = reportService;
         }
 
-        // နေ့စဉ်အစီရင်ခံစာများ တွက်ချက်စုစည်းရန် Trigger ပေးသည့် API (ဥပမာ- ညဉ့်နက်ပိုင်းတွင် Run ရန်)
         [HttpPost("aggregate-daily")]
         public IActionResult TriggerDailyAggregation([FromQuery] DateTime date)
         {
@@ -22,21 +24,18 @@ namespace ClothingPlatformProject.Features.Report
             return Ok($"Daily aggregation completed for date: {date.ToShortDateString()}");
         }
 
-        // ဝန်ထမ်းအလိုက် နေ့စဉ်အရောင်းမှတ်တမ်း ကြည့်ရန် API
         [HttpGet("staff-daily")]
         public IActionResult GetStaffDaily([FromQuery] DateTime date)
         {
             return Ok(_reportService.GetStaffDailySales(date));
         }
 
-        // ဝန်ထမ်းအလိုက် လစဉ်အရောင်းမှတ်တမ်း ကြည့်ရန် API
         [HttpGet("staff-monthly")]
         public IActionResult GetStaffMonthly([FromQuery] int year, [FromQuery] int month)
         {
             return Ok(_reportService.GetStaffMonthlySales(year, month));
         }
 
-        // ဆိုင်တစ်ခုလုံး၏ နေ့စဉ်အရောင်းအနှစ်ချုပ် ကြည့်ရန် API
         [HttpGet("store-daily")]
         public IActionResult GetStoreDaily([FromQuery] DateTime date)
         {
@@ -45,7 +44,6 @@ namespace ClothingPlatformProject.Features.Report
             return Ok(result);
         }
 
-        // ဆိုင်တစ်ခုလုံး၏ လစဉ်အရောင်းအနှစ်ချုပ် ကြည့်ရန် API
         [HttpGet("store-monthly")]
         public IActionResult GetStoreMonthly([FromQuery] int year, [FromQuery] int month)
         {
@@ -54,11 +52,47 @@ namespace ClothingPlatformProject.Features.Report
             return Ok(result);
         }
 
-        // ဝန်ထမ်းများ၏ စနစ်တွင်း လုပ်ဆောင်ချက် မှတ်တမ်းများကို စစ်ဆေးရန် API
         [HttpGet("staff-activities")]
         public IActionResult GetStaffActivities([FromQuery] DateTime date)
         {
             return Ok(_reportService.GetStaffActivityLogs(date));
+        }
+
+        [HttpGet("admin")]
+        public IActionResult GetAdminReport([FromQuery] DateTime? from, [FromQuery] DateTime? to)
+        {
+            var end = to ?? DateTime.Today;
+            var start = from ?? end.AddDays(-30);
+            return Ok(_reportService.GetAdminReport(start, end));
+        }
+
+        [HttpGet("admin.csv")]
+        public IActionResult GetAdminReportCsv([FromQuery] DateTime? from, [FromQuery] DateTime? to)
+        {
+            var end = to ?? DateTime.Today;
+            var start = from ?? end.AddDays(-30);
+            var report = _reportService.GetAdminReport(start, end);
+
+            var csv = new StringBuilder();
+            csv.AppendLine("OrderId,OrderDate,CustomerName,OrderStatus,PaymentStatus,PaymentMethod,TotalAmount");
+            foreach (var row in report.Orders)
+            {
+                csv.AppendLine(string.Join(",",
+                    row.OrderId,
+                    Csv(row.OrderDate?.ToString("yyyy-MM-dd HH:mm") ?? string.Empty),
+                    Csv(row.CustomerName),
+                    Csv(row.OrderStatus),
+                    Csv(row.PaymentStatus),
+                    Csv(row.PaymentMethod),
+                    row.TotalAmount.ToString("0.00")));
+            }
+
+            return File(Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", $"admin-report-{report.From:yyyyMMdd}-{report.To:yyyyMMdd}.csv");
+        }
+
+        private static string Csv(string value)
+        {
+            return "\"" + value.Replace("\"", "\"\"") + "\"";
         }
     }
 }

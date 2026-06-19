@@ -18,7 +18,7 @@ namespace ClothingPlatformProject.Features.User
         }
         public async Task<PagedResult<UserModel>> GetUsersCustomerAsync(int page, int pageSize)
         {
-            var query = _db.Users.AsNoTracking();
+            var query = _db.Users.AsNoTracking().Where(u => u.Role == "customer");
 
             var totalCount = await query.CountAsync();
 
@@ -26,7 +26,6 @@ namespace ClothingPlatformProject.Features.User
                 .OrderByDescending(u => u.UserId)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Where(u=>u.Role =="customer")
                 .Select(u => new UserModel
                 {
                     Id = u.UserId,
@@ -51,23 +50,25 @@ namespace ClothingPlatformProject.Features.User
 
         public async Task<PagedResult<UserModel>> GetUsersStaffAsync(int page, int pageSize)
         {
-            var query = _db.Users.AsNoTracking();
+            var query = _db.TblUsers
+                .AsNoTracking()
+                .Include(u => u.Role)
+                .Where(u => u.Role.RoleName == "staff");
 
             var totalCount = await query.CountAsync();
 
             var users = await query
-                
+                .OrderByDescending(u => u.UserId)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Where(u => u.Role == "staff")
                 .Select(u => new UserModel
                 {
                     Id = u.UserId,
                     First_Name = u.FirstName,
                     Last_Name = u.LastName,
                     Email = u.Email,
-                    Address = u.Address,
-                    Role = u.Role,
+                    Address = u.Address ?? string.Empty,
+                    Role = u.Role.RoleName,
                     PhoneNo = u.PhoneNumber,
                     CreatedAt = u.CreatedAt
                 })

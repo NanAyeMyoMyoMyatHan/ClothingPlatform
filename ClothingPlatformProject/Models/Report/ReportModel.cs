@@ -50,4 +50,28 @@
         public string? Description { get; set; }
         public DateTime? CreatedAt { get; set; }
     }
+
+    public class AdminReportSummaryDto
+    {
+        public DateTime From { get; set; }
+        public DateTime To { get; set; }
+        public int TotalOrders { get; set; }
+        public int PendingOrders { get; set; }
+        public int ProcessingOrders { get; set; }
+        public int ConfirmOrders { get; set; }
+        public decimal TotalRevenue { get; set; }
+        public decimal PaidRevenue { get; set; }
+        public List<AdminReportOrderDto> Orders { get; set; } = new();
+    }
+
+    public class AdminReportOrderDto
+    {
+        public int OrderId { get; set; }
+        public DateTime? OrderDate { get; set; }
+        public string CustomerName { get; set; } = string.Empty;
+        public string OrderStatus { get; set; } = string.Empty;
+        public string PaymentStatus { get; set; } = string.Empty;
+        public string PaymentMethod { get; set; } = string.Empty;
+        public decimal TotalAmount { get; set; }
+    }
 }

@@ -13,7 +13,9 @@
         public int UserId { get; set; }
         public decimal TotalPrice { get; set; }
         public string ShippingAddress { get; set; }
-        public string PaymentMethod { get; set; } = string.Empty; // ဥပမာ - KPay, CBPay, Cash
+        public string PaymentMethod { get; set; } = string.Empty; // cod, kpay, wave_money
+        public string? TransactionId { get; set; }
+        public string? SlipImageUrl { get; set; }
         public List<CheckoutItemRequest> Items { get; set; } = new();
     }
 
@@ -44,7 +46,7 @@
 
         public DateTime? OrderDate { get; set; }
         public decimal TotalAmount { get; set; }
-        public string OrderStatus { get; set; }  // pending, processing, shipped, delivered, cancelled
+        public string OrderStatus { get; set; }  // Pending, Processing, Confirm
         public string PaymentStatus { get; set; } = "unpaid";  // unpaid, paid, refunded, completed
 
         // Shipping Details
@@ -80,7 +82,7 @@
     public class OrderPaymentDto
     {
         public int PaymentId { get; set; }
-        public string PaymentMethod { get; set; } = string.Empty; // KBZPay, CBPay, WaveMoney, COD
+        public string PaymentMethod { get; set; } = string.Empty; // cod, kpay, wave_money
         public string TransactionNumber { get; set; } = string.Empty;
         public decimal AmountPaid { get; set; }
         public DateTime? PaymentDate { get; set; }

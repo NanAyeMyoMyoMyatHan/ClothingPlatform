@@ -23,6 +23,15 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
         public Microsoft.JSInterop.IJSRuntime JSRuntime { get; set; }
         public AuthRequest data { get; set; } = new();
 
+        protected override void OnInitialized()
+        {
+            var relativePath = Nav.ToBaseRelativePath(Nav.Uri).TrimEnd('/');
+            if (string.Equals(relativePath, "login", StringComparison.OrdinalIgnoreCase))
+            {
+                Nav.NavigateTo("/portal-login", replace: true);
+            }
+        }
+
 
         private string currentPanel = "login";
         private bool showToast = false;
@@ -147,7 +156,7 @@ namespace ClothingPlatformProject.BlazorFroent.Components.Pages
                         }
                         else
                         {
-                            Nav.NavigateTo("/customer");
+                            loginErrorMessage = "This portal is for Admin and Staff only.";
                         }
                     }
                     else

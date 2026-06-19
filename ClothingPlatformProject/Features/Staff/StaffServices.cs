@@ -1,4 +1,5 @@
 ﻿using ClothingPlatform.DB.AppDbModels;
+using ClothingPlatformProject.Models.Order;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -18,6 +19,7 @@ namespace ClothingPlatformProject.Features.Staff
 
         public async Task<StaffDashboardDataDto> GetDashboardDataAsync(int staffId, DateTime reportDate)
         {
+            var operationalStaffId = await ResolveOperationalStaffIdAsync(staffId);
             var data = new StaffDashboardDataDto();
 
             data.AllOrders = await _db.Orders
@@ -78,7 +80,7 @@ namespace ClothingPlatformProject.Features.Staff
 
             // Report logic for regular orders
             var orderIds = await _db.StaffFulfillmentLogs
-                .Where(l => l.StaffId == staffId && l.ActionAt != null && l.ActionAt.Value.Date == reportDate.Date)
+                .Where(l => l.StaffId == operationalStaffId && l.ActionAt != null && l.ActionAt.Value.Date == reportDate.Date)
                 .Select(l => l.OrderId)
                 .Distinct()
                 .ToListAsync();
@@ -87,7 +89,7 @@ namespace ClothingPlatformProject.Features.Staff
 
             // Report logic for guest orders
             var guestOrderIds = await _db.StaffActivityLogs
-                .Where(l => l.StaffId == staffId && l.TargetTable == "guest_orders" && l.ActionType == "create" && l.CreatedAt != null && l.CreatedAt.Value.Date == reportDate.Date)
+                .Where(l => l.StaffId == operationalStaffId && l.TargetTable == "guest_orders" && l.ActionType == "create" && l.CreatedAt != null && l.CreatedAt.Value.Date == reportDate.Date)
                 .Select(l => l.TargetId)
                 .Distinct()
                 .ToListAsync();
@@ -99,15 +101,19 @@ namespace ClothingPlatformProject.Features.Staff
 
         public async Task<bool> UpdateOrderStatusAsync(int orderId, int staffId, string newStatus)
         {
+            var operationalStaffId = await ResolveOperationalStaffIdAsync(staffId);
             var dbOrder = await _db.Orders.FirstOrDefaultAsync(o => o.OrderId == orderId);
             if (dbOrder == null) return false;
 
-            dbOrder.OrderStatus = newStatus;
+            var normalizedStatus = OrderWorkflow.Normalize(newStatus);
+            if (!OrderWorkflow.CanMoveTo(dbOrder.OrderStatus, normalizedStatus)) return false;
+
+            dbOrder.OrderStatus = normalizedStatus;
             _db.StaffFulfillmentLogs.Add(new StaffFulfillmentLog
             {
                 OrderId = orderId,
-                StaffId = staffId,
-                ActionTaken = char.ToUpper(newStatus[0]) + newStatus.Substring(1),
+                StaffId = operationalStaffId,
+                ActionTaken = normalizedStatus,
                 ActionAt = DateTime.Now,
                 Notes = "Status changed by operational staff member."
             });
@@ -118,10 +124,14 @@ namespace ClothingPlatformProject.Features.Staff
 
         public async Task<bool> UpdateGuestOrderStatusAsync(int guestOrderId, int staffId, string newStatus)
         {
+            var operationalStaffId = await ResolveOperationalStaffIdAsync(staffId);
             var dbGo = await _db.GuestOrders.FirstOrDefaultAsync(g => g.GuestOrderId == guestOrderId);
             if (dbGo == null) return false;
 
-            dbGo.OrderStatus = newStatus;
+            var normalizedStatus = OrderWorkflow.Normalize(newStatus);
+            if (!OrderWorkflow.CanMoveTo(dbGo.OrderStatus, normalizedStatus)) return false;
+
+            dbGo.OrderStatus = normalizedStatus;
 
             // FIX: "update_status" was not an allowed value for the action_type
             // check constraint in the database, which caused SaveChangesAsync to
@@ -130,11 +140,11 @@ namespace ClothingPlatformProject.Features.Staff
             // so we follow that same convention here.
             _db.StaffActivityLogs.Add(new StaffActivityLog
             {
-                StaffId = staffId,
+                StaffId = operationalStaffId,
                 TargetTable = "guest_orders",
                 TargetId = guestOrderId,
                 ActionType = "update",
-                Description = $"Guest order status updated to {newStatus}",
+                Description = $"Guest order status updated to {normalizedStatus}",
                 CreatedAt = DateTime.Now
             });
 
@@ -144,6 +154,7 @@ namespace ClothingPlatformProject.Features.Staff
 
         public async Task<bool> AdjustStockAsync(int variantId, int adjustment, int staffId)
         {
+            var operationalStaffId = await ResolveOperationalStaffIdAsync(staffId);
             var dbVariant = await _db.ProductVariants.FirstOrDefaultAsync(v => v.VariantId == variantId);
             if (dbVariant == null) return false;
 
@@ -152,7 +163,7 @@ namespace ClothingPlatformProject.Features.Staff
 
             _db.StaffActivityLogs.Add(new StaffActivityLog
             {
-                StaffId = staffId,
+                StaffId = operationalStaffId,
                 TargetTable = "product_variants",
                 TargetId = variantId,
                 ActionType = "update",
@@ -166,6 +177,7 @@ namespace ClothingPlatformProject.Features.Staff
 
         public async Task<bool> SubmitPhoneOrderAsync(GuestOrderRequestDto request, int staffId)
         {
+            var operationalStaffId = await ResolveOperationalStaffIdAsync(staffId);
             var inventoryVariants = await _db.ProductVariants.Include(v => v.Product).ToListAsync();
 
             var demandByVariant = request.OrderLines
@@ -199,7 +211,7 @@ namespace ClothingPlatformProject.Features.Staff
                     ShippingAddress = request.ShippingAddress.Trim(),
                     TotalQuantity = totalQuantity,
                     TotalAmount = orderTotal,
-                    OrderStatus = "pending",
+                    OrderStatus = OrderWorkflow.Pending,
                     CreatedAt = DateTime.Now,
                     PaymentMethod = request.PaymentMethod,
                     PaymentStatus = request.PaymentStatus
@@ -211,7 +223,7 @@ namespace ClothingPlatformProject.Features.Staff
                 // Log the creation so it shows up in Sales Report
                 _db.StaffActivityLogs.Add(new StaffActivityLog
                 {
-                    StaffId = staffId,
+                    StaffId = operationalStaffId,
                     TargetTable = "guest_orders",
                     TargetId = guestOrder.GuestOrderId,
                     ActionType = "create",
@@ -228,7 +240,7 @@ namespace ClothingPlatformProject.Features.Staff
 
                     _db.StaffActivityLogs.Add(new StaffActivityLog
                     {
-                        StaffId = staffId,
+                        StaffId = operationalStaffId,
                         TargetTable = "product_variants",
                         TargetId = dbVariant.VariantId,
                         ActionType = "update",
@@ -250,6 +262,16 @@ namespace ClothingPlatformProject.Features.Staff
 
         public async Task<bool> UpdateProfileAsync(int staffId, string firstName, string lastName, string email)
         {
+            var portalUser = await _db.TblUsers.FirstOrDefaultAsync(u => u.UserId == staffId);
+            if (portalUser != null)
+            {
+                portalUser.FirstName = firstName;
+                portalUser.LastName = lastName;
+                portalUser.Email = email;
+                await _db.SaveChangesAsync();
+                return true;
+            }
+
             var user = await _db.Users.FirstOrDefaultAsync(u => u.UserId == staffId);
             if (user == null) return false;
 
@@ -259,6 +281,25 @@ namespace ClothingPlatformProject.Features.Staff
 
             await _db.SaveChangesAsync();
             return true;
+        }
+
+        private async Task<int> ResolveOperationalStaffIdAsync(int portalStaffId)
+        {
+            var portalUser = await _db.TblUsers.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == portalStaffId);
+            if (portalUser != null)
+            {
+                var mirror = await _db.Users.AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.Email == portalUser.Email && (u.Role == "staff" || u.Role == "admin"));
+                if (mirror != null) return mirror.UserId;
+            }
+
+            if (await _db.Users.AnyAsync(u => u.UserId == portalStaffId && (u.Role == "staff" || u.Role == "admin")))
+            {
+                return portalStaffId;
+            }
+
+            var fallback = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Role == "staff" || u.Role == "admin");
+            return fallback?.UserId ?? portalStaffId;
         }
     }
 }

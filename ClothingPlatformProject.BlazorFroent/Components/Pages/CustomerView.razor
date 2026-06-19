@@ -1,11 +1,12 @@
-﻿@page "/"
+@page "/"
 @page "/customer"
 @using ClothingPlatformProject.BlazorFroent.Components.Partial
+@using ClothingPlatformProject.Models.Order
 @inject IJSRuntime JSRuntime
 
 @inject AuthenticationStateProvider AuthenStateProvider
 
-<PageTitle>Chic Boutique — Luxury Atelier</PageTitle>
+<PageTitle>Chic Boutique � Luxury Atelier</PageTitle>
 
 <style>
     :root {
@@ -31,7 +32,7 @@
     }
 
     body {
-        font-family: 'Jost', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         background: var(--bg);
         color: var(--charcoal);
         min-height: 100vh;
@@ -69,7 +70,7 @@
     }
 
     .logo {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 1.7rem;
         font-weight: 600;
         letter-spacing: 0.22em;
@@ -129,6 +130,32 @@
         justify-content: center;
     }
 
+    .notification-btn {
+        position: relative;
+        background: none;
+        border: none;
+        color: var(--charcoal);
+        font-size: 1.1rem;
+        padding: 6px 8px;
+        cursor: pointer;
+    }
+
+    .notification-badge {
+        position: absolute;
+        top: -1px;
+        right: -1px;
+        min-width: 16px;
+        height: 16px;
+        border-radius: 999px;
+        background: #C0392B;
+        color: #fff;
+        font-size: 0.58rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+    }
+
     /* Nav Tabs */
     .nav-tabs-bar {
         display: flex;
@@ -145,7 +172,7 @@
         }
 
     .nav-tab {
-        font-family: 'Jost', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 0.72rem;
         letter-spacing: 0.17em;
         font-weight: 500;
@@ -224,12 +251,12 @@
     /* Title */
     /* Title */
     .hero-title {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: clamp(2.6rem, 6vw, 4.5rem);
         font-weight: 300;
         line-height: 1.1;
-        color: var(--charcoal); /* အရင်အရောင် */
-        text-shadow: none; /* shadow မလိုချင်ရင် ဖယ် */
+        color: var(--charcoal); /* ?????????? */
+        text-shadow: none; /* shadow ??????????? ??? */
         margin-bottom: 20px;
         position: relative;
         z-index: 1;
@@ -238,8 +265,8 @@
     /* Subtitle */
     .hero-sub {
         font-size: 0.88rem;
-        color: #ffffff; /* အမဲ */
-        text-shadow: 0 2px 6px rgba(255,255,255,0.6); /* အဖြူ glow ထည့် */
+        color: #ffffff; /* ??? */
+        text-shadow: 0 2px 6px rgba(255,255,255,0.6); /* ???? glow ???? */
         font-weight: 300;
         letter-spacing: 0.05em;
         max-width: 420px;
@@ -249,7 +276,7 @@
         z-index: 1;
     }
 
-    /* ── Logout confirmation modal ── */
+    /* -- Logout confirmation modal -- */
     .confirm-overlay {
         position: fixed;
         inset: 0;
@@ -284,7 +311,7 @@
     }
 
     .confirm-title {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 1.25rem;
         color: var(--navy);
         margin-bottom: .4rem;
@@ -348,7 +375,7 @@
         background: var(--rose);
         color: #F5ECD7;
         border: none;
-        font-family: 'Jost', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 0.72rem;
         letter-spacing: 0.2em;
         font-weight: 500;
@@ -372,7 +399,7 @@
     }
 
     .section-title {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 2.1rem;
         font-weight: 400;
         color: var(--charcoal);
@@ -451,7 +478,7 @@
         background: rgba(60,31,16,0.85);
         color: #F5ECD7;
         border: none;
-        font-family: 'Jost', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 0.68rem;
         letter-spacing: 0.2em;
         text-transform: uppercase;
@@ -481,7 +508,7 @@
     }
 
     .card-name {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 1.1rem;
         font-weight: 500;
         color: var(--charcoal);
@@ -535,6 +562,17 @@
         .product-modal {
             grid-template-columns: 1fr;
         }
+
+        .modal-buy-actions {
+            position: sticky;
+            bottom: 0;
+            top: auto;
+            margin-left: -32px;
+            margin-right: -32px;
+            padding: 12px 32px 18px;
+            border-top: 1px solid var(--border);
+            box-shadow: 0 -12px 28px rgba(139,26,26,0.08);
+        }
     }
 
     .modal-img-col {
@@ -566,7 +604,7 @@
     }
 
     .modal-name {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 1.7rem;
         font-weight: 400;
         color: var(--charcoal);
@@ -617,7 +655,7 @@
     .size-btn {
         border: 1px solid var(--border);
         background: var(--white);
-        font-family: 'Jost', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 0.72rem;
         font-weight: 500;
         padding: 7px 14px;
@@ -662,7 +700,7 @@
         background: var(--charcoal);
         color: #F5ECD7;
         border: none;
-        font-family: 'Jost', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 0.72rem;
         letter-spacing: 0.22em;
         font-weight: 500;
@@ -670,6 +708,25 @@
         padding: 16px;
         cursor: pointer;
         transition: background 0.25s, transform 0.2s;
+    }
+
+    .modal-buy-actions {
+        position: sticky;
+        top: 18px;
+        display: grid;
+        gap: 12px;
+        align-self: start;
+        background: var(--white);
+        padding-top: 6px;
+    }
+
+    .modal-qty-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border: 1px solid var(--border);
+        padding: 10px 12px;
     }
 
         .btn-add-bag:hover {
@@ -745,7 +802,7 @@
     }
 
     .cart-title {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 1.3rem;
         font-weight: 500;
         color: var(--charcoal);
@@ -809,7 +866,7 @@
     }
 
     .cart-item-name {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 0.98rem;
         font-weight: 500;
         color: var(--charcoal);
@@ -902,7 +959,7 @@
     }
 
     .cart-subtotal-val {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 1.3rem;
         font-weight: 500;
         color: var(--charcoal);
@@ -919,7 +976,7 @@
         background: var(--rose);
         color: #F5ECD7;
         border: none;
-        font-family: 'Jost', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 0.72rem;
         letter-spacing: 0.22em;
         font-weight: 500;
@@ -953,7 +1010,7 @@
     }
 
     .checkout-section-title {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 1.5rem;
         font-weight: 400;
         color: var(--charcoal);
@@ -980,7 +1037,7 @@
         width: 100%;
         border: 1px solid var(--border);
         background: var(--white);
-        font-family: 'Jost', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 0.88rem;
         color: var(--charcoal);
         padding: 12px 16px;
@@ -1135,7 +1192,7 @@
     }
 
     .order-sum-name {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 0.95rem;
         font-weight: 500;
         color: var(--charcoal);
@@ -1171,7 +1228,7 @@
     }
 
     .summary-total-val {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 1.4rem;
         font-weight: 500;
         color: var(--charcoal);
@@ -1182,7 +1239,7 @@
         background: var(--charcoal);
         color: #F5ECD7;
         border: none;
-        font-family: 'Jost', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 0.72rem;
         letter-spacing: 0.22em;
         font-weight: 500;
@@ -1231,7 +1288,7 @@
     }
 
     .success-title {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 2.2rem;
         font-weight: 400;
         color: var(--charcoal);
@@ -1259,7 +1316,7 @@
         background: none;
         border: 1px solid var(--charcoal);
         color: var(--charcoal);
-        font-family: 'Jost', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 0.72rem;
         letter-spacing: 0.2em;
         font-weight: 500;
@@ -1313,13 +1370,13 @@
     }
 
     .history-total {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 1.1rem;
         font-weight: 500;
         color: var(--charcoal);
     }
 
-    .badge-delivered {
+    .badge-confirm {
         background: #F5ECD7;
         color: #2e7d5e;
         font-size: 0.62rem;
@@ -1373,7 +1430,7 @@
     }
 
     .history-item-name {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 0.95rem;
         font-weight: 500;
         color: var(--charcoal);
@@ -1490,7 +1547,7 @@
         }
 
     .profile-name-display {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 1.6rem;
         font-weight: 500;
         color: var(--charcoal);
@@ -1540,7 +1597,7 @@
     }
 
     .points-value {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 1.4rem;
         font-weight: 600;
         color: var(--rose);
@@ -1573,7 +1630,7 @@
 </style>
 
 
-<!-- ═══════════════ HEADER ═══════════════ -->
+<!-- --------------- HEADER --------------- -->
 <header id="site-header">
     <div class="header-top">
         <a class="logo" @onclick='() => Navigate("home")'>
@@ -1601,9 +1658,20 @@
                 }
             </button>
 
-            @if (Session.CurrentUser != null)
+            @if (currentUser != null)
             {
-                <span class="text-muted small d-none d-sm-inline">Mingalarpar, <strong>@Session.CurrentUser.FirstName</strong></span>
+                <button class="notification-btn" title="Notifications">
+                    <i class="bi bi-bell"></i>
+                    @if (notifications.Any(n => !n.IsRead))
+                    {
+                        <span class="notification-badge">@notifications.Count(n => !n.IsRead)</span>
+                    }
+                </button>
+            }
+
+            @if (currentUser != null)
+            {
+                <span class="text-muted small d-none d-sm-inline">Mingalarpar, <strong>@currentUser.FirstName</strong></span>
             }
             else
             {
@@ -1618,7 +1686,7 @@
         <button class="nav-tab @(activeTab == "shop" ? "active" : "")" @onclick='() => Navigate("shop")'>The Collection</button>
         <button class="nav-tab @(activeTab == "history" ? "active" : "")" @onclick='() => Navigate("history")'>My Purchases</button>
         <button class="nav-tab @(activeTab == "profile" ? "active" : "")" @onclick='() => Navigate("profile")'>My Profile</button>
-       @if (Session.CurrentUser != null)
+       @if (currentUser != null)
         {
             <button class="nav-tab text-danger mt-xxl-3" @onclick="RequestLogout" style="margin-left: auto; padding-left: 20px;">Sign Out</button>
 
@@ -1628,7 +1696,7 @@
                     <div class="confirm-modal" @onclick:stopPropagation="true">
                         <div class="confirm-icon"><i class="bi bi-box-arrow-right"></i></div>
                         <div class="confirm-title">Log Out?</div>
-                        <div class="confirm-text">Are you sure you want to log out of the Staff Portal?</div>
+                        <div class="confirm-text">Are you sure you want to log out of your customer account?</div>
                         <div class="confirm-actions">
                             <button class="confirm-btn-cancel" @onclick="CancelLogout">Cancel</button>
                             <button class="confirm-btn-confirm" @onclick="ConfirmLogout">Yes, Log Out</button>
@@ -1639,12 +1707,12 @@
         }
         else
         {
-            <button class="nav-tab text-danger" @onclick="Logout" style="margin-left: auto; padding-left: 20px;">Sign in</button>
+            <button class="nav-tab text-danger" @onclick="GotoLogin" style="margin-left: auto; padding-left: 20px;">Sign in</button>
         }
     </nav>
 </header>
 <main class="view-wrapper">
-    <!-- ═══════════════ VIEW: HOME ═══════════════ -->
+    <!-- --------------- VIEW: HOME --------------- -->
     @if (activeTab == "home")
     {
         <section class="hero" style="
@@ -1703,7 +1771,7 @@
                     <div class="card-img-wrap">
                         <img src="@primaryImg" alt="@prod.Name" />
 
-                        <span class="badge-best">🔥New Arrival</span>
+                        <span class="badge-best">??New Arrival</span>
 
                         <button class="card-quick">Quick View</button>
                     </div>
@@ -1760,7 +1828,7 @@
                         <div class="card-img-wrap">
                             <img src="@primaryImg" alt="@prod.Name" />
 
-                            <span class="badge-best">🔥 Best Seller</span>
+                            <span class="badge-best">?? Best Seller</span>
 
                             <button class="card-quick">Quick View</button>
                         </div>
@@ -1816,7 +1884,7 @@
                     <div class="card-img-wrap">
                         <img src="@primaryImg" alt="@prod.Name" />
 
-                        <span class="badge-best">🔥New Arrival</span>
+                        <span class="badge-best">??New Arrival</span>
 
                         <button class="card-quick">Quick View</button>
                     </div>
@@ -1871,18 +1939,18 @@
 
                 <h3 class="checkout-section-title mt-5">Payment Method</h3>
 
-                <div class="payment-option @(selectedPayment == "kbz" ? "selected" : "")" @onclick='() => SelectPaymentMethod("kbz")'>
-                    <input type="radio" checked="@(selectedPayment == "kbz")" readonly />
+                <div class="payment-option @(selectedPayment == "kpay" ? "selected" : "")" @onclick='() => SelectPaymentMethod("kpay")'>
+                    <input type="radio" checked="@(selectedPayment == "kpay")" readonly />
                     <div>
-                        <p class="payment-option-name">KBZPay QR Code Transfer</p>
+                        <p class="payment-option-name">KBZPay (KPay) QR Code Transfer</p>
                         <p class="payment-option-sub">Transfer to 09252522525 (The Boutique Atelier)</p>
                     </div>
                 </div>
 
-                <div class="payment-option @(selectedPayment == "wave" ? "selected" : "")" @onclick='() => SelectPaymentMethod("wave")'>
-                    <input type="radio" checked="@(selectedPayment == "wave")" readonly />
+                <div class="payment-option @(selectedPayment == "wave_money" ? "selected" : "")" @onclick='() => SelectPaymentMethod("wave_money")'>
+                    <input type="radio" checked="@(selectedPayment == "wave_money")" readonly />
                     <div>
-                        <p class="payment-option-name">Wave Money QR Transfer</p>
+                        <p class="payment-option-name">WaveMoney (WavePay) QR Transfer</p>
                         <p class="payment-option-sub">Transfer to 09252522525 (Atelier Boutique Corp.)</p>
                     </div>
                 </div>
@@ -1895,7 +1963,7 @@
                     </div>
                 </div>
 
-                @if (selectedPayment == "kbz")
+                @if (selectedPayment == "kpay")
                 {
                     <div class="qr-block">
                         <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=KBZPayTransferRecv_09252522525" alt="KBZPay QR" />
@@ -1903,7 +1971,7 @@
                     </div>
                 }
 
-                @if (selectedPayment == "wave")
+                @if (selectedPayment == "wave_money")
                 {
                     <div class="qr-block">
                         <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=WavePayTransferRecv_09252522525" alt="WavePay QR" />
@@ -1911,8 +1979,12 @@
                     </div>
                 }
 
-                @if (selectedPayment == "kbz" || selectedPayment == "wave")
+                @if (selectedPayment == "kpay" || selectedPayment == "wave_money")
                 {
+                    <div class="form-group mt-4">
+                        <label class="form-label-custom">Transaction / Reference Number</label>
+                        <input type="text" class="form-control-custom" @bind="paymentReference" placeholder="Enter transaction ID from payment app" />
+                    </div>
                     <div class="form-group mt-4">
                         <label class="form-label-custom">Upload Screenshot Slip</label>
                         <div class="slip-upload-zone" @onclick="SimulateSlipUpload">
@@ -1948,7 +2020,7 @@
                                 <img class="order-summary-img" src="@item.ImgUrl" alt="@item.Name" />
                                 <div>
                                     <p class="order-sum-name">@item.Name</p>
-                                    <p class="order-sum-meta">@item.Size · @item.Color · Qty @item.Qty</p>
+                                    <p class="order-sum-meta">@item.Size � @item.Color � Qty @item.Qty</p>
                                     <p class="order-sum-price">@((item.Price * item.Qty).ToString("N0")) MMK</p>
                                 </div>
                             </div>
@@ -1992,17 +2064,17 @@
                                 <p class="history-date">@(order.CreatedAt?.ToString("dd MMM yyyy HH:mm") ?? "N/A")</p>
                             </div>
                             <div>
-                                @if (order.OrderStatus.ToLower() == "completed" || order.OrderStatus.ToLower() == "delivered")
+                                @if (OrderWorkflow.Normalize(order.OrderStatus) == OrderWorkflow.Confirm)
                                 {
-                                    <span class="badge-delivered px-3 py-1 rounded">Delivered</span>
+                                    <span class="badge-confirm px-3 py-1 rounded">Confirm</span>
                                 }
-                                else if (order.OrderStatus.ToLower() == "processing")
+                                else if (OrderWorkflow.Normalize(order.OrderStatus) == OrderWorkflow.Processing)
                                 {
                                     <span class="badge-processing px-3 py-1 rounded">Processing</span>
                                 }
                                 else
                                 {
-                                    <span class="badge-pending px-3 py-1 rounded">@order.OrderStatus.ToUpper()</span>
+                                    <span class="badge-pending px-3 py-1 rounded">Pending</span>
                                 }
                             </div>
                             <span class="history-total">@order.TotalAmount.ToString("N0") MMK</span>
@@ -2010,10 +2082,10 @@
                             <div class="history-items">
                                 @foreach (var item in order.OrderItems)
                                 {
-                                    // 💡 ၁။ ပုံရှိမရှိကို အဆင့်ဆင့် ဘေးကင်းစွာ အရင်စစ်ထုတ်ပါတယ်
+                                    // ?? ?? ????????????? ????????? ?????????? ????????????????
                                     var imgObj = item.Variant?.Product?.ProductImages?.FirstOrDefault(i => i.IsPrimary == true);
 
-                                    // 💡 ၂။ ပုံရှိရင် /images/products/ လမ်းကြောင်းနဲ့ တွဲပါတယ်။ (ရှေ့က / ထည့်ပေးဖို့ အရေးကြီးပါတယ်)
+                                    // ?? ?? ????????? /images/products/ ?????????????? ????????? (????? / ??????????? ?????????????)
                                     var rawUrl = imgObj?.ImageUrl?.Trim() ?? "";
 
                                     string primaryImg;
@@ -2039,8 +2111,8 @@
                                         <div>
                                             <h4 class="history-item-name">@(item.Variant?.Product?.Name ?? "Unknown Product")</h4>
                                             <p class="history-item-meta">
-                                                Size: @(item.Variant?.Size ?? "-") ·
-                                                Color: @(item.Variant?.Color ?? "-") ·
+                                                Size: @(item.Variant?.Size ?? "-") �
+                                                Color: @(item.Variant?.Color ?? "-") �
                                                 Qty: @item.Quantity
                                             </p>
                                             <p class="history-item-price">@((item.PriceAtPurchase * item.Quantity).ToString("N0")) MMK</p>
@@ -2058,7 +2130,7 @@
     
     else if (activeTab == "profile")
     {
-        if (Session.CurrentUser == null)
+        if (currentUser == null)
         {
             <div class="history-card" >
                 <div class="section-head px-0">
@@ -2125,7 +2197,7 @@
                         </div>
 
                         <div class="alert bg-light border text-start p-3 small" style="line-height: 1.6;">
-                            <strong>⭐ Membership Privileges:</strong>
+                            <strong>? Membership Privileges:</strong>
                             <ul class="ps-3 mt-1 m-0">
                                 <li>Earn 1 Point for every 5000 MMK spent.</li>
                                 <li>Silver members get 5% off items automatically.</li>
@@ -2177,7 +2249,7 @@
     }
 </main>
 
- <!-- ═══════════════ CONTACT US ═══════════════ -->
+ <!-- --------------- CONTACT US --------------- -->
 <section style="
     background: #FDF8F6;
     padding: 70px 40px;
@@ -2188,11 +2260,11 @@
         <!-- Left: Contact Info -->
         <div>
             <p style="font-size:0.68rem; letter-spacing:0.3em; text-transform:uppercase; color:#8B1A1A; margin-bottom:12px;">Get In Touch</p>
-            <h2 style="font-family:'Cormorant Garamond',serif; font-size:2.2rem; font-weight:400; color:#3C1F10; margin-bottom:16px; line-height:1.2;">
+            <h2 style="font-family: 'DM Sans', sans-serif; font-size:2.2rem; font-weight:400; color:#3C1F10; margin-bottom:16px; line-height:1.2;">
                 Contact <em style="color:#8B1A1A; font-style:italic;">Chic Boutique</em>
             </h2>
             <p style="font-size:0.88rem; color:#7A5C50; line-height:1.8; margin-bottom:32px;">
-                We would love to hear from you. Whether you have questions about our collections, sizing, or custom orders — our atelier team is here to assist.
+                We would love to hear from you. Whether you have questions about our collections, sizing, or custom orders � our atelier team is here to assist.
             </p>
 
             <div style="display:flex; flex-direction:column; gap:20px;">
@@ -2232,14 +2304,14 @@
                     </div>
                     <div>
                         <p style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:#7A5C50; font-weight:600; margin:0;">Hours</p>
-                        <p style="font-size:0.88rem; color:#3C1F10; margin:0;">Mon – Sat: 10:00 AM – 7:00 PM</p>
+                        <p style="font-size:0.88rem; color:#3C1F10; margin:0;">Mon � Sat: 10:00 AM � 7:00 PM</p>
                     </div>
                 </div>
             </div>
         </div>
         <!-- Right: Message Form -->
         <div style="background:#FFFFFF; border:1px solid #EDD9D0; border-radius:12px; padding:32px;">
-            <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.4rem; font-weight:400; color:#3C1F10; margin-bottom:24px;">Send a Message</h3>
+            <h3 style="font-family: 'DM Sans', sans-serif; font-size:1.4rem; font-weight:400; color:#3C1F10; margin-bottom:24px;">Send a Message</h3>
 
             <div style="margin-bottom:16px;">
                 <label style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; font-weight:600; color:#7A5C50; display:block; margin-bottom:6px;">Full Name</label>
@@ -2263,7 +2335,7 @@
     </div>
 </section>
 
-<!-- ═══════════════ FOOTER ═══════════════ -->
+<!-- --------------- FOOTER --------------- -->
 <footer style="background:#3C1F10; color:#F5F0E8; padding:60px 40px 30px;">
 
     <div style="max-width:1100px; margin:0 auto;">
@@ -2272,7 +2344,7 @@
         <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:40px; margin-bottom:50px;">
             <!-- Brand -->
             <div>
-                <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.6rem; font-weight:400; letter-spacing:0.15em; color:#F5F0E8; margin-bottom:8px;">CHIC BOUTIQUE</h3>
+                <h3 style="font-family: 'DM Sans', sans-serif; font-size:1.6rem; font-weight:400; letter-spacing:0.15em; color:#F5F0E8; margin-bottom:8px;">CHIC BOUTIQUE</h3>
                 <p style="font-size:0.62rem; letter-spacing:0.3em; text-transform:uppercase; color:#C8837A; margin-bottom:16px;">Atelier Coterie</p>
                 <p style="font-size:0.82rem; color:rgba(245,240,232,0.65); line-height:1.8; max-width:260px;">
                     Curating timeless garments for the modern woman. Crafted with care, worn with grace.
@@ -2332,10 +2404,10 @@
         <!-- Bottom Row -->
         <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
             <p style="font-size:0.72rem; color:rgba(245,240,232,0.4); margin:0; letter-spacing:0.05em;">
-                © 2026 The Boutique Atelier Coterie. All rights reserved.
+                � 2026 The Boutique Atelier Coterie. All rights reserved.
             </p>
             <p style="font-size:0.72rem; color:rgba(245,240,232,0.4); margin:0; letter-spacing:0.05em;">
-                Crafted with <span style="color:#C8837A;">♥️</span> in Yangon, Myanmar
+                Crafted with <span style="color:#C8837A;">??</span> in Yangon, Myanmar
             </p>
         </div>
     </div>
@@ -2369,7 +2441,7 @@
 
                 @if(modalProduct.VariantsDto != null)
                 {
-                    <label class="option-label">Select Size</label>
+                    <label class="option-label">Size Chart</label>
                     <div class="size-btns">
                         @foreach (var size in modalProduct.VariantsDto.Select(v => v.Size).Distinct())
                         {
@@ -2397,13 +2469,23 @@
                     </p>
                 }
 
-                <button class="btn-add-bag" @onclick="AddToBagUnified">Add to Bag</button>
+                <div class="modal-buy-actions">
+                    <div class="modal-qty-row">
+                        <span class="option-label mb-0">Quantity</span>
+                        <div class="cart-qty">
+                            <button class="qty-btn" @onclick="() => ChangeSelectedQuantity(-1)">-</button>
+                            <span class="qty-num">@selectedQuantity</span>
+                            <button class="qty-btn" @onclick="() => ChangeSelectedQuantity(1)">+</button>
+                        </div>
+                    </div>
+                    <button class="btn-add-bag" @onclick="AddToBagUnified">Add to Bag</button>
+                </div>
             </div>
         </div>
     }
 </div>
 
-<!-- ═══════════════ CART DRAWER ═══════════════ -->
+<!-- --------------- CART DRAWER --------------- -->
 <div class="cart-backdrop mt-3 @(isCartOpen ? "open" : "")" @onclick="ToggleCart"></div>
 <div class="cart-drawer @(isCartOpen ? "open" : "")">
     <div class="cart-header">
@@ -2426,7 +2508,7 @@
                     <img class="cart-item-img" src="@item.ImgUrl" alt="@item.Name" />
                     <div class="cart-item-info">
                         <p class="cart-item-name">@item.Name</p>
-                        <p class="cart-item-meta">@item.Size · @item.Color</p>
+                        <p class="cart-item-meta">@item.Size � @item.Color</p>
                         <div class="cart-qty">
                             <button class="qty-btn" @onclick="() => UpdateQty(item, -1)">-</button>
                             <span class="qty-num">@item.Qty</span>
@@ -2451,7 +2533,7 @@
     </div>
 </div>
 
-<!-- ═══════════════ SUCCESS OVERLAY ═══════════════ -->
+<!-- --------------- SUCCESS OVERLAY --------------- -->
 <div class="success-overlay @(isSuccessOpen ? "open" : "")">
     <div class="success-icon"><i class="bi bi-check-lg"></i></div>
     <h2 class="success-title">Order Confirmed!</h2>
@@ -2467,7 +2549,7 @@
         }
         <br /><br />
         <span style="display:inline-block;background:var(--rose-pale);border:1px solid var(--rose-light);padding:8px 16px;color:var(--charcoal);font-weight:500;font-size:0.8rem;letter-spacing:0.04em;">
-            ⭐IF ORDER CONFIRM, YOU EARNED @pointsEarnedInOrder.ToString("N0") LOYALTY POINTS!
+            ?IF ORDER CONFIRM, YOU EARNED @pointsEarnedInOrder.ToString("N0") LOYALTY POINTS!
         </span>
     </p>
     <p class="success-order-id">ORDER #@confirmedOrderId</p>

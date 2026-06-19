@@ -4,8 +4,10 @@ namespace ClothingPlatformProject.Features.Cart
 {
     public interface ICartService
     {
-        CartDto? GetUserCart(int userId);
-        void AddItemToCart(AddToCartRequest model);
-        void RemoveItemFromCart(int cartItemId);
+        Task<CartDto> GetUserCartAsync(int userId);
+        Task<CartDto> AddItemToCartAsync(AddToCartRequest model);
+        Task<CartDto?> UpdateItemQuantityAsync(int cartItemId, int quantity);
+        Task RemoveItemFromCartAsync(int cartItemId);
+        Task ClearUserCartAsync(int userId);
     }
 }

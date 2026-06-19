@@ -34,10 +34,20 @@ namespace ClothingPlatformProject.Features.Order
             return Ok(result);
         }
 
-        [HttpGet("{getAllOrder}")]
+        [Authorize(Policy = "AdminOrStaff")]
+        [HttpGet("getAllOrder")]
         public async Task<ActionResult<List<OrderDashboardDto>>> GetAllOrdersAsync()
         {
             return await _orderService.GetAllOrder();
+        }
+
+        [Authorize(Policy = "AdminOnly")]
+        [HttpDelete("{orderId}")]
+        public async Task<IActionResult> DeleteOrder(int orderId)
+        {
+            var success = await _orderService.DeleteOrderAsync(orderId);
+            if (!success) return NotFound("Order not found.");
+            return Ok(true);
         }
     }
 }

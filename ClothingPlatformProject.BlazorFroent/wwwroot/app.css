@@ -1,5 +1,33 @@
-html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+:root {
+    --app-font-family: 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+html,
+body,
+#app,
+.page,
+.main-workspace,
+.dashboard-container,
+#appShell,
+button,
+input,
+select,
+textarea,
+table,
+th,
+td,
+.modal,
+.modal-content,
+.offcanvas,
+.drawer,
+.luxury-text,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--app-font-family) !important;
 }
 
 a, .btn-link {
@@ -51,7 +79,7 @@ h1:focus {
 }
 
 html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: var(--app-font-family) !important;
 }
 
 a, .btn-link {

@@ -13,62 +13,110 @@ namespace ClothingPlatformProject.Features.Cart
             _db = db;
         }
 
-        public CartDto? GetUserCart(int userId)
+        public async Task<CartDto> GetUserCartAsync(int userId)
         {
-            var cart = _db.CartItems.AsNoTracking().FirstOrDefault(c => c.UserId == userId);
-            if (cart == null) return null;
-
             return new CartDto
             {
-                CartId = cart.CartId,
-                UserId = cart.UserId,
-                Items = _db.CartItems.AsNoTracking()
-                    .Where(ci => ci.CartId == cart.CartId)
-                    .Select(ci => new CartItemDto
-                    {
-                        CartItemId = ci.CartId,
-                        VariantId = ci.VariantId,
-                        Quantity = ci.Quantity
-                    }).ToList()
+                CartId = 0,
+                UserId = userId,
+                Items = await BuildCartItemsQuery(userId).ToListAsync()
             };
         }
 
-        public void AddItemToCart(AddToCartRequest model)
+        public async Task<CartDto> AddItemToCartAsync(AddToCartRequest model)
         {
-            // ခြင်းတောင်း (Cart) ရှိမရှိ အရင်စစ်ဆေးပြီး မရှိလျှင် အသစ်ဆောက်သည်
-            var cart = _db.CartItems.FirstOrDefault(c => c.UserId == model.UserId);
-            if (cart == null)
+            if (model.Quantity <= 0)
             {
-                cart = new ClothingPlatform.DB.AppDbModels.CartItem { UserId = model.UserId };
-                _db.CartItems.Add(cart);
-                _db.SaveChanges();
+                model.Quantity = 1;
             }
 
-            // Cart ထဲတွင် ထိုပစ္စည်း (Variant) ရှိပြီးသားဆိုလျှင် အရေအတွက်ပေါင်းထည့်သည်၊ မရှိလျှင် အသစ်ထည့်သည်
-            var existingItem = _db.CartItems.FirstOrDefault(ci => ci.CartId == cart.CartId && ci.VariantId == model.VariantId);
+            var variant = await _db.ProductVariants.AsNoTracking()
+                .FirstOrDefaultAsync(v => v.VariantId == model.VariantId);
+            if (variant == null)
+            {
+                throw new InvalidOperationException("Selected product variant does not exist.");
+            }
+
+            var existingItem = await _db.CartItems
+                .FirstOrDefaultAsync(ci => ci.UserId == model.UserId && ci.VariantId == model.VariantId);
+
             if (existingItem != null)
             {
-                existingItem.Quantity += model.Quantity;
+                existingItem.Quantity = Math.Min(variant.StockQuantity, existingItem.Quantity + model.Quantity);
             }
             else
             {
                 _db.CartItems.Add(new CartItem
                 {
-                    CartId = cart.CartId,
+                    UserId = model.UserId,
                     VariantId = model.VariantId,
-                    Quantity = model.Quantity
+                    Quantity = Math.Min(variant.StockQuantity, model.Quantity)
                 });
             }
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
+
+            return await GetUserCartAsync(model.UserId);
         }
 
-        public void RemoveItemFromCart(int cartItemId)
+        public async Task<CartDto?> UpdateItemQuantityAsync(int cartItemId, int quantity)
         {
-            var item = _db.CartItems.FirstOrDefault(ci => ci.CartId == cartItemId);
+            var item = await _db.CartItems.FirstOrDefaultAsync(ci => ci.CartId == cartItemId);
+            if (item == null) return null;
+
+            if (quantity <= 0)
+            {
+                _db.CartItems.Remove(item);
+            }
+            else
+            {
+                var stock = await _db.ProductVariants
+                    .Where(v => v.VariantId == item.VariantId)
+                    .Select(v => v.StockQuantity)
+                    .FirstOrDefaultAsync();
+
+                item.Quantity = Math.Min(stock, quantity);
+            }
+
+            await _db.SaveChangesAsync();
+            return await GetUserCartAsync(item.UserId);
+        }
+
+        public async Task RemoveItemFromCartAsync(int cartItemId)
+        {
+            var item = await _db.CartItems.FirstOrDefaultAsync(ci => ci.CartId == cartItemId);
             if (item == null) return;
 
             _db.CartItems.Remove(item);
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task ClearUserCartAsync(int userId)
+        {
+            var items = await _db.CartItems.Where(ci => ci.UserId == userId).ToListAsync();
+            _db.CartItems.RemoveRange(items);
+            await _db.SaveChangesAsync();
+        }
+
+        private IQueryable<CartItemDto> BuildCartItemsQuery(int userId)
+        {
+            return _db.CartItems
+                .AsNoTracking()
+                .Where(ci => ci.UserId == userId)
+                .OrderBy(ci => ci.CartId)
+                .Select(ci => new CartItemDto
+                {
+                    CartItemId = ci.CartId,
+                    VariantId = ci.VariantId,
+                    Quantity = ci.Quantity,
+                    ProductName = ci.Variant.Product.Name,
+                    Size = ci.Variant.Size,
+                    Color = ci.Variant.Color,
+                    UnitPrice = ci.Variant.Product.BasePrice + (ci.Variant.PriceModifier ?? 0),
+                    ImageUrl = ci.Variant.Product.ProductImages
+                        .Where(i => i.IsPrimary == true)
+                        .Select(i => i.ImageUrl)
+                        .FirstOrDefault() ?? string.Empty
+                });
         }
     }
 }
