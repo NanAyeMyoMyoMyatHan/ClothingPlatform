@@ -215,10 +215,13 @@
         }
 
         <div class="summary-actions">
-            <button type="button" class="ob-submit-btn @(canSubmitPhoneOrder ? "" : "disabled")"
-                    disabled="@(!canSubmitPhoneOrder)" @onclick="SubmitPhoneOrder">
+            <LoadingButton Class="@PhoneOrderSubmitButtonClass"
+                           Disabled="@(!canSubmitPhoneOrder || isSubmittingPhoneOrder)"
+                           IsLoading="@isSubmittingPhoneOrder"
+                           LoadingText="Confirming..."
+                           OnClick="SubmitPhoneOrder">
                 <i class="bi bi-bag-check-fill"></i> Confirm Order
-            </button>
+            </LoadingButton>
             <button type="button" class="text-action-btn" @onclick="ResetCreateOrderForm">
                 <i class="bi bi-arrow-counterclockwise"></i> Reset
             </button>
@@ -230,6 +233,7 @@
     private bool HasCustomer => !string.IsNullOrWhiteSpace(guestCustomerName) && !string.IsNullOrWhiteSpace(guestPhoneNumber);
     private bool HasDelivery => !string.IsNullOrWhiteSpace(newOrderShippingAddress);
     private bool HasItems => selectedLineCount > 0;
+    private string PhoneOrderSubmitButtonClass => canSubmitPhoneOrder ? "ob-submit-btn" : "ob-submit-btn disabled";
 
     private static string CheckClass(bool isComplete) => isComplete ? "summary-check complete" : "summary-check";
 }

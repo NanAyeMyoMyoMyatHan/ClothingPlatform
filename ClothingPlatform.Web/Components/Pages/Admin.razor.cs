@@ -41,6 +41,7 @@ namespace ClothingPlatform.Web.Components.Pages
         private string activeView = "dashboard";
         private string errorMessage = "";
         private string successMessage = "";
+        private readonly HashSet<string> adminLoadingActions = new();
 
         // Lists
         private List<Order> allOrders = new();
@@ -124,6 +125,59 @@ namespace ClothingPlatform.Web.Components.Pages
         private List<UserModel> PageCustomer { get; set; } = new();
         private List<UserModel> PageStaff { get; set; } = new();
         private List<ProductImageModel> imageModel { get; set; } = new();
+
+        private const string LoadDataAction = "load-data";
+        private const string CreateProductAction = "create-product";
+        private const string UpdateProductAction = "update-product";
+        private const string CreateStaffAction = "create-staff";
+        private const string LoadReportAction = "load-report";
+        private const string DownloadReportAction = "download-report";
+        private const string DailyReportAction = "daily-report";
+        private const string OrderFilterAll = "All";
+        private const string OrderFilterPending = "Pending";
+        private const string OrderFilterProcessing = "Processing";
+        private const string OrderFilterConfirm = "Confirm";
+
+        private bool IsAdminActionLoading(string action) => adminLoadingActions.Contains(action);
+
+        private static string EditProductAction(int productId) => $"edit-product-{productId}";
+
+        private static string DeleteProductAction(int productId) => $"delete-product-{productId}";
+
+        private static string DeleteOrderAction(int orderId) => $"delete-order-{orderId}";
+
+        private static string DeleteStaffAction(int userId) => $"delete-staff-{userId}";
+
+        private static string OrderStatusAction(int orderId) => $"order-status-{orderId}";
+
+        private static string FilterOrdersAction(string status) => $"filter-orders-{status}";
+
+        private string AdminOrderFilterButtonClass(string status, bool includeMargin = true)
+        {
+            var activeClass = orderFilter == status ? "btn-luxury-solid text-white" : "";
+            var marginClass = includeMargin ? " me-2" : "";
+            return $"btn-luxury {activeClass}{marginClass}".Trim();
+        }
+
+        private async Task RunAdminAction(string action, Func<Task> callback)
+        {
+            if (!adminLoadingActions.Add(action))
+            {
+                return;
+            }
+
+            StateHasChanged();
+
+            try
+            {
+                await callback();
+            }
+            finally
+            {
+                adminLoadingActions.Remove(action);
+                StateHasChanged();
+            }
+        }
         // စာမျက်နှာ နံပါတ်နှိပ်လိုက်ရင် ပြောင်းပေးမည့် Methods
         protected override async Task OnInitializedAsync()
         {
@@ -998,6 +1052,34 @@ namespace ClothingPlatform.Web.Components.Pages
 
         private static bool IsFinalStatus(string? status) =>
             OrderWorkflow.IsFinal(OrderWorkflow.Normalize(status));
+
+        private static string? NormalizeSlipImageUrl(string? imageUrl)
+        {
+            if (string.IsNullOrWhiteSpace(imageUrl))
+            {
+                return null;
+            }
+
+            var trimmedUrl = imageUrl.Trim();
+            if (trimmedUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase) ||
+                trimmedUrl.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            {
+                return trimmedUrl;
+            }
+
+            var normalizedPath = trimmedUrl.Replace('\\', '/').TrimStart('/');
+            if (normalizedPath.StartsWith("images/payment-slips/", StringComparison.OrdinalIgnoreCase))
+            {
+                return $"/{normalizedPath}";
+            }
+
+            if (trimmedUrl.StartsWith("/", StringComparison.Ordinal))
+            {
+                return trimmedUrl;
+            }
+
+            return $"/images/payment-slips/{normalizedPath}";
+        }
 
         private static string StatusBadgeClass(string? status) => OrderWorkflow.Normalize(status) switch
         {

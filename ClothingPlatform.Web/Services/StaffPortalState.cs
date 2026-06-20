@@ -40,6 +40,11 @@ namespace ClothingPlatform.Web.Services
 
         public bool IsPortalReady { get; private set; }
         public bool ShowLogoutConfirm { get; private set; }
+        public bool IsSubmittingPhoneOrder { get; private set; }
+        public bool IsSavingProfile { get; private set; }
+        public bool IsLoggingOut { get; private set; }
+        public int? UpdatingRegularOrderId { get; private set; }
+        public int? UpdatingGuestOrderId { get; private set; }
         public string CurrentFilter { get; private set; } = "";
         public string CurrentDateString { get; private set; } = "";
         public bool ProfileSaved { get; set; }
@@ -453,6 +458,11 @@ namespace ClothingPlatform.Web.Services
 
         public async Task UpdateOrderStatus(Order order, string? newStatus)
         {
+            if (UpdatingRegularOrderId == order.OrderId)
+            {
+                return;
+            }
+
             if (string.IsNullOrEmpty(newStatus))
             {
                 return;
@@ -466,6 +476,9 @@ namespace ClothingPlatform.Web.Services
             }
 
             var staffId = _session.CurrentUser!.UserId;
+            UpdatingRegularOrderId = order.OrderId;
+            NotifyStateChanged();
+
             try
             {
                 await _httpServices.ExecuteAsync<object>(
@@ -479,10 +492,20 @@ namespace ClothingPlatform.Web.Services
             {
                 TriggerToast(UiMessages.StaffPortal.RegularOrderUpdateFailed(ex.Message), true);
             }
+            finally
+            {
+                UpdatingRegularOrderId = null;
+                NotifyStateChanged();
+            }
         }
 
         public async Task UpdateGuestOrderStatus(GuestOrder guestOrder, string? newStatus)
         {
+            if (UpdatingGuestOrderId == guestOrder.GuestOrderId)
+            {
+                return;
+            }
+
             if (string.IsNullOrEmpty(newStatus))
             {
                 return;
@@ -496,6 +519,9 @@ namespace ClothingPlatform.Web.Services
             }
 
             var staffId = _session.CurrentUser!.UserId;
+            UpdatingGuestOrderId = guestOrder.GuestOrderId;
+            NotifyStateChanged();
+
             try
             {
                 await _httpServices.ExecuteAsync<object>(
@@ -508,6 +534,11 @@ namespace ClothingPlatform.Web.Services
             catch (Exception ex)
             {
                 TriggerToast(UiMessages.StaffPortal.GuestOrderUpdateFailed(ex.Message), true);
+            }
+            finally
+            {
+                UpdatingGuestOrderId = null;
+                NotifyStateChanged();
             }
         }
 
@@ -624,6 +655,11 @@ namespace ClothingPlatform.Web.Services
 
         public async Task SubmitPhoneOrder()
         {
+            if (IsSubmittingPhoneOrder)
+            {
+                return;
+            }
+
             CreateOrderError = "";
 
             if (string.IsNullOrWhiteSpace(GuestCustomerName) || string.IsNullOrWhiteSpace(GuestPhoneNumber))
@@ -647,6 +683,9 @@ namespace ClothingPlatform.Web.Services
                 NotifyStateChanged();
                 return;
             }
+
+            IsSubmittingPhoneOrder = true;
+            NotifyStateChanged();
 
             var requestDto = new ClothingPlatform.Api.Features.Staff.GuestOrderRequestDto
             {
@@ -687,11 +726,24 @@ namespace ClothingPlatform.Web.Services
                 TriggerToast(UiMessages.StaffPortal.PhoneOrderSubmitFailed(ex.Message), true);
                 NotifyStateChanged();
             }
+            finally
+            {
+                IsSubmittingPhoneOrder = false;
+                NotifyStateChanged();
+            }
         }
 
         public async Task SaveProfile()
         {
+            if (IsSavingProfile)
+            {
+                return;
+            }
+
             var staffId = _session.CurrentUser!.UserId;
+            IsSavingProfile = true;
+            NotifyStateChanged();
+
             try
             {
                 await _httpServices.ExecuteAsync<object>(
@@ -712,6 +764,11 @@ namespace ClothingPlatform.Web.Services
             {
                 TriggerToast(UiMessages.StaffPortal.ProfileSaveFailed(ex.Message), true);
             }
+            finally
+            {
+                IsSavingProfile = false;
+                NotifyStateChanged();
+            }
         }
 
         public void RequestLogout()
@@ -728,9 +785,24 @@ namespace ClothingPlatform.Web.Services
 
         public async Task ConfirmLogout()
         {
+            if (IsLoggingOut)
+            {
+                return;
+            }
+
             ShowLogoutConfirm = false;
-            await Logout();
+            IsLoggingOut = true;
             NotifyStateChanged();
+
+            try
+            {
+                await Logout();
+            }
+            finally
+            {
+                IsLoggingOut = false;
+                NotifyStateChanged();
+            }
         }
 
         public async Task Logout()

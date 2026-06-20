@@ -41,6 +41,7 @@ namespace ClothingPlatform.Web.Components.Pages
         private bool showLoginPw = false;
         private string loginErrorMessage = "";
         private string loginSuccessMessage = "";
+        private bool isLoginSubmitting = false;
         // Validation flags
         private bool emailInvalid = false;
         private string emailErrorMsg = "";
@@ -94,6 +95,11 @@ namespace ClothingPlatform.Web.Components.Pages
         }
         private async Task HandleLogin()
         {
+            if (isLoginSubmitting)
+            {
+                return;
+            }
+
             ClearAllErrors();
             loginErrorMessage = "";
             bool isValid = true;
@@ -116,6 +122,9 @@ namespace ClothingPlatform.Web.Components.Pages
                 isValid = false;
             }
             if (!isValid) return;
+
+            isLoginSubmitting = true;
+            StateHasChanged();
 
             try
             {
@@ -174,6 +183,11 @@ namespace ClothingPlatform.Web.Components.Pages
                 loginErrorMessage = ex.Message.Contains("Customer accounts must use", StringComparison.OrdinalIgnoreCase)
                     ? UiMessages.PortalLogin.CustomerMustUseCustomerLogin
                     : UiMessages.PortalLogin.LoginFailed(ex.Message);
+            }
+            finally
+            {
+                isLoginSubmitting = false;
+                StateHasChanged();
             }
         }
         private void HandleSignup()

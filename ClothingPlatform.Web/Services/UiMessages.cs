@@ -90,12 +90,17 @@ namespace ClothingPlatform.Web.Services
             public const string CartItemRemoved = "Item removed from your shopping bag.";
             public const string CheckoutBagEmpty = "Add at least one item before checkout.";
             public const string PaymentSlipUploaded = "Payment screenshot was attached to checkout.";
+            public const string PaymentSlipInvalidFormat = "Payment screenshot must be a JPG, PNG, or WEBP image.";
+            public const string PaymentSlipTooLarge = "Payment screenshot must be 5 MB or smaller.";
+            public static string PaymentSlipReadFailed(string detail) => $"Payment screenshot could not be read. {detail}";
             public const string PlaceOrderConfirm = "Submit this checkout order for boutique processing?";
             public const string DeliveryDetailsRequired = "Enter all delivery details before submitting the order.";
             public const string PaymentMethodRequired = "Select a payment method for this order.";
             public const string PaymentSlipRequired = "Upload a payment screenshot for this method.";
             public const string PaymentReferenceRequired = "Enter the payment transaction or reference number.";
             public const string SubmitBagEmpty = "Your bag is empty, so no order can be submitted.";
+            public const string CheckoutSignInRequired = "Sign in before submitting this order.";
+            public static string CartClearAfterOrderFailed(string detail) => $"Order was placed, but your shopping bag could not be cleared automatically. {detail}";
             public static string PlaceOrderFailed(string detail) => $"Checkout order could not be placed. {detail}";
             public const string ProfileDetailsRequired = "Complete all customer profile fields before saving.";
             public const string ProfileUpdated = "Customer profile changes were saved.";

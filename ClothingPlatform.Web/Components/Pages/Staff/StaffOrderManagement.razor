@@ -89,7 +89,9 @@
                         <tbody>
                             @foreach (var ord in Pagedorders)
                             {
-                                var payMethod = ord.Payments.FirstOrDefault()?.PaymentMethod ?? "COD";
+                                var payment = ord.Payments.FirstOrDefault();
+                                var payMethod = payment?.PaymentMethod ?? "COD";
+                                var slipUrl = NormalizeSlipImageUrl(payment?.SlipImageUrl);
                                 <tr>
                                     <td>
                                         <span class="order-code">#ORD-@ord.OrderId.ToString("D4")</span>
@@ -101,7 +103,21 @@
                                         </div>
                                     </td>
                                     <td class="amount-cell">@ord.TotalAmount.ToString("N0")</td>
-                                    <td><span class="pay-badge">@payMethod.ToUpper()</span></td>
+                                    <td>
+                                        <div class="payment-stack">
+                                            <span class="pay-badge">@payMethod.ToUpper()</span>
+                                            @if (!string.IsNullOrEmpty(slipUrl))
+                                            {
+                                                <a class="payment-slip-link" href="@slipUrl" target="_blank" rel="noopener" title="View payment slip">
+                                                    <img class="payment-slip-thumb" src="@slipUrl" alt="Payment slip for ORD-@ord.OrderId.ToString("D4")" />
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <span class="payment-slip-empty">No slip</span>
+                                            }
+                                        </div>
+                                    </td>
                                     <td>@StatusBadge(ord.OrderStatus)</td>
                                     <td>
                                         @if (IsFinalStatus(ord.OrderStatus))
@@ -111,6 +127,7 @@
                                         else
                                         {
                                             <select class="status-select" value="@NormalizeStatus(ord.OrderStatus)"
+                                                    disabled="@IsUpdatingRegularOrder(ord.OrderId)"
                                                     @onchange="(e) => UpdateOrderStatus(ord, e.Value?.ToString())">
                                                 <option value="Pending">Pending</option>
                                                 <option value="Processing">Processing</option>
@@ -127,7 +144,9 @@
                 <div class="ops-card-list">
                     @foreach (var ord in Pagedorders)
                     {
-                        var payMethod = ord.Payments.FirstOrDefault()?.PaymentMethod ?? "COD";
+                        var payment = ord.Payments.FirstOrDefault();
+                        var payMethod = payment?.PaymentMethod ?? "COD";
+                        var slipUrl = NormalizeSlipImageUrl(payment?.SlipImageUrl);
                         <article class="ops-order-card">
                             <div class="ops-card-top">
                                 <span class="order-code">#ORD-@ord.OrderId.ToString("D4")</span>
@@ -145,6 +164,16 @@
                                 <div>
                                     <label>Payment</label>
                                     <span class="pay-badge">@payMethod.ToUpper()</span>
+                                    @if (!string.IsNullOrEmpty(slipUrl))
+                                    {
+                                        <a class="payment-slip-link" href="@slipUrl" target="_blank" rel="noopener" title="View payment slip">
+                                            <img class="payment-slip-thumb" src="@slipUrl" alt="Payment slip for ORD-@ord.OrderId.ToString("D4")" />
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="payment-slip-empty">No slip</span>
+                                    }
                                 </div>
                             </div>
                             <div class="ops-card-action">
@@ -155,6 +184,7 @@
                                 else
                                 {
                                     <select class="status-select" value="@NormalizeStatus(ord.OrderStatus)"
+                                            disabled="@IsUpdatingRegularOrder(ord.OrderId)"
                                             @onchange="(e) => UpdateOrderStatus(ord, e.Value?.ToString())">
                                         <option value="Pending">Pending</option>
                                         <option value="Processing">Processing</option>
@@ -251,6 +281,7 @@
                                         else
                                         {
                                             <select class="status-select" value="@NormalizeStatus(go.OrderStatus)"
+                                                    disabled="@IsUpdatingGuestOrder(go.GuestOrderId)"
                                                     @onchange="(e) => UpdateGuestOrderStatus(go, e.Value?.ToString())">
                                                 <option value="Pending">Pending</option>
                                                 <option value="Processing">Processing</option>
@@ -302,6 +333,7 @@
                                 else
                                 {
                                     <select class="status-select" value="@NormalizeStatus(go.OrderStatus)"
+                                            disabled="@IsUpdatingGuestOrder(go.GuestOrderId)"
                                             @onchange="(e) => UpdateGuestOrderStatus(go, e.Value?.ToString())">
                                         <option value="Pending">Pending</option>
                                         <option value="Processing">Processing</option>
@@ -362,6 +394,34 @@
     {
         guestOrderSearch = "";
         guestPaymentFilter = "";
+    }
+
+    private static string? NormalizeSlipImageUrl(string? imageUrl)
+    {
+        if (string.IsNullOrWhiteSpace(imageUrl))
+        {
+            return null;
+        }
+
+        var trimmedUrl = imageUrl.Trim();
+        if (trimmedUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase) ||
+            trimmedUrl.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            return trimmedUrl;
+        }
+
+        var normalizedPath = trimmedUrl.Replace('\\', '/').TrimStart('/');
+        if (normalizedPath.StartsWith("images/payment-slips/", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"/{normalizedPath}";
+        }
+
+        if (trimmedUrl.StartsWith("/", StringComparison.Ordinal))
+        {
+            return trimmedUrl;
+        }
+
+        return $"/images/payment-slips/{normalizedPath}";
     }
 
     private static MarkupString PaymentBadge(string? status)

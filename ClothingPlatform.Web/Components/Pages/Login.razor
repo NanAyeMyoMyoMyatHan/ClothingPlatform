@@ -553,10 +553,13 @@
                         <label class="form-check-label" for="rememberMe">Remember me</label>
                     </div>
                 </div>
-                <button class="btn-boutique" @onclick="HandleLogin">
+                <LoadingButton Class="btn-boutique"
+                               IsLoading="@isLoginSubmitting"
+                               LoadingText="Entering..."
+                               OnClick="HandleLogin">
                     <i class="bi bi-arrow-right-short" style="font-size:1rem;vertical-align:-2px;margin-right:4px;"></i>
                     Enter the Boutique
-                </button>
+                </LoadingButton>
                 <p class="switch-text">
                     Shopping as a customer?
                     <a class="switch-link" href="/customer-login">Customer sign in &rarr;</a>

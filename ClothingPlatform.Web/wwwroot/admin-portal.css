@@ -454,6 +454,28 @@
     font-size: 0.88rem;
 }
 
+.payment-slip-link {
+    display: inline-flex;
+    align-items: center;
+    margin-top: .45rem;
+    text-decoration: none;
+}
+
+.payment-slip-thumb {
+    width: 46px;
+    height: 58px;
+    object-fit: cover;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: #fff;
+}
+
+.payment-slip-empty {
+    margin-top: .35rem;
+    font-size: .72rem;
+    color: #7A5C50;
+}
+
 .portal-content {
     padding: 0;
 }

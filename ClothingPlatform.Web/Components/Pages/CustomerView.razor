@@ -1130,6 +1130,11 @@
         transition: border-color 0.2s, background 0.2s;
         margin-top: 20px;
         position: relative;
+        display: block;
+    }
+
+    .slip-file-input {
+        display: none;
     }
 
         .slip-upload-zone:hover {
@@ -1707,7 +1712,12 @@
                         <div class="confirm-text">Are you sure you want to log out of your customer account?</div>
                         <div class="confirm-actions">
                             <button class="confirm-btn-cancel" @onclick="CancelLogout">Cancel</button>
-                            <button class="confirm-btn-confirm" @onclick="ConfirmLogout">Yes, Log Out</button>
+                            <LoadingButton Class="confirm-btn-confirm"
+                                                   IsLoading="@isCustomerLoggingOut"
+                                                   LoadingText="Signing Out..."
+                                                   OnClick="ConfirmLogout">
+                                        Yes, Log Out
+                                    </LoadingButton>
                         </div>
                     </div>
                 </div>
@@ -1980,15 +1990,26 @@
                     </div>
                     <div class="form-group mt-4">
                         <label class="form-label-custom">Upload Screenshot Slip</label>
-                        <div class="slip-upload-zone" @onclick="SimulateSlipUpload">
+                        <label class="slip-upload-zone" for="payment-slip-input">
                             <i class="bi bi-cloud-arrow-up slip-upload-icon"></i>
-                            <p class="slip-upload-text">Click to simulate uploading screenshot slip</p>
-                        </div>
+                            <p class="slip-upload-text">Choose a JPG, PNG, or WEBP screenshot from this device</p>
+                        </label>
+                        <InputFile id="payment-slip-input"
+                                   class="slip-file-input"
+                                   OnChange="HandleSlipSelected"
+                                   accept="image/jpeg,image/png,image/webp" />
 
-                        @if (slipUploaded && !string.IsNullOrEmpty(slipFileName))
+                        @if (!string.IsNullOrEmpty(slipUploadError))
+                        {
+                            <p class="modal-error mt-2">
+                                <i class="bi bi-exclamation-triangle"></i> @slipUploadError
+                            </p>
+                        }
+
+                        @if (slipUploaded && !string.IsNullOrEmpty(slipFileName) && !string.IsNullOrEmpty(slipPreviewDataUrl))
                         {
                             <div class="slip-preview">
-                                <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80" style="width:120px; height:150px; object-fit:cover;" alt="Simulated Slip" />
+                                <img src="@slipPreviewDataUrl" style="width:120px; height:150px; object-fit:cover;" alt="Selected payment slip" />
                                 <p class="slip-preview-name text-center text-success mt-2"><i class="bi bi-patch-check-fill"></i> @slipFileName</p>
                             </div>
                         }
@@ -2025,7 +2046,12 @@
                         <span class="summary-total-val">@CartTotal.ToString("N0") MMK</span>
                     </div>
 
-                    <button class="btn-place-order" @onclick="PlaceOrder">Confirm Atelier Purchase</button>
+                    <LoadingButton Class="btn-place-order"
+                                   IsLoading="@isPlacingOrder"
+                                   LoadingText="Confirming..."
+                                   OnClick="PlaceOrder">
+                        Confirm Atelier Purchase
+                    </LoadingButton>
                 </div>
             </div>
         </div>
@@ -2213,7 +2239,12 @@
                             <input type="text" class="form-control-custom" @bind="profCity" />
                         </div>
 
-                        <button class="btn-primary-rose mt-4 w-100" @onclick="SaveProfile">Save Member Profile</button>
+                        <LoadingButton Class="btn-primary-rose mt-4 w-100"
+                                                       IsLoading="@isSavingCustomerProfile"
+                                                       LoadingText="Saving..."
+                                                       OnClick="SaveProfile">
+                            Save Member Profile
+                        </LoadingButton>
                     </div>
                 </div>
             </div>
@@ -2448,7 +2479,12 @@
                             <button class="qty-btn" @onclick="() => ChangeSelectedQuantity(1)">+</button>
                         </div>
                     </div>
-                    <button class="btn-add-bag" @onclick="AddToBagUnified">Add to Bag</button>
+                    <LoadingButton Class="btn-add-bag"
+                                   IsLoading="@isAddingToBag"
+                                   LoadingText="Adding..."
+                                   OnClick="AddToBagUnified">
+                        Add to Bag
+                    </LoadingButton>
                 </div>
             </div>
         </div>
@@ -2480,13 +2516,24 @@
                         <p class="cart-item-name">@item.Name</p>
                         <p class="cart-item-meta">@item.Size · @item.Color</p>
                         <div class="cart-qty">
-                            <button class="qty-btn" @onclick="() => UpdateQty(item, -1)">-</button>
+                            <LoadingButton Class="qty-btn"
+                                                   IsLoading="@IsCartItemBusy(item.CartItemId)"
+                                                   Disabled="@IsCartItemBusy(item.CartItemId)"
+                                                   OnClick="@(() => UpdateQty(item, -1))">-</LoadingButton>
                             <span class="qty-num">@item.Qty</span>
-                            <button class="qty-btn" @onclick="() => UpdateQty(item, 1)">+</button>
+                            <LoadingButton Class="qty-btn"
+                                                   IsLoading="@IsCartItemBusy(item.CartItemId)"
+                                                   Disabled="@IsCartItemBusy(item.CartItemId)"
+                                                   OnClick="@(() => UpdateQty(item, 1))">+</LoadingButton>
                         </div>
                     </div>
                     <div class="d-flex flex-column align-items-end justify-content-between">
-                        <button class="cart-item-remove" @onclick="() => RemoveItem(item)"><i class="bi bi-trash"></i></button>
+                        <LoadingButton Class="cart-item-remove"
+                                               IsLoading="@IsCartItemBusy(item.CartItemId)"
+                                               Disabled="@IsCartItemBusy(item.CartItemId)"
+                                               OnClick="@(() => RemoveItem(item))">
+                            <i class="bi bi-trash"></i>
+                        </LoadingButton>
                         <span class="cart-item-price">@((item.Price * item.Qty).ToString("N0")) MMK</span>
                     </div>
                 </div>
@@ -2523,7 +2570,12 @@
         </span>
     </p>
     <p class="success-order-id">ORDER #@confirmedOrderId</p>
-    <button class="btn-continue" @onclick="AfterOrder">Continue Shopping</button>
+    <LoadingButton Class="btn-continue"
+                   IsLoading="@isContinuingAfterOrder"
+                   LoadingText="Loading..."
+                   OnClick="AfterOrder">
+        Continue Shopping
+    </LoadingButton>
 </div>
 
 <!-- Toast container -->

@@ -26,7 +26,12 @@
             <input type="email" @bind="loginEmail" />
             <label>Password</label>
             <input type="password" @bind="loginPassword" />
-            <button class="auth-primary" @onclick="HandleLogin">Sign In</button>
+            <LoadingButton Class="auth-primary"
+                           IsLoading="@isCustomerLoginSubmitting"
+                           LoadingText="Signing In..."
+                           OnClick="HandleLogin">
+                Sign In
+            </LoadingButton>
         }
         else
         {
@@ -48,7 +53,12 @@
             <input type="text" @bind="address" />
             <label>Password</label>
             <input type="password" @bind="registerPassword" />
-            <button class="auth-primary" @onclick="HandleRegister">Create Account</button>
+            <LoadingButton Class="auth-primary"
+                           IsLoading="@isCustomerRegisterSubmitting"
+                           LoadingText="Creating..."
+                           OnClick="HandleRegister">
+                Create Account
+            </LoadingButton>
         }
     </section>
 </div>
@@ -57,6 +67,8 @@
     private string mode = "login";
     private string message = "";
     private bool isError;
+    private bool isCustomerLoginSubmitting;
+    private bool isCustomerRegisterSubmitting;
 
     private string loginEmail = "";
     private string loginPassword = "";
@@ -76,12 +88,20 @@
 
     private async Task HandleLogin()
     {
+        if (isCustomerLoginSubmitting)
+        {
+            return;
+        }
+
         message = "";
         if (string.IsNullOrWhiteSpace(loginEmail) || string.IsNullOrWhiteSpace(loginPassword))
         {
             ShowMessage(UiMessages.CustomerAuth.LoginRequired, true);
             return;
         }
+
+        isCustomerLoginSubmitting = true;
+        StateHasChanged();
 
         try
         {
@@ -102,10 +122,20 @@
         {
             ShowMessage(UiMessages.CustomerAuth.LoginFailed(ex.Message), true);
         }
+        finally
+        {
+            isCustomerLoginSubmitting = false;
+            StateHasChanged();
+        }
     }
 
     private async Task HandleRegister()
     {
+        if (isCustomerRegisterSubmitting)
+        {
+            return;
+        }
+
         message = "";
         if (string.IsNullOrWhiteSpace(firstName) ||
             string.IsNullOrWhiteSpace(lastName) ||
@@ -116,6 +146,9 @@
             ShowMessage(UiMessages.CustomerAuth.RegisterRequiredFields, true);
             return;
         }
+
+        isCustomerRegisterSubmitting = true;
+        StateHasChanged();
 
         try
         {
@@ -140,6 +173,11 @@
         catch (Exception ex)
         {
             ShowMessage(UiMessages.CustomerAuth.RegisterFailed(ex.Message), true);
+        }
+        finally
+        {
+            isCustomerRegisterSubmitting = false;
+            StateHasChanged();
         }
     }
 

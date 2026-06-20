@@ -41,9 +41,12 @@
                             </div>
                         }
                         <div style="margin-top:1.4rem">
-                            <button class="btn-save" @onclick="SaveProfile">
+                            <LoadingButton Class="btn-save"
+                                           IsLoading="@isSavingStaffProfile"
+                                           LoadingText="Saving..."
+                                           OnClick="SaveProfile">
                                 <i class="bi bi-floppy" style="margin-right:.35rem"></i>Save Changes
-                            </button>
+                            </LoadingButton>
                         </div>
                     </div>
                 </div>

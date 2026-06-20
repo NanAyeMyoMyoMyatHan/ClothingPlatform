@@ -121,7 +121,8 @@ namespace ClothingPlatform.Api.Features.Order
                             TransactionNumber = p.TransactionId,
                             AmountPaid = p.Amount,
                             PaymentDate = p.CreatedAt,
-                            Status = p.PaymentStatus
+                            Status = p.PaymentStatus,
+                            SlipImageUrl = p.SlipImageUrl
                         }).ToList(),
 
                         // OrderItems များကို Mapping လုပ်ခြင်း

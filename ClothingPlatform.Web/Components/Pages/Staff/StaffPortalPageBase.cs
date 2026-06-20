@@ -49,6 +49,9 @@ namespace ClothingPlatform.Web.Components.Pages.Staff
         protected int selectedLineCount => State.SelectedLineCount;
         protected int selectedItemCount => State.SelectedItemCount;
         protected bool canSubmitPhoneOrder => State.CanSubmitPhoneOrder;
+        protected bool isSubmittingPhoneOrder => State.IsSubmittingPhoneOrder;
+        protected bool isSavingStaffProfile => State.IsSavingProfile;
+        protected bool isStaffLoggingOut => State.IsLoggingOut;
 
         protected int orderPage => State.OrderPage;
         protected int OrderTotalPages => State.OrderTotalPages;
@@ -76,6 +79,8 @@ namespace ClothingPlatform.Web.Components.Pages.Staff
         protected Task UpdateOrderStatus(Order order, string? newStatus) => State.UpdateOrderStatus(order, newStatus);
         protected Task UpdateGuestOrderStatus(GuestOrder guestOrder, string? newStatus) => State.UpdateGuestOrderStatus(guestOrder, newStatus);
         protected Task AdjustStock(ProductVariant variant, int adjustment) => State.AdjustStock(variant, adjustment);
+        protected bool IsUpdatingRegularOrder(int orderId) => State.UpdatingRegularOrderId == orderId;
+        protected bool IsUpdatingGuestOrder(int guestOrderId) => State.UpdatingGuestOrderId == guestOrderId;
 
         protected decimal GetVariantUnitPrice(int variantId) => State.GetVariantUnitPrice(variantId);
         protected decimal GetLineTotal(StaffPortalState.OrderLineDraft line) => State.GetLineTotal(line);

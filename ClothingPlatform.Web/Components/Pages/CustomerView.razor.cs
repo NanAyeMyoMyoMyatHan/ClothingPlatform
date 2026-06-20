@@ -5,13 +5,16 @@ using ClothingPlatform.Api.Models.Notifications;
 using ClothingPlatform.Api.Models.Order;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Razor.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Eventing.Reader;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -30,6 +33,9 @@ namespace ClothingPlatform.Web.Components.Pages
 
         [Inject]
         public HttpClientServices httpClientServices { get; set; }
+
+        [Inject]
+        public IWebHostEnvironment WebHostEnvironment { get; set; }
 
         // State variables
         private string activeTab = "home";
@@ -90,9 +96,34 @@ namespace ClothingPlatform.Web.Components.Pages
         private string paymentReference = "";
         private bool slipUploaded = false;
         private string slipFileName = "";
+        private string slipPreviewDataUrl = "";
+        private string slipUploadError = "";
+        private byte[]? selectedSlipBytes;
+        private string selectedSlipContentType = "";
+        private string selectedSlipExtension = "";
+        private const long MaxSlipFileSizeBytes = 5 * 1024 * 1024;
+        private static readonly HashSet<string> AllowedSlipExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".webp"
+        };
+        private static readonly HashSet<string> AllowedSlipContentTypes = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+        };
         private int pointsEarnedInOrder = 0;
         private string confirmedOrderId = "";
         private bool isSuccessOpen = false;
+        private bool isAddingToBag = false;
+        private bool isPlacingOrder = false;
+        private bool isContinuingAfterOrder = false;
+        private bool isSavingCustomerProfile = false;
+        private bool isCustomerLoggingOut = false;
+        private readonly HashSet<int> cartItemActionIds = new();
 
         // Profile inputs
         private string profFirstName = "";
@@ -441,9 +472,23 @@ namespace ClothingPlatform.Web.Components.Pages
 
         private async Task AddToBagUnified()
         {
-            
-                    await AddToBagAsync();
-       
+            if (isAddingToBag)
+            {
+                return;
+            }
+
+            isAddingToBag = true;
+            StateHasChanged();
+
+            try
+            {
+                await AddToBagAsync();
+            }
+            finally
+            {
+                isAddingToBag = false;
+                StateHasChanged();
+            }
         }
 
         private void SelectSize(string size)
@@ -553,37 +598,68 @@ namespace ClothingPlatform.Web.Components.Pages
 
         private async Task UpdateQty(CartItemModel item, int change)
         {
-            // Verify stock
-            var dbVariant = _db.ProductVariants.FirstOrDefault(v => v.VariantId == item.VariantId);
-            if (dbVariant != null)
+            if (!cartItemActionIds.Add(item.CartItemId))
             {
-                if (change > 0 && item.Qty + change > dbVariant.StockQuantity)
-                {
-                    ShowToast(UiMessages.CustomerShop.CartStockExceeded);
-                    return;
-                }
-            }
-
-            var nextQuantity = item.Qty + change;
-            if (nextQuantity <= 0)
-            {
-                await RemoveItem(item);
                 return;
             }
 
-            await httpClientServices.ExecuteAsync<CartDto>(
-                $"api/cart/item/{item.CartItemId}",
-                new UpdateCartItemRequest { Quantity = nextQuantity },
-                EnumHttpMethod.Put);
+            // Verify stock
+            try
+            {
+                var dbVariant = _db.ProductVariants.FirstOrDefault(v => v.VariantId == item.VariantId);
+                if (dbVariant != null)
+                {
+                    if (change > 0 && item.Qty + change > dbVariant.StockQuantity)
+                    {
+                        ShowToast(UiMessages.CustomerShop.CartStockExceeded);
+                        return;
+                    }
+                }
 
-            await LoadCartAsync();
+                var nextQuantity = item.Qty + change;
+                if (nextQuantity <= 0)
+                {
+                    await RemoveItem(item);
+                    return;
+                }
+
+                await httpClientServices.ExecuteAsync<CartDto>(
+                    $"api/cart/item/{item.CartItemId}",
+                    new UpdateCartItemRequest { Quantity = nextQuantity },
+                    EnumHttpMethod.Put);
+
+                await LoadCartAsync();
+            }
+            finally
+            {
+                cartItemActionIds.Remove(item.CartItemId);
+                StateHasChanged();
+            }
         }
 
         private async Task RemoveItem(CartItemModel item)
         {
-            await httpClientServices.ExecuteAsync<string>($"api/cart/item/{item.CartItemId}", null, EnumHttpMethod.Delete);
-            await LoadCartAsync();
-            ShowToast(UiMessages.CustomerShop.CartItemRemoved);
+            var ownsAction = cartItemActionIds.Add(item.CartItemId);
+            if (!ownsAction && item.Qty > 1)
+            {
+                return;
+            }
+
+            try
+            {
+                await httpClientServices.ExecuteAsync<string>($"api/cart/item/{item.CartItemId}", null, EnumHttpMethod.Delete);
+                await LoadCartAsync();
+                ShowToast(UiMessages.CustomerShop.CartItemRemoved);
+            }
+            finally
+            {
+                if (ownsAction)
+                {
+                    cartItemActionIds.Remove(item.CartItemId);
+                }
+
+                StateHasChanged();
+            }
         }
 
         private void ChangeSelectedQuantity(int change)
@@ -603,6 +679,8 @@ namespace ClothingPlatform.Web.Components.Pages
             Navigate("checkout");
         }
 
+        private bool IsCartItemBusy(int cartItemId) => cartItemActionIds.Contains(cartItemId);
+
         // Checkout & Payment Methods
         private void SelectPaymentMethod(string method)
         {
@@ -611,30 +689,117 @@ namespace ClothingPlatform.Web.Components.Pages
             {
                 slipUploaded = true; // No upload needed for COD
                 paymentReference = "COD";
+                ClearSlipSelection();
             }
             else
             {
-                slipUploaded = false; // Needs upload simulation
+                slipUploaded = false; // Needs real screenshot upload
                 paymentReference = "";
+                ClearSlipSelection();
             }
         }
 
-        private void SimulateSlipUpload()
+        private async Task HandleSlipSelected(InputFileChangeEventArgs e)
         {
-            slipFileName = "screenshot_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".png";
-            slipUploaded = true;
-            ShowToast(UiMessages.CustomerShop.PaymentSlipUploaded);
+            ClearSlipSelection(false);
+
+            var file = e.File;
+            if (file == null)
+            {
+                slipUploadError = UiMessages.CustomerShop.PaymentSlipRequired;
+                return;
+            }
+
+            var extension = Path.GetExtension(file.Name);
+            if (!AllowedSlipExtensions.Contains(extension) ||
+                !AllowedSlipContentTypes.Contains(file.ContentType))
+            {
+                slipUploadError = UiMessages.CustomerShop.PaymentSlipInvalidFormat;
+                return;
+            }
+
+            if (file.Size > MaxSlipFileSizeBytes)
+            {
+                slipUploadError = UiMessages.CustomerShop.PaymentSlipTooLarge;
+                return;
+            }
+
+            try
+            {
+                await using var stream = file.OpenReadStream(MaxSlipFileSizeBytes);
+                using var memoryStream = new MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+
+                selectedSlipBytes = memoryStream.ToArray();
+                selectedSlipContentType = file.ContentType;
+                selectedSlipExtension = extension.ToLowerInvariant();
+                slipFileName = Path.GetFileName(file.Name);
+                slipPreviewDataUrl = $"data:{selectedSlipContentType};base64,{Convert.ToBase64String(selectedSlipBytes)}";
+                slipUploaded = true;
+                slipUploadError = "";
+                ShowToast(UiMessages.CustomerShop.PaymentSlipUploaded);
+            }
+            catch (Exception ex)
+            {
+                ClearSlipSelection(false);
+                slipUploadError = UiMessages.CustomerShop.PaymentSlipReadFailed(ex.Message);
+            }
+        }
+
+        private void ClearSlipSelection(bool clearError = true)
+        {
+            slipUploaded = selectedPayment == "cod";
+            slipFileName = "";
+            slipPreviewDataUrl = "";
+            selectedSlipBytes = null;
+            selectedSlipContentType = "";
+            selectedSlipExtension = "";
+            if (clearError)
+            {
+                slipUploadError = "";
+            }
+        }
+
+        private async Task<(string Url, string PhysicalPath)> SaveSelectedSlipAsync()
+        {
+            if (selectedSlipBytes == null || selectedSlipBytes.Length == 0)
+            {
+                throw new InvalidOperationException(UiMessages.CustomerShop.PaymentSlipRequired);
+            }
+
+            var webRootPath = WebHostEnvironment.WebRootPath
+                ?? Path.Combine(WebHostEnvironment.ContentRootPath, "wwwroot");
+            var folder = Path.Combine(webRootPath, "images", "payment-slips");
+            Directory.CreateDirectory(folder);
+
+            var fileName = $"{Guid.NewGuid():N}{selectedSlipExtension}";
+            var physicalPath = Path.Combine(folder, fileName);
+            await File.WriteAllBytesAsync(physicalPath, selectedSlipBytes);
+
+            return ($"/images/payment-slips/{fileName}", physicalPath);
         }
 
         private async Task PlaceOrder()
         {
-            string message = UiMessages.CustomerShop.PlaceOrderConfirm;
-            var isConfirm = await JSRuntime.InvokeAsync<bool>("confirm", message);
-            if (isConfirm)
+            if (isPlacingOrder)
             {
+                return;
+            }
 
+            isPlacingOrder = true;
+            StateHasChanged();
 
+            string? savedSlipPhysicalPath = null;
+            var dbCommitted = false;
 
+            try
+            {
+                string message = UiMessages.CustomerShop.PlaceOrderConfirm;
+                var isConfirm = await JSRuntime.InvokeAsync<bool>("confirm", message);
+                if (!isConfirm)
+                {
+                    return;
+                }
 
                 if (string.IsNullOrWhiteSpace(coName) || string.IsNullOrWhiteSpace(coPhone) ||
                     string.IsNullOrWhiteSpace(coAddress) || string.IsNullOrWhiteSpace(coCity))
@@ -649,7 +814,13 @@ namespace ClothingPlatform.Web.Components.Pages
                     return;
                 }
 
-                if (!slipUploaded)
+                if (selectedPayment != "cod" && !slipUploaded)
+                {
+                    ShowToast(UiMessages.CustomerShop.PaymentSlipRequired);
+                    return;
+                }
+
+                if (selectedPayment != "cod" && selectedSlipBytes == null)
                 {
                     ShowToast(UiMessages.CustomerShop.PaymentSlipRequired);
                     return;
@@ -667,95 +838,150 @@ namespace ClothingPlatform.Web.Components.Pages
                     return;
                 }
 
-                try
+                if (currentUser == null)
                 {
-                    // Create checkout order via transactions
-                    var total = CartTotal;
+                    ShowToast(UiMessages.CustomerShop.CheckoutSignInRequired);
+                    return;
+                }
 
-                    var order = new Order
-                    {
-                        UserId = currentUser!.UserId,
-                        TotalAmount = total,
-                        OrderStatus = OrderWorkflow.Pending,
-                        PaymentStatus = "unpaid",
-                        ShippingAddress = $"{coAddress}, {coCity} (Phone: {coPhone})",
-                        CreatedAt = DateTime.Now
-                    };
+                string? savedSlipUrl = null;
+                if (selectedPayment != "cod")
+                {
+                    var savedSlip = await SaveSelectedSlipAsync();
+                    savedSlipUrl = savedSlip.Url;
+                    savedSlipPhysicalPath = savedSlip.PhysicalPath;
+                }
 
-                    _db.Orders.Add(order);
-                    await _db.SaveChangesAsync(); // generate OrderId
+                await using var transaction = await _db.Database.BeginTransactionAsync();
 
-                    // Add OrderItems and deduct stock
-                    foreach (var item in cart)
-                    {
-                        _db.OrderItems.Add(new OrderItem
-                        {
-                            OrderId = order.OrderId,
-                            VariantId = item.VariantId,
-                            Quantity = item.Qty,
-                            PriceAtPurchase = item.Price
-                        });
+                var total = CartTotal;
 
-                        // Decrement variant stock
-                        var variant = await _db.ProductVariants.FirstOrDefaultAsync(v => v.VariantId == item.VariantId);
-                        if (variant != null)
-                        {
-                            variant.StockQuantity = Math.Max(0, variant.StockQuantity - item.Qty);
-                        }
-                    }
+                var order = new Order
+                {
+                    UserId = currentUser.UserId,
+                    TotalAmount = total,
+                    OrderStatus = OrderWorkflow.Pending,
+                    PaymentStatus = "unpaid",
+                    ShippingAddress = $"{coAddress}, {coCity} (Phone: {coPhone})",
+                    CreatedAt = DateTime.Now
+                };
 
-                    // Add Payment entry
-                    _db.Payments.Add(new Payment
+                _db.Orders.Add(order);
+                await _db.SaveChangesAsync(); // generate OrderId
+
+                // Add OrderItems and deduct stock
+                foreach (var item in cart)
+                {
+                    _db.OrderItems.Add(new OrderItem
                     {
                         OrderId = order.OrderId,
-                        PaymentMethod = selectedPayment,
-                        PaymentStatus = "pending",
-                        Amount = total,
-                        TransactionId = selectedPayment == "cod" ? "COD" : paymentReference.Trim(),
-                        SlipImageUrl = selectedPayment == "cod" ? null : slipFileName,
-                        CreatedAt = DateTime.Now
+                        VariantId = item.VariantId,
+                        Quantity = item.Qty,
+                        PriceAtPurchase = item.Price
                     });
 
-                    await _db.SaveChangesAsync();
+                    var variant = await _db.ProductVariants.FirstOrDefaultAsync(v => v.VariantId == item.VariantId);
+                    if (variant != null)
+                    {
+                        variant.StockQuantity = Math.Max(0, variant.StockQuantity - item.Qty);
+                    }
+                }
 
-                    pointsEarnedInOrder = (int)(total / 100);
-                    confirmedOrderId = $"ORD-{order.OrderId:D4}";
-                    isSuccessOpen = true;
+                _db.Payments.Add(new Payment
+                {
+                    OrderId = order.OrderId,
+                    PaymentMethod = selectedPayment,
+                    PaymentStatus = "pending",
+                    Amount = total,
+                    TransactionId = selectedPayment == "cod" ? "COD" : paymentReference.Trim(),
+                    SlipImageUrl = selectedPayment == "cod" ? null : savedSlipUrl,
+                    CreatedAt = DateTime.Now
+                });
+
+                await _db.SaveChangesAsync();
+                await transaction.CommitAsync();
+                dbCommitted = true;
+
+                pointsEarnedInOrder = (int)(total / 100);
+                confirmedOrderId = $"ORD-{order.OrderId:D4}";
+                isSuccessOpen = true;
+
+                try
+                {
                     await httpClientServices.ExecuteAsync<string>($"api/cart/user/{currentUser.UserId}/clear", null, EnumHttpMethod.Delete);
                 }
                 catch (Exception ex)
                 {
-                    ShowToast(UiMessages.CustomerShop.PlaceOrderFailed(ex.Message));
+                    ShowToast(UiMessages.CustomerShop.CartClearAfterOrderFailed(ex.Message));
                 }
-                
             }
-            else
+            catch (Exception ex)
             {
-                return;
+                if (!dbCommitted && !string.IsNullOrWhiteSpace(savedSlipPhysicalPath) && File.Exists(savedSlipPhysicalPath))
+                {
+                    try
+                    {
+                        File.Delete(savedSlipPhysicalPath);
+                    }
+                    catch
+                    {
+                        // The failed checkout should still surface the original error.
+                    }
+                }
+
+                ShowToast(UiMessages.CustomerShop.PlaceOrderFailed(ex.Message));
+            }
+            finally
+            {
+                isPlacingOrder = false;
+                StateHasChanged();
             }
         }
         private async Task AfterOrder()
         {
-            isSuccessOpen = false;
-            cart.Clear();
-            selectedPayment = "";
-            slipUploaded = false;
-            slipFileName = "";
-            paymentReference = "";
-            
-            await LoadData(); // reload history
-            Navigate("history");
+            if (isContinuingAfterOrder)
+            {
+                return;
+            }
+
+            isContinuingAfterOrder = true;
+            StateHasChanged();
+
+            try
+            {
+                isSuccessOpen = false;
+                cart.Clear();
+                selectedPayment = "";
+                paymentReference = "";
+                ClearSlipSelection();
+
+                await LoadData(); // reload history
+                Navigate("history");
+            }
+            finally
+            {
+                isContinuingAfterOrder = false;
+                StateHasChanged();
+            }
         }
 
         // Customer Profile methods
         private async Task SaveProfile()
         {
+            if (isSavingCustomerProfile)
+            {
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(profFirstName) || string.IsNullOrWhiteSpace(profLastName) || 
                 string.IsNullOrWhiteSpace(profEmail) || string.IsNullOrWhiteSpace(profAddress))
             {
                 ShowToast(UiMessages.CustomerShop.ProfileDetailsRequired);
                 return;
             }
+
+            isSavingCustomerProfile = true;
+            StateHasChanged();
 
             try
             {
@@ -783,6 +1009,11 @@ namespace ClothingPlatform.Web.Components.Pages
             catch (Exception ex)
             {
                 ShowToast(UiMessages.CustomerShop.ProfileUpdateFailed(ex.Message));
+            }
+            finally
+            {
+                isSavingCustomerProfile = false;
+                StateHasChanged();
             }
         }
 
@@ -875,8 +1106,24 @@ namespace ClothingPlatform.Web.Components.Pages
         private void CancelLogout() => showLogoutConfirm = false;
         private async Task ConfirmLogout()
         {
+            if (isCustomerLoggingOut)
+            {
+                return;
+            }
+
+            isCustomerLoggingOut = true;
+            StateHasChanged();
+
             showLogoutConfirm = false;
-            await Logout();
+            try
+            {
+                await Logout();
+            }
+            finally
+            {
+                isCustomerLoggingOut = false;
+                StateHasChanged();
+            }
         }
 
         private async Task Logout()

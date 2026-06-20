@@ -86,7 +86,12 @@ else
                 <p class="text-muted m-0">Today is @DateTime.Now.ToString("dd MMM yyyy")</p>
             </div>
             <div>
-                <button class="btn-luxury" @onclick="LoadData"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                <LoadingButton Class="btn-luxury"
+                               IsLoading="@IsAdminActionLoading(LoadDataAction)"
+                               LoadingText="Refreshing..."
+                               OnClick="@(() => RunAdminAction(LoadDataAction, LoadData))">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </LoadingButton>
             </div>
         </div>
 
@@ -263,11 +268,21 @@ else
                     <div class="mt-4 d-grid gap-2">
                         @if (editingProduct == null)
                         {
-                            <button class="btn-luxury-solid" @onclick="HandleCreateProduct">Add Product</button>
+                            <LoadingButton Class="btn-luxury-solid"
+                                           IsLoading="@IsAdminActionLoading(CreateProductAction)"
+                                           LoadingText="Adding..."
+                                           OnClick="@(() => RunAdminAction(CreateProductAction, HandleCreateProduct))">
+                                Add Product
+                            </LoadingButton>
                         }
                         else
                         {
-                            <button class="btn-luxury-solid" @onclick=" HandleUpdateProduct">Save Changes</button>
+                            <LoadingButton Class="btn-luxury-solid"
+                                           IsLoading="@IsAdminActionLoading(UpdateProductAction)"
+                                           LoadingText="Saving..."
+                                           OnClick="@(() => RunAdminAction(UpdateProductAction, HandleUpdateProduct))">
+                                Save Changes
+                            </LoadingButton>
                             <button class="btn-luxury" @onclick="ResetProductForm">Cancel</button>
                         }
                     </div>
@@ -324,8 +339,16 @@ else
                                             @prod.ProductVariants.FirstOrDefault()?.StockQuantity
                                         </td>
                                         <td>
-                                            <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditProduct(prod)"><i class="bi bi-pencil"></i></button>
-                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteProduct(prod.ProductId)"><i class="bi bi-trash"></i></button>
+                                            <LoadingButton Class="btn btn-sm btn-outline-primary me-1"
+                                                           IsLoading="@IsAdminActionLoading(EditProductAction(prod.ProductId))"
+                                                           OnClick="@(() => RunAdminAction(EditProductAction(prod.ProductId), () => EditProduct(prod)))">
+                                                <i class="bi bi-pencil"></i>
+                                            </LoadingButton>
+                                            <LoadingButton Class="btn btn-sm btn-outline-danger"
+                                                           IsLoading="@IsAdminActionLoading(DeleteProductAction(prod.ProductId))"
+                                                           OnClick="@(() => RunAdminAction(DeleteProductAction(prod.ProductId), () => DeleteProduct(prod.ProductId)))">
+                                                <i class="bi bi-trash"></i>
+                                            </LoadingButton>
                                             
                                         </td>
                                     </tr>
@@ -346,10 +369,18 @@ else
         {
             <div class="mb-3 d-flex justify-content-between align-items-center">
                 <div class="filter-buttons">
-                    <button class="btn-luxury @(orderFilter == "All" ? "btn-luxury-solid text-white" : "") me-2" @onclick='() => FilterOrders("All")'>All Orders</button>
-                    <button class="btn-luxury @(orderFilter == "Pending" ? "btn-luxury-solid text-white" : "") me-2" @onclick='() => FilterOrders("Pending")'>Pending</button>
-                    <button class="btn-luxury @(orderFilter == "Processing" ? "btn-luxury-solid text-white" : "") me-2" @onclick='() => FilterOrders("Processing")'>Processing</button>
-                    <button class="btn-luxury @(orderFilter == "Confirm" ? "btn-luxury-solid text-white" : "")" @onclick='() => FilterOrders("Confirm")'>Confirm</button>
+                    <LoadingButton Class="@AdminOrderFilterButtonClass(OrderFilterAll)"
+                                   IsLoading="@IsAdminActionLoading(FilterOrdersAction(OrderFilterAll))"
+                                   OnClick="@(() => RunAdminAction(FilterOrdersAction(OrderFilterAll), () => FilterOrders(OrderFilterAll)))">All Orders</LoadingButton>
+                    <LoadingButton Class="@AdminOrderFilterButtonClass(OrderFilterPending)"
+                                   IsLoading="@IsAdminActionLoading(FilterOrdersAction(OrderFilterPending))"
+                                   OnClick="@(() => RunAdminAction(FilterOrdersAction(OrderFilterPending), () => FilterOrders(OrderFilterPending)))">Pending</LoadingButton>
+                    <LoadingButton Class="@AdminOrderFilterButtonClass(OrderFilterProcessing)"
+                                   IsLoading="@IsAdminActionLoading(FilterOrdersAction(OrderFilterProcessing))"
+                                   OnClick="@(() => RunAdminAction(FilterOrdersAction(OrderFilterProcessing), () => FilterOrders(OrderFilterProcessing)))">Processing</LoadingButton>
+                    <LoadingButton Class="@AdminOrderFilterButtonClass(OrderFilterConfirm, false)"
+                                   IsLoading="@IsAdminActionLoading(FilterOrdersAction(OrderFilterConfirm))"
+                                   OnClick="@(() => RunAdminAction(FilterOrdersAction(OrderFilterConfirm), () => FilterOrders(OrderFilterConfirm)))">Confirm</LoadingButton>
                 </div>
                 <span class="text-muted small">Queue Count: @filteredOrders.Count</span>
             </div>
@@ -378,7 +409,9 @@ else
                         {
                             @foreach (var order in Pagedorders)
                             {
-                                var payInfo = order.Payments.FirstOrDefault()?.PaymentMethod ?? "COD";
+                                var payment = order.Payments.FirstOrDefault();
+                                var payInfo = payment?.PaymentMethod ?? "COD";
+                                var slipUrl = NormalizeSlipImageUrl(payment?.SlipImageUrl);
                                 <tr>
                                     <td><strong>ORD-@order.OrderId.ToString("D4")</strong></td>
                                     <td>
@@ -386,7 +419,19 @@ else
                                         <div class="small text-muted">@order.User.Email</div>
                                     </td>
                                     <td>@order.ShippingAddress</td>
-                                    <td><span class="badge bg-light text-dark border">@payInfo.ToUpper()</span></td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border">@payInfo.ToUpper()</span>
+                                        @if (!string.IsNullOrEmpty(slipUrl))
+                                        {
+                                            <a class="payment-slip-link" href="@slipUrl" target="_blank" rel="noopener" title="View payment slip">
+                                                <img class="payment-slip-thumb" src="@slipUrl" alt="Payment slip for ORD-@order.OrderId.ToString("D4")" />
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <div class="payment-slip-empty">No slip</div>
+                                        }
+                                    </td>
                                     <td><strong>@order.TotalAmount.ToString("N0") MMK</strong></td>
                                     <td>
                                         <span class="badge @StatusBadgeClass(order.OrderStatus) px-3 py-2 rounded-pill">@NormalizeStatus(order.OrderStatus)</span>
@@ -398,15 +443,19 @@ else
                                         }
                                         else
                                         {
-                                            <select class="luxury-select py-1 px-2 small d-inline-block" style="width: 140px; font-size: 0.85rem;" @onchange="(e) => UpdateOrderStatus(order, e.Value?.ToString() ?? string.Empty)">
+                                            <select class="luxury-select py-1 px-2 small d-inline-block" style="width: 140px; font-size: 0.85rem;"
+                                                    disabled="@IsAdminActionLoading(OrderStatusAction(order.OrderId))"
+                                                    @onchange="(e) => RunAdminAction(OrderStatusAction(order.OrderId), () => UpdateOrderStatus(order, e.Value?.ToString() ?? string.Empty))">
                                                 <option value="Pending" selected="@(NormalizeStatus(order.OrderStatus) == "Pending")">Pending</option>
                                                 <option value="Processing" selected="@(NormalizeStatus(order.OrderStatus) == "Processing")">Processing</option>
                                                 <option value="Confirm" selected="@(NormalizeStatus(order.OrderStatus) == "Confirm")">Confirm</option>
                                             </select>
                                         }
-                                        <button class="btn btn-sm btn-outline-danger ms-2" @onclick="() => DeleteOrder(order.OrderId)">
+                                        <LoadingButton Class="btn btn-sm btn-outline-danger ms-2"
+                                                       IsLoading="@IsAdminActionLoading(DeleteOrderAction(order.OrderId))"
+                                                       OnClick="@(() => RunAdminAction(DeleteOrderAction(order.OrderId), () => DeleteOrder(order.OrderId)))">
                                             <i class="bi bi-trash"></i>
-                                        </button>
+                                        </LoadingButton>
                                     </td>
                                 </tr>
                             }
@@ -504,18 +553,13 @@ else
                     </div>
 
                     <div class="mt-4 d-grid gap-2">
-                        <button class="btn-luxury-solid" @onclick="HandleCreateStaff" disabled="@isCreatingStaff">
-                            @if (isCreatingStaff)
-                            {
-                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                <span>Adding Staff...</span>
-                            }
-                            else
-                            {
-                                <i class="bi bi-person-check me-1"></i>
-                                <span>Add New Staff</span>
-                            }
-                        </button>
+                        <LoadingButton Class="btn-luxury-solid"
+                                       IsLoading="@IsAdminActionLoading(CreateStaffAction)"
+                                       LoadingText="Adding Staff..."
+                                       OnClick="@(() => RunAdminAction(CreateStaffAction, HandleCreateStaff))">
+                            <i class="bi bi-person-check me-1"></i>
+                            <span>Add New Staff</span>
+                        </LoadingButton>
                         <button class="btn-luxury" @onclick="ResetStaffForm">Clear Form</button>
                     </div>
                 </div>
@@ -558,9 +602,11 @@ else
                                         <td>@cust.Address</td>
                                         <td>@(cust.CreatedAt?.ToString("dd/MM/yyyy") ?? "N/A")</td>
                                         <td>
-                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteStaff(cust.Id)">
+                                            <LoadingButton Class="btn btn-sm btn-outline-danger"
+                                                           IsLoading="@IsAdminActionLoading(DeleteStaffAction(cust.Id))"
+                                                           OnClick="@(() => RunAdminAction(DeleteStaffAction(cust.Id), () => DeleteStaff(cust.Id)))">
                                                 <i class="bi bi-trash"></i>
-                                            </button>
+                                            </LoadingButton>
                                         </td>
                                     </tr>
                                 }
@@ -584,12 +630,18 @@ else
                     <div class="d-flex align-items-center gap-2 flex-wrap">
                         <input type="date" class="luxury-input" style="width: 160px;" @bind="reportFrom" />
                         <input type="date" class="luxury-input" style="width: 160px;" @bind="reportTo" />
-                        <button class="btn-luxury-solid" @onclick="LoadAdminReport">
+                        <LoadingButton Class="btn-luxury-solid"
+                                       IsLoading="@IsAdminActionLoading(LoadReportAction)"
+                                       LoadingText="Generating..."
+                                       OnClick="@(() => RunAdminAction(LoadReportAction, LoadAdminReport))">
                             <i class="bi bi-bar-chart-line me-1"></i> Generate
-                        </button>
-                        <button class="btn-luxury" @onclick="DownloadAdminReportCsv">
+                        </LoadingButton>
+                        <LoadingButton Class="btn-luxury"
+                                       IsLoading="@IsAdminActionLoading(DownloadReportAction)"
+                                       LoadingText="Downloading..."
+                                       OnClick="@(() => RunAdminAction(DownloadReportAction, DownloadAdminReportCsv))">
                             <i class="bi bi-download me-1"></i> CSV
-                        </button>
+                        </LoadingButton>
                     </div>
                 </div>
 
@@ -673,7 +725,13 @@ else
                     <div class="luxury-card">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h4 class="m-0">Daily Revenue Summary</h4>
-                            <button class="btn-luxury-solid py-1 px-3" style="font-size: 0.75rem;" @onclick="TriggerDailyReport">Recalculate Today</button>
+                            <LoadingButton Class="btn-luxury-solid py-1 px-3"
+                                           Style="font-size: 0.75rem;"
+                                           IsLoading="@IsAdminActionLoading(DailyReportAction)"
+                                           LoadingText="Recalculating..."
+                                           OnClick="@(() => RunAdminAction(DailyReportAction, TriggerDailyReport))">
+                                Recalculate Today
+                            </LoadingButton>
                         </div>
                         <table class="table table-sm luxury-table">
                             <thead>
