@@ -1,0 +1,56 @@
+@page "/staff/profile"
+@layout Layout.StaffPortalLayout
+@inherits StaffPortalPageBase
+@using ClothingPlatform.Web.Components.Partial
+
+<div class="page-header">
+                    <div class="page-sub">Account</div>
+                    <h1 class="page-title">My Profile</h1>
+                    <div class="page-divider"></div>
+                </div>
+                <div class="profile-card">
+                    <div class="profile-avatar-lg">@staffInitials</div>
+                    <div class="profile-section-title">Personal Information</div>
+                    <div class="profile-form">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label">First Name</label>
+                                <input type="text" class="form-control" @bind="staffFirstName" />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Last Name</label>
+                                <input type="text" class="form-control" @bind="staffLastName" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" class="form-control" @bind="staffEmail" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" @bind="staffPhone" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Role</label>
+                                <input type="text" class="form-control" value="@staffRole" disabled style="background:#f8fafc;color:var(--slate)" />
+                            </div>
+                        </div>
+                        @if (profileSaved)
+                        {
+                            <div class="inline-toast success">
+                                <i class="bi bi-check-circle"></i> @UiMessages.StaffPortal.ProfileSavedInline
+                            </div>
+                        }
+                        <div style="margin-top:1.4rem">
+                            <button class="btn-save" @onclick="SaveProfile">
+                                <i class="bi bi-floppy" style="margin-right:.35rem"></i>Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        profileSaved = false;
+    }
+}

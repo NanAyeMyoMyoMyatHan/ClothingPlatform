@@ -1,0 +1,55 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+
+<div class="page">
+    @* @if (!IsLoginPage)
+    {
+        <div class="sidebar">
+            <NavMenu />
+        </div>
+    } *@
+    
+
+    <main>
+        @* @if (!IsLoginPage)
+        {
+            <div class="top-row px-4">
+                <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            </div>
+        } *@
+
+        <article class="@ContentClass">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+@code{
+    private string ContentClass => IsFullBleedPage ? "content portal-content" : "content px-4";
+
+    private bool IsFullBleedPage
+    {
+        get
+        {
+            var path = Navigation.ToBaseRelativePath(Navigation.Uri)
+                .Split('?', '#')[0]
+                .Trim('/')
+                .ToLowerInvariant();
+
+            return path is "login" or "portal-login" or "customer-login" or "dashboard" or "staff";
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        {
+            Navigation.LocationChanged += (s, e) => StateHasChanged();
+        }
+    }
+}

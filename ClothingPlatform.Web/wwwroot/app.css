@@ -1,0 +1,499 @@
+:root {
+    --app-font-family: 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --bg: #FDF8F6;
+    --bg-warm: #F5ECD7;
+    --surface: #FFFFFF;
+    --surface-tint: #FFF3EE;
+    --surface-hover: #FFF5F0;
+    --text: #3C1F10;
+    --muted: #7A5C50;
+    --border: #EDD9D0;
+    --brand: #8B1A1A;
+    --brand-dark: #6B0F0F;
+    --brand-xdark: #4A0A0A;
+    --on-brand: #F5F0E8;
+    --focus: #0F766E;
+    --accent-soft: #C8837A;
+    --accent-gold: #C9A96E;
+    --success-text: #15803D;
+    --success-bg: #DCFCE7;
+    --success-border: #86EFAC;
+    --warning-text: #92400E;
+    --warning-bg: #FEF3C7;
+    --warning-border: #FCD34D;
+    --danger-text: #9F1D1D;
+    --danger-bg: #FEE2E2;
+    --danger-border: #F2B6B6;
+    --info-text: #1D4ED8;
+    --info-bg: #DBEAFE;
+    --info-border: #BFDBFE;
+    --brand-rgb: 139, 26, 26;
+    --focus-rgb: 15, 118, 110;
+}
+
+html,
+body,
+#app,
+.page,
+.main-workspace,
+.dashboard-container,
+#appShell,
+button,
+input,
+select,
+textarea,
+table,
+th,
+td,
+.modal,
+.modal-content,
+.offcanvas,
+.drawer,
+.luxury-text,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--app-font-family) !important;
+}
+
+a, .btn-link {
+    color: var(--brand);
+}
+
+.btn-primary {
+    color: var(--on-brand);
+    background-color: var(--brand);
+    border-color: var(--brand-dark);
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem var(--surface), 0 0 0 0.25rem rgba(var(--focus-rgb), 0.35);
+}
+
+.content {
+    padding-top: 1.1rem;
+}
+
+h1:focus {
+    outline: none;
+}
+
+.valid.modified:not([type=checkbox]) {
+    outline: 1px solid var(--success-text);
+}
+
+.invalid {
+    outline: 1px solid var(--danger-text);
+}
+
+.validation-message {
+    color: var(--danger-text);
+}
+
+.blazor-error-boundary {
+    background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxyZWN0IHg9IjIzNSIgeT0iNTEiIHdpZHRoPSI1NiIgaGVpZ2h0PSI0OSIvPjwvY2xpcFBhdGg+PC9kZWZzPjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMCkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMzUgLTUxKSI+PHBhdGggZD0iTTI2My41MDYgNTFDMjY0LjcxNyA1MSAyNjUuODEzIDUxLjQ4MzcgMjY2LjYwNiA1Mi4yNjU4TDI2Ny4wNTIgNTIuNzk4NyAyNjcuNTM5IDUzLjYyODMgMjkwLjE4NSA5Mi4xODMxIDI5MC41NDUgOTIuNzk1IDI5MC42NTYgOTIuOTk2QzI5MC44NzcgOTMuNTEzIDI5MSA5NC4wODE1IDI5MSA5NC42NzgyIDI5MSA5Ny4wNjUxIDI4OS4wMzggOTkgMjg2LjYxNyA5OUwyNDAuMzgzIDk5QzIzNy45NjMgOTkgMjM2IDk3LjA2NTEgMjM2IDk0LjY3ODIgMjM2IDk0LjM3OTkgMjM2LjAzMSA5NC4wODg2IDIzNi4wODkgOTMuODA3MkwyMzYuMzM4IDkzLjAxNjIgMjM2Ljg1OCA5Mi4xMzE0IDI1OS40NzMgNTMuNjI5NCAyNTkuOTYxIDUyLjc5ODUgMjYwLjQwNyA1Mi4yNjU4QzI2MS4yIDUxLjQ4MzcgMjYyLjI5NiA1MSAyNjMuNTA2IDUxWk0yNjMuNTg2IDY2LjAxODNDMjYwLjczNyA2Ni4wMTgzIDI1OS4zMTMgNjcuMTI0NSAyNTkuMzEzIDY5LjMzNyAyNTkuMzEzIDY5LjYxMDIgMjU5LjMzMiA2OS44NjA4IDI1OS4zNzEgNzAuMDg4N0wyNjEuNzk1IDg0LjAxNjEgMjY1LjM4IDg0LjAxNjEgMjY3LjgyMSA2OS43NDc1QzI2Ny44NiA2OS43MzA5IDI2Ny44NzkgNjkuNTg3NyAyNjcuODc5IDY5LjMxNzkgMjY3Ljg3OSA2Ny4xMTgyIDI2Ni40NDggNjYuMDE4MyAyNjMuNTg2IDY2LjAxODNaTTI2My41NzYgODYuMDU0N0MyNjEuMDQ5IDg2LjA1NDcgMjU5Ljc4NiA4Ny4zMDA1IDI1OS43ODYgODkuNzkyMSAyNTkuNzg2IDkyLjI4MzcgMjYxLjA0OSA5My41Mjk1IDI2My41NzYgOTMuNTI5NSAyNjYuMTE2IDkzLjUyOTUgMjY3LjM4NyA5Mi4yODM3IDI2Ny4zODcgODkuNzkyMSAyNjcuMzg3IDg3LjMwMDUgMjY2LjExNiA4Ni4wNTQ3IDI2My41NzYgODYuMDU0N1oiIGZpbGw9IiNGRkU1MDAiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvZz48L3N2Zz4=) no-repeat 1rem/1.8rem, var(--danger-text);
+    padding: 1rem 1rem 1rem 3.7rem;
+    color: #fff;
+}
+
+    .blazor-error-boundary::after {
+        content: "An error has occurred."
+    }
+
+.darker-border-checkbox.form-check-input {
+    border-color: #929292;
+}
+
+html, body {
+    font-family: var(--app-font-family) !important;
+}
+
+a, .btn-link {
+    color: var(--brand);
+}
+
+.btn-primary {
+    color: var(--on-brand);
+    background-color: var(--brand);
+    border-color: var(--brand-dark);
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem var(--surface), 0 0 0 0.25rem rgba(var(--focus-rgb), 0.35);
+}
+
+.content {
+    padding-top: 1.1rem;
+}
+
+h1:focus {
+    outline: none;
+}
+
+.valid.modified:not([type=checkbox]) {
+    outline: 1px solid var(--success-text);
+}
+
+.invalid {
+    outline: 1px solid var(--danger-text);
+}
+
+.validation-message {
+    color: var(--danger-text);
+}
+
+.blazor-error-boundary {
+    background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxyZWN0IHg9IjIzNSIgeT0iNTEiIHdpZHRoPSI1NiIgaGVpZ2h0PSI0OSIvPjwvY2xpcFBhdGg+PC9kZWZzPjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMCkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMzUgLTUxKSI+PHBhdGggZD0iTTI2My41MDYgNTFDMjY0LjcxNyA1MSAyNjUuODEzIDUxLjQ4MzcgMjY2LjYwNiA1Mi4yNjU4TDI2Ny4wNTIgNTIuNzk4NyAyNjcuNTM5IDUzLjYyODMgMjkwLjE4NSA5Mi4xODMxIDI5MC41NDUgOTIuNzk1IDI5MC42NTYgOTIuOTk2QzI5MC44NzcgOTMuNTEzIDI5MSA5NC4wODE1IDI5MSA5NC42NzgyIDI5MSA5Ny4wNjUxIDI4OS4wMzggOTkgMjg2LjYxNyA5OUwyNDAuMzgzIDk5QzIzNy45NjMgOTkgMjM2IDk3LjA2NTEgMjM2IDk0LjY3ODIgMjM2IDk0LjM3OTkgMjM2LjAzMSA5NC4wODg2IDIzNi4wODkgOTMuODA3MkwyMzYuMzM4IDkzLjAxNjIgMjM2Ljg1OCA5Mi4xMzE0IDI1OS40NzMgNTMuNjI5NCAyNTkuOTYxIDUyLjc5ODUgMjYwLjQwNyA1Mi4yNjU4QzI2MS4yIDUxLjQ4MzcgMjYyLjI5NiA1MSAyNjMuNTA2IDUxWk0yNjMuNTg2IDY2LjAxODNDMjYwLjczNyA2Ni4wMTgzIDI1OS4zMTMgNjcuMTI0NSAyNTkuMzEzIDY5LjMzNyAyNTkuMzEzIDY5LjYxMDIgMjU5LjMzMiA2OS44NjA4IDI1OS4zNzEgNzAuMDg4N0wyNjEuNzk5IDg0LjAxNjEgMjY1LjM4IDg0LjAxNjEgMjY3LjgyMSA2OS43NDc1QzI2Ny44NiA2OS43MzA5IDI2Ny44NzkgNjkuNTg3NyAyNjcuODc5IDY5LjMxNzkgMjY3Ljg3OSA2Ny4xMTgyIDI2Ni40NDggNjYuMDE4MyAyNjMuNTg2IDY2LjAxODNaTTI2My41NzYgODYuMDU0N0MyNjEuMDQ5IDg2LjA1NDcgMjU5Ljc4NiA4Ny4zMDA1IDI1OS43ODYgODkuNzkyMSAyNTkuNzg2IDkyLjI4MzcgMjYxLjA0OSA5My41Mjk1IDI2My41NzYgOTMuNTI5NSAyNjYuMTE2IDkzLjUyOTUgMjY3LjM4NyA5Mi4yODM3IDI2Ny4zODcgODkuNzkyMSAyNjcuMzg3IDg3LjMwMDUgMjY2LjExNiA4Ni4wNTQ3IDI2My41NzYgODYuMDU0N1oiIGZpbGw9IiNGRkU1MDAiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvZz48L3N2Zz4=) no-repeat 1rem/1.8rem, var(--danger-text);
+    padding: 1rem 1rem 1rem 3.7rem;
+    color: #fff;
+}
+
+    .blazor-error-boundary::after {
+        content: "An error has occurred."
+    }
+
+.darker-border-checkbox.form-check-input {
+    border-color: #929292;
+}
+
+/* ============================================
+   ADMIN PANEL — COLOR OVERRIDES
+   ============================================ */
+
+/* Sidebar — Blood Red background */
+.sidebar {
+    background-color: var(--brand) !important;
+    border-right: 1px solid var(--brand-dark) !important;
+}
+
+/* Sidebar brand text — Cream White */
+.sidebar-brand h3,
+.sidebar-brand span {
+    color: var(--on-brand) !important;
+}
+
+/* Sidebar nav links — Cream White */
+.nav-item-link {
+    color: var(--on-brand) !important;
+}
+
+    .nav-item-link i {
+        color: var(--on-brand) !important;
+    }
+
+    .nav-item-link:hover,
+    .nav-item-link.active {
+        background-color: rgba(245, 240, 232, 0.15) !important;
+        border-left-color: var(--on-brand) !important;
+        color: var(--on-brand) !important;
+    }
+
+/* Main workspace header text — Chocolate Brown */
+.luxury-text,
+.main-workspace h1,
+.main-workspace h2,
+.main-workspace h3,
+.main-workspace h4,
+.main-workspace p {
+    color: #3C1F10 !important;
+}
+
+/* All card, table, form text — Chocolate Brown */
+.luxury-card,
+.table-responsive-wrapper,
+.luxury-table,
+.luxury-table tbody td,
+.luxury-table thead th,
+.luxury-input,
+.luxury-select,
+.form-label,
+.kpi-value,
+.kpi-title {
+    color: #3C1F10 !important;
+}
+
+/* btn-luxury-solid — Blood Red + Cream White text */
+.btn-luxury-solid {
+    background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%) !important;
+    color: var(--on-brand) !important;
+}
+
+    .btn-luxury-solid:hover {
+        color: var(--on-brand) !important;
+    }
+
+/* text-muted override */
+.main-workspace .text-muted {
+    color: var(--muted) !important;
+}
+
+.sidebar {
+    background-image: none !important;
+    background-color: var(--brand) !important;
+}
+
+aside {
+    background-image: none !important;
+    background-color: var(--brand) !important;
+}
+
+    aside .sidebar {
+        background-image: none !important;
+        background-color: var(--brand) !important;
+    }
+
+/* ============================================
+   CUSTOMER AUTH
+   ============================================ */
+
+.portal-content:has(.customer-auth-page) {
+    padding-top: 0;
+}
+
+.customer-auth-page {
+    --customer-ink: var(--text);
+    --customer-muted: var(--muted);
+    --customer-line: var(--border);
+    --customer-panel: #fffaf7;
+    --customer-accent: var(--brand);
+    --customer-accent-dark: var(--brand-dark);
+    --customer-highlight: var(--focus);
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 48px 24px;
+    color: var(--customer-ink);
+    background:
+        linear-gradient(120deg, rgba(139, 26, 26, 0.10), rgba(15, 118, 110, 0.08)),
+        var(--bg);
+}
+
+.customer-auth-page::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.58), transparent 28%),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.35), transparent 58%);
+}
+
+.customer-auth-panel {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 460px);
+    padding: 34px;
+    border: 1px solid rgba(139, 26, 26, 0.14);
+    border-radius: 8px;
+    background:
+        linear-gradient(rgba(255, 250, 247, 0.94), rgba(255, 250, 247, 0.94)),
+        url('/images/products/longdress.jpg') center/cover;
+    box-shadow: 0 22px 60px rgba(47, 34, 29, 0.16);
+}
+
+.customer-auth-panel::before {
+    content: "";
+    display: block;
+    width: 100%;
+    height: 150px;
+    margin-bottom: 24px;
+    border-radius: 8px;
+    background:
+        linear-gradient(180deg, rgba(47, 34, 29, 0.04), rgba(47, 34, 29, 0.38)),
+        url('/images/products/longdress.jpg') center 36%/cover;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.44);
+}
+
+.auth-brand {
+    margin-bottom: 18px;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: 0;
+    color: var(--customer-ink);
+}
+
+.auth-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding: 5px;
+    margin-bottom: 22px;
+    border: 1px solid var(--customer-line);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.auth-tabs button {
+    height: 42px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--customer-muted);
+    font-size: 15px;
+    font-weight: 700;
+    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auth-tabs button:hover {
+    color: var(--customer-accent);
+    background: #fff4ef;
+}
+
+.auth-tabs button.active {
+    color: var(--on-brand);
+    background: linear-gradient(135deg, var(--customer-accent), var(--customer-accent-dark));
+    box-shadow: 0 8px 18px rgba(139, 26, 26, 0.22);
+}
+
+.customer-auth-panel label {
+    display: block;
+    margin: 14px 0 7px;
+    color: var(--customer-ink);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.customer-auth-panel input {
+    width: 100%;
+    height: 46px;
+    padding: 0 14px;
+    border: 1px solid var(--customer-line);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--customer-ink);
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.customer-auth-panel input:focus {
+    border-color: var(--customer-highlight);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+}
+
+.auth-name-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.auth-primary {
+    width: 100%;
+    min-height: 48px;
+    margin-top: 22px;
+    border: 0;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--customer-accent), var(--customer-accent-dark));
+    color: var(--on-brand);
+    font-size: 15px;
+    font-weight: 800;
+    box-shadow: 0 14px 28px rgba(139, 26, 26, 0.26);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.auth-primary:hover {
+    filter: brightness(1.03);
+    transform: translateY(-1px);
+    box-shadow: 0 18px 34px rgba(139, 26, 26, 0.30);
+}
+
+.auth-primary:active {
+    transform: translateY(0);
+}
+
+.auth-message {
+    margin: 0 0 18px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.auth-message.error {
+    border: 1px solid var(--danger-border);
+    background: var(--danger-bg);
+    color: var(--danger-text);
+}
+
+.auth-message.success {
+    border: 1px solid var(--success-border);
+    background: var(--success-bg);
+    color: var(--success-text);
+}
+
+@media (min-width: 920px) {
+    .customer-auth-panel {
+        width: min(100%, 880px);
+        min-height: 560px;
+        display: grid;
+        grid-template-columns: minmax(280px, 1fr) 410px;
+        column-gap: 34px;
+        padding: 0;
+        overflow: hidden;
+        background: var(--customer-panel);
+    }
+
+    .customer-auth-panel::before {
+        width: auto;
+        height: auto;
+        min-height: 560px;
+        margin: 0;
+        border-radius: 0;
+        grid-row: 1 / span 20;
+        background:
+            linear-gradient(180deg, rgba(47, 34, 29, 0.02), rgba(47, 34, 29, 0.46)),
+            url('/images/products/longdress.jpg') center/cover;
+    }
+
+    .auth-brand,
+    .auth-tabs,
+    .auth-message,
+    .customer-auth-panel > label,
+    .customer-auth-panel > input,
+    .auth-name-grid,
+    .auth-primary {
+        grid-column: 2;
+        margin-left: 0;
+        margin-right: 34px;
+    }
+
+    .auth-brand {
+        align-self: end;
+        margin-top: 44px;
+    }
+
+    .auth-primary {
+        margin-bottom: 44px;
+    }
+}
+
+@media (max-width: 560px) {
+    .customer-auth-page {
+        display: block;
+        min-height: 100vh;
+        padding: 18px;
+    }
+
+    .customer-auth-panel {
+        padding: 22px;
+    }
+
+    .customer-auth-panel::before {
+        height: 116px;
+        margin-bottom: 18px;
+    }
+
+    .auth-brand {
+        font-size: 25px;
+    }
+
+    .auth-name-grid {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+}

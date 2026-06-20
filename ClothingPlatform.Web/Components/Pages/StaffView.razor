@@ -1,0 +1,19 @@
+@page "/staff"
+@inject NavigationManager Nav
+
+<div class="portal-loading">
+    <div class="portal-loading-card">
+        <div class="portal-loading-mark">TB</div>
+        <div>
+            <h1>Loading portal</h1>
+            <p>Opening your staff dashboard.</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Nav.NavigateTo("/staff/dashboard", replace: true);
+    }
+}

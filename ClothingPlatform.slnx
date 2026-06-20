@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="ClothingPlatform.DB/ClothingPlatform.DB.csproj" Id="f6614859-971f-466a-9d70-85baa749f355" />
+  <Project Path="ClothingPlatform.Web/ClothingPlatform.Web.csproj" Id="0087ea88-9a22-4df0-abaf-0bce876bf052" />
+  <Project Path="ClothingPlatform.Api/ClothingPlatform.Api.csproj" />
+</Solution>

@@ -1,0 +1,62 @@
+@page "/staff/dashboard"
+@layout Layout.StaffPortalLayout
+@inherits StaffPortalPageBase
+@using ClothingPlatform.Web.Components.Partial
+
+<div class="welcome-banner">
+                    <div>
+                        <div class="wb-greeting">Good day, <strong>@staffFirstName @staffLastName</strong></div>
+                        <div class="wb-sub">Here's an overview of today's boutique activity.</div>
+                    </div>
+                    <div class="wb-badge">@staffRole</div>
+                </div>
+                <div class="dash-grid">
+                    <div class="dash-stat">
+                        <div class="dash-stat-val">@totalOrdersCount</div>
+                        <div class="dash-stat-label">Total Orders</div>
+                    </div>
+                    <div class="dash-stat">
+                        <div class="dash-stat-val">@totalRevenue.ToString("N0")</div>
+                        <div class="dash-stat-label">Total Revenue (MMK)</div>
+                    </div>
+                    <div class="dash-stat">
+                        <div class="dash-stat-val">@totalSkusCount</div>
+                        <div class="dash-stat-label">Active SKUs</div>
+                    </div>
+                    <div class="dash-stat">
+                        <div class="dash-stat-val text-warning">@lowStockCount</div>
+                        <div class="dash-stat-label">Low Stock Items</div>
+                    </div>
+                </div>
+                <div class="section-title">Recent Orders</div>
+                <div class="table-card">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Amount (MMK)</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!PagedRecentOrders.Any())
+                            {
+                                <tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--slate-light)"><i class="bi bi-inbox" style="font-size:1.6rem;display:block;margin-bottom:.4rem"></i>No orders yet.</td></tr>
+                            }
+                            else
+                            {
+                                @foreach (var ord in PagedRecentOrders)
+                                {
+                                    <tr>
+                                        <td style="font-family:'DM Sans',sans-serif;font-weight:600;color:var(--navy)">#ORD-@ord.OrderId.ToString("D4")</td>
+                                        <td>@ord.User.FirstName @ord.User.LastName</td>
+                                        <td>@ord.TotalAmount.ToString("N0")</td>
+                                        <td>@StatusBadge(ord.OrderStatus)</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <Pagination CurrentPage="@recentOrderPage" TotalPages="@RecentOrderTotalPages" CurrentPageChanged="@ChangeRecentOrderPage" />

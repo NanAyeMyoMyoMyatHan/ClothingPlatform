@@ -51,21 +51,23 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<StoreSalesMonthly> StoreSalesMonthlies { get; set; }
 
-    public virtual DbSet<TblPermission> TblPermissions { get; set; }
+    public virtual DbSet<Permission> Permissions { get; set; }
 
-    public virtual DbSet<TblRole> TblRoles { get; set; }
+    public virtual DbSet<Role> Roles { get; set; }
 
-    public virtual DbSet<TblRolePermission> TblRolePermissions { get; set; }
-
-    public virtual DbSet<TblUser> TblUsers { get; set; }
+    public virtual DbSet<RolePermission> RolePermissions { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
 
     public virtual DbSet<Wishlist> Wishlists { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=.;Database=ClothingPlatformDB;User ID=sa; Password=sasa@123;Trusted_Connection=True;TrustServerCertificate=True;");
+    {
+        if (!optionsBuilder.IsConfigured)
+        {
+            optionsBuilder.UseSqlServer("Server=.;Database=ClothingPlatformDB;User Id=sa;Password=sasa@123;TrustServerCertificate=True;");
+        }
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -561,75 +563,68 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("total_revenue");
         });
 
-        modelBuilder.Entity<TblPermission>(entity =>
+        modelBuilder.Entity<Permission>(entity =>
         {
-            entity.HasKey(e => e.PermissionId).HasName("PK__Tbl_Perm__EFA6FB2F8202D7D7");
+            entity.HasKey(e => e.PermissionId).HasName("PK_permissions");
 
-            entity.ToTable("Tbl_Permissions");
+            entity.ToTable("permissions");
 
-            entity.HasIndex(e => e.PermissionName, "UQ__Tbl_Perm__0FFDA35752B34B95").IsUnique();
+            entity.HasIndex(e => e.PermissionName, "UQ_permissions_permission_name").IsUnique();
 
+            entity.Property(e => e.PermissionId).HasColumnName("permission_id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.Description).HasMaxLength(255);
-            entity.Property(e => e.PermissionName).HasMaxLength(100);
+                .HasColumnType("datetime")
+                .HasColumnName("created_at");
+            entity.Property(e => e.Description)
+                .HasMaxLength(255)
+                .HasColumnName("description");
+            entity.Property(e => e.PermissionName)
+                .HasMaxLength(100)
+                .HasColumnName("permission_name");
         });
 
-        modelBuilder.Entity<TblRole>(entity =>
+        modelBuilder.Entity<Role>(entity =>
         {
-            entity.HasKey(e => e.RoleId).HasName("PK__Tbl_Role__8AFACE1A112BE116");
+            entity.HasKey(e => e.RoleId).HasName("PK_roles");
 
-            entity.ToTable("Tbl_Roles");
+            entity.ToTable("roles");
 
-            entity.HasIndex(e => e.RoleName, "UQ__Tbl_Role__8A2B616085D3A83C").IsUnique();
+            entity.HasIndex(e => e.RoleName, "UQ_roles_role_name").IsUnique();
 
+            entity.Property(e => e.RoleId).HasColumnName("role_id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.Description).HasMaxLength(255);
-            entity.Property(e => e.RoleName).HasMaxLength(50);
+                .HasColumnType("datetime")
+                .HasColumnName("created_at");
+            entity.Property(e => e.Description)
+                .HasMaxLength(255)
+                .HasColumnName("description");
+            entity.Property(e => e.RoleName)
+                .HasMaxLength(50)
+                .HasColumnName("role_name");
         });
 
-        modelBuilder.Entity<TblRolePermission>(entity =>
+        modelBuilder.Entity<RolePermission>(entity =>
         {
-            entity.HasKey(e => new { e.RoleId, e.PermissionId }).HasName("PK__Tbl_Role__6400A1A889303A12");
+            entity.HasKey(e => new { e.RoleId, e.PermissionId }).HasName("PK_role_permissions");
 
-            entity.ToTable("Tbl_RolePermissions");
+            entity.ToTable("role_permissions");
 
+            entity.Property(e => e.RoleId).HasColumnName("role_id");
+            entity.Property(e => e.PermissionId).HasColumnName("permission_id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+                .HasColumnType("datetime")
+                .HasColumnName("created_at");
 
-            entity.HasOne(d => d.Permission).WithMany(p => p.TblRolePermissions)
+            entity.HasOne(d => d.Permission).WithMany(p => p.RolePermissions)
                 .HasForeignKey(d => d.PermissionId)
-                .HasConstraintName("FK_RolePermissions_Permissions");
+                .HasConstraintName("FK_role_permissions_permissions");
 
-            entity.HasOne(d => d.Role).WithMany(p => p.TblRolePermissions)
+            entity.HasOne(d => d.Role).WithMany(p => p.RolePermissions)
                 .HasForeignKey(d => d.RoleId)
-                .HasConstraintName("FK_RolePermissions_Roles");
-        });
-
-        modelBuilder.Entity<TblUser>(entity =>
-        {
-            entity.HasKey(e => e.UserId).HasName("PK__Tbl_User__1788CC4C1949D101");
-
-            entity.ToTable("Tbl_Users");
-
-            entity.HasIndex(e => e.Email, "UQ__Tbl_User__A9D10534B5681EFC").IsUnique();
-
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.Email).HasMaxLength(150);
-            entity.Property(e => e.FirstName).HasMaxLength(100);
-            entity.Property(e => e.LastName).HasMaxLength(100);
-            entity.Property(e => e.PhoneNumber).HasMaxLength(20);
-
-            entity.HasOne(d => d.Role).WithMany(p => p.TblUsers)
-                .HasForeignKey(d => d.RoleId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Users_Roles");
+                .HasConstraintName("FK_role_permissions_roles");
         });
 
         modelBuilder.Entity<User>(entity =>
@@ -668,11 +663,12 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(100)
                 .IsUnicode(false)
                 .HasColumnName("phone_number");
-            entity.Property(e => e.Role)
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasDefaultValue("customer")
-                .HasColumnName("role");
+            entity.Property(e => e.RoleId).HasColumnName("role_id");
+
+            entity.HasOne(d => d.Role).WithMany(p => p.Users)
+                .HasForeignKey(d => d.RoleId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_users_role_id_roles");
         });
 
         modelBuilder.Entity<Wishlist>(entity =>

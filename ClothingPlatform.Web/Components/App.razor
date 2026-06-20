@@ -1,0 +1,83 @@
+﻿@using Microsoft.AspNetCore.Components.Sections
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="app.css" />
+    <link rel="stylesheet" href="admin-portal.css" />
+    <link rel="stylesheet" href="staff-portal.css" />
+    <link rel="stylesheet" href="ClothingPlatform.Web.styles.css" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <SectionOutlet SectionName="custom-css" />
+    <HeadOutlet @rendermode="InteractiveServer" />
+</head>
+
+<style>
+    .pag {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+
+    .pag-btn {
+        min-width: 36px;
+        height: 36px;
+        padding: 0 10px;
+        border: 0.5px solid #EDD9D0;
+        background: #fff;
+        color: #3C1F10;
+        border-radius: 8px;
+        font-size: 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s, border-color 0.15s;
+        font-family: inherit;
+    }
+
+        .pag-btn:hover:not(.disabled):not(.active) {
+            background: #FFF3EE;
+            border-color: #8B1A1A;
+            color: #8B1A1A;
+        }
+
+        .pag-btn.active {
+            background: #8B1A1A;
+            border-color: #8B1A1A;
+            color: #F5F0E8;
+            font-weight: 500;
+        }
+
+        .pag-btn.disabled {
+            color: #C4A99A;
+            cursor: default;
+            pointer-events: none;
+        }
+
+    .pag-sep {
+        min-width: 32px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #C4A99A;
+        font-size: 14px;
+    }
+</style>
+
+<body>
+    <Routes @rendermode="InteractiveServer" />
+    <script src="_framework/blazor.web.js"></script>
+</body>
+
+</html>

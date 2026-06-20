@@ -19,9 +19,11 @@ public partial class User
 
     public string PhoneNumber { get; set; } = null!;
 
-    public string Role { get; set; } = null!;
+    public int RoleId { get; set; }
 
     public DateTime? CreatedAt { get; set; }
+
+    public virtual Role Role { get; set; } = null!;
 
     public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
 

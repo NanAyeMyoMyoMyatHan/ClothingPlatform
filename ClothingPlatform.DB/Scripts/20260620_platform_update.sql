@@ -110,58 +110,193 @@ WHERE dc.parent_object_id = OBJECT_ID('dbo.orders')
 
 IF @constraintName IS NOT NULL
 BEGIN
-    EXEC('ALTER TABLE dbo.orders DROP CONSTRAINT ' + QUOTENAME(@constraintName));
+    DECLARE @dropDefaultSql nvarchar(max);
+    SET @dropDefaultSql = N'ALTER TABLE dbo.orders DROP CONSTRAINT ' + QUOTENAME(@constraintName);
+    EXEC sys.sp_executesql @dropDefaultSql;
 END;
 
 ALTER TABLE dbo.orders ADD CONSTRAINT DF_orders_order_status DEFAULT ('Pending') FOR order_status;
 
-MERGE dbo.Tbl_Roles AS target
+IF OBJECT_ID('dbo.roles', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.roles
+    (
+        role_id int IDENTITY(1,1) NOT NULL CONSTRAINT PK_roles PRIMARY KEY,
+        role_name nvarchar(50) NOT NULL CONSTRAINT UQ_roles_role_name UNIQUE,
+        description nvarchar(255) NULL,
+        created_at datetime NULL CONSTRAINT DF_roles_created_at DEFAULT (GETDATE())
+    );
+END;
+
+IF OBJECT_ID('dbo.permissions', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.permissions
+    (
+        permission_id int IDENTITY(1,1) NOT NULL CONSTRAINT PK_permissions PRIMARY KEY,
+        permission_name nvarchar(100) NOT NULL CONSTRAINT UQ_permissions_permission_name UNIQUE,
+        description nvarchar(255) NULL,
+        created_at datetime NULL CONSTRAINT DF_permissions_created_at DEFAULT (GETDATE())
+    );
+END;
+
+IF OBJECT_ID('dbo.role_permissions', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.role_permissions
+    (
+        role_id int NOT NULL,
+        permission_id int NOT NULL,
+        created_at datetime NULL CONSTRAINT DF_role_permissions_created_at DEFAULT (GETDATE()),
+        CONSTRAINT PK_role_permissions PRIMARY KEY (role_id, permission_id),
+        CONSTRAINT FK_role_permissions_roles FOREIGN KEY (role_id) REFERENCES dbo.roles(role_id),
+        CONSTRAINT FK_role_permissions_permissions FOREIGN KEY (permission_id) REFERENCES dbo.permissions(permission_id)
+    );
+END;
+
+MERGE dbo.roles AS target
 USING (VALUES
     ('admin', 'Full administrator access'),
-    ('staff', 'Staff operations access')
-) AS source(RoleName, Description)
-ON target.RoleName = source.RoleName
+    ('staff', 'Staff operations access'),
+    ('customer', 'Customer shopping account')
+) AS source(role_name, description)
+ON target.role_name = source.role_name
+WHEN MATCHED THEN
+    UPDATE SET description = source.description
 WHEN NOT MATCHED THEN
-    INSERT (RoleName, Description, CreatedAt) VALUES (source.RoleName, source.Description, GETDATE());
+    INSERT (role_name, description, created_at) VALUES (source.role_name, source.description, GETDATE());
 
-MERGE dbo.Tbl_Permissions AS target
-USING (VALUES ('Reports.Generate', 'Generate and export admin reports')) AS source(PermissionName, Description)
-ON target.PermissionName = source.PermissionName
+MERGE dbo.permissions AS target
+USING (VALUES ('Reports.Generate', 'Generate and export admin reports')) AS source(permission_name, description)
+ON target.permission_name = source.permission_name
+WHEN MATCHED THEN
+    UPDATE SET description = source.description
 WHEN NOT MATCHED THEN
-    INSERT (PermissionName, Description, CreatedAt) VALUES (source.PermissionName, source.Description, GETDATE());
+    INSERT (permission_name, description, created_at) VALUES (source.permission_name, source.description, GETDATE());
 
-INSERT INTO dbo.Tbl_RolePermissions (RoleId, PermissionId, CreatedAt)
-SELECT r.RoleId, p.PermissionId, GETDATE()
-FROM dbo.Tbl_Roles r
-CROSS JOIN dbo.Tbl_Permissions p
-WHERE r.RoleName = 'admin'
-  AND p.PermissionName = 'Reports.Generate'
+INSERT INTO dbo.role_permissions (role_id, permission_id, created_at)
+SELECT r.role_id, p.permission_id, GETDATE()
+FROM dbo.roles r
+CROSS JOIN dbo.permissions p
+WHERE r.role_name = 'admin'
+  AND p.permission_name = 'Reports.Generate'
   AND NOT EXISTS
   (
       SELECT 1
-      FROM dbo.Tbl_RolePermissions rp
-      WHERE rp.RoleId = r.RoleId
-        AND rp.PermissionId = p.PermissionId
+      FROM dbo.role_permissions rp
+      WHERE rp.role_id = r.role_id
+        AND rp.permission_id = p.permission_id
   );
 
-INSERT INTO dbo.Tbl_Users (FirstName, LastName, Email, PasswordHash, PhoneNumber, Address, RoleId, CreatedAt)
-SELECT 'Admin', 'User', 'admin@boutique.com', 'admin123', '09252522525', 'Chic Boutique HQ', r.RoleId, GETDATE()
-FROM dbo.Tbl_Roles r
-WHERE r.RoleName = 'admin'
-  AND NOT EXISTS (SELECT 1 FROM dbo.Tbl_Users WHERE Email = 'admin@boutique.com');
+IF COL_LENGTH('dbo.users', 'role_id') IS NULL
+BEGIN
+    ALTER TABLE dbo.users ADD role_id int NULL;
+END;
 
-INSERT INTO dbo.Tbl_Users (FirstName, LastName, Email, PasswordHash, PhoneNumber, Address, RoleId, CreatedAt)
-SELECT 'Thiri', 'San', 'staff@boutique.com', 'staff123', '09222333444', 'No. 456, Atelier Rd, Yangon', r.RoleId, GETDATE()
-FROM dbo.Tbl_Roles r
-WHERE r.RoleName = 'staff'
-  AND NOT EXISTS (SELECT 1 FROM dbo.Tbl_Users WHERE Email = 'staff@boutique.com');
+IF COL_LENGTH('dbo.users', 'role') IS NOT NULL
+BEGIN
+    EXEC sp_executesql N'
+        UPDATE u
+        SET role_id = r.role_id
+        FROM dbo.users u
+        JOIN dbo.roles r ON r.role_name = u.role
+        WHERE u.role_id IS NULL;';
+END;
 
-INSERT INTO dbo.users (first_name, last_name, email, password_hash, address, phone_number, role, created_at)
-SELECT tu.FirstName, tu.LastName, tu.Email, tu.PasswordHash, ISNULL(tu.Address, ''), ISNULL(tu.PhoneNumber, ''), tr.RoleName, GETDATE()
-FROM dbo.Tbl_Users tu
-JOIN dbo.Tbl_Roles tr ON tr.RoleId = tu.RoleId
-WHERE tr.RoleName IN ('admin', 'staff')
-  AND NOT EXISTS (SELECT 1 FROM dbo.users u WHERE u.email = tu.Email);
+DECLARE @adminRoleId int = (SELECT role_id FROM dbo.roles WHERE role_name = 'admin');
+DECLARE @staffRoleId int = (SELECT role_id FROM dbo.roles WHERE role_name = 'staff');
+DECLARE @customerRoleId int = (SELECT role_id FROM dbo.roles WHERE role_name = 'customer');
+
+EXEC sp_executesql N'
+    IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = ''admin@boutique.com'')
+    BEGIN
+        INSERT INTO dbo.users (first_name, last_name, email, password_hash, address, phone_number, created_at, role_id)
+        VALUES (''Admin'', ''User'', ''admin@boutique.com'', ''admin123'', ''Chic Boutique HQ'', ''09252522525'', GETDATE(), @adminRoleId);
+    END
+    ELSE
+    BEGIN
+        UPDATE dbo.users SET role_id = @adminRoleId WHERE email = ''admin@boutique.com'';
+    END;
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = ''staff@boutique.com'')
+    BEGIN
+        INSERT INTO dbo.users (first_name, last_name, email, password_hash, address, phone_number, created_at, role_id)
+        VALUES (''Thiri'', ''San'', ''staff@boutique.com'', ''staff123'', ''No. 456, Atelier Rd, Yangon'', ''09222333444'', GETDATE(), @staffRoleId);
+    END
+    ELSE
+    BEGIN
+        UPDATE dbo.users SET role_id = @staffRoleId WHERE email = ''staff@boutique.com'';
+    END;
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE email = ''emily@gmail.com'')
+    BEGIN
+        INSERT INTO dbo.users (first_name, last_name, email, password_hash, address, phone_number, created_at, role_id)
+        VALUES (''Emily'', ''Watson'', ''emily@gmail.com'', ''12345678'', ''No. 789, Style Street, Yangon'', ''09999888777'', GETDATE(), @customerRoleId);
+    END
+    ELSE
+    BEGIN
+        UPDATE dbo.users SET role_id = @customerRoleId WHERE email = ''emily@gmail.com'';
+    END;
+
+    UPDATE dbo.users SET role_id = @customerRoleId WHERE role_id IS NULL;',
+    N'@adminRoleId int, @staffRoleId int, @customerRoleId int',
+    @adminRoleId = @adminRoleId,
+    @staffRoleId = @staffRoleId,
+    @customerRoleId = @customerRoleId;
+
+IF EXISTS
+(
+    SELECT 1
+    FROM sys.foreign_keys
+    WHERE name = 'FK_users_role_id_roles'
+      AND parent_object_id = OBJECT_ID('dbo.users')
+)
+BEGIN
+    ALTER TABLE dbo.users DROP CONSTRAINT FK_users_role_id_roles;
+END;
+
+EXEC sp_executesql N'ALTER TABLE dbo.users ALTER COLUMN role_id int NOT NULL;';
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.foreign_keys
+    WHERE name = 'FK_users_role_id_roles'
+      AND parent_object_id = OBJECT_ID('dbo.users')
+)
+BEGIN
+    EXEC sp_executesql N'
+        ALTER TABLE dbo.users WITH CHECK
+        ADD CONSTRAINT FK_users_role_id_roles FOREIGN KEY (role_id) REFERENCES dbo.roles(role_id);';
+END;
+
+IF COL_LENGTH('dbo.users', 'role') IS NOT NULL
+BEGIN
+    DECLARE @userRoleDefaultName sysname;
+    SELECT @userRoleDefaultName = dc.name
+    FROM sys.default_constraints dc
+    JOIN sys.columns c ON c.default_object_id = dc.object_id
+    WHERE dc.parent_object_id = OBJECT_ID('dbo.users')
+      AND c.name = 'role';
+
+    IF @userRoleDefaultName IS NOT NULL
+    BEGIN
+        DECLARE @dropUserRoleDefaultSql nvarchar(max);
+        SET @dropUserRoleDefaultSql = N'ALTER TABLE dbo.users DROP CONSTRAINT ' + QUOTENAME(@userRoleDefaultName);
+        EXEC sys.sp_executesql @dropUserRoleDefaultSql;
+    END;
+
+    IF EXISTS
+    (
+        SELECT 1
+        FROM sys.check_constraints
+        WHERE parent_object_id = OBJECT_ID('dbo.users')
+          AND name = 'CHK_UserRole'
+    )
+    BEGIN
+        ALTER TABLE dbo.users DROP CONSTRAINT CHK_UserRole;
+    END;
+
+    ALTER TABLE dbo.users DROP COLUMN role;
+END;
 
 COMMIT TRANSACTION;
 GO

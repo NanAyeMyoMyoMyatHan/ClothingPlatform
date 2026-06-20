@@ -1,0 +1,235 @@
+@page "/staff/create-order"
+@layout Layout.StaffPortalLayout
+@inherits StaffPortalPageBase
+
+<div class="page-header order-page-header">
+    <div>
+        <div class="page-sub">Operations</div>
+        <h1 class="page-title">Create Phone Order</h1>
+        <div class="page-divider"></div>
+    </div>
+    <div class="order-header-meta">
+        <span class="order-meta-pill"><i class="bi bi-telephone"></i> Phone sale</span>
+        <span class="order-meta-pill muted">@selectedItemCount item(s)</span>
+    </div>
+</div>
+
+<div class="create-order-workflow">
+    <div class="create-order-main">
+        <section class="order-panel">
+            <div class="order-panel-head">
+                <div>
+                    <div class="order-panel-kicker">Customer</div>
+                    <h2>Caller Details</h2>
+                </div>
+                <span class="order-step-badge">01</span>
+            </div>
+            <div class="ob-form-grid two">
+                <div class="field-block">
+                    <label class="ob-form-label">Customer Name</label>
+                    <input type="text" class="ob-input" placeholder="Thiri San" @bind="guestCustomerName" @bind:event="oninput" />
+                </div>
+                <div class="field-block">
+                    <label class="ob-form-label">Phone Number</label>
+                    <input type="tel" class="ob-input" placeholder="09xxxxxxxxx" @bind="guestPhoneNumber" @bind:event="oninput" />
+                </div>
+            </div>
+        </section>
+
+        <section class="order-panel order-items-panel">
+            <div class="order-panel-head">
+                <div>
+                    <div class="order-panel-kicker">Items</div>
+                    <h2>Product Lines</h2>
+                </div>
+                <button type="button" class="ob-add-btn compact" @onclick="AddOrderLine">
+                    <i class="bi bi-plus-circle"></i> Add Item
+                </button>
+            </div>
+
+            <div class="staff-search-control">
+                <i class="bi bi-search"></i>
+                <input type="search" placeholder="Search SKU, product, size, color" @bind="productSearch" @bind:event="oninput" />
+            </div>
+
+            <div class="ob-items-header">
+                <div>Product</div>
+                <div>Qty</div>
+                <div>Unit</div>
+                <div>Total</div>
+                <div></div>
+            </div>
+
+            <div class="ob-item-list">
+                @foreach (var line in orderLines)
+                {
+                    var selectedVariant = inventoryVariants.FirstOrDefault(v => v.VariantId == line.VariantId);
+                    var variantOptions = GetSelectableVariants(line).ToList();
+
+                    <div class="ob-item-row">
+                        <div class="ob-product-cell">
+                            <select class="ob-select" value="@line.VariantId"
+                                    @onchange="(e) => OnLineVariantChanged(line, e.Value?.ToString())">
+                                <option value="0">Select item</option>
+                                @if (!variantOptions.Any())
+                                {
+                                    <option value="0" disabled>No matching stock</option>
+                                }
+                                @foreach (var v in variantOptions)
+                                {
+                                    <option value="@v.VariantId">@v.Sku - @v.Product.Name (@v.Size / @v.Color)</option>
+                                }
+                            </select>
+                            @if (selectedVariant != null)
+                            {
+                                <div class="ob-stock-line">
+                                    <span>@selectedVariant.StockQuantity left</span>
+                                    <span>@selectedVariant.Size / @selectedVariant.Color</span>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="qty-stepper">
+                            <button type="button" @onclick="() => AdjustLineQuantity(line, -1)" aria-label="Decrease quantity">
+                                <i class="bi bi-dash"></i>
+                            </button>
+                            <input type="number" min="1" value="@line.Quantity"
+                                   @onchange="(e) => OnLineQtyChanged(line, e.Value?.ToString())" />
+                            <button type="button" @onclick="() => AdjustLineQuantity(line, 1)" aria-label="Increase quantity">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+
+                        <div class="money-cell">@GetVariantUnitPrice(line.VariantId).ToString("N0")</div>
+                        <div class="money-cell strong">@GetLineTotal(line).ToString("N0")</div>
+                        <button type="button" class="icon-action danger" @onclick="() => RemoveOrderLine(line)" aria-label="Remove item">
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                    </div>
+                }
+            </div>
+        </section>
+
+        <section class="order-panel">
+            <div class="order-panel-head">
+                <div>
+                    <div class="order-panel-kicker">Delivery</div>
+                    <h2>Address</h2>
+                </div>
+                <span class="order-step-badge">03</span>
+            </div>
+            <div class="field-block">
+                <label class="ob-form-label">Shipping / Contact Address</label>
+                <textarea class="ob-textarea" rows="4"
+                          placeholder="No.123, Bo Yar Nyunt Street, Dagon Township, Yangon"
+                          @bind="newOrderShippingAddress" @bind:event="oninput"></textarea>
+            </div>
+        </section>
+
+        <section class="order-panel">
+            <div class="order-panel-head">
+                <div>
+                    <div class="order-panel-kicker">Payment</div>
+                    <h2>Method & Status</h2>
+                </div>
+                <span class="order-step-badge">04</span>
+            </div>
+            <div class="ob-form-grid two">
+                <div class="field-block">
+                    <label class="ob-form-label">Payment Method</label>
+                    <div class="ob-pill-group">
+                        @foreach (var method in new[] { ("cod", "bi-cash-coin", "COD"), ("kpay", "bi-phone", "KPay"), ("wave_money", "bi-phone-fill", "WavePay") })
+                        {
+                            <button type="button" class="ob-pill @(guestPaymentMethod == method.Item1 ? "ob-pill-active" : "")"
+                                    @onclick='() => guestPaymentMethod = method.Item1'>
+                                <i class="bi @method.Item2"></i> @method.Item3
+                            </button>
+                        }
+                    </div>
+                </div>
+                <div class="field-block">
+                    <label class="ob-form-label">Payment Status</label>
+                    <div class="ob-pill-group">
+                        <button type="button" class="ob-pill @(guestPaymentStatus == "unpaid" ? "ob-pill-active" : "")"
+                                @onclick='() => guestPaymentStatus = "unpaid"'>
+                            <i class="bi bi-clock-history"></i> Unpaid
+                        </button>
+                        <button type="button" class="ob-pill @(guestPaymentStatus == "paid" ? "ob-pill-active" : "")"
+                                @onclick='() => guestPaymentStatus = "paid"'>
+                            <i class="bi bi-check-circle"></i> Paid
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <aside class="order-summary-panel">
+        <div class="summary-title-row">
+            <div>
+                <div class="order-panel-kicker">Summary</div>
+                <h2>Phone Order</h2>
+            </div>
+            <span class="summary-status @(canSubmitPhoneOrder ? "ready" : "")">
+                @(canSubmitPhoneOrder ? "Ready" : "Draft")
+            </span>
+        </div>
+
+        <div class="summary-total-block">
+            <div class="summary-label">Order Total</div>
+            <div class="summary-total">@OrderLinesTotal.ToString("N0") <span>MMK</span></div>
+        </div>
+
+        <div class="summary-metrics">
+            <div>
+                <span>@selectedLineCount</span>
+                <label>Lines</label>
+            </div>
+            <div>
+                <span>@selectedItemCount</span>
+                <label>Pieces</label>
+            </div>
+        </div>
+
+        <div class="summary-checklist">
+            <div class="@CheckClass(HasCustomer)">
+                <i class="bi @(HasCustomer ? "bi-check-circle-fill" : "bi-circle")"></i>
+                <span>Customer</span>
+            </div>
+            <div class="@CheckClass(HasItems)">
+                <i class="bi @(HasItems ? "bi-check-circle-fill" : "bi-circle")"></i>
+                <span>Items</span>
+            </div>
+            <div class="@CheckClass(HasDelivery)">
+                <i class="bi @(HasDelivery ? "bi-check-circle-fill" : "bi-circle")"></i>
+                <span>Delivery</span>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(createOrderError))
+        {
+            <div class="inline-toast error order-error">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span>@createOrderError</span>
+            </div>
+        }
+
+        <div class="summary-actions">
+            <button type="button" class="ob-submit-btn @(canSubmitPhoneOrder ? "" : "disabled")"
+                    disabled="@(!canSubmitPhoneOrder)" @onclick="SubmitPhoneOrder">
+                <i class="bi bi-bag-check-fill"></i> Confirm Order
+            </button>
+            <button type="button" class="text-action-btn" @onclick="ResetCreateOrderForm">
+                <i class="bi bi-arrow-counterclockwise"></i> Reset
+            </button>
+        </div>
+    </aside>
+</div>
+
+@code {
+    private bool HasCustomer => !string.IsNullOrWhiteSpace(guestCustomerName) && !string.IsNullOrWhiteSpace(guestPhoneNumber);
+    private bool HasDelivery => !string.IsNullOrWhiteSpace(newOrderShippingAddress);
+    private bool HasItems => selectedLineCount > 0;
+
+    private static string CheckClass(bool isComplete) => isComplete ? "summary-check complete" : "summary-check";
+}

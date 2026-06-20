@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" role="img" aria-labelledby="title desc">
+  <title id="title">No product image</title>
+  <desc id="desc">A placeholder shown when a product image is unavailable.</desc>
+  <rect width="600" height="800" fill="#FFF3EE"/>
+  <rect x="38" y="38" width="524" height="724" rx="26" fill="#F5ECD7" stroke="#EDD9D0" stroke-width="6"/>
+  <path d="M230 214h140l34 70 64 26-32 86-54-20v188H218V376l-54 20-32-86 64-26 34-70Z" fill="#FFFFFF" stroke="#8B1A1A" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M258 214c8 22 22 34 42 34s34-12 42-34" fill="none" stroke="#C8837A" stroke-width="10" stroke-linecap="round"/>
+  <path d="M196 620h208" stroke="#EDD9D0" stroke-width="12" stroke-linecap="round"/>
+  <text x="300" y="676" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700" fill="#3C1F10">No image</text>
+  <text x="300" y="720" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="24" fill="#7A5C50">Product photo unavailable</text>
+</svg>

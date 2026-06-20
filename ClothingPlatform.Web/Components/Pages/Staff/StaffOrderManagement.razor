@@ -1,0 +1,373 @@
+@page "/staff/order-management"
+@layout Layout.StaffPortalLayout
+@inherits StaffPortalPageBase
+@using ClothingPlatform.Web.Components.Partial
+
+<div class="page-header order-page-header">
+    <div>
+        <div class="page-sub">Operations</div>
+        <h1 class="page-title">Order Management</h1>
+        <div class="page-divider"></div>
+    </div>
+    <div class="order-header-meta">
+        <span class="order-meta-pill"><i class="bi bi-bag-check"></i> @allOrders.Count regular</span>
+        <span class="order-meta-pill muted"><i class="bi bi-telephone"></i> @allGuestOrders.Count phone</span>
+    </div>
+</div>
+
+<div class="ops-workspace">
+    <div class="om-tabs" role="tablist" aria-label="Order type">
+        <button type="button" class="om-tab @(ordersTab == "regular" ? "om-tab-active" : "")"
+                @onclick='() => ordersTab = "regular"'>
+            <i class="bi bi-bag"></i>
+            <span>Regular</span>
+            <strong>@allOrders.Count</strong>
+        </button>
+        <button type="button" class="om-tab @(ordersTab == "guest" ? "om-tab-active" : "")"
+                @onclick='() => ordersTab = "guest"'>
+            <i class="bi bi-telephone"></i>
+            <span>Phone / Guest</span>
+            <strong>@allGuestOrders.Count</strong>
+        </button>
+    </div>
+
+    @if (ordersTab == "regular")
+    {
+        <section class="ops-section">
+            <div class="ops-filter-row">
+                <button type="button" class="@RegularStatusClass("")" @onclick='() => FilterOrders("")'>
+                    <strong>@allOrders.Count</strong><span>All</span>
+                </button>
+                <button type="button" class="@RegularStatusClass("Pending")" @onclick='() => FilterOrders("Pending")'>
+                    <strong>@pendingCount</strong><span>Pending</span>
+                </button>
+                <button type="button" class="@RegularStatusClass("Processing")" @onclick='() => FilterOrders("Processing")'>
+                    <strong>@processingCount</strong><span>Processing</span>
+                </button>
+                <button type="button" class="@RegularStatusClass("Confirm")" @onclick='() => FilterOrders("Confirm")'>
+                    <strong>@confirmCount</strong><span>Confirm</span>
+                </button>
+            </div>
+
+            <div class="ops-toolbar">
+                <div class="staff-search-control">
+                    <i class="bi bi-search"></i>
+                    <input type="search" placeholder="Search order, customer, payment" @bind="regularOrderSearch" @bind:event="oninput" />
+                </div>
+                <div class="ops-result-meta">
+                    <span>@RegularResultText</span>
+                    @if (HasRegularTools)
+                    {
+                        <button type="button" class="text-action-btn" @onclick="ClearRegularTools">
+                            <i class="bi bi-x-circle"></i> Clear
+                        </button>
+                    }
+                </div>
+            </div>
+
+            @if (!filteredOrders.Any())
+            {
+                <div class="empty-panel">
+                    <i class="bi bi-inbox"></i>
+                    <strong>No regular orders found.</strong>
+                </div>
+            }
+            else
+            {
+                <div class="ops-table-wrap">
+                    <table class="table ops-table">
+                        <thead>
+                            <tr>
+                                <th>Order</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Payment</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ord in Pagedorders)
+                            {
+                                var payMethod = ord.Payments.FirstOrDefault()?.PaymentMethod ?? "COD";
+                                <tr>
+                                    <td>
+                                        <span class="order-code">#ORD-@ord.OrderId.ToString("D4")</span>
+                                    </td>
+                                    <td>
+                                        <div class="customer-stack">
+                                            <strong>@ord.User.FirstName @ord.User.LastName</strong>
+                                            <span>@(ord.CreatedAt?.ToString("dd MMM yyyy") ?? "No date")</span>
+                                        </div>
+                                    </td>
+                                    <td class="amount-cell">@ord.TotalAmount.ToString("N0")</td>
+                                    <td><span class="pay-badge">@payMethod.ToUpper()</span></td>
+                                    <td>@StatusBadge(ord.OrderStatus)</td>
+                                    <td>
+                                        @if (IsFinalStatus(ord.OrderStatus))
+                                        {
+                                            <span class="status-badge badge-locked"><i class="bi bi-lock-fill"></i> Locked</span>
+                                        }
+                                        else
+                                        {
+                                            <select class="status-select" value="@NormalizeStatus(ord.OrderStatus)"
+                                                    @onchange="(e) => UpdateOrderStatus(ord, e.Value?.ToString())">
+                                                <option value="Pending">Pending</option>
+                                                <option value="Processing">Processing</option>
+                                                <option value="Confirm">Confirm</option>
+                                            </select>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="ops-card-list">
+                    @foreach (var ord in Pagedorders)
+                    {
+                        var payMethod = ord.Payments.FirstOrDefault()?.PaymentMethod ?? "COD";
+                        <article class="ops-order-card">
+                            <div class="ops-card-top">
+                                <span class="order-code">#ORD-@ord.OrderId.ToString("D4")</span>
+                                @StatusBadge(ord.OrderStatus)
+                            </div>
+                            <div class="customer-stack">
+                                <strong>@ord.User.FirstName @ord.User.LastName</strong>
+                                <span>@(ord.CreatedAt?.ToString("dd MMM yyyy") ?? "No date")</span>
+                            </div>
+                            <div class="ops-card-grid">
+                                <div>
+                                    <label>Amount</label>
+                                    <span>@ord.TotalAmount.ToString("N0") MMK</span>
+                                </div>
+                                <div>
+                                    <label>Payment</label>
+                                    <span class="pay-badge">@payMethod.ToUpper()</span>
+                                </div>
+                            </div>
+                            <div class="ops-card-action">
+                                @if (IsFinalStatus(ord.OrderStatus))
+                                {
+                                    <span class="status-badge badge-locked"><i class="bi bi-lock-fill"></i> Locked</span>
+                                }
+                                else
+                                {
+                                    <select class="status-select" value="@NormalizeStatus(ord.OrderStatus)"
+                                            @onchange="(e) => UpdateOrderStatus(ord, e.Value?.ToString())">
+                                        <option value="Pending">Pending</option>
+                                        <option value="Processing">Processing</option>
+                                        <option value="Confirm">Confirm</option>
+                                    </select>
+                                }
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+
+            <Pagination CurrentPage="@orderPage" TotalPages="@OrderTotalPages" CurrentPageChanged="@ChangeOrderPage" />
+        </section>
+    }
+    else
+    {
+        <section class="ops-section">
+            <div class="ops-filter-row">
+                <button type="button" class="@GuestPaymentClass("")" @onclick='() => guestPaymentFilter = ""'>
+                    <strong>@allGuestOrders.Count</strong><span>All</span>
+                </button>
+                <button type="button" class="@GuestPaymentClass("paid")" @onclick='() => guestPaymentFilter = "paid"'>
+                    <strong>@allGuestOrders.Count(g => (g.PaymentStatus ?? "unpaid").Equals("paid", StringComparison.OrdinalIgnoreCase))</strong><span>Paid</span>
+                </button>
+                <button type="button" class="@GuestPaymentClass("unpaid")" @onclick='() => guestPaymentFilter = "unpaid"'>
+                    <strong>@allGuestOrders.Count(g => !(g.PaymentStatus ?? "unpaid").Equals("paid", StringComparison.OrdinalIgnoreCase))</strong><span>Unpaid</span>
+                </button>
+            </div>
+
+            <div class="ops-toolbar">
+                <div class="staff-search-control">
+                    <i class="bi bi-search"></i>
+                    <input type="search" placeholder="Search guest, phone, payment" @bind="guestOrderSearch" @bind:event="oninput" />
+                </div>
+                <div class="ops-result-meta">
+                    <span>@GuestResultText</span>
+                    @if (HasGuestTools)
+                    {
+                        <button type="button" class="text-action-btn" @onclick="ClearGuestTools">
+                            <i class="bi bi-x-circle"></i> Clear
+                        </button>
+                    }
+                </div>
+            </div>
+
+            @if (!filteredGuestOrders.Any())
+            {
+                <div class="empty-panel">
+                    <i class="bi bi-telephone-x"></i>
+                    <strong>No phone orders found.</strong>
+                </div>
+            }
+            else
+            {
+                <div class="ops-table-wrap">
+                    <table class="table ops-table">
+                        <thead>
+                            <tr>
+                                <th>Order</th>
+                                <th>Customer</th>
+                                <th>Phone</th>
+                                <th>Amount</th>
+                                <th>Payment</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var go in PagedGuestOrders)
+                            {
+                                <tr>
+                                    <td><span class="order-code guest">#GORD-@go.GuestOrderId.ToString("D4")</span></td>
+                                    <td>
+                                        <div class="customer-stack">
+                                            <strong>@go.CustomerName</strong>
+                                            <span>@go.CreatedAt.ToString("dd MMM yyyy")</span>
+                                        </div>
+                                    </td>
+                                    <td class="phone-cell">@go.PhoneNumber</td>
+                                    <td class="amount-cell">@go.TotalAmount.ToString("N0")</td>
+                                    <td>
+                                        <div class="payment-stack">
+                                            <span class="pay-badge">@((go.PaymentMethod ?? "COD").ToUpper())</span>
+                                            @PaymentBadge(go.PaymentStatus)
+                                        </div>
+                                    </td>
+                                    <td>@StatusBadge(go.OrderStatus ?? "pending")</td>
+                                    <td>
+                                        @if (IsFinalStatus(go.OrderStatus))
+                                        {
+                                            <span class="status-badge badge-locked"><i class="bi bi-lock-fill"></i> Locked</span>
+                                        }
+                                        else
+                                        {
+                                            <select class="status-select" value="@NormalizeStatus(go.OrderStatus)"
+                                                    @onchange="(e) => UpdateGuestOrderStatus(go, e.Value?.ToString())">
+                                                <option value="Pending">Pending</option>
+                                                <option value="Processing">Processing</option>
+                                                <option value="Confirm">Confirm</option>
+                                            </select>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="ops-card-list">
+                    @foreach (var go in PagedGuestOrders)
+                    {
+                        <article class="ops-order-card">
+                            <div class="ops-card-top">
+                                <span class="order-code guest">#GORD-@go.GuestOrderId.ToString("D4")</span>
+                                @StatusBadge(go.OrderStatus ?? "pending")
+                            </div>
+                            <div class="customer-stack">
+                                <strong>@go.CustomerName</strong>
+                                <span>@go.PhoneNumber</span>
+                            </div>
+                            <div class="ops-card-grid">
+                                <div>
+                                    <label>Amount</label>
+                                    <span>@go.TotalAmount.ToString("N0") MMK</span>
+                                </div>
+                                <div>
+                                    <label>Payment</label>
+                                    <span class="pay-badge">@((go.PaymentMethod ?? "COD").ToUpper())</span>
+                                </div>
+                                <div>
+                                    <label>Status</label>
+                                    @PaymentBadge(go.PaymentStatus)
+                                </div>
+                                <div>
+                                    <label>Date</label>
+                                    <span>@go.CreatedAt.ToString("dd MMM yyyy")</span>
+                                </div>
+                            </div>
+                            <div class="ops-card-action">
+                                @if (IsFinalStatus(go.OrderStatus))
+                                {
+                                    <span class="status-badge badge-locked"><i class="bi bi-lock-fill"></i> Locked</span>
+                                }
+                                else
+                                {
+                                    <select class="status-select" value="@NormalizeStatus(go.OrderStatus)"
+                                            @onchange="(e) => UpdateGuestOrderStatus(go, e.Value?.ToString())">
+                                        <option value="Pending">Pending</option>
+                                        <option value="Processing">Processing</option>
+                                        <option value="Confirm">Confirm</option>
+                                    </select>
+                                }
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+
+            <Pagination CurrentPage="@guestOrderPage" TotalPages="@GuestOrderTotalPages" CurrentPageChanged="@ChangeGuestOrderPage" />
+        </section>
+    }
+</div>
+
+@code {
+    private bool HasRegularTools => !string.IsNullOrWhiteSpace(regularOrderSearch) || !string.IsNullOrWhiteSpace(currentFilter);
+    private bool HasGuestTools => !string.IsNullOrWhiteSpace(guestOrderSearch) || !string.IsNullOrWhiteSpace(guestPaymentFilter);
+
+    private string RegularResultText =>
+        HasRegularTools
+            ? $"{filteredOrders.Count} matching of {allOrders.Count}"
+            : $"{filteredOrders.Count} regular orders";
+
+    private string GuestResultText =>
+        HasGuestTools
+            ? $"{filteredGuestOrders.Count} matching of {allGuestOrders.Count}"
+            : $"{filteredGuestOrders.Count} phone orders";
+
+    private string RegularStatusClass(string status)
+    {
+        var isActive = string.IsNullOrWhiteSpace(status)
+            ? string.IsNullOrWhiteSpace(currentFilter)
+            : !string.IsNullOrWhiteSpace(currentFilter)
+                && string.Equals(NormalizeStatus(currentFilter), NormalizeStatus(status), StringComparison.OrdinalIgnoreCase);
+
+        return isActive
+            ? "filter-chip active"
+            : "filter-chip";
+    }
+
+    private string GuestPaymentClass(string status)
+    {
+        return string.Equals(guestPaymentFilter, status, StringComparison.OrdinalIgnoreCase)
+            ? "filter-chip active"
+            : "filter-chip";
+    }
+
+    private void ClearRegularTools()
+    {
+        regularOrderSearch = "";
+        FilterOrders("");
+    }
+
+    private void ClearGuestTools()
+    {
+        guestOrderSearch = "";
+        guestPaymentFilter = "";
+    }
+
+    private static MarkupString PaymentBadge(string? status)
+    {
+        return string.Equals(status ?? "unpaid", "paid", StringComparison.OrdinalIgnoreCase)
+            ? new MarkupString("<span class=\"status-badge badge-paid\"><i class=\"bi bi-check-circle\"></i> Paid</span>")
+            : new MarkupString("<span class=\"status-badge badge-unpaid\"><i class=\"bi bi-clock-history\"></i> Unpaid</span>");
+    }
+}

@@ -1,0 +1,2538 @@
+@page "/"
+@page "/customer"
+@using ClothingPlatform.Web.Components.Partial
+@using ClothingPlatform.Api.Models.Order
+@inject IJSRuntime JSRuntime
+
+@inject AuthenticationStateProvider AuthenStateProvider
+
+<PageTitle>Chic Boutique — Luxury Atelier</PageTitle>
+
+<style>
+    :root {
+        --rose: var(--brand, #8B1A1A);
+        --rose-light: var(--border, #EDD9D0);
+        --rose-pale: var(--bg-warm, #F5ECD7);
+        --charcoal: var(--text, #3C1F10);
+        --charcoal-soft: var(--muted, #7A5C50);
+        --bg: var(--bg-warm, #F5ECD7);
+        --bg-start: var(--bg-warm, #F5ECD7);
+        --bg-end: var(--bg-warm, #F5ECD7);
+        --white: var(--surface, #FFFFFF);
+        --shadow: rgba(139,26,26,0.10);
+        --gold: var(--accent-gold, #C9A96E);
+        --success: var(--success-text, #15803D);
+        --red: var(--danger-text, #9F1D1D);
+        --red-light: var(--danger-bg, #FEE2E2);
+        --navy: var(--brand, #8B1A1A);
+        --slate: var(--muted, #7A5C50);
+        --slate-border: var(--border, #EDD9D0);
+        --off-white: var(--surface-tint, #FFF3EE);
+        --radius-lg: 10px;
+        --shadow-lg: 0 8px 32px rgba(139,26,26,.14);
+        --transition: 0.22s cubic-bezier(.4,0,.2,1);
+    }
+
+    *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg);
+        color: var(--charcoal);
+        min-height: 100vh;
+        overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--rose-light);
+        border-radius: 99px;
+    }
+
+    /* Header */
+    #site-header {
+        position: sticky;
+        top: 0;
+        z-index: 700;
+        background: rgba(253,248,246,0.96);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .header-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 40px;
+    }
+
+    .logo {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 1.7rem;
+        font-weight: 600;
+        letter-spacing: 0.22em;
+        color: var(--charcoal);
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+        .logo span {
+            color: var(--rose);
+        }
+
+    .logo-tagline {
+        font-size: 0.62rem;
+        letter-spacing: 0.3em;
+        color: var(--rose);
+        font-weight: 400;
+        display: block;
+        text-align: center;
+        margin-top: -4px;
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .btn-bag {
+        position: relative;
+        background: none;
+        border: none;
+        font-size: 1.25rem;
+        color: var(--charcoal);
+        cursor: pointer;
+        padding: 6px 10px;
+        transition: color 0.2s;
+    }
+
+        .btn-bag:hover {
+            color: var(--rose);
+        }
+
+    .bag-badge {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: var(--rose);
+        color: #F5F0E8;
+        font-size: 0.6rem;
+        font-weight: 700;
+        width: 17px;
+        height: 17px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .notification-btn {
+        position: relative;
+        background: none;
+        border: none;
+        color: var(--charcoal);
+        font-size: 1.1rem;
+        padding: 6px 8px;
+        cursor: pointer;
+    }
+
+    .notification-badge {
+        position: absolute;
+        top: -1px;
+        right: -1px;
+        min-width: 16px;
+        height: 16px;
+        border-radius: 999px;
+        background: #C0392B;
+        color: #fff;
+        font-size: 0.58rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+    }
+
+    /* Nav Tabs */
+    .nav-tabs-bar {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        padding: 0 40px;
+        border-top: 1px solid var(--border);
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+        .nav-tabs-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+    .nav-tab {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.72rem;
+        letter-spacing: 0.17em;
+        font-weight: 500;
+        color: var(--charcoal-soft);
+        background: none;
+        border: none;
+        padding: 14px 22px;
+        cursor: pointer;
+        white-space: nowrap;
+        border-bottom: 2px solid transparent;
+        transition: color 0.2s, border-color 0.2s;
+        text-transform: uppercase;
+    }
+
+        .nav-tab:hover {
+            color: var(--rose);
+        }
+
+        .nav-tab.active {
+            color: var(--rose);
+            border-bottom-color: var(--rose);
+        }
+
+    /* Views */
+    .view-wrapper {
+        animation: fadeIn 0.35s ease;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(12px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Hero */
+    .hero {
+        background: linear-gradient(135deg, #F5ECD7 0%, #FAF0EE 50%, #F5EAE8 100%);
+        padding: 80px 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+        /* Overlay effect */
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient( ellipse 70% 60% at 60% 40%, rgba(139,26,26,0.12) 0%, transparent 70% );
+            pointer-events: none;
+            z-index: 0;
+        }
+
+    /* Eyebrow text */
+    .hero-eyebrow {
+        font-size: 0.68rem;
+        letter-spacing: 0.35em;
+        color: var(--rose);
+        font-weight: 500;
+        text-transform: uppercase;
+        margin-bottom: 18px;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Title */
+    /* Title */
+    .hero-title {
+        font-family: 'DM Sans', sans-serif;
+        font-size: clamp(2.6rem, 6vw, 4.5rem);
+        font-weight: 300;
+        line-height: 1.1;
+        color: var(--charcoal); /* ?????????? */
+        text-shadow: none; /* shadow ??????????? ??? */
+        margin-bottom: 20px;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Subtitle */
+    .hero-sub {
+        font-size: 0.88rem;
+        color: #ffffff; /* ??? */
+        text-shadow: 0 2px 6px rgba(255,255,255,0.6); /* ???? glow ???? */
+        font-weight: 300;
+        letter-spacing: 0.05em;
+        max-width: 420px;
+        line-height: 1.7;
+        margin-bottom: 36px;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* -- Logout confirmation modal -- */
+    .confirm-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15,32,80,.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .confirm-modal {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        padding: 1.8rem 2rem;
+        max-width: 360px;
+        width: 90%;
+        text-align: center;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .confirm-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: var(--red-light);
+        color: var(--red);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        margin: 0 auto .9rem;
+    }
+
+    .confirm-title {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 1.25rem;
+        color: var(--navy);
+        margin-bottom: .4rem;
+    }
+
+    .confirm-text {
+        font-size: .82rem;
+        color: var(--slate);
+        margin-bottom: 1.4rem;
+        line-height: 1.5;
+    }
+
+    .confirm-actions {
+        display: flex;
+        gap: .7rem;
+        justify-content: center;
+    }
+
+    .confirm-btn-cancel {
+        font-size: .78rem;
+        font-weight: 600;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        background: var(--off-white);
+        color: var(--slate);
+        border: 1px solid var(--slate-border);
+        border-radius: 8px;
+        padding: .55rem 1.3rem;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        transition: background var(--transition);
+    }
+
+        .confirm-btn-cancel:hover {
+            background: #EDF1F6;
+        }
+
+    .confirm-btn-confirm {
+        font-size: .78rem;
+        font-weight: 600;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        background: var(--red);
+        color: #000000;
+        border: none;
+        border-radius: 8px;
+        padding: .55rem 1.3rem;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        transition: background var(--transition), transform var(--transition);
+    }
+
+        .confirm-btn-confirm:hover {
+            background: #B91C1C;
+            transform: translateY(-1px);
+        }
+
+    
+
+    .btn-primary-rose {
+        background: var(--rose);
+        color: #F5ECD7;
+        border: none;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.72rem;
+        letter-spacing: 0.2em;
+        font-weight: 500;
+        text-transform: uppercase;
+        padding: 14px 38px;
+        cursor: pointer;
+        transition: background 0.25s, transform 0.2s;
+    }
+
+        .btn-primary-rose:hover {
+            background: #6B0F0F;
+            transform: translateY(-1px);
+        }
+
+    /* Section Header */
+    .section-head {
+        padding: 56px 40px 28px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+    }
+
+    .section-title {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 2.1rem;
+        font-weight: 400;
+        color: var(--charcoal);
+    }
+
+        .section-title span {
+            color: var(--rose);
+            font-style: italic;
+        }
+
+    .section-count {
+        font-size: 0.7rem;
+        letter-spacing: 0.15em;
+        color: var(--rose);
+        font-weight: 500;
+    }
+
+    /* Product Grid */
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 28px;
+        padding: 0 40px 60px;
+    }
+
+    .product-card {
+        background: var(--white);
+        border: 1px solid var(--border);
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.28s cubic-bezier(.25,.8,.25,1), box-shadow 0.28s;
+        position: relative;
+    }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 18px 48px var(--shadow);
+        }
+
+    .card-img-wrap {
+        position: relative;
+        overflow: hidden;
+        aspect-ratio: 3/4;
+        background: var(--rose-pale);
+    }
+
+        .card-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s cubic-bezier(.25,.8,.25,1);
+        }
+
+    .product-card:hover .card-img-wrap img {
+        transform: scale(1.06);
+    }
+
+    .card-badge {
+        position: absolute;
+        top: 14px;
+        left: 14px;
+        background: var(--rose);
+        color: #F5ECD7;
+        font-size: 0.58rem;
+        letter-spacing: 0.18em;
+        font-weight: 600;
+        padding: 4px 10px;
+        text-transform: uppercase;
+    }
+
+    .card-quick {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(60,31,16,0.85);
+        color: #F5ECD7;
+        border: none;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.68rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        font-weight: 500;
+        padding: 13px;
+        transform: translateY(100%);
+        transition: transform 0.3s cubic-bezier(.25,.8,.25,1);
+        cursor: pointer;
+        width: 100%;
+    }
+
+    .product-card:hover .card-quick {
+        transform: translateY(0);
+    }
+
+    .card-body {
+        padding: 18px 18px 22px;
+    }
+
+    .card-collection {
+        font-size: 0.6rem;
+        letter-spacing: 0.2em;
+        color: var(--rose);
+        font-weight: 500;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+    }
+
+    .card-name {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: var(--charcoal);
+        margin-bottom: 8px;
+        line-height: 1.3;
+    }
+
+    .card-price {
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: var(--charcoal-soft);
+        letter-spacing: 0.03em;
+    }
+
+        .card-price .currency {
+            font-size: 0.7rem;
+            color: var(--rose);
+            margin-left: 4px;
+        }
+
+    /* Product Modal */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        background: rgba(0,0,0,0.55);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+        .modal-overlay.open {
+            display: flex;
+            animation: fadeIn 0.25s ease;
+        }
+
+    .product-modal {
+        background: var(--white);
+        max-width: 800px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        position: relative;
+    }
+
+    @@media (max-width: 600px) {
+        .product-modal {
+            grid-template-columns: 1fr;
+        }
+
+        .modal-buy-actions {
+            position: sticky;
+            bottom: 0;
+            top: auto;
+            margin-left: -32px;
+            margin-right: -32px;
+            padding: 12px 32px 18px;
+            border-top: 1px solid var(--border);
+            box-shadow: 0 -12px 28px rgba(139,26,26,0.08);
+        }
+    }
+
+    .modal-img-col {
+        position: relative;
+        aspect-ratio: 3/4;
+        background: var(--rose-pale);
+        overflow: hidden;
+        min-height: 380px;
+    }
+
+        .modal-img-col img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .modal-info-col {
+        padding: 36px 32px;
+        overflow-y: auto;
+    }
+
+    .modal-collection {
+        font-size: 0.62rem;
+        letter-spacing: 0.25em;
+        color: var(--rose);
+        font-weight: 500;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }
+
+    .modal-name {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 1.7rem;
+        font-weight: 400;
+        color: var(--charcoal);
+        line-height: 1.2;
+        margin-bottom: 10px;
+    }
+
+    .modal-price {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: var(--charcoal);
+        margin-bottom: 18px;
+    }
+
+        .modal-price .currency {
+            color: var(--rose);
+            font-size: 0.8rem;
+            margin-left: 5px;
+        }
+
+    .modal-desc {
+        font-size: 0.84rem;
+        color: var(--charcoal-soft);
+        line-height: 1.75;
+        font-weight: 300;
+        margin-bottom: 26px;
+        padding-bottom: 22px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .option-label {
+        font-size: 0.65rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: var(--charcoal);
+        margin-bottom: 10px;
+        display: block;
+    }
+
+    .size-btns, .color-btns {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 22px;
+    }
+
+    .size-btn {
+        border: 1px solid var(--border);
+        background: var(--white);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.72rem;
+        font-weight: 500;
+        padding: 7px 14px;
+        cursor: pointer;
+        letter-spacing: 0.08em;
+        transition: all 0.2s;
+        color: var(--charcoal);
+    }
+
+        .size-btn:hover, .size-btn.selected {
+            border-color: var(--rose);
+            background: var(--rose);
+            color: #F5ECD7;
+        }
+
+    .color-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 2px solid var(--border);
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        position: relative;
+    }
+
+        .color-btn:hover {
+            transform: scale(1.15);
+        }
+
+        .color-btn.selected {
+            box-shadow: 0 0 0 3px var(--white), 0 0 0 5px var(--rose);
+        }
+
+    .modal-error {
+        font-size: 0.75rem;
+        color: #c0392b;
+        margin-bottom: 10px;
+    }
+
+    .btn-add-bag {
+        width: 100%;
+        background: var(--charcoal);
+        color: #F5ECD7;
+        border: none;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.72rem;
+        letter-spacing: 0.22em;
+        font-weight: 500;
+        text-transform: uppercase;
+        padding: 16px;
+        cursor: pointer;
+        transition: background 0.25s, transform 0.2s;
+    }
+
+    .modal-buy-actions {
+        position: sticky;
+        top: 18px;
+        display: grid;
+        gap: 12px;
+        align-self: start;
+        background: var(--white);
+        padding-top: 6px;
+    }
+
+    .modal-qty-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border: 1px solid var(--border);
+        padding: 10px 12px;
+    }
+
+        .btn-add-bag:hover {
+            background: var(--rose);
+            transform: translateY(-1px);
+        }
+
+    .modal-close {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        z-index: 10;
+        background: #F5ECD7;
+        border: 1px solid var(--border);
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        cursor: pointer;
+        color: var(--charcoal);
+        transition: background 0.2s, color 0.2s;
+    }
+
+        .modal-close:hover {
+            background: var(--rose);
+            color: #F5ECD7;
+            border-color: var(--rose);
+        }
+
+    /* Cart Drawer */
+    .cart-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 800;
+        background: rgba(0,0,0,0.4);
+        backdrop-filter: blur(3px);
+        display: none;
+    }
+
+        .cart-backdrop.open {
+            display: block;
+            animation: fadeIn 0.25s;
+        }
+
+    .cart-drawer {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 850;
+        width: min(420px, 100vw);
+        background: var(--white);
+        transform: translateX(100%);
+        transition: transform 0.38s cubic-bezier(.77,0,.175,1);
+        display: flex;
+        flex-direction: column;
+        box-shadow: -8px 0 48px rgba(139,26,26,0.12);
+    }
+
+        .cart-drawer.open {
+            transform: translateX(0);
+        }
+
+    .cart-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 24px 28px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .cart-title {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 1.3rem;
+        font-weight: 500;
+        color: var(--charcoal);
+        letter-spacing: 0.05em;
+    }
+
+    .cart-close {
+        background: none;
+        border: none;
+        font-size: 1.1rem;
+        color: var(--charcoal-soft);
+        cursor: pointer;
+    }
+
+        .cart-close:hover {
+            color: var(--rose);
+        }
+
+    .cart-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 28px;
+    }
+
+    .cart-empty {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+        .cart-empty i {
+            font-size: 3rem;
+            color: var(--rose-light);
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .cart-empty p {
+            font-size: 0.85rem;
+            color: var(--charcoal-soft);
+            letter-spacing: 0.05em;
+        }
+
+    .cart-item {
+        display: flex;
+        gap: 14px;
+        padding: 16px 0;
+        border-bottom: 1px solid var(--border);
+        animation: fadeIn 0.3s ease;
+    }
+
+    .cart-item-img {
+        width: 72px;
+        height: 90px;
+        object-fit: cover;
+        flex-shrink: 0;
+        background: var(--rose-pale);
+    }
+
+    .cart-item-info {
+        flex: 1;
+    }
+
+    .cart-item-name {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.98rem;
+        font-weight: 500;
+        color: var(--charcoal);
+        margin-bottom: 4px;
+        line-height: 1.3;
+    }
+
+    .cart-item-meta {
+        font-size: 0.7rem;
+        color: var(--charcoal-soft);
+        letter-spacing: 0.06em;
+        margin-bottom: 10px;
+    }
+
+    .cart-qty {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .qty-btn {
+        width: 24px;
+        height: 24px;
+        border: 1px solid var(--border);
+        background: var(--white);
+        color: var(--charcoal);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: all 0.15s;
+    }
+
+        .qty-btn:hover {
+            background: var(--rose);
+            color: #F5ECD7;
+            border-color: var(--rose);
+        }
+
+    .qty-num {
+        font-size: 0.85rem;
+        font-weight: 500;
+        min-width: 20px;
+        text-align: center;
+        color: var(--charcoal);
+    }
+
+    .cart-item-price {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--charcoal);
+        white-space: nowrap;
+        align-self: center;
+    }
+
+    .cart-item-remove {
+        background: none;
+        border: none;
+        color: #ccc;
+        cursor: pointer;
+        font-size: 0.8rem;
+        align-self: flex-start;
+        margin-top: 2px;
+        transition: color 0.2s;
+    }
+
+        .cart-item-remove:hover {
+            color: #c0392b;
+        }
+
+    .cart-footer {
+        padding: 20px 28px 28px;
+        border-top: 1px solid var(--border);
+        background: var(--bg);
+    }
+
+    .cart-subtotal-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+    }
+
+    .cart-subtotal-label {
+        font-size: 0.72rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--charcoal-soft);
+    }
+
+    .cart-subtotal-val {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 1.3rem;
+        font-weight: 500;
+        color: var(--charcoal);
+    }
+
+    .cart-note {
+        font-size: 0.68rem;
+        color: var(--charcoal-soft);
+        margin-bottom: 18px;
+    }
+
+    .btn-checkout {
+        width: 100%;
+        background: var(--rose);
+        color: #F5ECD7;
+        border: none;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.72rem;
+        letter-spacing: 0.22em;
+        font-weight: 500;
+        text-transform: uppercase;
+        padding: 16px;
+        cursor: pointer;
+        transition: background 0.25s;
+    }
+
+        .btn-checkout:hover {
+            background: #6B0F0F;
+        }
+
+    /* Checkout View */
+    .checkout-view {
+        padding: 50px 40px;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    .checkout-grid {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 40px;
+    }
+
+    @@media (max-width: 900px) {
+        .checkout-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .checkout-section-title {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 400;
+        color: var(--charcoal);
+        margin-bottom: 24px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label-custom {
+        font-size: 0.65rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: var(--charcoal);
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .form-control-custom {
+        width: 100%;
+        border: 1px solid var(--border);
+        background: var(--white);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.88rem;
+        color: var(--charcoal);
+        padding: 12px 16px;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+
+        .form-control-custom:focus {
+            border-color: var(--rose);
+        }
+
+    .payment-option {
+        border: 1px solid var(--border);
+        padding: 16px 20px;
+        cursor: pointer;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        transition: border-color 0.2s, background 0.2s;
+    }
+
+        .payment-option:hover {
+            border-color: var(--rose);
+        }
+
+        .payment-option.selected {
+            border-color: var(--rose);
+            background: var(--rose-pale);
+        }
+
+        .payment-option input[type="radio"] {
+            accent-color: var(--rose);
+        }
+
+    .payment-option-name {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--charcoal);
+    }
+
+    .payment-option-sub {
+        font-size: 0.72rem;
+        color: var(--charcoal-soft);
+    }
+
+    .qr-block {
+        margin-top: 20px;
+        background: var(--rose-pale);
+        padding: 24px;
+        text-align: center;
+        border: 1px solid var(--rose-light);
+        animation: fadeIn 0.3s ease;
+    }
+
+    .qr-img {
+        width: 160px;
+        height: 160px;
+        margin: 0 auto 14px;
+        display: block;
+        border: 6px solid #fff;
+        box-shadow: 0 4px 20px var(--shadow);
+    }
+
+    .qr-instruction {
+        font-size: 0.78rem;
+        color: var(--charcoal-soft);
+        line-height: 1.6;
+    }
+
+    .qr-account {
+        font-weight: 600;
+        color: var(--rose);
+        font-size: 0.9rem;
+    }
+
+    .slip-upload-zone {
+        border: 2px dashed var(--rose-light);
+        padding: 28px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.2s, background 0.2s;
+        margin-top: 20px;
+        position: relative;
+    }
+
+        .slip-upload-zone:hover {
+            border-color: var(--rose);
+            background: var(--rose-pale);
+        }
+
+    .slip-upload-icon {
+        font-size: 2rem;
+        color: var(--rose-light);
+        margin-bottom: 10px;
+        display: block;
+    }
+
+    .slip-upload-text {
+        font-size: 0.78rem;
+        color: var(--charcoal-soft);
+        line-height: 1.6;
+    }
+
+    .slip-preview {
+        margin-top: 16px;
+        position: relative;
+    }
+
+        .slip-preview img {
+            max-width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+            border: 1px solid var(--border);
+            display: block;
+            margin: 0 auto;
+        }
+
+    .slip-preview-name {
+        font-size: 0.72rem;
+        color: var(--success);
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .order-summary-panel {
+        background: var(--white);
+        border: 1px solid var(--border);
+        padding: 28px;
+    }
+
+    .order-summary-item {
+        display: flex;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+        .order-summary-item:last-of-type {
+            border-bottom: none;
+        }
+
+    .order-summary-img {
+        width: 56px;
+        height: 70px;
+        object-fit: cover;
+        background: var(--rose-pale);
+        flex-shrink: 0;
+    }
+
+    .order-sum-name {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: var(--charcoal);
+        margin-bottom: 3px;
+    }
+
+    .order-sum-meta {
+        font-size: 0.68rem;
+        color: var(--charcoal-soft);
+    }
+
+    .order-sum-price {
+        font-size: 0.82rem;
+        font-weight: 500;
+        color: var(--charcoal-soft);
+        margin-top: 4px;
+    }
+
+    .summary-total-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 0 0;
+        margin-top: 8px;
+        border-top: 1px solid var(--border);
+    }
+
+    .summary-total-label {
+        font-size: 0.7rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--charcoal-soft);
+    }
+
+    .summary-total-val {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 1.4rem;
+        font-weight: 500;
+        color: var(--charcoal);
+    }
+
+    .btn-place-order {
+        width: 100%;
+        background: var(--charcoal);
+        color: #F5ECD7;
+        border: none;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.72rem;
+        letter-spacing: 0.22em;
+        font-weight: 500;
+        text-transform: uppercase;
+        padding: 18px;
+        cursor: pointer;
+        transition: background 0.25s;
+        margin-top: 20px;
+    }
+
+        .btn-place-order:hover {
+            background: var(--rose);
+        }
+
+    /* Success Overlay */
+    .success-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        background: #F5ECD7);
+        backdrop-filter: blur(8px);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 40px;
+        animation: fadeIn 0.4s ease;
+    }
+
+        .success-overlay.open {
+            display: flex;
+        }
+
+    .success-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--rose-light), var(--rose));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.2rem;
+        color: #F5ECD7;
+        margin-bottom: 28px;
+    }
+
+    .success-title {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 2.2rem;
+        font-weight: 400;
+        color: var(--charcoal);
+        margin-bottom: 14px;
+    }
+
+    .success-sub {
+        font-size: 0.88rem;
+        color: var(--charcoal-soft);
+        line-height: 1.7;
+        max-width: 450px;
+        margin-bottom: 10px;
+        font-weight: 300;
+    }
+
+    .success-order-id {
+        font-size: 0.78rem;
+        color: var(--rose);
+        letter-spacing: 0.2em;
+        font-weight: 500;
+        margin-bottom: 36px;
+    }
+
+    .btn-continue {
+        background: none;
+        border: 1px solid var(--charcoal);
+        color: var(--charcoal);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.72rem;
+        letter-spacing: 0.2em;
+        font-weight: 500;
+        text-transform: uppercase;
+        padding: 13px 36px;
+        cursor: pointer;
+        transition: all 0.25s;
+    }
+
+        .btn-continue:hover {
+            background: var(--charcoal);
+            color: #F5ECD7;
+        }
+
+    /* Purchase History */
+    .history-view {
+        padding: 50px 40px;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .history-card {
+        background: var(--white);
+        border: 1px solid var(--border);
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+
+    .history-card-header {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 24px;
+        background: var(--rose-pale);
+        border-bottom: 1px solid var(--rose-light);
+    }
+
+    .history-order-id {
+        font-size: 0.7rem;
+        letter-spacing: 0.18em;
+        font-weight: 600;
+        color: var(--charcoal);
+        text-transform: uppercase;
+    }
+
+    .history-date {
+        font-size: 0.75rem;
+        color: var(--charcoal-soft);
+    }
+
+    .history-total {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: var(--charcoal);
+    }
+
+    .badge-confirm {
+        background: #F5ECD7;
+        color: #2e7d5e;
+        font-size: 0.62rem;
+        letter-spacing: 0.15em;
+        font-weight: 600;
+        text-transform: uppercase;
+        padding: 4px 12px;
+    }
+
+    .badge-processing {
+        background: #F5ECD7;
+        color: #c07826;
+        font-size: 0.62rem;
+        letter-spacing: 0.15em;
+        font-weight: 600;
+        text-transform: uppercase;
+        padding: 4px 12px;
+    }
+
+    .badge-pending {
+        background: #F5ECD7;
+        color: #8B1A1A;
+        font-size: 0.62rem;
+        letter-spacing: 0.15em;
+        font-weight: 600;
+        text-transform: uppercase;
+        padding: 4px 12px;
+    }
+
+    .history-items {
+        padding: 16px 24px;
+    }
+
+    .history-item-row {
+        display: flex;
+        gap: 14px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+        .history-item-row:last-child {
+            border-bottom: none;
+        }
+
+    .history-item-img {
+        width: 70px;
+        height: 95px;
+        object-fit: cover;
+        background: var(--rose-pale);
+        flex-shrink: 0;
+    }
+
+    .history-item-name {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: var(--charcoal);
+    }
+
+    .history-item-meta {
+        font-size: 0.7rem;
+        color: var(--charcoal-soft);
+        margin-top: 3px;
+    }
+
+    .history-item-price {
+        font-size: 0.82rem;
+        font-weight: 500;
+        color: var(--charcoal-soft);
+        margin-top: 4px;
+    }
+
+    /* Toast */
+    .toast-wrap {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 3000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .toast-msg {
+        background: var(--charcoal);
+        color: #F5ECD7;
+        padding: 12px 20px;
+        font-size: 0.78rem;
+        letter-spacing: 0.06em;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: toastIn 0.35s ease;
+    }
+
+        .toast-msg i {
+            color: var(--rose-light);
+        }
+
+    @@keyframes toastIn {
+        from {
+            transform: translateX(120%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    /* Profile View */
+    .profile-view {
+        padding: 50px 40px;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    .profile-grid {
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        gap: 40px;
+    }
+
+    @@media (max-width: 900px) {
+        .profile-grid {
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+    }
+
+    .profile-card {
+        background: var(--white);
+        border: 1px solid var(--border);
+        padding: 36px 30px;
+        text-align: center;
+        position: relative;
+        box-shadow: 0 10px 30px var(--shadow);
+    }
+
+        .profile-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--rose-light), var(--rose));
+        }
+
+    .profile-avatar-wrap {
+        position: relative;
+        width: 130px;
+        height: 130px;
+        margin: 0 auto 24px;
+        border-radius: 50%;
+        border: 3px solid var(--white);
+        box-shadow: 0 8px 24px var(--shadow);
+        overflow: hidden;
+        background: var(--rose-pale);
+    }
+
+        .profile-avatar-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .profile-name-display {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 1.6rem;
+        font-weight: 500;
+        color: var(--charcoal);
+        margin-bottom: 6px;
+    }
+
+    .profile-tier-badge {
+        display: inline-block;
+        font-size: 0.62rem;
+        letter-spacing: 0.18em;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #F5ECD7;
+        background: var(--rose);
+        padding: 5px 14px;
+        border-radius: 20px;
+        margin-bottom: 20px;
+    }
+
+    .profile-joined {
+        font-size: 0.72rem;
+        color: var(--charcoal-soft);
+        margin-bottom: 24px;
+    }
+
+    .loyalty-points-box {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        padding: 20px;
+        margin-bottom: 24px;
+        text-align: left;
+    }
+
+    .points-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .points-label {
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--charcoal-soft);
+        font-weight: 600;
+    }
+
+    .points-value {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: var(--rose);
+    }
+
+    .points-progress-bar {
+        height: 5px;
+        background: var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .points-progress-fill {
+        height: 100%;
+        background: var(--rose);
+    }
+
+    .points-footer {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 8px;
+        font-size: 0.62rem;
+        color: var(--charcoal-soft);
+        letter-spacing: 0.04em;
+    }
+
+    .nav-tabs-bar {
+        border-bottom: 1px solid var(--border);
+    }
+</style>
+
+
+<!-- --------------- HEADER --------------- -->
+<header id="site-header">
+    <div class="header-top">
+        <a class="logo" @onclick='() => Navigate("home")'>
+            CHIC <span>BOUTIQUE</span>
+            <span class="logo-tagline">Atelier Coterie</span>
+        </a>
+
+        <div class="header-actions">
+            <div class="d-none d-md-flex align-items-center border px-3 py-1 bg-white" style="border-radius: 20px;">
+                <!-- Replace @onkeyup with the debounced handler -->
+                <input type="text"
+                       value="@searchQuery"
+                       @oninput="OnSearchInput"
+                       placeholder="Search creations..."
+                       class="border-0 small"
+                       style="outline:none; width:150px; font-size:0.8rem;" />
+                <i class="bi bi-search text-muted" @onclick='() => Navigate("shop")' style="cursor:pointer;"></i>
+            </div>
+
+            <button class="btn-bag" @onclick="ToggleCart">
+                <i class="bi bi-bag"></i>
+                @if (CartCount > 0)
+                {
+                    <span class="bag-badge">@CartCount</span>
+                }
+            </button>
+
+            @if (currentUser != null)
+            {
+                <button class="notification-btn" title="Notifications">
+                    <i class="bi bi-bell"></i>
+                    @if (notifications.Any(n => !n.IsRead))
+                    {
+                        <span class="notification-badge">@notifications.Count(n => !n.IsRead)</span>
+                    }
+                </button>
+            }
+
+            @if (currentUser != null)
+            {
+                <span class="text-muted small d-none d-sm-inline">Mingalarpar, <strong>@currentUser.FirstName</strong></span>
+            }
+            else
+            {
+                <span class="text-muted small d-none d-sm-inline">Mingalarpar</span>
+            }
+        </div>
+    </div>
+
+    <nav class="nav-tabs-bar" style="overflow-x: auto; display: flex; white-space: nowrap; -webkit-overflow-scrolling: touch;">
+        <button class="nav-tab @(activeTab == "home" ? "active" : "")" @onclick='() => Navigate("home")'>Home</button>
+        <button class="nav-tab @(activeTab == "best" ? "active" : "")" @onclick='() => Navigate("best")'>Best Seller</button>
+        <button class="nav-tab @(activeTab == "shop" ? "active" : "")" @onclick='() => Navigate("shop")'>The Collection</button>
+        <button class="nav-tab @(activeTab == "history" ? "active" : "")" @onclick='() => Navigate("history")'>My Purchases</button>
+        <button class="nav-tab @(activeTab == "profile" ? "active" : "")" @onclick='() => Navigate("profile")'>My Profile</button>
+       @if (currentUser != null)
+        {
+            <button class="nav-tab text-danger mt-xxl-3" @onclick="RequestLogout" style="margin-left: auto; padding-left: 20px;">Sign Out</button>
+
+            @if (showLogoutConfirm)
+            {
+                <div class="confirm-overlay" @onclick="CancelLogout">
+                    <div class="confirm-modal" @onclick:stopPropagation="true">
+                        <div class="confirm-icon"><i class="bi bi-box-arrow-right"></i></div>
+                        <div class="confirm-title">Log Out?</div>
+                        <div class="confirm-text">Are you sure you want to log out of your customer account?</div>
+                        <div class="confirm-actions">
+                            <button class="confirm-btn-cancel" @onclick="CancelLogout">Cancel</button>
+                            <button class="confirm-btn-confirm" @onclick="ConfirmLogout">Yes, Log Out</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <button class="nav-tab text-danger" @onclick="GotoLogin" style="margin-left: auto; padding-left: 20px;">Sign in</button>
+        }
+    </nav>
+</header>
+<main class="view-wrapper">
+    <!-- --------------- VIEW: HOME --------------- -->
+    @if (activeTab == "home")
+    {
+        <section class="hero" style="
+            background: url('https://media.timeout.com/images/100661581/image.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            min-height: 420px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            ">
+
+            <!-- Overlay (optional for readability) -->
+            <div style="
+                position: absolute;
+                inset: 0;
+                background: rgba(245,236,215,0.4); /* semi-transparent beige overlay */
+                z-index: 0;">
+            </div>
+
+            <!-- Text block -->
+            <div style="
+                position: relative;
+                max-width: 520px;
+                text-align: center;
+                color: #2B2B2B;
+                z-index: 1;
+                padding: 20px;">
+
+                <span class="hero-eyebrow">Summer Coterie 2026</span>
+                <h1 class="hero-title">Timeless grace crafted for <em>modern silhouettes</em></h1>
+                <p class="hero-sub">Discover lightweight fabrics and soft pastel gradients curated carefully for high-society Yangon events.</p>
+                <button class="btn-primary-rose" @onclick='() => Navigate("shop")'>Explore Catalog</button>
+            </div>
+        </section>
+
+        <div class="section-head">
+            <h2 class="section-title">New <span>Creations</span></h2>
+            <span class="section-count">Featured Releases</span>
+        </div>
+
+        <div class="products-grid">
+            @foreach (var prod in newCreation)
+            {
+                var primaryImg = NormalizeImageUrl(prod.ImageDto);
+
+                <div class="product-card best-seller" @onclick="() => OpenQuickViewss(prod)">
+
+                    <div class="card-img-wrap">
+                        <FallbackImage Src="@primaryImg" Alt="@prod.Name" />
+
+                        <span class="badge-best">??New Arrival</span>
+
+                        <button class="card-quick">Quick View</button>
+                    </div>
+
+                    <div class="card-body">
+                        <p class="card-collection">@prod.CategoryName</p>
+                        <h3 class="card-name">@prod.Name</h3>
+
+                        <p class="card-price">
+                            @prod.BasePrice.ToString("N0")
+                            <span class="currency">MMK</span>
+                        </p>
+                    </div>
+
+                </div>
+                
+            }
+        </div>
+        <Pagination CurrentPage="@PageNoC"
+                    TotalPages="@TotalPagesC"
+                    CurrentPageChanged="@ChangePage" />
+        
+    }
+
+    else if (activeTab == "best")
+    {
+        <div class="section-head">
+            <h2 class="section-title">The <span>Best Collection</span></h2>
+            <span class="section-count">Here are the best seller </span>
+        </div>
+
+        <div class="products-grid">
+            @if (!bestSeller.Any())
+            {
+                <div class="col-12 text-center py-5 text-muted">
+                    <i class="bi bi-inbox" style="font-size:2rem; display:block;"></i>
+                    No products match the selection criteria.
+                </div>
+            }
+            else
+            {
+                @foreach (var prod in bestSeller)
+                {
+                 
+                    var primaryImg = NormalizeImageUrl(prod.ImageDto);
+
+                    <div class="product-card best-seller" @onclick="() => OpenQuickViews(prod)">
+
+                        <div class="card-img-wrap">
+                            <FallbackImage Src="@primaryImg" Alt="@prod.Name" />
+
+                            <span class="badge-best">?? Best Seller</span>
+
+                            <button class="card-quick">Quick View</button>
+                        </div>
+
+                        <div class="card-body">
+                            <p class="card-collection">@prod.CategoryName</p>
+                            <h3 class="card-name">@prod.Name</h3>
+
+                            <p class="card-price">
+                                @prod.BasePrice.ToString("N0")
+                                <span class="currency">MMK</span>
+                            </p>
+                        </div>
+
+                    </div>
+                }
+            }
+        </div>
+
+        <Pagination CurrentPage="@PageNoB"
+                    TotalPages="@TotalPagesB"
+                    CurrentPageChanged="@ChangeBPage" />
+    }
+    
+    else if (activeTab == "shop")
+    {
+    <div class="section-head">
+        <h2 class="section-title">The <span>The Collection</span></h2>
+        <span class="section-count">Here is the collection</span>
+    </div>
+
+    <div class="products-grid">
+        @if (!filteredProduct.Any())
+        {
+            <div class="col-12 text-center py-5 text-muted">
+                <i class="bi bi-inbox" style="font-size:2rem; display:block;"></i>
+                No products match the selection criteria.
+            </div>
+        }
+        else
+        {
+                @foreach (var prod in filteredProduct)
+            {
+                    var primaryImg = NormalizeImageUrl(prod.ImageDto);
+
+                <div class="product-card best-seller" @onclick="() => OpenQuickView(prod)">
+
+                    <div class="card-img-wrap">
+                        <FallbackImage Src="@primaryImg" Alt="@prod.Name" />
+
+                        <span class="badge-best">??New Arrival</span>
+
+                        <button class="card-quick">Quick View</button>
+                    </div>
+
+                    <div class="card-body">
+                        <p class="card-collection">@prod.CategoryName</p>
+                        <h3 class="card-name">@prod.Name</h3>
+
+                        <p class="card-price">
+                            @prod.BasePrice.ToString("N0")
+                            <span class="currency">MMK</span>
+                        </p>
+                    </div>
+
+                </div>
+                
+            }
+        }
+    </div>
+        <Pagination CurrentPage="@PageNo"
+                    TotalPages="@TotalPages"
+                    CurrentPageChanged="@ChangePageAll" />
+    }
+    
+    else if (activeTab == "checkout")
+    {
+    <div class="checkout-view">
+        <div class="checkout-grid">
+            <!-- Form Info -->
+            <div>
+                <h3 class="checkout-section-title">Delivery Details</h3>
+
+                <div class="form-group">
+                    <label class="form-label-custom">Recipient Full Name</label>
+                    <input type="text" class="form-control-custom" @bind="coName" placeholder="Emily Watson" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label-custom">Phone Number</label>
+                    <input type="text" class="form-control-custom" @bind="coPhone" placeholder="09443322110" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label-custom">Shipping Address</label>
+                    <input type="text" class="form-control-custom" @bind="coAddress" placeholder="Room 21, Golden Valley Apartments" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label-custom">City</label>
+                    <input type="text" class="form-control-custom" @bind="coCity" placeholder="Yangon" />
+                </div>
+
+                <h3 class="checkout-section-title mt-5">Payment Method</h3>
+
+                <div class="payment-option @(selectedPayment == "kpay" ? "selected" : "")" @onclick='() => SelectPaymentMethod("kpay")'>
+                    <input type="radio" checked="@(selectedPayment == "kpay")" readonly />
+                    <div>
+                        <p class="payment-option-name">KBZPay (KPay) QR Code Transfer</p>
+                        <p class="payment-option-sub">Transfer to 09252522525 (The Boutique Atelier)</p>
+                    </div>
+                </div>
+
+                <div class="payment-option @(selectedPayment == "wave_money" ? "selected" : "")" @onclick='() => SelectPaymentMethod("wave_money")'>
+                    <input type="radio" checked="@(selectedPayment == "wave_money")" readonly />
+                    <div>
+                        <p class="payment-option-name">WaveMoney (WavePay) QR Transfer</p>
+                        <p class="payment-option-sub">Transfer to 09252522525 (Atelier Boutique Corp.)</p>
+                    </div>
+                </div>
+
+                <div class="payment-option @(selectedPayment == "cod" ? "selected" : "")" @onclick='() => SelectPaymentMethod("cod")'>
+                    <input type="radio" checked="@(selectedPayment == "cod")" readonly />
+                    <div>
+                        <p class="payment-option-name">Cash on Delivery (Yangon Only)</p>
+                        <p class="payment-option-sub">Pay raw cash to courier upon dress delivery.</p>
+                    </div>
+                </div>
+
+                @if (selectedPayment == "kpay")
+                {
+                    <div class="qr-block">
+                        <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=KBZPayTransferRecv_09252522525" alt="KBZPay QR" />
+                        <p class="qr-instruction">Scan this QR Code in KBZPay to transfer. Account Name: <span class="qr-account">Chic Boutique Atelier</span></p>
+                    </div>
+                }
+
+                @if (selectedPayment == "wave_money")
+                {
+                    <div class="qr-block">
+                        <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=WavePayTransferRecv_09252522525" alt="WavePay QR" />
+                        <p class="qr-instruction">Scan this QR Code in WaveMoney to transfer. Account Name: <span class="qr-account">Atelier Boutique Corp.</span></p>
+                    </div>
+                }
+
+                @if (selectedPayment == "kpay" || selectedPayment == "wave_money")
+                {
+                    <div class="form-group mt-4">
+                        <label class="form-label-custom">Transaction / Reference Number</label>
+                        <input type="text" class="form-control-custom" @bind="paymentReference" placeholder="Enter transaction ID from payment app" />
+                    </div>
+                    <div class="form-group mt-4">
+                        <label class="form-label-custom">Upload Screenshot Slip</label>
+                        <div class="slip-upload-zone" @onclick="SimulateSlipUpload">
+                            <i class="bi bi-cloud-arrow-up slip-upload-icon"></i>
+                            <p class="slip-upload-text">Click to simulate uploading screenshot slip</p>
+                        </div>
+
+                        @if (slipUploaded && !string.IsNullOrEmpty(slipFileName))
+                        {
+                            <div class="slip-preview">
+                                <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80" style="width:120px; height:150px; object-fit:cover;" alt="Simulated Slip" />
+                                <p class="slip-preview-name text-center text-success mt-2"><i class="bi bi-patch-check-fill"></i> @slipFileName</p>
+                            </div>
+                        }
+                    </div>
+                }
+
+            </div>
+
+            <!-- Summary info -->
+            <div>
+                <h3 class="checkout-section-title">Order Bag Summary</h3>
+                <div class="order-summary-panel">
+                    @if (!cart.Any())
+                    {
+                        <p class="text-muted text-center py-4 small">No creations in bag.</p>
+                    }
+                    else
+                    {
+                        @foreach (var item in cart)
+                        {
+                            <div class="order-summary-item">
+                                <FallbackImage Src="@item.ImgUrl" Alt="@item.Name" CssClass="order-summary-img" />
+                                <div>
+                                    <p class="order-sum-name">@item.Name</p>
+                                    <p class="order-sum-meta">@item.Size · @item.Color · Qty @item.Qty</p>
+                                    <p class="order-sum-price">@((item.Price * item.Qty).ToString("N0")) MMK</p>
+                                </div>
+                            </div>
+                        }
+                    }
+
+                    <div class="summary-total-row">
+                        <span class="summary-total-label">Subtotal</span>
+                        <span class="summary-total-val">@CartTotal.ToString("N0") MMK</span>
+                    </div>
+
+                    <button class="btn-place-order" @onclick="PlaceOrder">Confirm Atelier Purchase</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+
+    
+    else if (activeTab == "history")
+    {
+    <div class="history-view">
+        <div class="section-head px-0">
+            <h2 class="section-title">Your <span>Your Purchases History</span></h2>
+            <span class="section-count">@userOrders.Count orders logged</span>
+        </div>
+
+        <div id="history-list">
+            @if (!userOrders.Any())
+            {
+                <p class="text-muted text-center py-5">No purchase history logged for this account. Discover creations in the catalog!</p>
+            }
+            else
+            {
+                @foreach (var order in userOrders)
+                {
+                    <div class="history-card">
+                        <div class="history-card-header">
+                            <div>
+                                <p class="history-order-id">Order ORD-@order.OrderId.ToString("D4")</p>
+                                <p class="history-date">@(order.CreatedAt?.ToString("dd MMM yyyy HH:mm") ?? "N/A")</p>
+                            </div>
+                            <div>
+                                @if (OrderWorkflow.Normalize(order.OrderStatus) == OrderWorkflow.Confirm)
+                                {
+                                    <span class="badge-confirm px-3 py-1 rounded">Confirm</span>
+                                }
+                                else if (OrderWorkflow.Normalize(order.OrderStatus) == OrderWorkflow.Processing)
+                                {
+                                    <span class="badge-processing px-3 py-1 rounded">Processing</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-pending px-3 py-1 rounded">Pending</span>
+                                }
+                            </div>
+                            <span class="history-total">@order.TotalAmount.ToString("N0") MMK</span>
+                        </div>
+                            <div class="history-items">
+                                @foreach (var item in order.OrderItems)
+                                {
+                                    // ?? ?? ????????????? ????????? ?????????? ????????????????
+                                    var imgObj = item.Variant?.Product?.ProductImages?.FirstOrDefault(i => i.IsPrimary == true);
+                                    var primaryImg = NormalizeImageUrl(imgObj?.ImageUrl);
+                                    <div class="history-item-row">
+                                        <FallbackImage Src="@primaryImg" Alt="@(item.Variant?.Product?.Name ?? "Product")" CssClass="history-item-img" />
+                                        <div>
+                                            <h4 class="history-item-name">@(item.Variant?.Product?.Name ?? "Unknown Product")</h4>
+                                            <p class="history-item-meta">
+                                                Size: @(item.Variant?.Size ?? "-") ·
+                                                Color: @(item.Variant?.Color ?? "-") ·
+                                                Qty: @item.Quantity
+                                            </p>
+                                            <p class="history-item-price">@((item.PriceAtPurchase * item.Quantity).ToString("N0")) MMK</p>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+    }
+
+    
+    else if (activeTab == "profile")
+    {
+        if (currentUser == null)
+        {
+            <div class="history-card" >
+                <div class="section-head px-0">
+                    <h2 class="section-title">Your <span>Authentication required. Please log in to access your profile page.</span></h2>
+                    <button class="nav-tab text-danger" @onclick="GotoLogin" style="margin-left: auto;">Login</button>
+                </div>
+            </div>
+
+        }
+        else
+        {
+            <div class="profile-view">
+                <div class="profile-grid">
+                    <!-- Member Badge Card -->
+                    <div class="profile-card">
+                        <div class="profile-avatar-wrap">
+                            <img src="@profileAvatar" alt="Avatar" />
+                        </div>
+
+                        <h3 class="profile-name-display">@currentUser?.FirstName @currentUser?.LastName</h3>
+
+                        @if (loyaltyPoints >= 1500)
+                        {
+                            <span class="profile-tier-badge" style="background:#D4AF37;">Royal Circle (Gold)</span>
+                        }
+                        else if (loyaltyPoints >= 500)
+                        {
+                            <span class="profile-tier-badge" style="background:#C0C0C0;">Atelier Elite (Silver)</span>
+                        }
+                        else
+                        {
+                            <span class="profile-tier-badge">Salon Member (Bronze)</span>
+                        }
+
+                        <p class="profile-joined">Joined On: @(currentUser?.CreatedAt?.ToString("MMM yyyy") ?? "June 2026")</p>
+
+                        <div class="loyalty-points-box">
+                            <div class="points-header">
+                                <span class="points-label">Loyalty Balance</span>
+                                <span class="points-value">@loyaltyPoints.ToString("N0") pts</span>
+                            </div>
+
+                            @{
+                                int nextTierTarget = 1500;
+                                int ptsNeeded = nextTierTarget - loyaltyPoints;
+                                double progressPercent = (double)loyaltyPoints / nextTierTarget * 100;
+                                if (progressPercent > 100) progressPercent = 100;
+                            }
+
+                            <div class="points-progress-bar">
+                                <div class="points-progress-fill" style="width: @(progressPercent)%;"></div>
+                            </div>
+                            <div class="points-footer">
+                                @if (ptsNeeded > 0)
+                                {
+                                    <span>@ptsNeeded.ToString("N0") pts to Gold Member</span>
+                                }
+                                else
+                                {
+                                    <span>Maximum Membership Tier Achieved</span>
+                                }
+                                <span>Target: @nextTierTarget pts</span>
+                            </div>
+                        </div>
+
+                        <div class="alert bg-light border text-start p-3 small" style="line-height: 1.6;">
+                            <strong>? Membership Privileges:</strong>
+                            <ul class="ps-3 mt-1 m-0">
+                                <li>Earn 1 Point for every 5000 MMK spent.</li>
+                                <li>Silver members get 5% off items automatically.</li>
+                                <li>Gold members unlock free shipping & early access.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Edit Profile Form -->
+                    <div class="profile-card text-start">
+                        <h3 class="checkout-section-title">Atelier Member Details</h3>
+
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label class="form-label-custom">First Name</label>
+                                <input type="text" class="form-control-custom" @bind="profFirstName" />
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label class="form-label-custom">Last Name</label>
+                                <input type="text" class="form-control-custom" @bind="profLastName" />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label-custom">Email Address (Registered)</label>
+                            <input type="email" class="form-control-custom" @bind="profEmail" />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label-custom">Phone Number</label>
+                            <input type="text" class="form-control-custom" @bind="coPhone" />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label-custom">Default Delivery Address</label>
+                            <input type="text" class="form-control-custom" @bind="profAddress" />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label-custom">Default City</label>
+                            <input type="text" class="form-control-custom" @bind="profCity" />
+                        </div>
+
+                        <button class="btn-primary-rose mt-4 w-100" @onclick="SaveProfile">Save Member Profile</button>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</main>
+
+ <!-- --------------- CONTACT US --------------- -->
+<section style="
+    background: #FDF8F6;
+    padding: 70px 40px;
+    border-top: 1px solid #EDD9D0;">
+
+    <div style="max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start;">
+
+        <!-- Left: Contact Info -->
+        <div>
+            <p style="font-size:0.68rem; letter-spacing:0.3em; text-transform:uppercase; color:#8B1A1A; margin-bottom:12px;">Get In Touch</p>
+            <h2 style="font-family: 'DM Sans', sans-serif; font-size:2.2rem; font-weight:400; color:#3C1F10; margin-bottom:16px; line-height:1.2;">
+                Contact <em style="color:#8B1A1A; font-style:italic;">Chic Boutique</em>
+            </h2>
+            <p style="font-size:0.88rem; color:#7A5C50; line-height:1.8; margin-bottom:32px;">
+                We would love to hear from you. Whether you have questions about our collections, sizing, or custom orders — our atelier team is here to assist.
+            </p>
+
+            <div style="display:flex; flex-direction:column; gap:20px;">
+                <div style="display:flex; align-items:center; gap:14px;">
+                    <div style="width:40px; height:40px; border-radius:50%; background:#FFF3EE; border:1px solid #EDD9D0; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i class="bi bi-geo-alt" style="color:#8B1A1A; font-size:1rem;"></i>
+                    </div>
+                    <div>
+                        <p style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:#7A5C50; font-weight:600; margin:0;">Location</p>
+                        <p style="font-size:0.88rem; color:#3C1F10; margin:0;">Golden Valley, Bahan Township, Yangon</p>
+                    </div>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:14px;">
+                    <div style="width:40px; height:40px; border-radius:50%; background:#FFF3EE; border:1px solid #EDD9D0; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i class="bi bi-telephone" style="color:#8B1A1A; font-size:1rem;"></i>
+                    </div>
+                    <div>
+                        <p style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:#7A5C50; font-weight:600; margin:0;">Phone</p>
+                        <p style="font-size:0.88rem; color:#3C1F10; margin:0;">09 252 522 525</p>
+                    </div>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:14px;">
+                    <div style="width:40px; height:40px; border-radius:50%; background:#FFF3EE; border:1px solid #EDD9D0; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i class="bi bi-envelope" style="color:#8B1A1A; font-size:1rem;"></i>
+                    </div>
+                    <div>
+                        <p style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:#7A5C50; font-weight:600; margin:0;">Email</p>
+                        <p style="font-size:0.88rem; color:#3C1F10; margin:0;">hello@theboutique.com.mm</p>
+                    </div>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:14px;">
+                    <div style="width:40px; height:40px; border-radius:50%; background:#FFF3EE; border:1px solid #EDD9D0; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i class="bi bi-clock" style="color:#8B1A1A; font-size:1rem;"></i>
+                    </div>
+                    <div>
+                        <p style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:#7A5C50; font-weight:600; margin:0;">Hours</p>
+                        <p style="font-size:0.88rem; color:#3C1F10; margin:0;">Mon – Sat: 10:00 AM – 7:00 PM</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Right: Message Form -->
+        <div style="background:#FFFFFF; border:1px solid #EDD9D0; border-radius:12px; padding:32px;">
+            <h3 style="font-family: 'DM Sans', sans-serif; font-size:1.4rem; font-weight:400; color:#3C1F10; margin-bottom:24px;">Send a Message</h3>
+
+            <div style="margin-bottom:16px;">
+                <label style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; font-weight:600; color:#7A5C50; display:block; margin-bottom:6px;">Full Name</label>
+                <input type="text" placeholder="Your name" style="width:100%; border:1px solid #EDD9D0; border-radius:8px; padding:10px 14px; font-size:0.88rem; color:#3C1F10; background:#FDFAF8; outline:none; font-family:inherit;" />
+            </div>
+
+            <div style="margin-bottom:16px;">
+                <label style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; font-weight:600; color:#7A5C50; display:block; margin-bottom:6px;">Email Address</label>
+                <input type="email" placeholder="you@example.com" style="width:100%; border:1px solid #EDD9D0; border-radius:8px; padding:10px 14px; font-size:0.88rem; color:#3C1F10; background:#FDFAF8; outline:none; font-family:inherit;" />
+            </div>
+
+            <div style="margin-bottom:24px;">
+                <label style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; font-weight:600; color:#7A5C50; display:block; margin-bottom:6px;">Message</label>
+                <textarea placeholder="How can we assist you?" rows="4" style="width:100%; border:1px solid #EDD9D0; border-radius:8px; padding:10px 14px; font-size:0.88rem; color:#3C1F10; background:#FDFAF8; outline:none; font-family:inherit; resize:none;"></textarea>
+            </div>
+
+            <button style="width:100%; background:linear-gradient(135deg,#8B1A1A,#6B0F0F); color:#F5F0E8; border:none; border-radius:8px; padding:14px; font-size:0.78rem; letter-spacing:0.2em; text-transform:uppercase; font-weight:600; cursor:pointer;">
+                Send Message
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- --------------- FOOTER --------------- -->
+<footer style="background:#3C1F10; color:#F5F0E8; padding:60px 40px 30px;">
+
+    <div style="max-width:1100px; margin:0 auto;">
+
+        <!-- Top Row -->
+        <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:40px; margin-bottom:50px;">
+            <!-- Brand -->
+            <div>
+                <h3 style="font-family: 'DM Sans', sans-serif; font-size:1.6rem; font-weight:400; letter-spacing:0.15em; color:#F5F0E8; margin-bottom:8px;">CHIC BOUTIQUE</h3>
+                <p style="font-size:0.62rem; letter-spacing:0.3em; text-transform:uppercase; color:#C8837A; margin-bottom:16px;">Atelier Coterie</p>
+                <p style="font-size:0.82rem; color:rgba(245,240,232,0.65); line-height:1.8; max-width:260px;">
+                    Curating timeless garments for the modern woman. Crafted with care, worn with grace.
+                </p>
+                <div style="display:flex; gap:12px; margin-top:20px;">
+                    <a href="https://www.facebook.com/share/17QQMv833X/" style="width:34px; height:34px; border-radius:50%; border:1px solid rgba(245,240,232,0.2); display:flex; align-items:center; justify-content:center; color:#F5F0E8; text-decoration:none; transition:all 0.2s;">
+                        <i class="bi bi-facebook" style="font-size:0.9rem;"></i>
+                    </a>
+                    <a href="https://www.instagram.com/y_for_youth_?igsh=MzF4M2U0ZWxveTRi" style="width:34px; height:34px; border-radius:50%; border:1px solid rgba(245,240,232,0.2); display:flex; align-items:center; justify-content:center; color:#F5F0E8; text-decoration:none;">
+                        <i class="bi bi-instagram" style="font-size:0.9rem;"></i>
+                    </a>
+                    <a href="#" style="width:34px; height:34px; border-radius:50%; border:1px solid rgba(245,240,232,0.2); display:flex; align-items:center; justify-content:center; color:#F5F0E8; text-decoration:none;">
+                        <i class="bi bi-tiktok" style="font-size:0.9rem;"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Collections -->
+            <div>
+                <h4 style="font-size:0.65rem; letter-spacing:0.2em; text-transform:uppercase; color:#C8837A; font-weight:600; margin-bottom:16px;">Collections</h4>
+                <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px;">
+                    <li><a @onclick='() => Navigate("shop")' style="font-size:0.82rem; color:rgba(245,240,232,0.65); text-decoration:none; cursor:pointer; transition:color 0.2s;">The Collection</a></li>
+                    <li><a @onclick='() => Navigate("best")' style="font-size:0.82rem; color:rgba(245,240,232,0.65); text-decoration:none; cursor:pointer;">Best Sellers</a></li>
+                    <li><a @onclick='() => Navigate("home")' style="font-size:0.82rem; color:rgba(245,240,232,0.65); text-decoration:none; cursor:pointer;">New Arrivals</a></li>
+                </ul>
+            </div>
+
+            <!-- Account -->
+            <div>
+                <h4 style="font-size:0.65rem; letter-spacing:0.2em; text-transform:uppercase; color:#C8837A; font-weight:600; margin-bottom:16px;">Account</h4>
+                <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px;">
+                    <li><a @onclick='() => Navigate("profile")' style="font-size:0.82rem; color:rgba(245,240,232,0.65); text-decoration:none; cursor:pointer;">My Profile</a></li>
+                    <li><a @onclick='() => Navigate("history")' style="font-size:0.82rem; color:rgba(245,240,232,0.65); text-decoration:none; cursor:pointer;">My Purchases</a></li>
+                    <li><a @onclick="ToggleCart" style="font-size:0.82rem; color:rgba(245,240,232,0.65); text-decoration:none; cursor:pointer;">Shopping Bag</a></li>
+                </ul>
+            </div>
+             <!-- Contact -->
+            <div>
+                <h4 style="font-size:0.65rem; letter-spacing:0.2em; text-transform:uppercase; color:#C8837A; font-weight:600; margin-bottom:16px;">Contact</h4>
+                <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px;">
+                    <li style="font-size:0.82rem; color:rgba(245,240,232,0.65);">
+                        <i class="bi bi-geo-alt" style="margin-right:6px; color:#C8837A;"></i>Golden Valley, Yangon
+                    </li>
+                    <li style="font-size:0.82rem; color:rgba(245,240,232,0.65);">
+                        <i class="bi bi-telephone" style="margin-right:6px; color:#C8837A;"></i>09 252 522 525
+                    </li>
+                    <li style="font-size:0.82rem; color:rgba(245,240,232,0.65);">
+                        <i class="bi bi-envelope" style="margin-right:6px; color:#C8837A;"></i>hello@theboutique.mm
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <div style="height:1px; background:rgba(245,240,232,0.12); margin-bottom:24px;"></div>
+
+        <!-- Bottom Row -->
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+            <p style="font-size:0.72rem; color:rgba(245,240,232,0.4); margin:0; letter-spacing:0.05em;">
+                © 2026 The Boutique Atelier Coterie. All rights reserved.
+            </p>
+            <p style="font-size:0.72rem; color:rgba(245,240,232,0.4); margin:0; letter-spacing:0.05em;">
+                Crafted with <span style="color:#C8837A;">??</span> in Yangon, Myanmar
+            </p>
+        </div>
+    </div>
+</footer>
+
+<div class="modal-overlay @(isModalOpen ? "open" : "")">
+    @if (modalProduct != null)
+    {
+        var primaryImg = NormalizeImageUrl(modalProduct.ImageDto);
+
+        <div class="product-modal">
+            <button class="modal-close" @onclick="CloseQuickView">
+                <i class="bi bi-x-lg"></i>
+            </button>
+
+            <div class="modal-img-col">
+                <FallbackImage Src="@primaryImg" Alt="@modalProduct.Name" />
+            </div>
+
+            <div class="modal-info-col">
+                <p class="modal-collection">@modalProduct.CategoryName</p>
+                <h2 class="modal-name">@modalProduct.Name</h2>
+                <p class="modal-price">
+                    @modalProduct.BasePrice.ToString("N0")
+                    <span class="currency">MMK</span>
+                </p>
+                <p class="modal-desc">@modalProduct.Description</p>
+
+
+                @if(modalProduct.VariantsDto != null)
+                {
+                    <label class="option-label">Size Chart</label>
+                    <div class="size-btns">
+                        @foreach (var size in modalProduct.VariantsDto.Select(v => v.Size).Distinct())
+                        {
+                            <button class="size-btn @(selectedSize == size ? "selected" : "")" @onclick="() => SelectSize(size)">@size</button>
+                        }
+                    </div>
+
+                    <label class="option-label">Select Color</label>
+                    <div class="color-btns">
+                        @foreach (var color in modalProduct.VariantsDto.Select(v => v.Color).Distinct())
+                        {
+                            <button class="size-btn @(selectedColor == color ? "selected" : "")" @onclick="() => SelectColor(color)">@color</button>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p>There is no size and color</p>
+                }
+
+                @if (!string.IsNullOrEmpty(modalErrorMessage))
+                {
+                    <p class="modal-error">
+                        <i class="bi bi-exclamation-triangle"></i> @modalErrorMessage
+                    </p>
+                }
+
+                <div class="modal-buy-actions">
+                    <div class="modal-qty-row">
+                        <span class="option-label mb-0">Quantity</span>
+                        <div class="cart-qty">
+                            <button class="qty-btn" @onclick="() => ChangeSelectedQuantity(-1)">-</button>
+                            <span class="qty-num">@selectedQuantity</span>
+                            <button class="qty-btn" @onclick="() => ChangeSelectedQuantity(1)">+</button>
+                        </div>
+                    </div>
+                    <button class="btn-add-bag" @onclick="AddToBagUnified">Add to Bag</button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- --------------- CART DRAWER --------------- -->
+<div class="cart-backdrop mt-3 @(isCartOpen ? "open" : "")" @onclick="ToggleCart"></div>
+<div class="cart-drawer @(isCartOpen ? "open" : "")">
+    <div class="cart-header">
+        <span class="cart-title">Shopping Bag</span>
+        <button class="cart-close" @onclick="ToggleCart"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="cart-body">
+        @if (!cart.Any())
+        {
+            <div class="cart-empty">
+                <i class="bi bi-bag-x" style="font-size:3rem; color:var(--rose-light);"></i>
+                <p class="mt-3">Your shopping bag is empty.</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var item in cart)
+            {
+                <div class="cart-item">
+                    <FallbackImage Src="@item.ImgUrl" Alt="@item.Name" CssClass="cart-item-img" />
+                    <div class="cart-item-info">
+                        <p class="cart-item-name">@item.Name</p>
+                        <p class="cart-item-meta">@item.Size · @item.Color</p>
+                        <div class="cart-qty">
+                            <button class="qty-btn" @onclick="() => UpdateQty(item, -1)">-</button>
+                            <span class="qty-num">@item.Qty</span>
+                            <button class="qty-btn" @onclick="() => UpdateQty(item, 1)">+</button>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column align-items-end justify-content-between">
+                        <button class="cart-item-remove" @onclick="() => RemoveItem(item)"><i class="bi bi-trash"></i></button>
+                        <span class="cart-item-price">@((item.Price * item.Qty).ToString("N0")) MMK</span>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+    <div class="cart-footer">
+        <div class="cart-subtotal-row">
+            <span class="cart-subtotal-label">Subtotal</span>
+            <span class="cart-subtotal-val">@CartTotal.ToString("N0") MMK</span>
+        </div>
+        <p class="cart-note">Fulfillment and shipping calculated at checkout.</p>
+        <button class="btn-checkout" @onclick="GoCheckout">Proceed to Checkout</button>
+    </div>
+</div>
+
+<!-- --------------- SUCCESS OVERLAY --------------- -->
+<div class="success-overlay @(isSuccessOpen ? "open" : "")">
+    <div class="success-icon"><i class="bi bi-check-lg"></i></div>
+    <h2 class="success-title">Order Confirmed!</h2>
+    <p class="success-sub">
+        Thank you for your purchase. We have received your order.
+        @if (selectedPayment == "cod")
+        {
+            <span>Our shipping coordinator will call you shortly to confirm delivery details.</span>
+        }
+        else
+        {
+            <span>Your bank payment screenshot slip has been queued for validation. We will dispatch within 2 hours.</span>
+        }
+        <br /><br />
+        <span style="display:inline-block;background:var(--rose-pale);border:1px solid var(--rose-light);padding:8px 16px;color:var(--charcoal);font-weight:500;font-size:0.8rem;letter-spacing:0.04em;">
+            ?IF ORDER CONFIRM, YOU EARNED @pointsEarnedInOrder.ToString("N0") LOYALTY POINTS!
+        </span>
+    </p>
+    <p class="success-order-id">ORDER #@confirmedOrderId</p>
+    <button class="btn-continue" @onclick="AfterOrder">Continue Shopping</button>
+</div>
+
+<!-- Toast container -->
+<div class="toast-wrap">
+    @foreach (var toast in toasts)
+    {
+        <div class="toast-msg">
+            <i class="bi bi-check-circle-fill"></i>
+            <span>@toast.Text</span>
+        </div>
+    }
+</div>

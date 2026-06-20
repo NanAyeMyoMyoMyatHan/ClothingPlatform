@@ -1,0 +1,129 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject StaffPortalState State
+
+<PageTitle>The Boutique - Staff Portal</PageTitle>
+
+@if (!State.IsPortalReady)
+{
+    <div class="portal-loading">
+        <div class="portal-loading-card">
+            <div class="portal-loading-mark">TB</div>
+            <div>
+                <h1>Loading portal</h1>
+                <p>Preparing your staff workspace.</p>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div id="toastContainer">
+        @foreach (var toast in State.ActiveToasts)
+        {
+            <div class="app-toast @(toast.IsError ? "toast-error" : "")">
+                <i class="bi @(toast.IsError ? "bi-x-circle text-danger" : "bi-check-circle text-success")" style="font-size:1.1rem"></i>
+                <div class="toast-msg">@State.HtmlRaw(toast.Message)</div>
+            </div>
+        }
+    </div>
+
+    @if (State.ShowLogoutConfirm)
+    {
+        <div class="confirm-overlay" @onclick="State.CancelLogout">
+            <div class="confirm-modal" @onclick:stopPropagation="true">
+                <div class="confirm-icon"><i class="bi bi-box-arrow-right"></i></div>
+                <div class="confirm-title">@UiMessages.StaffLogout.Title</div>
+                <div class="confirm-text">@UiMessages.StaffLogout.Text</div>
+                <div class="confirm-actions">
+                    <button class="confirm-btn-cancel" @onclick="State.CancelLogout">Cancel</button>
+                    <button class="confirm-btn-confirm" @onclick="State.ConfirmLogout">@UiMessages.StaffLogout.ConfirmButton</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div id="appShell">
+        <aside id="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-monogram">TB</div>
+                <div class="brand-title">The Boutique</div>
+                <div class="brand-sub">Staff Portal</div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section-label">Main</div>
+                <NavLink class="nav-item" href="/staff/dashboard" Match="NavLinkMatch.All">
+                    <i class="bi bi-grid-1x2"></i> Dashboard
+                </NavLink>
+
+                <div class="nav-section-label">Operations</div>
+                <NavLink class="nav-item" href="/staff/create-order" Match="NavLinkMatch.All">
+                    <i class="bi bi-telephone-plus"></i> Create Order (Phone)
+                </NavLink>
+                <NavLink class="nav-item" href="/staff/order-management" Match="NavLinkMatch.All">
+                    <i class="bi bi-bag-check"></i> Order Management
+                </NavLink>
+                <NavLink class="nav-item" href="/staff/stock-control" Match="NavLinkMatch.All">
+                    <i class="bi bi-archive"></i> Stock Control
+                </NavLink>
+
+                <div class="nav-section-label">Account</div>
+                <NavLink class="nav-item" href="/staff/profile" Match="NavLinkMatch.All">
+                    <i class="bi bi-person-circle"></i> My Profile
+                </NavLink>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="staff-chip">
+                    <div class="staff-avatar">@State.StaffInitials</div>
+                    <div>
+                        <div class="staff-name">@State.StaffFirstName @State.StaffLastName</div>
+                        <div class="staff-role">@State.StaffRole</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <div id="mainArea">
+            <div id="topbar">
+                <div class="topbar-greeting">Hello, <span>@State.StaffFirstName @State.StaffLastName</span></div>
+                <div class="topbar-right">
+                    <span class="topbar-date">@State.CurrentDateString</span>
+                    <span class="topbar-badge">@State.StaffRole</span>
+                    <button class="topbar-logout-btn" @onclick="State.RequestLogout" title="Logout">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </button>
+                </div>
+            </div>
+
+            <div id="content">
+                @Body
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        State.StateChanged += OnStateChanged;
+        await State.InitializeFromCurrentSessionAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await State.RestoreOrRedirectAsync();
+        }
+    }
+
+    private void OnStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        State.StateChanged -= OnStateChanged;
+    }
+}
