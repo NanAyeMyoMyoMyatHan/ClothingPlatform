@@ -94,7 +94,7 @@
                                 var slipUrl = NormalizeSlipImageUrl(payment?.SlipImageUrl);
                                 <tr>
                                     <td>
-                                        <span class="order-code">#ORD-@ord.OrderId.ToString("D4")</span>
+                                        <span class="order-code">ORD-@ord.OrderId.ToString("D4")</span>
                                     </td>
                                     <td>
                                         <div class="customer-stack">
@@ -257,7 +257,7 @@
                             @foreach (var go in PagedGuestOrders)
                             {
                                 <tr>
-                                    <td><span class="order-code guest">#GORD-@go.GuestOrderId.ToString("D4")</span></td>
+                                    <td><span class="order-code guest">GORD-@go.GuestOrderId.ToString("D4")</span></td>
                                     <td>
                                         <div class="customer-stack">
                                             <strong>@go.CustomerName</strong>

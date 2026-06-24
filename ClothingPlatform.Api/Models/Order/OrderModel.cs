@@ -108,4 +108,9 @@
 
     }
 
+public class OrderSummaryDto
+    {
+
+    }
+
 }

@@ -1,0 +1,148 @@
+﻿
+<style>
+.confirm-overlay {
+position: fixed;
+inset: 0;
+background: rgba(15, 15, 20, 0.55);
+backdrop-filter: blur(4px);
+display: flex;
+align-items: center;
+justify-content: center;
+z-index: 9999;
+animation: fadeIn 0.18s ease-out;
+}
+
+.confirm-box {
+background: #fff;
+border-radius: 16px;
+padding: 28px 28px 24px;
+width: 360px;
+max-width: 90vw;
+box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+text-align: center;
+animation: popIn 0.2s ease-out;
+}
+
+.confirm-icon {
+width: 56px;
+height: 56px;
+margin: 0 auto 16px;
+border-radius: 50%;
+background: #fef2f2;
+color: #e11d48;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+.confirm-icon svg {
+width: 28px;
+height: 28px;
+}
+
+.confirm-title {
+font-size: 18px;
+font-weight: 600;
+color: #18181b;
+margin: 0 0 8px;
+}
+
+.confirm-message {
+font-size: 14px;
+color: #71717a;
+margin: 0 0 22px;
+line-height: 1.5;
+}
+
+.confirm-actions {
+display: flex;
+gap: 10px;
+justify-content: center;
+}
+
+.btn {
+flex: 1;
+padding: 10px 16px;
+border-radius: 10px;
+font-size: 14px;
+font-weight: 600;
+border: none;
+cursor: pointer;
+transition: transform 0.1s ease, opacity 0.15s ease;
+}
+
+.btn:hover { opacity: 0.9; }
+.btn:active { transform: scale(0.97); }
+
+.btn-cancel {
+background: #f4f4f5;
+color: #3f3f46;
+}
+
+.btn-confirm {
+background: #e11d48;
+color: #fff;
+}
+
+@@keyframes fadeIn {
+from { opacity: 0; }
+to { opacity: 1; }
+}
+
+@@keyframes popIn {
+from { transform: scale(0.92); opacity: 0; }
+to { transform: scale(1); opacity: 1; }
+}
+</style>
+
+@if (IsVisible)
+{
+    <div class="confirm-overlay" @onclick="Cancel">
+        <div class="confirm-box" @onclick:stopPropagation="true">
+            <div class="confirm-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 9v4m0 4h.01M10.29 3.86l-8.18 14.18A2 2 0 0 0 4 21h16a2 2 0 0 0 1.89-2.96L13.71 3.86a2 2 0 0 0-3.42 0z" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h3 class="confirm-title">@Title</h3>
+            <p class="confirm-message">@Message</p>
+            <div class="confirm-actions">
+                <button class="btn btn-cancel" @onclick="Cancel">@CancelText</button>
+                <button class="btn btn-confirm" @onclick="Confirm">@ConfirmText</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string Title { get; set; } = "Are you sure?";
+    [Parameter] public string Message { get; set; } = "This action cannot be undone.";
+    [Parameter] public string ConfirmText { get; set; } = "Delete";
+    [Parameter] public string CancelText { get; set; } = "Cancel";
+
+    private bool IsVisible { get; set; }
+    private TaskCompletionSource<bool>? _tcs;
+
+    public Task<bool> ShowAsync(string? title = null, string? message = null, string? confirmText = null)
+    {
+        if (title is not null) Title = title;
+        if (message is not null) Message = message;
+        if (confirmText is not null) ConfirmText = confirmText;
+        _tcs = new TaskCompletionSource<bool>();
+        IsVisible = true;
+        StateHasChanged();
+        return _tcs.Task;
+    }
+
+    private void Confirm()
+    {
+        IsVisible = false;
+        _tcs?.TrySetResult(true);
+    }
+
+    private void Cancel()
+    {
+        IsVisible = false;
+        _tcs?.TrySetResult(false);
+    }
+}

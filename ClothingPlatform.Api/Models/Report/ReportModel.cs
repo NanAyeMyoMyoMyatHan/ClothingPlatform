@@ -1,4 +1,6 @@
-﻿namespace ClothingPlatform.Api.Models.Report
+﻿using ClothingPlatform.Api.Models.Order;
+
+namespace ClothingPlatform.Api.Models.Report
 {
     public class StaffDailySalesDto
     {

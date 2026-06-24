@@ -1,8 +1,9 @@
-using ClothingPlatform.DB.AppDbModels;
-using ClothingPlatform.Web.Services;
 using ClothingPlatform.Api.Models.Order;
 using ClothingPlatform.Api.Models.Report;
 using ClothingPlatform.Api.Models.User;
+using ClothingPlatform.DB.AppDbModels;
+using ClothingPlatform.Web.Components.Partial;
+using ClothingPlatform.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Mvc;
@@ -11,10 +12,10 @@ using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace ClothingPlatform.Web.Components.Pages
 {
@@ -122,6 +123,7 @@ namespace ClothingPlatform.Web.Components.Pages
         
         // လက်ရှိ စာမျက်နှာအတွက်ပဲ ရှာဖွေပြီး ဖြတ်ထုတ်ပေးမည့် Orders စာရင်း
         private List<Order> Pagedorders { get; set; } = new();
+        
         private List<UserModel> PageCustomer { get; set; } = new();
         private List<UserModel> PageStaff { get; set; } = new();
         private List<ProductImageModel> imageModel { get; set; } = new();
@@ -493,32 +495,34 @@ namespace ClothingPlatform.Web.Components.Pages
                 errorMessage = UiMessages.Admin.OrderStatusUpdateFailed(ex.Message);
             }
         }
-
+     
         private async Task DeleteOrder(int orderId)
+{
+    var confirmed = await confirmModal.ShowAsync(
+        title: "Delete Order",
+        message: UiMessages.Admin.DeleteOrderConfirm(orderId),
+        confirmText: "Delete");
+
+    if (!confirmed) return;
+
+    try
+    {
+        var response = await HttpClientServices.ExecuteAsync<bool>(
+            $"api/order/{orderId}",
+            null,
+            EnumHttpMethod.Delete);
+
+        if (response)
         {
-            var confirmed = await JSRuntime.InvokeAsync<bool>(
-                "confirm", UiMessages.Admin.DeleteOrderConfirm(orderId));
-
-            if (!confirmed) return;
-
-            try
-            {
-                var response = await HttpClientServices.ExecuteAsync<bool>(
-                    $"api/order/{orderId}",
-                    null,
-                    EnumHttpMethod.Delete);
-
-                if (response)
-                {
-                    successMessage = UiMessages.Admin.OrderDeleted(orderId);
-                    await LoadData();
-                }
-            }
-            catch (Exception ex)
-            {
-                errorMessage = UiMessages.Admin.OrderDeleteFailed(ex.Message);
-            }
+            successMessage = UiMessages.Admin.OrderDeleted(orderId);
+            await LoadData();
         }
+    }
+    catch (Exception ex)
+    {
+        errorMessage = UiMessages.Admin.OrderDeleteFailed(ex.Message);
+    }
+}
 
         // Product methods
         private void ResetProductForm()
@@ -784,41 +788,47 @@ namespace ClothingPlatform.Web.Components.Pages
                 errorMessage = UiMessages.Admin.ProductUpdateError(ex.Message);
             }
         }
-        private async Task DeleteProduct(int productId)
+        private ConfirmModal confirmModal = default!;
+
+
+        private async Task HandleDeleteClick(int productId)
         {
-            string message = UiMessages.Admin.DeleteProductConfirm;
+            var isConfirm = await confirmModal.ShowAsync();
+            if (!isConfirm)
+                return;
 
-            var isConfirm = await JSRuntime.InvokeAsync<bool>("confirm", message);
+            await RunAdminAction(DeleteProductAction(productId), () => DeleteProductCore(productId));
+        }
 
-            if (isConfirm)
+        private async Task DeleteProductCore(int productId)
+        {
+            try
             {
-                try
-                {
-                    var response = await HttpClientServices.ExecuteAsync<bool>(
-                        $"api/product/{productId}",
-                        null,
-                        EnumHttpMethod.Delete);
+                var response = await HttpClientServices.ExecuteAsync<bool>(
+                    $"api/product/{productId}",
+                    null,
+                    EnumHttpMethod.Delete);
 
-                    if (response)
-                    {
-                        await LoadData();
-                        StateHasChanged();
-                    }
-                    else
-                    {
-                        errorMessage = UiMessages.Admin.ProductDeleteFailed;
-                    }
-                }
-                catch (Exception ex)
+                if (response)
                 {
-                    errorMessage = UiMessages.Admin.ProductDeleteError(ex.Message);
+                    await LoadData();
+                    StateHasChanged();
+                }
+                else
+                {
+                    errorMessage = UiMessages.Admin.ProductDeleteFailed;
                 }
             }
-            else
+            catch (Exception ex)
             {
-                return;
+                errorMessage = UiMessages.Admin.ProductDeleteError(ex.Message);
             }
         }
+
+       
+
+
+
         private async Task TriggerDailyReport()
         {
             try
@@ -863,11 +873,40 @@ namespace ClothingPlatform.Web.Components.Pages
                 errorMessage = UiMessages.Admin.DailyReportFailed(ex.Message);
             }
         }
+        private bool showLogoutConfirm = false;
+        private User? currentUser;
+        private bool isCustomerLoggingOut = false;
+        private void RequestLogout() => showLogoutConfirm = true;
+        private void CancelLogout() => showLogoutConfirm = false;
+        private async Task ConfirmLogout()
+        {
+            if (isCustomerLoggingOut)
+            {
+                return;
+            }
+
+            isCustomerLoggingOut = true;
+            StateHasChanged();
+
+            showLogoutConfirm = false;
+            try
+            {
+                await Logout();
+            }
+            finally
+            {
+                isCustomerLoggingOut = false;
+                StateHasChanged();
+            }
+        }
+        
         private async Task Logout()
         {
             Session.Logout();
-            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
-            Nav.NavigateTo("/portal-login", replace: true);
+            currentUser = null;
+            
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "customerId");
+            Nav.NavigateTo("/portal-login");
         }
         private async Task HandleCreateStaff()
         {
@@ -954,10 +993,11 @@ namespace ClothingPlatform.Web.Components.Pages
         /// </summary>
         private async Task DeleteStaff(int userId)
         {
-            var confirmed = await JSRuntime.InvokeAsync<bool>(
-                "confirm", UiMessages.Admin.DeleteStaffConfirm);
+            var confirmed = await confirmModal.ShowAsync(title: "Delete Staff", message: UiMessages.Admin.DeleteStaffConfirm, confirmText: "Delete");
 
             if (!confirmed) return;
+
+           
 
             try
             {

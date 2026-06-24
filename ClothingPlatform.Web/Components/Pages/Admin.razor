@@ -3,7 +3,127 @@
 @inject IJSRuntime JSRuntime
 @inject HttpClientServices HttpClientServices
 @inject HttpClient Http
+<style>
+    /* -- Logout confirmation modal -- */
+    .confirm-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw; /* Force full viewport width */
+        height: 100vh; /* Force full viewport height */
+        background: rgba(15, 32, 80, .45);
+        /* The magic centering trio */
+        display: flex;
+        align-items: center; /* Centers vertically */
+        justify-content: center; /* Centers horizontally */
 
+        z-index: 9999; /* Keeps it on top of sidebars/navbars */
+    }
+
+    .confirm-modal {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        padding: 1.8rem 2rem;
+        max-width: 360px;
+        width: 90%;
+        text-align: center;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .confirm-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: var(--red-light);
+        color: var(--red);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        margin: 0 auto .9rem;
+    }
+
+    .confirm-title {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 1.25rem;
+        color: var(--navy);
+        margin-bottom: .4rem;
+    }
+
+    .confirm-text {
+        font-size: .82rem;
+        color: var(--slate);
+        margin-bottom: 1.4rem;
+        line-height: 1.5;
+    }
+
+    .confirm-actions {
+        display: flex;
+        gap: .7rem;
+        justify-content: center;
+    }
+
+    .confirm-btn-cancel {
+        font-size: .78rem;
+        font-weight: 600;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        background: var(--off-white);
+        color: var(--slate);
+        border: 1px solid var(--slate-border);
+        border-radius: 8px;
+        padding: .55rem 1.3rem;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        transition: background var(--transition);
+    }
+
+        .confirm-btn-cancel:hover {
+            background: #EDF1F6;
+        }
+
+    .confirm-btn-confirm {
+        font-size: .78rem;
+        font-weight: 600;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        background: var(--red);
+        color: #000000;
+        border: none;
+        border-radius: 8px;
+        padding: .55rem 1.3rem;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        transition: background var(--transition), transform var(--transition);
+    }
+
+        .confirm-btn-confirm:hover {
+            background: #B91C1C;
+            transform: translateY(-1px);
+        }
+
+    
+
+    .btn-primary-rose {
+        background: var(--rose);
+        color: #F5ECD7;
+        border: none;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.72rem;
+        letter-spacing: 0.2em;
+        font-weight: 500;
+        text-transform: uppercase;
+        padding: 14px 38px;
+        cursor: pointer;
+        transition: background 0.25s, transform 0.2s;
+    }
+
+        .btn-primary-rose:hover {
+            background: #6B0F0F;
+            transform: translateY(-1px);
+        }
+
+</style>
 
 @if (!isPortalReady)
 {
@@ -70,10 +190,29 @@ else
             </li>
 
             <li class="mt-5">
-                <a class="nav-item-link text-danger" @onclick="Logout">
+                    <a class="nav-item-link text-danger" @onclick="RequestLogout">
                     <i class="bi bi-box-arrow-right text-danger"></i>
                     Sign Out
                 </a>
+                    @if (showLogoutConfirm)
+                    {
+                        <div class="confirm-overlay" @onclick="CancelLogout">
+                            <div class="confirm-modal" @onclick:stopPropagation="true">
+                                <div class="confirm-icon"><i class="bi bi-box-arrow-right"></i></div>
+                                <div class="confirm-title">Log Out?</div>
+                                <div class="confirm-text">Are you sure you want to log out of your customer account?</div>
+                                <div class="confirm-actions">
+                                    <button class="confirm-btn-cancel" @onclick="CancelLogout">Cancel</button>
+                                    <LoadingButton Class="confirm-btn-confirm"
+                                                   IsLoading="@isCustomerLoggingOut"
+                                                   LoadingText="Signing Out..."
+                                                   OnClick="ConfirmLogout">
+                                        Yes, Log Out
+                                    </LoadingButton>
+                                </div>
+                            </div>
+                        </div>
+                    }
             </li>
         </ul>
     </aside>
@@ -340,16 +479,24 @@ else
                                         </td>
                                         <td>
                                             <LoadingButton Class="btn btn-sm btn-outline-primary me-1"
-                                                           IsLoading="@IsAdminActionLoading(EditProductAction(prod.ProductId))"
-                                                           OnClick="@(() => RunAdminAction(EditProductAction(prod.ProductId), () => EditProduct(prod)))">
-                                                <i class="bi bi-pencil"></i>
-                                            </LoadingButton>
-                                            <LoadingButton Class="btn btn-sm btn-outline-danger"
-                                                           IsLoading="@IsAdminActionLoading(DeleteProductAction(prod.ProductId))"
-                                                           OnClick="@(() => RunAdminAction(DeleteProductAction(prod.ProductId), () => DeleteProduct(prod.ProductId)))">
-                                                <i class="bi bi-trash"></i>
-                                            </LoadingButton>
-                                            
+               IsLoading="@IsAdminActionLoading(EditProductAction(prod.ProductId))"
+               OnClick="@(() => RunAdminAction(EditProductAction(prod.ProductId), () => EditProduct(prod)))">
+    <i class="bi bi-pencil"></i>
+</LoadingButton>
+
+                                                <LoadingButton Class="btn btn-sm btn-outline-danger"
+                                                               IsLoading="@IsAdminActionLoading(DeleteProductAction(prod.ProductId))"
+                                                               OnClick="@(() => HandleDeleteClick(prod.ProductId))">
+                                                    <i class="bi bi-trash"></i>
+                                                </LoadingButton>
+
+<!-- Place ONCE outside the loop, not per-row -->
+<ConfirmModal @ref="confirmModal"
+              Title="Delete Product"
+              Message="@UiMessages.Admin.DeleteProductConfirm"
+              ConfirmText="Delete"
+              CancelText="Cancel" />
+                                         
                                         </td>
                                     </tr>
                                 }
@@ -451,11 +598,13 @@ else
                                                 <option value="Confirm" selected="@(NormalizeStatus(order.OrderStatus) == "Confirm")">Confirm</option>
                                             </select>
                                         }
-                                        <LoadingButton Class="btn btn-sm btn-outline-danger ms-2"
-                                                       IsLoading="@IsAdminActionLoading(DeleteOrderAction(order.OrderId))"
-                                                       OnClick="@(() => RunAdminAction(DeleteOrderAction(order.OrderId), () => DeleteOrder(order.OrderId)))">
-                                            <i class="bi bi-trash"></i>
-                                        </LoadingButton>
+                                            <LoadingButton Class="btn btn-sm btn-outline-danger ms-2"
+                                                           IsLoading="@IsAdminActionLoading(DeleteOrderAction(order.OrderId))"
+                                                           OnClick="@(() => RunAdminAction(DeleteOrderAction(order.OrderId), () => DeleteOrder(order.OrderId)))">
+                                                <i class="bi bi-trash"></i>
+                                            </LoadingButton>
+
+                                            <ConfirmModal @ref="confirmModal" />
                                     </td>
                                 </tr>
                             }
@@ -607,6 +756,7 @@ else
                                                            OnClick="@(() => RunAdminAction(DeleteStaffAction(cust.Id), () => DeleteStaff(cust.Id)))">
                                                 <i class="bi bi-trash"></i>
                                             </LoadingButton>
+                                                <ConfirmModal @ref="confirmModal" />
                                         </td>
                                     </tr>
                                 }

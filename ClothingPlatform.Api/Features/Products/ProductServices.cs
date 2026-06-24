@@ -185,10 +185,10 @@ namespace ClothingPlatform.Api.Features.Product
                 }
 
                 var oldVariants = context.ProductVariants.Where(v => v.ProductId == request.Id).ToList();
-                if (oldVariants.Any())
-                {
-                    context.ProductVariants.RemoveRange(oldVariants);
-                }
+                //if (oldVariants.Any())
+                //{
+                //    context.ProductVariants.RemoveRange(oldVariants);
+                //}
 
                 if (request.VariantsDto != null && request.VariantsDto.Any())
                 {

@@ -49,7 +49,7 @@
                                 @foreach (var ord in PagedRecentOrders)
                                 {
                                     <tr>
-                                        <td style="font-family:'DM Sans',sans-serif;font-weight:600;color:var(--navy)">#ORD-@ord.OrderId.ToString("D4")</td>
+                                        <td style="font-family:'DM Sans',sans-serif;font-weight:600;color:var(--navy)">ORD-@ord.OrderId.ToString("D4")</td>
                                         <td>@ord.User.FirstName @ord.User.LastName</td>
                                         <td>@ord.TotalAmount.ToString("N0")</td>
                                         <td>@StatusBadge(ord.OrderStatus)</td>

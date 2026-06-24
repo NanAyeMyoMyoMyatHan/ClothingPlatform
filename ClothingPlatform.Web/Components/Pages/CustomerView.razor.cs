@@ -1,14 +1,15 @@
-using ClothingPlatform.DB.AppDbModels;
-using ClothingPlatform.Web.Services;
 using ClothingPlatform.Api.Models.Cart;
 using ClothingPlatform.Api.Models.Notifications;
 using ClothingPlatform.Api.Models.Order;
-using Microsoft.AspNetCore.SignalR.Client;
+using ClothingPlatform.DB.AppDbModels;
+using ClothingPlatform.Web.Components.Partial;
+using ClothingPlatform.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Razor.Internal;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
 using System;
@@ -48,7 +49,7 @@ namespace ClothingPlatform.Web.Components.Pages
         private bool initializedFromStorage;
         private HubConnection? notificationHub;
         private List<CustomerNotificationDto> notifications = new();
-
+        private ConfirmModal confirmModal = default!;
 
         private List<ProductDto> allProduct = new();
         private List<BestSellerDto> allBestSellers = new();
@@ -514,16 +515,13 @@ namespace ClothingPlatform.Web.Components.Pages
         {
             if (currentUser == null)
             {
-                string message = UiMessages.CustomerShop.AddToBagSignInConfirm;
-                var isConfirm = await JSRuntime.InvokeAsync<bool>("confirm", message);
-                if (isConfirm)
-                {
-                    Nav.NavigateTo("customer-login?returnUrl=" + Uri.EscapeDataString(Nav.Uri));
-                }
+                var wantsToSignIn = await confirmModal.ShowAsync(title:
+                    "Sign In Required",
+                    message: UiMessages.CustomerShop.AddToBagSignInConfirm, confirmText: "Sign In"); 
+                if (wantsToSignIn) { Nav.NavigateTo("customer-login?returnUrl=" + Uri.EscapeDataString(Nav.Uri)); }
                 return;
             }
-
-            if (modalProduct == null) return;
+                if (modalProduct == null) return;
 
             if (string.IsNullOrEmpty(selectedSize) || string.IsNullOrEmpty(selectedColor))
             {
@@ -794,12 +792,7 @@ namespace ClothingPlatform.Web.Components.Pages
 
             try
             {
-                string message = UiMessages.CustomerShop.PlaceOrderConfirm;
-                var isConfirm = await JSRuntime.InvokeAsync<bool>("confirm", message);
-                if (!isConfirm)
-                {
-                    return;
-                }
+                var isConfirm = await confirmModal.ShowAsync(title: "Confirm Purchase", message: UiMessages.CustomerShop.PlaceOrderConfirm, confirmText: "Confirm"); if (!isConfirm) return;
 
                 if (string.IsNullOrWhiteSpace(coName) || string.IsNullOrWhiteSpace(coPhone) ||
                     string.IsNullOrWhiteSpace(coAddress) || string.IsNullOrWhiteSpace(coCity))

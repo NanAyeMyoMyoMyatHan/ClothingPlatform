@@ -287,12 +287,17 @@
     /* -- Logout confirmation modal -- */
     .confirm-overlay {
         position: fixed;
-        inset: 0;
-        background: rgba(15,32,80,.45);
+        top: 0;
+        left: 0;
+        width: 100vw; /* Force full viewport width */
+        height: 100vh; /* Force full viewport height */
+        background: rgba(15, 32, 80, .45);
+        /* The magic centering trio */
         display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
+        align-items: center; /* Centers vertically */
+        justify-content: center; /* Centers horizontally */
+
+        z-index: 9999; /* Keeps it on top of sidebars/navbars */
     }
 
     .confirm-modal {
@@ -1709,7 +1714,7 @@
                     <div class="confirm-modal" @onclick:stopPropagation="true">
                         <div class="confirm-icon"><i class="bi bi-box-arrow-right"></i></div>
                         <div class="confirm-title">Log Out?</div>
-                        <div class="confirm-text">Are you sure you want to log out of your customer account?</div>
+                        <div class="confirm-text">You want to log out of your customer account?</div>
                         <div class="confirm-actions">
                             <button class="confirm-btn-cancel" @onclick="CancelLogout">Cancel</button>
                             <LoadingButton Class="confirm-btn-confirm"
@@ -1864,7 +1869,7 @@
     else if (activeTab == "shop")
     {
     <div class="section-head">
-        <h2 class="section-title">The <span>The Collection</span></h2>
+        <h2 class="section-title"> <span>The Collection</span></h2>
         <span class="section-count">Here is the collection</span>
     </div>
 
@@ -2019,41 +2024,43 @@
             </div>
 
             <!-- Summary info -->
-            <div>
-                <h3 class="checkout-section-title">Order Bag Summary</h3>
-                <div class="order-summary-panel">
-                    @if (!cart.Any())
-                    {
-                        <p class="text-muted text-center py-4 small">No creations in bag.</p>
-                    }
-                    else
-                    {
-                        @foreach (var item in cart)
+                <div>
+                    <h3 class="checkout-section-title">Order Bag Summary</h3>
+                    <div class="order-summary-panel">
+                        @if (!cart.Any())
                         {
-                            <div class="order-summary-item">
-                                <FallbackImage Src="@item.ImgUrl" Alt="@item.Name" CssClass="order-summary-img" />
-                                <div>
-                                    <p class="order-sum-name">@item.Name</p>
-                                    <p class="order-sum-meta">@item.Size · @item.Color · Qty @item.Qty</p>
-                                    <p class="order-sum-price">@((item.Price * item.Qty).ToString("N0")) MMK</p>
-                                </div>
-                            </div>
+                            <p class="text-muted text-center py-4 small">No creations in bag.</p>
                         }
-                    }
+                        else
+                        {
+                            @foreach (var item in cart)
+                            {
+                                <div class="order-summary-item">
+                                    <FallbackImage Src="@item.ImgUrl" Alt="@item.Name" CssClass="order-summary-img" />
+                                    <div>
+                                        <p class="order-sum-name">@item.Name</p>
+                                        <p class="order-sum-meta">@item.Size · @item.Color · Qty @item.Qty</p>
+                                        <p class="order-sum-price">@((item.Price * item.Qty).ToString("N0")) MMK</p>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        <div class="summary-total-row">
+                            <span class="summary-total-label">Subtotal</span>
+                            <span class="summary-total-val">@CartTotal.ToString("N0") MMK</span>
+                        </div>
 
-                    <div class="summary-total-row">
-                        <span class="summary-total-label">Subtotal</span>
-                        <span class="summary-total-val">@CartTotal.ToString("N0") MMK</span>
+                        <LoadingButton Class="btn-place-order"
+                                       IsLoading="@isPlacingOrder"
+                                       LoadingText="Confirming..."
+                                       OnClick="PlaceOrder">
+                            Confirm Atelier Purchase
+                        </LoadingButton>
                     </div>
-
-                    <LoadingButton Class="btn-place-order"
-                                   IsLoading="@isPlacingOrder"
-                                   LoadingText="Confirming..."
-                                   OnClick="PlaceOrder">
-                        Confirm Atelier Purchase
-                    </LoadingButton>
                 </div>
-            </div>
+
+                <!-- ONE modal for the whole page, placed at the root level -->
+                <ConfirmModal @ref="confirmModal" />
         </div>
     </div>
     }
@@ -2063,7 +2070,7 @@
     {
     <div class="history-view">
         <div class="section-head px-0">
-            <h2 class="section-title">Your <span>Your Purchases History</span></h2>
+            <h2 class="section-title"> <span>Your Purchases History</span></h2>
             <span class="section-count">@userOrders.Count orders logged</span>
         </div>
 
@@ -2485,6 +2492,7 @@
                                    OnClick="AddToBagUnified">
                         Add to Bag
                     </LoadingButton>
+                    <ConfirmModal @ref="confirmModal" />
                 </div>
             </div>
         </div>
