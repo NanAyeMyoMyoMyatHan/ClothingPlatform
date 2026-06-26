@@ -123,6 +123,26 @@ namespace ClothingPlatform.Web.Components.Pages
         
         // လက်ရှိ စာမျက်နှာအတွက်ပဲ ရှာဖွေပြီး ဖြတ်ထုတ်ပေးမည့် Orders စာရင်း
         private List<Order> Pagedorders { get; set; } = new();
+
+        // ── Guest/Phone Orders State ──
+        private string ordersTab = "regular";
+        private string regularOrderSearch = "";
+        private string guestOrderSearch = "";
+        private string guestPaymentFilter = "";
+        private List<GuestOrder> allGuestOrders = new();
+        private List<GuestOrder> filteredGuestOrders = new();
+        private List<GuestOrder> PagedGuestOrders { get; set; } = new();
+        private int guestOrderPage = 1;
+        private int guestOrderPageSize = 10;
+        private int guestOrderTotalCount = 0;
+        private int GuestOrderTotalPages => (int)Math.Ceiling((double)guestOrderTotalCount / guestOrderPageSize);
+        private int? updatingRegularOrderId;
+        private int? updatingGuestOrderId;
+
+        // ── Order Receipt Modal State ──
+        private Order? selectedRegularOrder;
+        private GuestOrder? selectedGuestOrder;
+        private bool showReceiptModal = false;
         
         private List<UserModel> PageCustomer { get; set; } = new();
         private List<UserModel> PageStaff { get; set; } = new();
@@ -320,7 +340,18 @@ namespace ClothingPlatform.Web.Components.Pages
                 allOrders = await db.Orders
                     .Include(o => o.User)
                     .Include(o => o.Payments)
+                    .Include(o => o.OrderItems)
+                        .ThenInclude(oi => oi.Variant)
+                            .ThenInclude(v => v.Product)
                     .OrderByDescending(o => o.OrderId)
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                allGuestOrders = await db.GuestOrders
+                    .Include(g => g.GuestOrderItems)
+                        .ThenInclude(gi => gi.Variant)
+                            .ThenInclude(v => v.Product)
+                    .OrderByDescending(g => g.GuestOrderId)
                     .AsNoTracking()
                     .ToListAsync();
 
@@ -329,23 +360,39 @@ namespace ClothingPlatform.Web.Components.Pages
                     order.OrderStatus = OrderWorkflow.Normalize(order.OrderStatus);
                 }
 
-                var filteredOrderRows = orderFilter == "All"
-                    ? allOrders
-                    : allOrders
-                        .Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Normalize(orderFilter))
-                        .ToList();
-
-                if (orderFilter != "All")
+                foreach (var go in allGuestOrders)
                 {
-                    filteredOrderRows = filteredOrderRows
-                        .Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Normalize(orderFilter))
-                        .ToList();
+                    go.OrderStatus = OrderWorkflow.Normalize(go.OrderStatus);
                 }
 
-                // စုစုပေါင်း အရေအတွက်ကို ယူမယ်
-                orderTotalCount = filteredOrderRows.Count;
+                // Apply regular orders filter & search
+                var regularQuery = allOrders.AsEnumerable();
+                if (!string.IsNullOrEmpty(orderFilter) && !orderFilter.Equals("All", StringComparison.OrdinalIgnoreCase))
+                {
+                    regularQuery = regularQuery.Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Normalize(orderFilter));
+                }
+                if (!string.IsNullOrWhiteSpace(regularOrderSearch))
+                {
+                    var search = regularOrderSearch.Trim();
+                    regularQuery = regularQuery.Where(o => OrderMatchesSearch(o, search));
+                }
+                var filteredOrderRows = regularQuery.ToList();
 
-                // Safety Checks
+                // Apply guest orders filter & search
+                var guestQuery = allGuestOrders.AsEnumerable();
+                if (!string.IsNullOrWhiteSpace(guestPaymentFilter))
+                {
+                    guestQuery = guestQuery.Where(g => string.Equals(g.PaymentStatus ?? "unpaid", guestPaymentFilter, StringComparison.OrdinalIgnoreCase));
+                }
+                if (!string.IsNullOrWhiteSpace(guestOrderSearch))
+                {
+                    var search = guestOrderSearch.Trim();
+                    guestQuery = guestQuery.Where(g => GuestOrderMatchesSearch(g, search));
+                }
+                filteredGuestOrders = guestQuery.ToList();
+
+                // Regular Order Pagination safety check & subsetting
+                orderTotalCount = filteredOrderRows.Count;
                 if (orderPage > OrderTotalPages && OrderTotalPages > 0)
                 {
                     orderPage = OrderTotalPages;
@@ -354,11 +401,24 @@ namespace ClothingPlatform.Web.Components.Pages
                 {
                     orderPage = 1;
                 }
-
-                // လက်ရှိ Page စာပဲ ဆွဲထုတ်ပြီး Pagedorders ထဲ ထည့်မယ်
                 Pagedorders = filteredOrderRows
                     .Skip((orderPage - 1) * orderPageSize)
                     .Take(orderPageSize)
+                    .ToList();
+
+                // Guest Order Pagination safety check & subsetting
+                guestOrderTotalCount = filteredGuestOrders.Count;
+                if (guestOrderPage > GuestOrderTotalPages && GuestOrderTotalPages > 0)
+                {
+                    guestOrderPage = GuestOrderTotalPages;
+                }
+                if (guestOrderPage < 1)
+                {
+                    guestOrderPage = 1;
+                }
+                PagedGuestOrders = filteredGuestOrders
+                    .Skip((guestOrderPage - 1) * guestOrderPageSize)
+                    .Take(guestOrderPageSize)
                     .ToList();
 
                 // Load customers
@@ -440,6 +500,11 @@ namespace ClothingPlatform.Web.Components.Pages
             if (viewName == "reports")
             {
                 _ = LoadAdminReport();
+            }
+
+            if (viewName == "create-order")
+            {
+                _ = LoadAdminInventoryVariants();
             }
         }
 
@@ -1147,5 +1212,336 @@ namespace ClothingPlatform.Web.Components.Pages
             public string Address { get; set; } = "";
         }
 
+        // ─── Admin Create Phone Order ─────────────────────────────────────────────
+
+        // Order line draft used only by admin create-order view
+        public class AdminOrderLineDraft
+        {
+            public int VariantId { get; set; } = 0;
+            public int Quantity { get; set; } = 1;
+        }
+
+        // Form fields
+        private string adminGuestCustomerName = "";
+        private string adminGuestPhoneNumber = "";
+        private string adminShippingAddress = "";
+        private string adminPaymentMethod = "cod";
+        private string adminPaymentStatus = "unpaid";
+        private string adminProductSearch = "";
+        private string adminCreateOrderError = "";
+        private bool adminIsSubmittingPhoneOrder = false;
+
+        // Product variants loaded for the dropdown (reuses allProducts data)
+        private List<ProductVariant> adminInventoryVariants = new();
+
+        // Order lines
+        private List<AdminOrderLineDraft> adminOrderLines = new() { new AdminOrderLineDraft() };
+
+        // Computed helpers
+        private decimal adminOrderLinesTotal => adminOrderLines.Sum(l => AdminGetLineTotal(l));
+        private int adminSelectedLineCount => adminOrderLines.Count(l => l.VariantId > 0);
+        private int adminSelectedItemCount => adminOrderLines.Where(l => l.VariantId > 0).Sum(l => l.Quantity);
+        private bool adminCanSubmitPhoneOrder =>
+            !string.IsNullOrWhiteSpace(adminGuestCustomerName)
+            && !string.IsNullOrWhiteSpace(adminGuestPhoneNumber)
+            && !string.IsNullOrWhiteSpace(adminShippingAddress)
+            && adminOrderLines.Any(l => l.VariantId > 0 && l.Quantity > 0);
+
+        private decimal AdminGetVariantUnitPrice(int variantId)
+        {
+            var variant = adminInventoryVariants.FirstOrDefault(x => x.VariantId == variantId);
+            if (variant == null) return 0;
+            return (variant.Product?.BasePrice ?? 0) + (variant.PriceModifier ?? 0);
+        }
+
+        private decimal AdminGetLineTotal(AdminOrderLineDraft line) =>
+            AdminGetVariantUnitPrice(line.VariantId) * line.Quantity;
+
+        private IEnumerable<ProductVariant> AdminGetSelectableVariants(AdminOrderLineDraft line)
+        {
+            var query = adminInventoryVariants.Where(x => x.StockQuantity > 0 || x.VariantId == line.VariantId);
+
+            if (!string.IsNullOrWhiteSpace(adminProductSearch))
+            {
+                var search = adminProductSearch.Trim();
+                query = query.Where(v =>
+                    v.VariantId == line.VariantId
+                    || (v.Sku?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
+                    || (v.Product?.Name?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
+                    || (v.Size?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
+                    || (v.Color?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false));
+            }
+
+            return query
+                .OrderBy(v => v.Product?.Name)
+                .ThenBy(v => v.Size)
+                .ThenBy(v => v.Color)
+                .ToList();
+        }
+
+        private void AdminOnLineVariantChanged(AdminOrderLineDraft line, string? value)
+        {
+            if (int.TryParse(value, out var id))
+            {
+                line.VariantId = id;
+                StateHasChanged();
+            }
+        }
+
+        private void AdminOnLineQtyChanged(AdminOrderLineDraft line, string? value)
+        {
+            if (int.TryParse(value, out var qty) && qty > 0)
+            {
+                line.Quantity = qty;
+                StateHasChanged();
+            }
+        }
+
+        private void AdminAdjustLineQty(AdminOrderLineDraft line, int adjustment)
+        {
+            line.Quantity = Math.Max(1, line.Quantity + adjustment);
+            StateHasChanged();
+        }
+
+        private void AdminAddOrderLine()
+        {
+            adminOrderLines.Add(new AdminOrderLineDraft());
+            StateHasChanged();
+        }
+
+        private void AdminRemoveOrderLine(AdminOrderLineDraft line)
+        {
+            if (adminOrderLines.Count > 1)
+                adminOrderLines.Remove(line);
+            else
+            {
+                line.VariantId = 0;
+                line.Quantity = 1;
+            }
+            StateHasChanged();
+        }
+
+        private void AdminResetCreateOrderForm()
+        {
+            adminGuestCustomerName = "";
+            adminGuestPhoneNumber = "";
+            adminShippingAddress = "";
+            adminPaymentMethod = "cod";
+            adminPaymentStatus = "unpaid";
+            adminProductSearch = "";
+            adminCreateOrderError = "";
+            adminOrderLines = new() { new AdminOrderLineDraft() };
+            StateHasChanged();
+        }
+
+        private static string AdminCheckClass(bool isComplete) =>
+            isComplete ? "summary-check complete" : "summary-check";
+
+        /// <summary>
+        /// Loads product variants for the admin phone order dropdown.
+        /// Called when navigating to the create-order view.
+        /// </summary>
+        private async Task LoadAdminInventoryVariants()
+        {
+            try
+            {
+                await using var db = await DbFactory.CreateDbContextAsync();
+                adminInventoryVariants = await db.ProductVariants
+                    .Include(v => v.Product)
+                    .Where(v => v.StockQuantity > 0)
+                    .OrderBy(v => v.Product.Name)
+                    .ThenBy(v => v.Size)
+                    .ThenBy(v => v.Color)
+                    .AsNoTracking()
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Failed to load inventory: {ex.Message}";
+            }
+        }
+
+        private async Task AdminSubmitPhoneOrder()
+        {
+            if (adminIsSubmittingPhoneOrder) return;
+
+            adminCreateOrderError = "";
+
+            if (string.IsNullOrWhiteSpace(adminGuestCustomerName) || string.IsNullOrWhiteSpace(adminGuestPhoneNumber))
+            {
+                adminCreateOrderError = "Please enter the customer name and phone number.";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(adminShippingAddress))
+            {
+                adminCreateOrderError = "Please enter a shipping address.";
+                return;
+            }
+
+            var validLines = adminOrderLines.Where(l => l.VariantId > 0 && l.Quantity > 0).ToList();
+            if (!validLines.Any())
+            {
+                adminCreateOrderError = "Please add at least one product item.";
+                return;
+            }
+
+            adminIsSubmittingPhoneOrder = true;
+            StateHasChanged();
+
+            try
+            {
+                var requestDto = new ClothingPlatform.Api.Features.Staff.GuestOrderRequestDto
+                {
+                    CustomerName = adminGuestCustomerName,
+                    PhoneNumber = adminGuestPhoneNumber,
+                    ShippingAddress = adminShippingAddress,
+                    PaymentMethod = adminPaymentMethod,
+                    PaymentStatus = adminPaymentStatus,
+                    OrderLines = validLines
+                        .Select(l => new ClothingPlatform.Api.Features.Staff.OrderLineDraftDto
+                        {
+                            VariantId = l.VariantId,
+                            Quantity = l.Quantity
+                        })
+                        .ToList()
+                };
+
+                var staffId = Session.CurrentUser!.UserId;
+                var result = await HttpClientServices.ExecuteAsync<object>(
+                    $"api/Staff/phoneorder?staffId={staffId}",
+                    requestDto,
+                    EnumHttpMethod.Post);
+
+                successMessage = $"Phone order for '{adminGuestCustomerName}' was created successfully.";
+                AdminResetCreateOrderForm();
+                await LoadData();
+                SetView("orders");
+            }
+            catch (Exception ex)
+            {
+                adminCreateOrderError = $"Failed to submit order: {ex.Message}";
+            }
+            finally
+            {
+                adminIsSubmittingPhoneOrder = false;
+                StateHasChanged();
+            }
+        }
+
+        private async Task ChangeGuestOrderPage(int newPage)
+        {
+            guestOrderPage = newPage;
+            await LoadData();
+        }
+
+        private async Task UpdateGuestOrderStatus(GuestOrder guestOrder, string? newStatus)
+        {
+            if (updatingGuestOrderId == guestOrder.GuestOrderId) return;
+            if (string.IsNullOrEmpty(newStatus)) return;
+
+            var normalizedStatus = OrderWorkflow.Normalize(newStatus);
+            if (!OrderWorkflow.CanMoveTo(guestOrder.OrderStatus, normalizedStatus))
+            {
+                errorMessage = UiMessages.StaffPortal.GuestOrderForwardOnly;
+                return;
+            }
+
+            var staffId = Session.CurrentUser!.UserId;
+            updatingGuestOrderId = guestOrder.GuestOrderId;
+            StateHasChanged();
+
+            try
+            {
+                await HttpClientServices.ExecuteAsync<object>(
+                    $"api/Staff/guestorder/{guestOrder.GuestOrderId}/status?staffId={staffId}&newStatus={normalizedStatus}",
+                    null,
+                    EnumHttpMethod.Post);
+                await LoadData();
+                successMessage = UiMessages.StaffPortal.GuestOrderUpdated(guestOrder.GuestOrderId, normalizedStatus);
+            }
+            catch (Exception ex)
+            {
+                errorMessage = UiMessages.StaffPortal.GuestOrderUpdateFailed(ex.Message);
+            }
+            finally
+            {
+                updatingGuestOrderId = null;
+                StateHasChanged();
+            }
+        }
+
+        private void OpenRegularReceipt(Order order)
+        {
+            selectedRegularOrder = order;
+            selectedGuestOrder = null;
+            showReceiptModal = true;
+            StateHasChanged();
+        }
+
+        private void OpenGuestReceipt(GuestOrder guestOrder)
+        {
+            selectedGuestOrder = guestOrder;
+            selectedRegularOrder = null;
+            showReceiptModal = true;
+            StateHasChanged();
+        }
+
+        private void CloseReceipt()
+        {
+            selectedRegularOrder = null;
+            selectedGuestOrder = null;
+            showReceiptModal = false;
+            StateHasChanged();
+        }
+
+        private static bool OrderMatchesSearch(Order order, string search)
+        {
+            var paymentMethod = order.Payments.FirstOrDefault()?.PaymentMethod;
+            return ContainsText($"ORD-{order.OrderId:D4}", search)
+                || ContainsText(order.OrderId.ToString(), search)
+                || ContainsText(order.User?.FirstName, search)
+                || ContainsText(order.User?.LastName, search)
+                || ContainsText($"{order.User?.FirstName} {order.User?.LastName}", search)
+                || ContainsText(order.ShippingAddress, search)
+                || ContainsText(paymentMethod, search)
+                || ContainsText(order.OrderStatus, search)
+                || ContainsText(order.PaymentStatus, search);
+        }
+
+        private static bool GuestOrderMatchesSearch(GuestOrder order, string search)
+        {
+            return ContainsText($"GORD-{order.GuestOrderId:D4}", search)
+                || ContainsText(order.GuestOrderId.ToString(), search)
+                || ContainsText(order.CustomerName, search)
+                || ContainsText(order.PhoneNumber, search)
+                || ContainsText(order.ShippingAddress, search)
+                || ContainsText(order.PaymentMethod, search)
+                || ContainsText(order.PaymentStatus, search)
+                || ContainsText(order.OrderStatus, search);
+        }
+
+        private static bool ContainsText(string? value, string search)
+        {
+            return !string.IsNullOrWhiteSpace(value)
+                && value.Contains(search, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool IsUpdatingRegularOrder(int orderId) => updatingRegularOrderId == orderId;
+        private bool IsUpdatingGuestOrder(int guestOrderId) => updatingGuestOrderId == guestOrderId;
+
+        private static MarkupString PaymentBadge(string? status)
+        {
+            return string.Equals(status ?? "unpaid", "paid", StringComparison.OrdinalIgnoreCase)
+                ? new MarkupString("<span class=\"status-badge badge-paid\"><i class=\"bi bi-check-circle\"></i> Paid</span>")
+                : new MarkupString("<span class=\"status-badge badge-unpaid\"><i class=\"bi bi-clock-history\"></i> Unpaid</span>");
+        }
+
+        private static MarkupString StatusBadge(string status) => OrderWorkflow.Normalize(status) switch
+        {
+            OrderWorkflow.Confirm => new MarkupString("<span class=\"status-badge badge-confirm\"><i class=\"bi bi-check-circle\"></i> Confirm</span>"),
+            OrderWorkflow.Processing => new MarkupString("<span class=\"status-badge badge-processing\"><i class=\"bi bi-arrow-repeat\"></i> Processing</span>"),
+            _ => new MarkupString("<span class=\"status-badge badge-pending\"><i class=\"bi bi-hourglass-split\"></i> Pending</span>")
+        };
     }
 }

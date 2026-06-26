@@ -1,4 +1,4 @@
-﻿@page "/dashboard"
+@page "/dashboard"
 @using ClothingPlatform.Web.Components.Partial
 @inject IJSRuntime JSRuntime
 @inject HttpClientServices HttpClientServices
@@ -165,6 +165,13 @@ else
                 <a class="nav-item-link @(activeView == "orders" ? "active" : "")" @onclick='() => SetView("orders")'>
                     <i class="bi bi-cart"></i>
                     Orders
+                </a>
+            </li>
+
+            <li>
+                <a class="nav-item-link @(activeView == "create-order" ? "active" : "")" @onclick='() => SetView("create-order")'>
+                    <i class="bi bi-telephone-plus"></i>
+                    Create Order
                 </a>
             </li>
 
@@ -514,106 +521,222 @@ else
        
         else if (activeView == "orders")
         {
-            <div class="mb-3 d-flex justify-content-between align-items-center">
-                <div class="filter-buttons">
-                    <LoadingButton Class="@AdminOrderFilterButtonClass(OrderFilterAll)"
-                                   IsLoading="@IsAdminActionLoading(FilterOrdersAction(OrderFilterAll))"
-                                   OnClick="@(() => RunAdminAction(FilterOrdersAction(OrderFilterAll), () => FilterOrders(OrderFilterAll)))">All Orders</LoadingButton>
-                    <LoadingButton Class="@AdminOrderFilterButtonClass(OrderFilterPending)"
-                                   IsLoading="@IsAdminActionLoading(FilterOrdersAction(OrderFilterPending))"
-                                   OnClick="@(() => RunAdminAction(FilterOrdersAction(OrderFilterPending), () => FilterOrders(OrderFilterPending)))">Pending</LoadingButton>
-                    <LoadingButton Class="@AdminOrderFilterButtonClass(OrderFilterProcessing)"
-                                   IsLoading="@IsAdminActionLoading(FilterOrdersAction(OrderFilterProcessing))"
-                                   OnClick="@(() => RunAdminAction(FilterOrdersAction(OrderFilterProcessing), () => FilterOrders(OrderFilterProcessing)))">Processing</LoadingButton>
-                    <LoadingButton Class="@AdminOrderFilterButtonClass(OrderFilterConfirm, false)"
-                                   IsLoading="@IsAdminActionLoading(FilterOrdersAction(OrderFilterConfirm))"
-                                   OnClick="@(() => RunAdminAction(FilterOrdersAction(OrderFilterConfirm), () => FilterOrders(OrderFilterConfirm)))">Confirm</LoadingButton>
+            <div class="ops-workspace">
+                <div class="om-tabs" role="tablist" aria-label="Order type">
+                    <button type="button" class="om-tab @(ordersTab == "regular" ? "om-tab-active" : "")"
+                            @onclick='() => { ordersTab = "regular"; errorMessage = ""; successMessage = ""; }'>
+                        <i class="bi bi-bag"></i>
+                        <span>Regular Orders</span>
+                        <strong>@allOrders.Count</strong>
+                    </button>
+                    <button type="button" class="om-tab @(ordersTab == "guest" ? "om-tab-active" : "")"
+                            @onclick='() => { ordersTab = "guest"; errorMessage = ""; successMessage = ""; }'>
+                        <i class="bi bi-telephone"></i>
+                        <span>Phone / Guest</span>
+                        <strong>@allGuestOrders.Count</strong>
+                    </button>
                 </div>
-                <span class="text-muted small">Queue Count: @filteredOrders.Count</span>
-            </div>
 
-            <div class="table-responsive-wrapper">
-                <table class="table luxury-table">
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Customer Info</th>
-                            <th>Delivery Address</th>
-                            <th>Payment Info</th>
-                            <th>Total Price</th>
-                            <th>Fulfillment Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                @if (ordersTab == "regular")
+                {
+                    <section class="ops-section p-0">
+                        <div class="ops-filter-row mb-3">
+                            <button type="button" class="filter-chip @(string.IsNullOrWhiteSpace(orderFilter) || orderFilter == "All" ? "active" : "")" @onclick='() => FilterOrders("All")'>
+                                <strong>@allOrders.Count</strong><span>All</span>
+                            </button>
+                            <button type="button" class="filter-chip @(orderFilter == "Pending" ? "active" : "")" @onclick='() => FilterOrders("Pending")'>
+                                <strong>@allOrders.Count(o => NormalizeStatus(o.OrderStatus) == "Pending")</strong><span>Pending</span>
+                            </button>
+                            <button type="button" class="filter-chip @(orderFilter == "Processing" ? "active" : "")" @onclick='() => FilterOrders("Processing")'>
+                                <strong>@allOrders.Count(o => NormalizeStatus(o.OrderStatus) == "Processing")</strong><span>Processing</span>
+                            </button>
+                            <button type="button" class="filter-chip @(orderFilter == "Confirm" ? "active" : "")" @onclick='() => FilterOrders("Confirm")'>
+                                <strong>@allOrders.Count(o => NormalizeStatus(o.OrderStatus) == "Confirm")</strong><span>Confirm</span>
+                            </button>
+                        </div>
+
+                        <div class="ops-toolbar d-flex gap-3 mb-3 align-items-center justify-content-between">
+                            <div class="staff-search-control flex-grow-1" style="max-width: 480px; position: relative;">
+                                <i class="bi bi-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                                <input type="search" class="luxury-input" style="padding-left: 36px; height: 42px;" placeholder="Search regular orders..." @bind="regularOrderSearch" @bind:event="oninput" />
+                            </div>
+                            <span class="text-muted small">Showing @filteredOrders.Count regular orders</span>
+                        </div>
+
                         @if (!Pagedorders.Any())
                         {
-                            <tr>
-                                <td colspan="7" class="text-center py-4 text-muted">No orders found matching the filter.</td>
-                            </tr>
+                            <div class="empty-panel text-center py-5 text-muted border rounded" style="background: var(--bg-card);">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                <strong>No regular orders found.</strong>
+                            </div>
                         }
                         else
                         {
-                            @foreach (var order in Pagedorders)
-                            {
-                                var payment = order.Payments.FirstOrDefault();
-                                var payInfo = payment?.PaymentMethod ?? "COD";
-                                var slipUrl = NormalizeSlipImageUrl(payment?.SlipImageUrl);
-                                <tr>
-                                    <td><strong>ORD-@order.OrderId.ToString("D4")</strong></td>
-                                    <td>
-                                        <div>@order.User.FirstName @order.User.LastName</div>
-                                        <div class="small text-muted">@order.User.Email</div>
-                                    </td>
-                                    <td>@order.ShippingAddress</td>
-                                    <td>
-                                        <span class="badge bg-light text-dark border">@payInfo.ToUpper()</span>
-                                        @if (!string.IsNullOrEmpty(slipUrl))
+                            <div class="table-responsive-wrapper">
+                                <table class="table luxury-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Order ID</th>
+                                            <th>Customer Info</th>
+                                            <th>Delivery Address</th>
+                                            <th>Payment Info</th>
+                                            <th>Total Price</th>
+                                            <th>Fulfillment Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var order in Pagedorders)
                                         {
-                                            <a class="payment-slip-link" href="@slipUrl" target="_blank" rel="noopener" title="View payment slip">
-                                                <img class="payment-slip-thumb" src="@slipUrl" alt="Payment slip for ORD-@order.OrderId.ToString("D4")" />
-                                            </a>
+                                            var payment = order.Payments.FirstOrDefault();
+                                            var payInfo = payment?.PaymentMethod ?? "COD";
+                                            var slipUrl = NormalizeSlipImageUrl(payment?.SlipImageUrl);
+                                            <tr style="cursor: pointer;" @onclick="() => OpenRegularReceipt(order)">
+                                                <td @onclick:stopPropagation="true">
+                                                    <a class="text-decoration-none fw-bold" style="color: var(--accent-main);" @onclick="() => OpenRegularReceipt(order)">
+                                                        ORD-@order.OrderId.ToString("D4")
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    <div>@order.User.FirstName @order.User.LastName</div>
+                                                    <div class="small text-muted">@order.User.Email</div>
+                                                </td>
+                                                <td>@order.ShippingAddress</td>
+                                                <td>
+                                                    <span class="badge bg-light text-dark border">@payInfo.ToUpper()</span>
+                                                    @if (!string.IsNullOrEmpty(slipUrl))
+                                                    {
+                                                        <a class="payment-slip-link ms-1" href="@slipUrl" target="_blank" rel="noopener" title="View payment slip" @onclick:stopPropagation="true">
+                                                            <img class="payment-slip-thumb" src="@slipUrl" alt="Payment slip" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;" />
+                                                        </a>
+                                                    }
+                                                </td>
+                                                <td><strong>@order.TotalAmount.ToString("N0") MMK</strong></td>
+                                                <td @onclick:stopPropagation="true">
+                                                    <span class="badge @StatusBadgeClass(order.OrderStatus) px-3 py-2 rounded-pill">@NormalizeStatus(order.OrderStatus)</span>
+                                                </td>
+                                                <td @onclick:stopPropagation="true">
+                                                    @if (IsFinalStatus(order.OrderStatus))
+                                                    {
+                                                        <span class="text-muted small"><i class="bi bi-lock-fill"></i> Locked</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <select class="luxury-select py-1 px-2 small d-inline-block" style="width: 140px; font-size: 0.85rem;"
+                                                                disabled="@IsAdminActionLoading(OrderStatusAction(order.OrderId))"
+                                                                @onchange="(e) => RunAdminAction(OrderStatusAction(order.OrderId), () => UpdateOrderStatus(order, e.Value?.ToString() ?? string.Empty))">
+                                                            <option value="Pending" selected="@(NormalizeStatus(order.OrderStatus) == "Pending")">Pending</option>
+                                                            <option value="Processing" selected="@(NormalizeStatus(order.OrderStatus) == "Processing")">Processing</option>
+                                                            <option value="Confirm" selected="@(NormalizeStatus(order.OrderStatus) == "Confirm")">Confirm</option>
+                                                        </select>
+                                                    }
+                                                    <LoadingButton Class="btn btn-sm btn-outline-danger ms-2"
+                                                                   IsLoading="@IsAdminActionLoading(DeleteOrderAction(order.OrderId))"
+                                                                   OnClick="@(() => RunAdminAction(DeleteOrderAction(order.OrderId), () => DeleteOrder(order.OrderId)))">
+                                                        <i class="bi bi-trash"></i>
+                                                    </LoadingButton>
+                                                </td>
+                                            </tr>
                                         }
-                                        else
-                                        {
-                                            <div class="payment-slip-empty">No slip</div>
-                                        }
-                                    </td>
-                                    <td><strong>@order.TotalAmount.ToString("N0") MMK</strong></td>
-                                    <td>
-                                        <span class="badge @StatusBadgeClass(order.OrderStatus) px-3 py-2 rounded-pill">@NormalizeStatus(order.OrderStatus)</span>
-                                    </td>
-                                    <td>
-                                        @if (IsFinalStatus(order.OrderStatus))
-                                        {
-                                            <span class="text-muted small"><i class="bi bi-lock-fill"></i> Locked</span>
-                                        }
-                                        else
-                                        {
-                                            <select class="luxury-select py-1 px-2 small d-inline-block" style="width: 140px; font-size: 0.85rem;"
-                                                    disabled="@IsAdminActionLoading(OrderStatusAction(order.OrderId))"
-                                                    @onchange="(e) => RunAdminAction(OrderStatusAction(order.OrderId), () => UpdateOrderStatus(order, e.Value?.ToString() ?? string.Empty))">
-                                                <option value="Pending" selected="@(NormalizeStatus(order.OrderStatus) == "Pending")">Pending</option>
-                                                <option value="Processing" selected="@(NormalizeStatus(order.OrderStatus) == "Processing")">Processing</option>
-                                                <option value="Confirm" selected="@(NormalizeStatus(order.OrderStatus) == "Confirm")">Confirm</option>
-                                            </select>
-                                        }
-                                            <LoadingButton Class="btn btn-sm btn-outline-danger ms-2"
-                                                           IsLoading="@IsAdminActionLoading(DeleteOrderAction(order.OrderId))"
-                                                           OnClick="@(() => RunAdminAction(DeleteOrderAction(order.OrderId), () => DeleteOrder(order.OrderId)))">
-                                                <i class="bi bi-trash"></i>
-                                            </LoadingButton>
-
-                                            <ConfirmModal @ref="confirmModal" />
-                                    </td>
-                                </tr>
-                            }
+                                    </tbody>
+                                </table>
+                            </div>
                         }
-                    </tbody>
-                </table>
-                <Pagination CurrentPage="@orderPage"
-                            TotalPages="@OrderTotalPages"
-                            CurrentPageChanged="@ChangeOrderPage" />
+                        <Pagination CurrentPage="@orderPage"
+                                    TotalPages="@OrderTotalPages"
+                                    CurrentPageChanged="@ChangeOrderPage" />
+                    </section>
+                }
+                else
+                {
+                    <section class="ops-section p-0">
+                        <div class="ops-filter-row mb-3">
+                            <button type="button" class="filter-chip @(string.IsNullOrWhiteSpace(guestPaymentFilter) ? "active" : "")" @onclick='() => { guestPaymentFilter = ""; LoadData(); }'>
+                                <strong>@allGuestOrders.Count</strong><span>All</span>
+                            </button>
+                            <button type="button" class="filter-chip @(guestPaymentFilter == "paid" ? "active" : "")" @onclick='() => { guestPaymentFilter = "paid"; LoadData(); }'>
+                                <strong>@allGuestOrders.Count(g => (g.PaymentStatus ?? "unpaid").Equals("paid", StringComparison.OrdinalIgnoreCase))</strong><span>Paid</span>
+                            </button>
+                            <button type="button" class="filter-chip @(guestPaymentFilter == "unpaid" ? "active" : "")" @onclick='() => { guestPaymentFilter = "unpaid"; LoadData(); }'>
+                                <strong>@allGuestOrders.Count(g => !(g.PaymentStatus ?? "unpaid").Equals("paid", StringComparison.OrdinalIgnoreCase))</strong><span>Unpaid</span>
+                            </button>
+                        </div>
+
+                        <div class="ops-toolbar d-flex gap-3 mb-3 align-items-center justify-content-between">
+                            <div class="staff-search-control flex-grow-1" style="max-width: 480px; position: relative;">
+                                <i class="bi bi-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                                <input type="search" class="luxury-input" style="padding-left: 36px; height: 42px;" placeholder="Search phone orders..." @bind="guestOrderSearch" @bind:event="oninput" />
+                            </div>
+                            <span class="text-muted small">Showing @filteredGuestOrders.Count phone orders</span>
+                        </div>
+
+                        @if (!PagedGuestOrders.Any())
+                        {
+                            <div class="empty-panel text-center py-5 text-muted border rounded" style="background: var(--bg-card);">
+                                <i class="bi bi-telephone-x fs-1 d-block mb-2"></i>
+                                <strong>No phone orders found.</strong>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive-wrapper">
+                                <table class="table luxury-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Order ID</th>
+                                            <th>Customer Name</th>
+                                            <th>Phone</th>
+                                            <th>Amount</th>
+                                            <th>Payment Method</th>
+                                            <th>Payment Status</th>
+                                            <th>Fulfillment</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var go in PagedGuestOrders)
+                                        {
+                                            <tr style="cursor: pointer;" @onclick="() => OpenGuestReceipt(go)">
+                                                <td @onclick:stopPropagation="true">
+                                                    <a class="text-decoration-none fw-bold" style="color: var(--accent-main);" @onclick="() => OpenGuestReceipt(go)">
+                                                        GORD-@go.GuestOrderId.ToString("D4")
+                                                    </a>
+                                                </td>
+                                                <td><strong>@go.CustomerName</strong></td>
+                                                <td>@go.PhoneNumber</td>
+                                                <td><strong>@go.TotalAmount.ToString("N0") MMK</strong></td>
+                                                <td><span class="badge bg-light text-dark border">@((go.PaymentMethod ?? "COD").ToUpper())</span></td>
+                                                <td>@PaymentBadge(go.PaymentStatus)</td>
+                                                <td @onclick:stopPropagation="true">
+                                                    <span class="badge @StatusBadgeClass(go.OrderStatus) px-3 py-2 rounded-pill">@NormalizeStatus(go.OrderStatus)</span>
+                                                </td>
+                                                <td @onclick:stopPropagation="true">
+                                                    @if (IsFinalStatus(go.OrderStatus))
+                                                    {
+                                                        <span class="text-muted small"><i class="bi bi-lock-fill"></i> Locked</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <select class="luxury-select py-1 px-2 small d-inline-block" style="width: 140px; font-size: 0.85rem;"
+                                                                disabled="@IsUpdatingGuestOrder(go.GuestOrderId)"
+                                                                @onchange="(e) => UpdateGuestOrderStatus(go, e.Value?.ToString() ?? string.Empty)">
+                                                            <option value="Pending" selected="@(NormalizeStatus(go.OrderStatus) == "Pending")">Pending</option>
+                                                            <option value="Processing" selected="@(NormalizeStatus(go.OrderStatus) == "Processing")">Processing</option>
+                                                            <option value="Confirm" selected="@(NormalizeStatus(go.OrderStatus) == "Confirm")">Confirm</option>
+                                                        </select>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        <Pagination CurrentPage="@guestOrderPage"
+                                    TotalPages="@GuestOrderTotalPages"
+                                    CurrentPageChanged="@ChangeGuestOrderPage" />
+                    </section>
+                }
             </div>
         }
 
@@ -944,6 +1067,414 @@ else
                 </div>
             </div>
         }
+
+        else if (activeView == "create-order")
+        {
+            <div class="page-header order-page-header" style="margin-bottom: 1.5rem;">
+                <div>
+                    <div class="page-sub" style="font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);margin-bottom:.25rem;">Operations</div>
+                    <h2 class="luxury-text m-0">Create Phone Order</h2>
+                </div>
+                <div style="display:flex;align-items:center;gap:.6rem;">
+                    <span class="badge bg-light text-dark border"><i class="bi bi-telephone"></i> Phone sale</span>
+                    <span class="badge bg-secondary">@adminSelectedItemCount item(s)</span>
+                </div>
+            </div>
+
+            <div class="create-order-workflow">
+                <div class="create-order-main">
+
+                    <!-- 01 Caller Details -->
+                    <section class="order-panel">
+                        <div class="order-panel-head">
+                            <div>
+                                <div class="order-panel-kicker">Customer</div>
+                                <h3>Caller Details</h3>
+                            </div>
+                            <span class="order-step-badge">01</span>
+                        </div>
+                        <div class="ob-form-grid two">
+                            <div class="field-block">
+                                <label class="ob-form-label">Customer Name</label>
+                                <input type="text" class="ob-input" placeholder="Thiri San"
+                                       @bind="adminGuestCustomerName" @bind:event="oninput" />
+                            </div>
+                            <div class="field-block">
+                                <label class="ob-form-label">Phone Number</label>
+                                <input type="tel" class="ob-input" placeholder="09xxxxxxxxx"
+                                       @bind="adminGuestPhoneNumber" @bind:event="oninput" />
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 02 Product Lines -->
+                    <section class="order-panel order-items-panel">
+                        <div class="order-panel-head">
+                            <div>
+                                <div class="order-panel-kicker">Items</div>
+                                <h3>Product Lines</h3>
+                            </div>
+                            <button type="button" class="ob-add-btn compact" @onclick="AdminAddOrderLine">
+                                <i class="bi bi-plus-circle"></i> Add Item
+                            </button>
+                        </div>
+
+                        <div class="staff-search-control">
+                            <i class="bi bi-search"></i>
+                            <input type="search" placeholder="Search SKU, product, size, color"
+                                   @bind="adminProductSearch" @bind:event="oninput" />
+                        </div>
+
+                        <div class="ob-items-header">
+                            <div>Product</div>
+                            <div>Qty</div>
+                            <div>Unit</div>
+                            <div>Total</div>
+                            <div></div>
+                        </div>
+
+                        <div class="ob-item-list">
+                            @foreach (var line in adminOrderLines)
+                            {
+                                var selectedVariant = adminInventoryVariants.FirstOrDefault(v => v.VariantId == line.VariantId);
+                                var variantOptions = AdminGetSelectableVariants(line).ToList();
+
+                                <div class="ob-item-row">
+                                    <div class="ob-product-cell">
+                                        <select class="ob-select" value="@line.VariantId"
+                                                @onchange="(e) => AdminOnLineVariantChanged(line, e.Value?.ToString())">
+                                            <option value="0">Select item</option>
+                                            @if (!variantOptions.Any())
+                                            {
+                                                <option value="0" disabled>No matching stock</option>
+                                            }
+                                            @foreach (var v in variantOptions)
+                                            {
+                                                <option value="@v.VariantId">@v.Sku - @v.Product.Name (@v.Size / @v.Color)</option>
+                                            }
+                                        </select>
+                                        @if (selectedVariant != null)
+                                        {
+                                            <div class="ob-stock-line">
+                                                <span>@selectedVariant.StockQuantity left</span>
+                                                <span>@selectedVariant.Size / @selectedVariant.Color</span>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <div class="qty-stepper">
+                                        <button type="button" @onclick="() => AdminAdjustLineQty(line, -1)" aria-label="Decrease quantity">
+                                            <i class="bi bi-dash"></i>
+                                        </button>
+                                        <input type="number" min="1" value="@line.Quantity"
+                                               @onchange="(e) => AdminOnLineQtyChanged(line, e.Value?.ToString())" />
+                                        <button type="button" @onclick="() => AdminAdjustLineQty(line, 1)" aria-label="Increase quantity">
+                                            <i class="bi bi-plus"></i>
+                                        </button>
+                                    </div>
+
+                                    <div class="money-cell">@AdminGetVariantUnitPrice(line.VariantId).ToString("N0")</div>
+                                    <div class="money-cell strong">@AdminGetLineTotal(line).ToString("N0")</div>
+                                    <button type="button" class="icon-action danger" @onclick="() => AdminRemoveOrderLine(line)" aria-label="Remove item">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </section>
+
+                    <!-- 03 Delivery Address -->
+                    <section class="order-panel">
+                        <div class="order-panel-head">
+                            <div>
+                                <div class="order-panel-kicker">Delivery</div>
+                                <h3>Address</h3>
+                            </div>
+                            <span class="order-step-badge">03</span>
+                        </div>
+                        <div class="field-block">
+                            <label class="ob-form-label">Shipping / Contact Address</label>
+                            <textarea class="ob-textarea" rows="4"
+                                      placeholder="No.123, Bo Yar Nyunt Street, Dagon Township, Yangon"
+                                      @bind="adminShippingAddress" @bind:event="oninput"></textarea>
+                        </div>
+                    </section>
+
+                    <!-- 04 Payment -->
+                    <section class="order-panel">
+                        <div class="order-panel-head">
+                            <div>
+                                <div class="order-panel-kicker">Payment</div>
+                                <h3>Method &amp; Status</h3>
+                            </div>
+                            <span class="order-step-badge">04</span>
+                        </div>
+                        <div class="ob-form-grid two">
+                            <div class="field-block">
+                                <label class="ob-form-label">Payment Method</label>
+                                <div class="ob-pill-group">
+                                    @foreach (var method in new[] { ("cod", "bi-cash-coin", "COD"), ("kpay", "bi-phone", "KPay"), ("wave_money", "bi-phone-fill", "WavePay") })
+                                    {
+                                        <button type="button" class="ob-pill @(adminPaymentMethod == method.Item1 ? "ob-pill-active" : "")"
+                                                @onclick='() => adminPaymentMethod = method.Item1'>
+                                            <i class="bi @method.Item2"></i> @method.Item3
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                            <div class="field-block">
+                                <label class="ob-form-label">Payment Status</label>
+                                <div class="ob-pill-group">
+                                    <button type="button" class="ob-pill @(adminPaymentStatus == "unpaid" ? "ob-pill-active" : "")"
+                                            @onclick='() => adminPaymentStatus = "unpaid"'>
+                                        <i class="bi bi-clock-history"></i> Unpaid
+                                    </button>
+                                    <button type="button" class="ob-pill @(adminPaymentStatus == "paid" ? "ob-pill-active" : "")"
+                                            @onclick='() => adminPaymentStatus = "paid"'>
+                                        <i class="bi bi-check-circle"></i> Paid
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Order Summary Sidebar -->
+                <aside class="order-summary-panel">
+                    <div class="summary-title-row">
+                        <div>
+                            <div class="order-panel-kicker">Summary</div>
+                            <h3>Phone Order</h3>
+                        </div>
+                        <span class="summary-status @(adminCanSubmitPhoneOrder ? "ready" : "")">
+                            @(adminCanSubmitPhoneOrder ? "Ready" : "Draft")
+                        </span>
+                    </div>
+
+                    <div class="summary-total-block">
+                        <div class="summary-label">Order Total</div>
+                        <div class="summary-total">@adminOrderLinesTotal.ToString("N0") <span>MMK</span></div>
+                    </div>
+
+                    <div class="summary-metrics">
+                        <div>
+                            <span>@adminSelectedLineCount</span>
+                            <label>Lines</label>
+                        </div>
+                        <div>
+                            <span>@adminSelectedItemCount</span>
+                            <label>Pieces</label>
+                        </div>
+                    </div>
+
+                    <div class="summary-checklist">
+                        <div class="@AdminCheckClass(!string.IsNullOrWhiteSpace(adminGuestCustomerName) && !string.IsNullOrWhiteSpace(adminGuestPhoneNumber))">
+                            <i class="bi @(!string.IsNullOrWhiteSpace(adminGuestCustomerName) && !string.IsNullOrWhiteSpace(adminGuestPhoneNumber) ? "bi-check-circle-fill" : "bi-circle")"></i>
+                            <span>Customer</span>
+                        </div>
+                        <div class="@AdminCheckClass(adminSelectedLineCount > 0)">
+                            <i class="bi @(adminSelectedLineCount > 0 ? "bi-check-circle-fill" : "bi-circle")"></i>
+                            <span>Items</span>
+                        </div>
+                        <div class="@AdminCheckClass(!string.IsNullOrWhiteSpace(adminShippingAddress))">
+                            <i class="bi @(!string.IsNullOrWhiteSpace(adminShippingAddress) ? "bi-check-circle-fill" : "bi-circle")"></i>
+                            <span>Delivery</span>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(adminCreateOrderError))
+                    {
+                        <div class="inline-toast error order-error">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            <span>@adminCreateOrderError</span>
+                        </div>
+                    }
+
+                    <div class="summary-actions">
+                        <LoadingButton Class="@(adminCanSubmitPhoneOrder ? "ob-submit-btn" : "ob-submit-btn disabled")"
+                                       Disabled="@(!adminCanSubmitPhoneOrder || adminIsSubmittingPhoneOrder)"
+                                       IsLoading="@adminIsSubmittingPhoneOrder"
+                                       LoadingText="Confirming..."
+                                       OnClick="AdminSubmitPhoneOrder">
+                            <i class="bi bi-bag-check-fill"></i> Confirm Order
+                        </LoadingButton>
+                        <button type="button" class="text-action-btn" @onclick="AdminResetCreateOrderForm">
+                            <i class="bi bi-arrow-counterclockwise"></i> Reset
+                        </button>
+                    </div>
+                </aside>
+            </div>
+        }
     </main>
 </div>
+
+@if (showReceiptModal)
+{
+    <div class="receipt-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 32, 80, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 10000;" @onclick="CloseReceipt">
+        <div class="receipt-modal" style="background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); max-width: 620px; width: 90%; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #EDD9D0;" @onclick:stopPropagation="true">
+            <div class="receipt-header" style="background: #8B1A1A; color: #fff; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 1.2rem; font-family: 'DM Sans', sans-serif; letter-spacing: 0.05em; color: #fff;">
+                    @if (selectedRegularOrder != null)
+                    {
+                        <span>Order Receipt: ORD-@selectedRegularOrder.OrderId.ToString("D4")</span>
+                    }
+                    else if (selectedGuestOrder != null)
+                    {
+                        <span>Order Receipt: GORD-@selectedGuestOrder.GuestOrderId.ToString("D4")</span>
+                    }
+                </h3>
+                <button class="receipt-close-btn" style="background: transparent; border: none; color: #fff; font-size: 1.8rem; cursor: pointer; line-height: 1; opacity: 0.8;" @onclick="CloseReceipt">&times;</button>
+            </div>
+            <div class="receipt-body" style="padding: 1.5rem; overflow-y: auto; font-size: 0.88rem; line-height: 1.5; color: #3C1F10;">
+                @if (selectedRegularOrder != null)
+                {
+                    <div class="receipt-section-title">Customer Information</div>
+                    <div class="receipt-meta-grid">
+                        <div class="receipt-meta-item">
+                            <label>Customer Name</label>
+                            <span>@selectedRegularOrder.User?.FirstName @selectedRegularOrder.User?.LastName</span>
+                        </div>
+                        <div class="receipt-meta-item">
+                            <label>Email Address</label>
+                            <span>@selectedRegularOrder.User?.Email</span>
+                        </div>
+                        <div class="receipt-meta-item">
+                            <label>Phone Number</label>
+                            <span>@selectedRegularOrder.User?.PhoneNumber</span>
+                        </div>
+                        <div class="receipt-meta-item">
+                            <label>Order Date</label>
+                            <span>@(selectedRegularOrder.CreatedAt?.ToString("dd MMM yyyy HH:mm") ?? "N/A")</span>
+                        </div>
+                    </div>
+
+                    <div class="receipt-meta-item mb-4">
+                        <label>Shipping Address</label>
+                        <span>@selectedRegularOrder.ShippingAddress</span>
+                    </div>
+
+                    <div class="receipt-section-title">Order Items</div>
+                    <table class="receipt-table">
+                        <thead>
+                            <tr>
+                                <th>Item Details</th>
+                                <th>Qty</th>
+                                <th class="money">Price</th>
+                                <th class="money">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in selectedRegularOrder.OrderItems)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@item.Variant?.Product?.Name</strong>
+                                        <div class="small text-muted">Size: @item.Variant?.Size | Color: @item.Variant?.Color</div>
+                                    </td>
+                                    <td>@item.Quantity</td>
+                                    <td class="money">@item.PriceAtPurchase.ToString("N0") MMK</td>
+                                    <td class="money">@((item.PriceAtPurchase * item.Quantity).ToString("N0")) MMK</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                    <div class="receipt-total-row">
+                        <span class="receipt-total-label">Total Amount</span>
+                        <span class="receipt-total-val">@selectedRegularOrder.TotalAmount.ToString("N0") MMK</span>
+                    </div>
+
+                    <div class="receipt-section-title mt-4">Payment Details</div>
+                    <div class="receipt-meta-grid">
+                        <div class="receipt-meta-item">
+                            <label>Payment Method</label>
+                            <span class="pay-badge">@((selectedRegularOrder.Payments.FirstOrDefault()?.PaymentMethod ?? "COD").ToUpper())</span>
+                        </div>
+                        <div class="receipt-meta-item">
+                            <label>Payment Status</label>
+                            <span>@selectedRegularOrder.PaymentStatus</span>
+                        </div>
+                    </div>
+
+                    var slipUrl = NormalizeSlipImageUrl(selectedRegularOrder.Payments.FirstOrDefault()?.SlipImageUrl);
+                    @if (!string.IsNullOrEmpty(slipUrl))
+                    {
+                        <div class="receipt-slip-container">
+                            <label class="small text-muted uppercase d-block">Payment Slip</label>
+                            <a href="@slipUrl" target="_blank">
+                                <img class="receipt-slip-image" src="@slipUrl" alt="Payment slip" />
+                            </a>
+                        </div>
+                    }
+                }
+                else if (selectedGuestOrder != null)
+                {
+                    <div class="receipt-section-title">Guest Details</div>
+                    <div class="receipt-meta-grid">
+                        <div class="receipt-meta-item">
+                            <label>Guest Name</label>
+                            <span>@selectedGuestOrder.CustomerName</span>
+                        </div>
+                        <div class="receipt-meta-item">
+                            <label>Phone Number</label>
+                            <span>@selectedGuestOrder.PhoneNumber</span>
+                        </div>
+                        <div class="receipt-meta-item">
+                            <label>Order Date</label>
+                            <span>@selectedGuestOrder.CreatedAt.ToString("dd MMM yyyy HH:mm")</span>
+                        </div>
+                        <div class="receipt-meta-item">
+                            <label>Payment Method</label>
+                            <span class="pay-badge">@((selectedGuestOrder.PaymentMethod ?? "COD").ToUpper())</span>
+                        </div>
+                    </div>
+
+                    <div class="receipt-meta-item mb-4">
+                        <label>Shipping Address</label>
+                        <span>@selectedGuestOrder.ShippingAddress</span>
+                    </div>
+
+                    <div class="receipt-section-title">Order Items</div>
+                    <table class="receipt-table">
+                        <thead>
+                            <tr>
+                                <th>Item Details</th>
+                                <th>Qty</th>
+                                <th class="money">Price</th>
+                                <th class="money">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in selectedGuestOrder.GuestOrderItems)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@item.Variant?.Product?.Name</strong>
+                                        <div class="small text-muted">Size: @item.Variant?.Size | Color: @item.Variant?.Color</div>
+                                    </td>
+                                    <td>@item.Quantity</td>
+                                    <td class="money">@item.PriceAtPurchase.ToString("N0") MMK</td>
+                                    <td class="money">@((item.PriceAtPurchase * item.Quantity).ToString("N0")) MMK</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                    <div class="receipt-total-row">
+                        <span class="receipt-total-label">Total Amount</span>
+                        <span class="receipt-total-val">@selectedGuestOrder.TotalAmount.ToString("N0") MMK</span>
+                    </div>
+
+                    <div class="receipt-section-title mt-4">Payment Details</div>
+                    <div class="receipt-meta-grid">
+                        <div class="receipt-meta-item">
+                            <label>Payment Status</label>
+                            <span>@PaymentBadge(selectedGuestOrder.PaymentStatus)</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
 }

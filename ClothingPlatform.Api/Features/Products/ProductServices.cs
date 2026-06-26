@@ -196,7 +196,7 @@ namespace ClothingPlatform.Api.Features.Product
                         var safeSize = string.IsNullOrWhiteSpace(v.Size) ? "FREE" : v.Size.Trim();
                         var safeColor = string.IsNullOrWhiteSpace(v.Color) ? "MIX" : v.Color.Trim();
                         var safeProdName = string.IsNullOrWhiteSpace(request.Name) ? "PROD" : request.Name.Replace(" ", "");
-
+                        
                         var sku = $"{safeProdName.ToUpper()}-{safeSize.Replace(" ", "").ToUpper()}-{safeColor.Replace(" ", "").ToUpper()}-{Random.Shared.Next(1000, 9999)}";
 
                         return new ProductVariant
