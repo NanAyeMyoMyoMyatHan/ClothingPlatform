@@ -32,6 +32,7 @@ namespace ClothingPlatform.Api.Features.Product
         // UPDATE product
         [HttpPut]
         [Authorize(Policy = "AdminOrStaff")]
+        [Permission("Products.Manage", true)]
         
         public async Task<IActionResult> Update([FromBody] UpdateProductRequest model)
         {
@@ -63,6 +64,7 @@ namespace ClothingPlatform.Api.Features.Product
 
         [HttpDelete("{productId}")]
         [Authorize(Policy = "AdminOrStaff")]
+        [Permission("Products.Manage", true)]
         
         public async Task<IActionResult> DeleteProduct(int productId)
         {
@@ -74,6 +76,7 @@ namespace ClothingPlatform.Api.Features.Product
 
         [HttpPost]
         [Authorize(Policy = "AdminOrStaff")]
+        [Permission("Products.Manage", true)]
        
         public async Task<IActionResult> SaveProduct([FromBody] ProductModel model)
         {
@@ -113,6 +116,7 @@ namespace ClothingPlatform.Api.Features.Product
 
         [HttpPost("upload-image")]
         [Authorize(Policy = "AdminOrStaff")]
+        [Permission("Products.Manage", true)]
         public async Task<IActionResult> UploadImage(IFormFile file)
         {
             // ၁။ File ရှိမရှိနှင့် အလွတ်ဖြစ်နေသလား အရင်စစ်မယ်

@@ -23,7 +23,7 @@ namespace ClothingPlatform.Api.Features.Auth
 
             if (!string.Equals(user.Role?.RoleName, "customer", StringComparison.OrdinalIgnoreCase))
             {
-                throw new UnauthorizedAccessException("Admin and staff accounts must use the Staff Portal login page.");
+                throw new UnauthorizedAccessException("Admin and staff accounts must use the shared portal login page.");
             }
 
             var stored = user.PasswordHash?.Trim() ?? string.Empty;

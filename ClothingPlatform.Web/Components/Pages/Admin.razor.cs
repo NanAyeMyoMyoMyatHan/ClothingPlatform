@@ -43,6 +43,23 @@ namespace ClothingPlatform.Web.Components.Pages
         private string errorMessage = "";
         private string successMessage = "";
         private readonly HashSet<string> adminLoadingActions = new();
+        private string profileFirstName = "";
+        private string profileLastName = "";
+        private string profileEmail = "";
+        private string profilePhone = "";
+        private string profileRoleLabel = "";
+        private bool isSavingProfile = false;
+        private bool profileSaved = false;
+
+        private bool IsPortalOperator => Session.IsAdmin || Session.IsStaff;
+        private bool CanViewCustomers => Session.HasPermission("Customers.View");
+        private bool CanManageStaff => Session.HasPermission("Staff.Manage");
+        private bool CanManageProducts => Session.HasPermission("Products.Manage");
+        private bool CanViewReports => Session.HasPermission("Reports.Generate");
+        private bool CanAccessAdminInsights => Session.IsAdmin || CanViewReports;
+        private string PortalHeadline => Session.IsAdmin ? "Atelier Admin Panel" : "Atelier Operations Portal";
+        private string PortalShellLabel => Session.IsAdmin ? "Admin Control" : "Shared Operations";
+        private string ProductsNavLabel => CanManageProducts ? "Products" : "Inventory";
 
         // Lists
         private List<Order> allOrders = new();
@@ -203,8 +220,9 @@ namespace ClothingPlatform.Web.Components.Pages
         // စာမျက်နှာ နံပါတ်နှိပ်လိုက်ရင် ပြောင်းပေးမည့် Methods
         protected override async Task OnInitializedAsync()
         {
-            if (Session.IsLoggedIn && Session.IsAdmin)
+            if (Session.IsLoggedIn && IsPortalOperator)
             {
+                ApplyRequestedView();
                 await InitializePortalAsync();
             }
         }
@@ -217,12 +235,13 @@ namespace ClothingPlatform.Web.Components.Pages
             }
 
             var restored = await PortalSessionBootstrapper.RestorePortalSessionAsync();
-            if (!restored || !Session.IsAdmin)
+            if (!restored || !IsPortalOperator)
             {
                 Nav.NavigateTo("/portal-login", replace: true);
                 return;
             }
 
+            ApplyRequestedView();
             await InitializePortalAsync();
             await InvokeAsync(StateHasChanged);
         }
@@ -249,6 +268,7 @@ namespace ClothingPlatform.Web.Components.Pages
                     model.ImageDto = new ProductImageModel();
                 }
 
+                SyncPortalUserState();
                 await LoadData();
             }
             catch (Exception ex)
@@ -317,25 +337,43 @@ namespace ClothingPlatform.Web.Components.Pages
                     .AsNoTracking()
                     .ToListAsync();
                 
-                var result = await HttpClientServices.ExecuteAsync<PagedResult<UserModel>>(
-                $"api/user/customers?page={customerPage}&pageSize={customerPageSize}",
-                null,
-                EnumHttpMethod.Get);
+                if (CanViewCustomers)
+                {
+                    var result = await HttpClientServices.ExecuteAsync<PagedResult<UserModel>>(
+                        $"api/user/customers?page={customerPage}&pageSize={customerPageSize}",
+                        null,
+                        EnumHttpMethod.Get);
 
-                var staff = await HttpClientServices.ExecuteAsync<PagedResult<UserModel>>(
-                $"api/user/staffs?staffpage={staffPage}&staffpageSize={staffPageSize}",
-                null,
-                EnumHttpMethod.Get);
-                PageStaff = staff?.Items ?? new();
-                PageCustomer = result?.Items ?? new();
-                recentStaff = PageStaff.Take(5).ToList();
+                    PageCustomer = result?.Items ?? new();
+                    customerTotalCount = result?.TotalCount ?? 0;
+                    customerTotalPage = (int)Math.Ceiling((double)customerTotalCount / customerPageSize);
+                }
+                else
+                {
+                    PageCustomer = new();
+                    customerTotalCount = 0;
+                    customerTotalPage = 0;
+                }
 
-                staffTotalCount = staff?.TotalCount ?? 0;
-                staffTotalPage = (int)Math.Ceiling((double)staffTotalCount / staffPageSize);
+                if (CanManageStaff)
+                {
+                    var staff = await HttpClientServices.ExecuteAsync<PagedResult<UserModel>>(
+                        $"api/user/staffs?staffpage={staffPage}&staffpageSize={staffPageSize}",
+                        null,
+                        EnumHttpMethod.Get);
 
-                customerTotalCount = result?.TotalCount ?? 0;
-                 
-                customerTotalPage =(int)Math.Ceiling((double)customerTotalCount / customerPageSize);
+                    PageStaff = staff?.Items ?? new();
+                    recentStaff = PageStaff.Take(5).ToList();
+                    staffTotalCount = staff?.TotalCount ?? 0;
+                    staffTotalPage = (int)Math.Ceiling((double)staffTotalCount / staffPageSize);
+                }
+                else
+                {
+                    PageStaff = new();
+                    recentStaff = new();
+                    staffTotalCount = 0;
+                    staffTotalPage = 0;
+                }
 
                 allOrders = await db.Orders
                     .Include(o => o.User)
@@ -422,12 +460,14 @@ namespace ClothingPlatform.Web.Components.Pages
                     .ToList();
 
                 // Load customers
-                customers = await db.Users
-                    .Include(u => u.Role)
-                    .Where(u => u.Role.RoleName == "customer")
-                    .AsNoTracking()
-                    .OrderByDescending(u => u.UserId)
-                    .ToListAsync();
+                customers = CanViewCustomers
+                    ? await db.Users
+                        .Include(u => u.Role)
+                        .Where(u => u.Role.RoleName == "customer")
+                        .AsNoTracking()
+                        .OrderByDescending(u => u.UserId)
+                        .ToListAsync()
+                    : new List<User>();
 
                 // Load staff logs
                 activityLogs = await db.StaffActivityLogs
@@ -489,20 +529,89 @@ namespace ClothingPlatform.Web.Components.Pages
             staffPage = newPage;
             await LoadData(); // စာမျက်နှာပြောင်းရင် ဒေတာ ပြန်မောင်းတင်မယ်
         }
+        private void ApplyRequestedView()
+        {
+            var requestedView = GetRequestedViewFromUrl();
+            activeView = CanAccessView(requestedView) ? requestedView : "dashboard";
+        }
+
+        private string GetRequestedViewFromUrl()
+        {
+            var uri = Nav.ToAbsoluteUri(Nav.Uri);
+            var query = uri.Query.TrimStart('?');
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return "dashboard";
+            }
+
+            foreach (var pair in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var segments = pair.Split('=', 2);
+                if (segments.Length != 2 || !string.Equals(segments[0], "view", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                return NormalizePortalView(Uri.UnescapeDataString(segments[1]));
+            }
+
+            return "dashboard";
+        }
+
+        private bool CanAccessView(string viewName) => viewName switch
+        {
+            "customers" => CanViewCustomers,
+            "staffs" => CanManageStaff,
+            "reports" => CanViewReports,
+            "dashboard" or "products" or "orders" or "create-order" or "profile" => IsPortalOperator,
+            _ => false
+        };
+
+        private static string NormalizePortalView(string? viewName) => (viewName ?? string.Empty).Trim().ToLowerInvariant() switch
+        {
+            "products" => "products",
+            "orders" => "orders",
+            "create-order" => "create-order",
+            "customers" => "customers",
+            "staffs" => "staffs",
+            "reports" => "reports",
+            "profile" => "profile",
+            _ => "dashboard"
+        };
+
+        private static string BuildPortalUrl(string viewName) =>
+            viewName == "dashboard"
+                ? "/dashboard"
+                : $"/dashboard?view={Uri.EscapeDataString(viewName)}";
+
         private void SetView(string viewName)
         {
-            activeView = viewName;
+            var normalizedView = NormalizePortalView(viewName);
+            if (!CanAccessView(normalizedView))
+            {
+                normalizedView = "dashboard";
+            }
+
+            activeView = normalizedView;
             errorMessage = "";
             successMessage = "";
             editingProduct = null;
             ResetProductForm();
+            profileSaved = false;
 
-            if (viewName == "reports")
+            var targetUrl = BuildPortalUrl(normalizedView);
+            var currentUrl = Nav.ToBaseRelativePath(Nav.Uri).Trim('/');
+            if (!string.Equals(currentUrl, targetUrl.TrimStart('/'), StringComparison.OrdinalIgnoreCase))
+            {
+                Nav.NavigateTo(targetUrl, replace: true);
+            }
+
+            if (normalizedView == "reports")
             {
                 _ = LoadAdminReport();
             }
 
-            if (viewName == "create-order")
+            if (normalizedView == "create-order")
             {
                 _ = LoadAdminInventoryVariants();
             }
@@ -941,6 +1050,99 @@ namespace ClothingPlatform.Web.Components.Pages
         private bool showLogoutConfirm = false;
         private User? currentUser;
         private bool isCustomerLoggingOut = false;
+
+        private void SyncPortalUserState()
+        {
+            currentUser = Session.CurrentUser;
+            profileFirstName = currentUser?.FirstName ?? string.Empty;
+            profileLastName = currentUser?.LastName ?? string.Empty;
+            profileEmail = currentUser?.Email ?? string.Empty;
+            profilePhone = currentUser?.PhoneNumber ?? string.Empty;
+            profileRoleLabel = Session.IsAdmin ? "Admin" : "Staff";
+        }
+
+        private async Task SavePortalProfile()
+        {
+            errorMessage = string.Empty;
+            successMessage = string.Empty;
+            profileSaved = false;
+
+            if (string.IsNullOrWhiteSpace(profileFirstName))
+            {
+                errorMessage = UiMessages.Admin.ProfileFirstNameRequired;
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(profileLastName))
+            {
+                errorMessage = UiMessages.Admin.ProfileLastNameRequired;
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(profileEmail) || !profileEmail.Contains('@'))
+            {
+                errorMessage = UiMessages.Admin.ProfileEmailRequired;
+                return;
+            }
+
+            if (currentUser == null)
+            {
+                errorMessage = UiMessages.Admin.ProfileSaveFailed("Current portal user is missing.");
+                return;
+            }
+
+            isSavingProfile = true;
+            StateHasChanged();
+
+            try
+            {
+                await using var db = await DbFactory.CreateDbContextAsync();
+                var normalizedEmail = profileEmail.Trim().ToLowerInvariant();
+                var duplicateExists = await db.Users.AnyAsync(u =>
+                    u.UserId != currentUser.UserId &&
+                    u.Email.ToLower() == normalizedEmail);
+
+                if (duplicateExists)
+                {
+                    errorMessage = UiMessages.Admin.ProfileEmailDuplicate;
+                    return;
+                }
+
+                var dbUser = await db.Users
+                    .Include(u => u.Role)
+                        .ThenInclude(r => r.RolePermissions)
+                            .ThenInclude(rp => rp.Permission)
+                    .FirstOrDefaultAsync(u => u.UserId == currentUser.UserId);
+
+                if (dbUser == null)
+                {
+                    errorMessage = UiMessages.Admin.ProfileSaveFailed("Account record was not found.");
+                    return;
+                }
+
+                dbUser.FirstName = profileFirstName.Trim();
+                dbUser.LastName = profileLastName.Trim();
+                dbUser.Email = normalizedEmail;
+                dbUser.PhoneNumber = profilePhone?.Trim() ?? string.Empty;
+
+                await db.SaveChangesAsync();
+
+                Session.Login(dbUser, Session.Permissions.ToList());
+                SyncPortalUserState();
+                successMessage = UiMessages.Admin.ProfileSaved;
+                profileSaved = true;
+            }
+            catch (Exception ex)
+            {
+                errorMessage = UiMessages.Admin.ProfileSaveFailed(ex.Message);
+            }
+            finally
+            {
+                isSavingProfile = false;
+                StateHasChanged();
+            }
+        }
+
         private void RequestLogout() => showLogoutConfirm = true;
         private void CancelLogout() => showLogoutConfirm = false;
         private async Task ConfirmLogout()
@@ -970,7 +1172,7 @@ namespace ClothingPlatform.Web.Components.Pages
             Session.Logout();
             currentUser = null;
             
-            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "customerId");
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
             Nav.NavigateTo("/portal-login");
         }
         private async Task HandleCreateStaff()

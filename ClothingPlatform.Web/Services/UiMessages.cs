@@ -4,8 +4,8 @@ namespace ClothingPlatform.Web.Services
     {
         internal static class Admin
         {
-            public static string PreparePortalFailed(string detail) => $"Admin portal could not finish startup. {detail}";
-            public static string LoadDataFailed(string detail) => $"Admin dashboard data could not be loaded. {detail}";
+            public static string PreparePortalFailed(string detail) => $"Shared portal could not finish startup. {detail}";
+            public static string LoadDataFailed(string detail) => $"Shared portal data could not be loaded. {detail}";
             public const string OrderStatusForwardOnly = "Admin order status can only move forward in the fulfillment flow.";
             public static string OrderStatusUpdated(int orderId, string status) => $"Admin order #{orderId} moved to {status}.";
             public static string OrderStatusUpdateFailed(string detail) => $"Admin order status update failed. {detail}";
@@ -42,6 +42,12 @@ namespace ClothingPlatform.Web.Services
             public static string StaffDeleteFailed(string detail) => $"Staff account deletion failed. {detail}";
             public static string ReportLoadFailed(string detail) => $"Admin report could not be loaded. {detail}";
             public static string ReportDownloadFailed(string detail) => $"Admin CSV report download failed. {detail}";
+            public const string ProfileFirstNameRequired = "Enter your first name before saving your profile.";
+            public const string ProfileLastNameRequired = "Enter your last name before saving your profile.";
+            public const string ProfileEmailRequired = "Enter a valid email address before saving your profile.";
+            public const string ProfileEmailDuplicate = "Another account already uses that email address.";
+            public const string ProfileSaved = "Your shared portal profile was updated.";
+            public static string ProfileSaveFailed(string detail) => $"Profile update failed. {detail}";
         }
 
         internal static class PortalLogin
@@ -65,7 +71,7 @@ namespace ClothingPlatform.Web.Services
             public const string RegisterUnavailable = "Membership registration is currently unavailable. Please try again later.";
             public static string RegisterSuccess(string firstName) => $"Welcome to The Boutique, <strong>{firstName}</strong>! Your membership has been created. Please sign in.";
             public const string ToastTitle = "Portal Authentication Complete";
-            public const string ToastText = "Opening the staff workspace.";
+            public const string ToastText = "Opening the shared portal.";
         }
 
         internal static class CustomerAuth
@@ -132,9 +138,9 @@ namespace ClothingPlatform.Web.Services
 
         internal static class StaffLogout
         {
-            public const string Title = "Leave Staff Portal?";
-            public const string Text = "End this staff portal session and return to sign-in?";
-            public const string ConfirmButton = "Sign Out Staff";
+            public const string Title = "Leave Shared Portal?";
+            public const string Text = "End this shared portal session and return to sign-in?";
+            public const string ConfirmButton = "Sign Out";
         }
 
         internal static class CustomerLogout

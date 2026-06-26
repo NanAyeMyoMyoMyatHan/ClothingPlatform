@@ -90,16 +90,14 @@ namespace ClothingPlatform.Api.Features.Auth
             await EnsureRoleAsync("customer", "Customer shopping account");
 
             var reportPermission = await EnsurePermissionAsync("Reports.Generate", "Generate and export admin reports");
+            var productsPermission = await EnsurePermissionAsync("Products.Manage", "Create, update, and delete catalog records");
+            var staffPermission = await EnsurePermissionAsync("Staff.Manage", "View and manage staff accounts");
+            var customersPermission = await EnsurePermissionAsync("Customers.View", "View customer records inside the shared portal");
 
-            if (!await _db.RolePermissions.AnyAsync(rp => rp.RoleId == adminRole.RoleId && rp.PermissionId == reportPermission.PermissionId))
-            {
-                _db.RolePermissions.Add(new RolePermission
-                {
-                    RoleId = adminRole.RoleId,
-                    PermissionId = reportPermission.PermissionId,
-                    CreatedAt = DateTime.Now
-                });
-            }
+            await EnsureRolePermissionAsync(adminRole.RoleId, reportPermission.PermissionId);
+            await EnsureRolePermissionAsync(adminRole.RoleId, productsPermission.PermissionId);
+            await EnsureRolePermissionAsync(adminRole.RoleId, staffPermission.PermissionId);
+            await EnsureRolePermissionAsync(adminRole.RoleId, customersPermission.PermissionId);
 
             await EnsureSeedUserAsync("Admin", "User", "admin@boutique.com", "admin123", "09252522525", "Chic Boutique HQ", adminRole.RoleId);
             await EnsureSeedUserAsync("Thiri", "San", "staff@boutique.com", "staff123", "09222333444", "No. 456, Atelier Rd, Yangon", staffRole.RoleId);
@@ -137,6 +135,21 @@ namespace ClothingPlatform.Api.Features.Auth
             _db.Permissions.Add(permission);
             await _db.SaveChangesAsync();
             return permission;
+        }
+
+        private async Task EnsureRolePermissionAsync(int roleId, int permissionId)
+        {
+            if (await _db.RolePermissions.AnyAsync(rp => rp.RoleId == roleId && rp.PermissionId == permissionId))
+            {
+                return;
+            }
+
+            _db.RolePermissions.Add(new RolePermission
+            {
+                RoleId = roleId,
+                PermissionId = permissionId,
+                CreatedAt = DateTime.Now
+            });
         }
 
         private async Task EnsureSeedUserAsync(

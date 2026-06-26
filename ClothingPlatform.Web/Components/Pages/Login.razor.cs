@@ -155,13 +155,9 @@ namespace ClothingPlatform.Web.Components.Pages
                         // Redirect based on dynamic role
                         await Task.Delay(1500);
                         var roleName = response.Role.ToLower();
-                        if (roleName == "admin" )
+                        if (roleName == "admin" || roleName == "staff")
                         {
                             Nav.NavigateTo("/dashboard");
-                        }
-                        else if(roleName == "staff")
-                        {
-                            Nav.NavigateTo("/staff/dashboard");
                         }
                         else
                         {

@@ -132,7 +132,7 @@
             <div class="portal-loading-mark">TB</div>
             <div>
                 <h1>Loading portal</h1>
-                <p>Preparing your admin workspace.</p>
+                <p>Preparing your shared workspace.</p>
             </div>
         </div>
     </div>
@@ -144,7 +144,7 @@ else
     <aside class="sidebar">
         <div class="sidebar-brand">
             <h3>Chic Boutique</h3>
-            <span>Admin Control</span>
+            <span>@PortalShellLabel</span>
         </div>
         <ul class="nav-list">
             <li>
@@ -157,7 +157,7 @@ else
             <li>
                 <a class="nav-item-link @(activeView == "products" ? "active" : "")" @onclick='() => SetView("products")'>
                     <i class="bi bi-bag"></i>
-                    Products
+                    @ProductsNavLabel
                 </a>
             </li>
 
@@ -175,24 +175,40 @@ else
                 </a>
             </li>
 
+            @if (CanViewCustomers)
+            {
             <li>
                 <a class="nav-item-link @(activeView == "customers" ? "active" : "")" @onclick='() => SetView("customers")'>
                     <i class="bi bi-people"></i>
                     Customers
                 </a>
             </li>
+            }
 
+            @if (CanManageStaff)
+            {
             <li>
                 <a class="nav-item-link @(activeView == "staffs" ? "active" : "")" @onclick='() => SetView("staffs")'>
                     <i class="bi bi-person-workspace"></i>
                     Staff Menu
                 </a>
             </li>
+            }
 
+            @if (CanViewReports)
+            {
             <li>
                 <a class="nav-item-link @(activeView == "reports" ? "active" : "")" @onclick='() => SetView("reports")'>
                     <i class="bi bi-bar-chart-line"></i>
                     Admin Reports
+                </a>
+            </li>
+            }
+
+            <li>
+                <a class="nav-item-link @(activeView == "profile" ? "active" : "")" @onclick='() => SetView("profile")'>
+                    <i class="bi bi-person-circle"></i>
+                    My Profile
                 </a>
             </li>
 
@@ -207,7 +223,7 @@ else
                             <div class="confirm-modal" @onclick:stopPropagation="true">
                                 <div class="confirm-icon"><i class="bi bi-box-arrow-right"></i></div>
                                 <div class="confirm-title">Log Out?</div>
-                                <div class="confirm-text">Are you sure you want to log out of your customer account?</div>
+                                <div class="confirm-text">Are you sure you want to leave the shared portal?</div>
                                 <div class="confirm-actions">
                                     <button class="confirm-btn-cancel" @onclick="CancelLogout">Cancel</button>
                                     <LoadingButton Class="confirm-btn-confirm"
@@ -228,7 +244,7 @@ else
     <main class="main-workspace">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h1 class="luxury-text m-0">Atelier Admin Panel</h1>
+                <h1 class="luxury-text m-0">@PortalHeadline</h1>
                 <p class="text-muted m-0">Today is @DateTime.Now.ToString("dd MMM yyyy")</p>
             </div>
             <div>
@@ -259,7 +275,7 @@ else
         {
             <div class="row g-4 mb-4">
                 <div class="col-md-3">
-                    <div class="luxury-card luxury-card-clickable" @onclick='() => SetView("reports")'>
+                    <div class="luxury-card luxury-card-clickable" @onclick='() => SetView(CanViewReports ? "reports" : "orders")'>
                         <div class="kpi-title">Revenue</div>
                         <h2 class="kpi-value">@TotalRevenue.ToString("N0") MMK</h2>
                         <div class="kpi-icon-box">
@@ -289,11 +305,11 @@ else
                 </div>
 
                 <div class="col-md-3">
-                    <div class="luxury-card luxury-card-clickable" @onclick='() => SetView("customers")'>
-                        <div class="kpi-title">Customers</div>
-                        <h2 class="kpi-value">@TotalCustomers</h2>
+                    <div class="luxury-card luxury-card-clickable" @onclick='() => SetView(CanViewCustomers ? "customers" : "orders")'>
+                        <div class="kpi-title">@(CanViewCustomers ? "Customers" : "Phone Orders")</div>
+                        <h2 class="kpi-value">@(CanViewCustomers ? TotalCustomers : allGuestOrders.Count)</h2>
                         <div class="kpi-icon-box">
-                            <i class="bi bi-people"></i>
+                            <i class="bi @(CanViewCustomers ? "bi-people" : "bi-telephone")"></i>
                         </div>
                     </div>
                 </div>
@@ -351,6 +367,8 @@ else
         else if (activeView == "products")
         {
             <div class="crud-grid">
+                @if (CanManageProducts)
+                {
                 <!-- Product Form (Add / Edit) -->
                 <div class="luxury-card">
                     <h4>@(editingProduct == null ? "Add Atelier Product" : "Edit Product")</h4>
@@ -433,10 +451,18 @@ else
                         }
                     </div>
                 </div>
+                }
+                else
+                {
+                <div class="luxury-card">
+                    <h4>Inventory Overview</h4>
+                    <p class="text-muted mb-0">Staff accounts can review the live catalog and stock counts here. Product creation and catalog edits stay with admin accounts.</p>
+                </div>
+                }
 
                 <!-- Product Catalog List -->
                 <div class="table-responsive-wrapper">
-                    <h4>Catalog Items</h4>
+                    <h4>@(CanManageProducts ? "Catalog Items" : "Inventory Catalog")</h4>
                     <table class="table luxury-table mt-3">
                         <thead>
                             <tr>
@@ -446,14 +472,17 @@ else
                                 <th>Base Price</th>
                                 <th>Variants</th>
                                 <th>Quantity</th>
+                                @if (CanManageProducts)
+                                {
                                 <th>Actions</th>
+                                }
                             </tr>
                         </thead>
                         <tbody>
                             @if (!PagedProducts.Any())
                             {
                                 <tr>
-                                    <td colspan="6" class="text-center py-4 text-muted">No products registered. Create one to display.</td>
+                                    <td colspan="@(CanManageProducts ? 7 : 6)" class="text-center py-4 text-muted">No products registered. Create one to display.</td>
                                 </tr>
                             }
                             else
@@ -484,6 +513,8 @@ else
                                         <td>
                                             @prod.ProductVariants.FirstOrDefault()?.StockQuantity
                                         </td>
+                                        @if (CanManageProducts)
+                                        {
                                         <td>
                                             <LoadingButton Class="btn btn-sm btn-outline-primary me-1"
                IsLoading="@IsAdminActionLoading(EditProductAction(prod.ProductId))"
@@ -505,6 +536,7 @@ else
               CancelText="Cancel" />
                                          
                                         </td>
+                                        }
                                     </tr>
                                 }
                             }
@@ -630,11 +662,14 @@ else
                                                             <option value="Confirm" selected="@(NormalizeStatus(order.OrderStatus) == "Confirm")">Confirm</option>
                                                         </select>
                                                     }
-                                                    <LoadingButton Class="btn btn-sm btn-outline-danger ms-2"
-                                                                   IsLoading="@IsAdminActionLoading(DeleteOrderAction(order.OrderId))"
-                                                                   OnClick="@(() => RunAdminAction(DeleteOrderAction(order.OrderId), () => DeleteOrder(order.OrderId)))">
-                                                        <i class="bi bi-trash"></i>
-                                                    </LoadingButton>
+                                                    @if (Session.IsAdmin)
+                                                    {
+                                                        <LoadingButton Class="btn btn-sm btn-outline-danger ms-2"
+                                                                       IsLoading="@IsAdminActionLoading(DeleteOrderAction(order.OrderId))"
+                                                                       OnClick="@(() => RunAdminAction(DeleteOrderAction(order.OrderId), () => DeleteOrder(order.OrderId)))">
+                                                            <i class="bi bi-trash"></i>
+                                                        </LoadingButton>
+                                                    }
                                                 </td>
                                             </tr>
                                         }
@@ -1064,6 +1099,55 @@ else
                             }
                         </ul>
                     </div>
+                </div>
+            </div>
+        }
+
+        else if (activeView == "profile")
+        {
+            <div class="luxury-card" style="max-width: 760px;">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+                    <div>
+                        <h4 class="m-0">My Profile</h4>
+                        <p class="text-muted small m-0">Manage the account details used in the shared portal.</p>
+                    </div>
+                    <span class="badge bg-light text-dark border px-3 py-2">@profileRoleLabel</span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">First Name</label>
+                        <input type="text" class="luxury-input" @bind="profileFirstName" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Last Name</label>
+                        <input type="text" class="luxury-input" @bind="profileLastName" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Email Address</label>
+                        <input type="email" class="luxury-input" @bind="profileEmail" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Phone Number</label>
+                        <input type="text" class="luxury-input" @bind="profilePhone" />
+                    </div>
+                </div>
+
+                @if (profileSaved)
+                {
+                    <div class="alert-banner alert-banner-success mt-4">
+                        <i class="bi bi-check-circle-fill me-2"></i> @UiMessages.Admin.ProfileSaved
+                    </div>
+                }
+
+                <div class="mt-4 d-flex gap-2">
+                    <LoadingButton Class="btn-luxury-solid"
+                                   IsLoading="@isSavingProfile"
+                                   LoadingText="Saving..."
+                                   OnClick="SavePortalProfile">
+                        <i class="bi bi-floppy me-1"></i> Save Changes
+                    </LoadingButton>
+                    <button class="btn-luxury" @onclick="SyncPortalUserState">Reset</button>
                 </div>
             </div>
         }
