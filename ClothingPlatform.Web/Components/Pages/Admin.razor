@@ -396,7 +396,7 @@ else
                             <th>Thumbnail</th>
                             <th>Name</th>
                             <th>Category</th>
-                            <th>Base Price</th>
+                            <th>Sale Price</th>
                             <th>Variants</th>
                             <th>Quantity</th>
                             @if (CanManageProducts)
@@ -433,7 +433,7 @@ else
                                         <p class="text-muted small m-0 text-truncate" style="max-width: 200px;">@prod.Description</p>
                                     </td>
                                     <td>@(prod.Category?.Name ?? "No Category")</td>
-                                    <td>@prod.BasePrice.ToString("N0") MMK</td>
+                                    <td>@(prod.ProductVariants.Any() ? prod.ProductVariants.Min(v => v.SalePrice ?? 0m).ToString("N0") : "0") MMK</td>
                                     <td>
                                         <span class="badge bg-secondary">@prod.ProductVariants.Count variants</span>
                                     </td>
@@ -461,11 +461,6 @@ else
                         }
                     </tbody>
                 </table>
-                <ConfirmModal @ref="confirmModal"
-                              Title="Delete Product"
-                              Message="@UiMessages.Admin.DeleteProductConfirm"
-                              ConfirmText="Delete"
-                              CancelText="Cancel" />
                 <Pagination CurrentPage="@productPage"
                             TotalPages="@ProductTotalPages"
                             CurrentPageChanged="@OnProductPageChanged" />
@@ -496,11 +491,6 @@ else
                         <div class="mb-3">
                             <label class="form-label text-muted small uppercase fw-bold">Description</label>
                             <textarea class="luxury-input" @bind="model.Description" rows="3" placeholder="Describe this luxury garment..."></textarea>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label text-muted small uppercase fw-bold">Base Price (MMK)</label>
-                            <input type="text" class="luxury-input" @bind-value="model.BasePrice" placeholder="e.g., 75,000" />
                         </div>
 
                         <div class="mb-3">
@@ -570,7 +560,8 @@ else
                                                     <tr>
                                                         <th>Color</th>
                                                         <th>Quantity</th>
-                                                        <th>Price Modifier</th>
+                                                        <th>Sale Price</th>
+                                                        <th>Purchase Price</th>
                                                         <th>Actions</th>
                                                     </tr>
                                                 </thead>
@@ -593,7 +584,14 @@ else
                                                             <td style="max-width: 180px;">
                                                                 <input type="number"
                                                                        class="luxury-input"
-                                                                       @bind="entry.PriceModifier"
+                                                                       @bind="entry.SalePrice"
+                                                                       step="0.01"
+                                                                       min="0" />
+                                                            </td>
+                                                            <td style="max-width: 180px;">
+                                                                <input type="number"
+                                                                       class="luxury-input"
+                                                                       @bind="entry.PurchasePrice"
                                                                        step="0.01"
                                                                        min="0" />
                                                             </td>
@@ -676,7 +674,7 @@ else
                 @if (ordersTab == "regular")
                 {
                     <section class="ops-section p-0">
-                        <div class="ops-filter-row mb-3">
+                        <div class="ops-filter-row ops-filter-row-five mb-3">
                             <button type="button" class="filter-chip @(string.IsNullOrWhiteSpace(orderFilter) || orderFilter == "All" ? "active" : "")" @onclick='() => FilterOrders("All")'>
                                 <strong>@allOrders.Count</strong><span>All</span>
                             </button>
@@ -688,6 +686,9 @@ else
                             </button>
                             <button type="button" class="filter-chip @(orderFilter == "Confirm" ? "active" : "")" @onclick='() => FilterOrders("Confirm")'>
                                 <strong>@allOrders.Count(o => NormalizeStatus(o.OrderStatus) == "Confirm")</strong><span>Confirm</span>
+                            </button>
+                            <button type="button" class="filter-chip @(orderFilter == "Cancelled" ? "active" : "")" @onclick='() => FilterOrders("Cancelled")'>
+                                <strong>@allOrders.Count(o => NormalizeStatus(o.OrderStatus) == "Cancelled")</strong><span>Cancelled</span>
                             </button>
                         </div>
 
@@ -752,7 +753,11 @@ else
                                                     <span class="badge @StatusBadgeClass(order.OrderStatus) px-3 py-2 rounded-pill">@NormalizeStatus(order.OrderStatus)</span>
                                                 </td>
                                                 <td @onclick:stopPropagation="true">
-                                                    @if (IsFinalStatus(order.OrderStatus))
+                                                    @if (NormalizeStatus(order.OrderStatus) == "Cancelled")
+                                                    {
+                                                        <span class="text-danger small"><i class="bi bi-x-circle-fill"></i> Cancelled</span>
+                                                    }
+                                                    else if (IsFinalStatus(order.OrderStatus))
                                                     {
                                                         <span class="text-muted small"><i class="bi bi-lock-fill"></i> Locked</span>
                                                     }
@@ -766,12 +771,12 @@ else
                                                             <option value="Confirm" selected="@(NormalizeStatus(order.OrderStatus) == "Confirm")">Confirm</option>
                                                         </select>
                                                     }
-                                                    @if (Session.IsAdmin)
+                                                    @if (Session.IsAdmin && CanCancelOrder(order.OrderStatus))
                                                     {
                                                         <LoadingButton Class="btn btn-sm btn-outline-danger ms-2"
-                                                                       IsLoading="@IsAdminActionLoading(DeleteOrderAction(order.OrderId))"
-                                                                       OnClick="@(() => RunAdminAction(DeleteOrderAction(order.OrderId), () => DeleteOrder(order.OrderId)))">
-                                                            <i class="bi bi-trash"></i>
+                                                                       IsLoading="@IsAdminActionLoading(CancelOrderAction(order.OrderId))"
+                                                                       OnClick="@(() => RunAdminAction(CancelOrderAction(order.OrderId), () => CancelOrder(order.OrderId)))">
+                                                            <i class="bi bi-x-circle"></i> Cancel
                                                         </LoadingButton>
                                                     }
                                                 </td>
@@ -1018,7 +1023,6 @@ else
                                                            OnClick="@(() => RunAdminAction(DeleteStaffAction(cust.Id), () => DeleteStaff(cust.Id)))">
                                                 <i class="bi bi-trash"></i>
                                             </LoadingButton>
-                                                <ConfirmModal @ref="confirmModal" />
                                         </td>
                                     </tr>
                                 }
@@ -1857,4 +1861,5 @@ else
         </div>
     </div>
 }
+<ConfirmModal @ref="confirmModal" />
 }

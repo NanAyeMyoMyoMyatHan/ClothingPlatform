@@ -78,6 +78,7 @@ namespace ClothingPlatform.Web.Components.Pages
         private decimal TotalRevenue;
         private int TotalOrders;
         private int PendingOrders;
+        private int CancelledOrders;
         private int TotalCustomers;
         public string imageUrl = string.Empty;
         // Order Filter
@@ -87,7 +88,6 @@ namespace ClothingPlatform.Web.Components.Pages
         private Product? editingProduct;
         private string newProductName = "";
         private string newProductDesc = "";
-        private decimal newProductBasePrice;
         private int newProductCategoryId;
         public string newProductImgUrl = "";
         private static readonly string[] ProductSizeOptions = ["XS", "S", "M", "L", "XL"];
@@ -195,7 +195,7 @@ namespace ClothingPlatform.Web.Components.Pages
 
         private static string DeleteProductAction(int productId) => $"delete-product-{productId}";
 
-        private static string DeleteOrderAction(int orderId) => $"delete-order-{orderId}";
+        private static string CancelOrderAction(int orderId) => $"cancel-order-{orderId}";
 
         private static string DeleteStaffAction(int userId) => $"delete-staff-{userId}";
 
@@ -493,6 +493,7 @@ namespace ClothingPlatform.Web.Components.Pages
                 TotalRevenue = orders.Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Confirm).Sum(o => o.TotalAmount);
                 TotalOrders = orders.Count;
                 PendingOrders = orders.Count(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Pending);
+                CancelledOrders = orders.Count(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Cancelled);
                 TotalCustomers = customers.Count;
 
                 // Load report lists
@@ -690,33 +691,45 @@ namespace ClothingPlatform.Web.Components.Pages
             }
         }
      
-        private async Task DeleteOrder(int orderId)
-{
-    var confirmed = await confirmModal.ShowAsync(
-        title: "Delete Order",
-        message: UiMessages.Admin.DeleteOrderConfirm(orderId),
-        confirmText: "Delete");
-
-    if (!confirmed) return;
-
-    try
-    {
-        var response = await HttpClientServices.ExecuteAsync<bool>(
-            $"api/order/{orderId}",
-            null,
-            EnumHttpMethod.Delete);
-
-        if (response)
+        private async Task CancelOrder(int orderId)
         {
-            successMessage = UiMessages.Admin.OrderDeleted(orderId);
-            await LoadData();
+            var confirmed = await ShowConfirmModalAsync(
+                title: "Cancel Order",
+                message: UiMessages.Admin.CancelOrderConfirm(orderId),
+                confirmText: "Cancel Order");
+
+            if (!confirmed)
+            {
+                return;
+            }
+
+            try
+            {
+                await using var db = await DbFactory.CreateDbContextAsync();
+                var dbOrder = await db.Orders.FirstOrDefaultAsync(o => o.OrderId == orderId);
+                if (dbOrder == null)
+                {
+                    errorMessage = UiMessages.Admin.OrderCancelFailed("Order not found.");
+                    return;
+                }
+
+                if (!OrderWorkflow.CanMoveTo(dbOrder.OrderStatus, OrderWorkflow.Cancelled))
+                {
+                    errorMessage = UiMessages.Admin.OrderCancelNotAllowed;
+                    return;
+                }
+
+                dbOrder.OrderStatus = OrderWorkflow.Cancelled;
+                await db.SaveChangesAsync();
+
+                successMessage = UiMessages.Admin.OrderCancelled(orderId);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                errorMessage = UiMessages.Admin.OrderCancelFailed(ex.Message);
+            }
         }
-    }
-    catch (Exception ex)
-    {
-        errorMessage = UiMessages.Admin.OrderDeleteFailed(ex.Message);
-    }
-}
 
         // Product methods
         private void ResetProductForm()
@@ -773,7 +786,8 @@ namespace ClothingPlatform.Web.Components.Pages
                                 VariantId = v.VariantId > 0 ? v.VariantId : null,
                                 Color = v.Color ?? "",
                                 StockQuantity = v.StockQuantity,
-                                PriceModifier = v.PriceModifier ?? 0m
+                                SalePrice = v.SalePrice,
+                                PurchasePrice = v.PurchasePrice
                             }).ToList()
                             : new List<ProductVariantEntryDraft>()
                     };
@@ -798,7 +812,8 @@ namespace ClothingPlatform.Web.Components.Pages
                         Size = safeSize,
                         Color = safeColor,
                         StockQuantity = Math.Max(0, entry.StockQuantity),
-                        PriceModifier = entry.PriceModifier,
+                        SalePrice = entry.SalePrice,
+                        PurchasePrice = entry.PurchasePrice,
                         Sku = $"{safeProdName.ToUpper()}-{safeSize.Replace(" ", "").ToUpper()}-{safeColor.Replace(" ", "").ToUpper()}-{Random.Shared.Next(1000, 9999)}"
                     };
                 }))
@@ -853,7 +868,7 @@ namespace ClothingPlatform.Web.Components.Pages
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(model.Name) || model.BasePrice <= 0)
+            if (string.IsNullOrWhiteSpace(model.Name))
             {
                 errorMessage = UiMessages.Admin.CreateProductRequiredFields;
                 return;
@@ -874,6 +889,15 @@ namespace ClothingPlatform.Web.Components.Pages
                 return;
             }
 
+            if (variantDrafts
+                .Where(v => v.IsSelected)
+                .SelectMany(v => v.Entries)
+                .Any(v => v.SalePrice <= 0))
+            {
+                errorMessage = "Each selected variant needs a sale price above zero.";
+                return;
+            }
+
             try
             {
                 // Image upload အရင်လုပ်
@@ -891,7 +915,6 @@ namespace ClothingPlatform.Web.Components.Pages
                 {
                     Name = model.Name,
                     Description = model.Description,
-                    BasePrice = model.BasePrice,
                     CategoryId = newProductCategoryId,
                     IsFeatured = true,
                     CreatedAt = DateTime.Now,
@@ -967,7 +990,8 @@ namespace ClothingPlatform.Web.Components.Pages
             public int? VariantId { get; set; }
             public string Color { get; set; } = "";
             public int StockQuantity { get; set; }
-            public decimal PriceModifier { get; set; }
+            public decimal SalePrice { get; set; }
+            public decimal PurchasePrice { get; set; }
         }
 
         private async Task EditProduct(Product prod)
@@ -988,7 +1012,7 @@ namespace ClothingPlatform.Web.Components.Pages
                 Id = product.Id,
                 Name = product.Name,
                 Description = product.Description,
-                BasePrice = product.BasePrice,
+                SalePrice = product.SalePrice,
             };
 
             newProductCategoryId = prod.CategoryId;
@@ -1023,7 +1047,7 @@ namespace ClothingPlatform.Web.Components.Pages
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(model.Name) || model.BasePrice <= 0)
+            if (string.IsNullOrWhiteSpace(model.Name))
             {
                 errorMessage = UiMessages.Admin.UpdateProductRequiredFields;
                 return;
@@ -1044,6 +1068,15 @@ namespace ClothingPlatform.Web.Components.Pages
                 return;
             }
 
+            if (variantDrafts
+                .Where(v => v.IsSelected)
+                .SelectMany(v => v.Entries)
+                .Any(v => v.SalePrice <= 0))
+            {
+                errorMessage = "Each selected variant needs a sale price above zero.";
+                return;
+            }
+
             try
             {
                 var updateModel = new UpdateProductRequest
@@ -1051,7 +1084,6 @@ namespace ClothingPlatform.Web.Components.Pages
                     Id= model.Id,
                     Name = model.Name,
                     Description = model.Description,
-                    BasePrice = model.BasePrice,
                     CategoryId = newProductCategoryId,
                     IsFeatured = true,
                     CreatedAt = DateTime.Now,
@@ -1092,12 +1124,27 @@ namespace ClothingPlatform.Web.Components.Pages
                 errorMessage = UiMessages.Admin.ProductUpdateError(ex.Message);
             }
         }
-        private ConfirmModal confirmModal = default!;
+        private ConfirmModal? confirmModal;
+
+        private async Task<bool> ShowConfirmModalAsync(string title, string message, string confirmText)
+        {
+            if (confirmModal is null)
+            {
+                errorMessage = "Confirmation dialog is still loading. Please try again.";
+                await InvokeAsync(StateHasChanged);
+                return false;
+            }
+
+            return await confirmModal.ShowAsync(title: title, message: message, confirmText: confirmText);
+        }
 
 
         private async Task HandleDeleteClick(int productId)
         {
-            var isConfirm = await confirmModal.ShowAsync();
+            var isConfirm = await ShowConfirmModalAsync(
+                title: "Delete Product",
+                message: UiMessages.Admin.DeleteProductConfirm,
+                confirmText: "Delete");
             if (!isConfirm)
                 return;
 
@@ -1390,7 +1437,10 @@ namespace ClothingPlatform.Web.Components.Pages
         /// </summary>
         private async Task DeleteStaff(int userId)
         {
-            var confirmed = await confirmModal.ShowAsync(title: "Delete Staff", message: UiMessages.Admin.DeleteStaffConfirm, confirmText: "Delete");
+            var confirmed = await ShowConfirmModalAsync(
+                title: "Delete Staff",
+                message: UiMessages.Admin.DeleteStaffConfirm,
+                confirmText: "Delete");
 
             if (!confirmed) return;
 
@@ -1520,6 +1570,7 @@ namespace ClothingPlatform.Web.Components.Pages
 
         private static string StatusBadgeClass(string? status) => OrderWorkflow.Normalize(status) switch
         {
+            OrderWorkflow.Cancelled => "badge-cancelled text-danger",
             OrderWorkflow.Confirm => "badge-confirm text-success",
             OrderWorkflow.Processing => "badge-processing text-primary",
             _ => "badge-pending text-warning"
@@ -1583,7 +1634,7 @@ namespace ClothingPlatform.Web.Components.Pages
         {
             var variant = adminInventoryVariants.FirstOrDefault(x => x.VariantId == variantId);
             if (variant == null) return 0;
-            return (variant.Product?.BasePrice ?? 0) + (variant.PriceModifier ?? 0);
+            return variant.SalePrice ?? 0;
         }
 
         private decimal AdminGetLineTotal(AdminOrderLineDraft line) =>
@@ -1871,10 +1922,17 @@ namespace ClothingPlatform.Web.Components.Pages
 
         private static MarkupString StatusBadge(string status) => OrderWorkflow.Normalize(status) switch
         {
+            OrderWorkflow.Cancelled => new MarkupString("<span class=\"status-badge badge-cancelled\"><i class=\"bi bi-x-circle\"></i> Cancelled</span>"),
             OrderWorkflow.Confirm => new MarkupString("<span class=\"status-badge badge-confirm\"><i class=\"bi bi-check-circle\"></i> Confirm</span>"),
             OrderWorkflow.Processing => new MarkupString("<span class=\"status-badge badge-processing\"><i class=\"bi bi-arrow-repeat\"></i> Processing</span>"),
             _ => new MarkupString("<span class=\"status-badge badge-pending\"><i class=\"bi bi-hourglass-split\"></i> Pending</span>")
         };
+
+        private static bool CanCancelOrder(string? status)
+        {
+            var normalized = OrderWorkflow.Normalize(status);
+            return normalized == OrderWorkflow.Pending || normalized == OrderWorkflow.Processing;
+        }
 
         // ─── Permission Management Methods ────────────────────────────────────────
 

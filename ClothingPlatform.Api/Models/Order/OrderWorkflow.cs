@@ -5,8 +5,10 @@ namespace ClothingPlatform.Api.Models.Order
         public const string Pending = "Pending";
         public const string Processing = "Processing";
         public const string Confirm = "Confirm";
+        public const string Cancelled = "Cancelled";
 
-        public static readonly string[] Statuses = { Pending, Processing, Confirm };
+        public static readonly string[] Statuses = { Pending, Processing, Confirm, Cancelled };
+        private static readonly string[] FulfillmentStatuses = { Pending, Processing, Confirm };
 
         public static string Normalize(string? status)
         {
@@ -14,6 +16,7 @@ namespace ClothingPlatform.Api.Models.Order
             {
                 "processing" => Processing,
                 "confirm" or "confirmed" or "completed" or "delivered" => Confirm,
+                "cancelled" or "canceled" => Cancelled,
                 _ => Pending
             };
         }
@@ -22,12 +25,25 @@ namespace ClothingPlatform.Api.Models.Order
         {
             var current = Normalize(currentStatus);
             var requested = Normalize(requestedStatus);
-            return Array.IndexOf(Statuses, requested) >= Array.IndexOf(Statuses, current);
+
+            if (requested == Cancelled)
+            {
+                return current == Pending || current == Processing;
+            }
+
+            if (current == Cancelled)
+            {
+                return false;
+            }
+
+            return Array.IndexOf(FulfillmentStatuses, requested) >= Array.IndexOf(FulfillmentStatuses, current);
         }
 
         public static bool IsFinal(string? status)
         {
-            return string.Equals(Normalize(status), Confirm, StringComparison.Ordinal);
+            var normalized = Normalize(status);
+            return string.Equals(normalized, Confirm, StringComparison.Ordinal)
+                || string.Equals(normalized, Cancelled, StringComparison.Ordinal);
         }
     }
 }

@@ -560,6 +560,11 @@
         color: var(--green);
     }
 
+    .badge-cancelled {
+        background: #FEE2E2;
+        color: #B91C1C;
+    }
+
     .badge-locked {
         background: #E2E8F0;
         color: #475569;
@@ -1543,6 +1548,10 @@
     gap: .65rem;
 }
 
+.ops-filter-row.ops-filter-row-five {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .filter-chip {
     min-height: 62px;
     padding: .65rem .75rem;
@@ -1888,6 +1897,10 @@
     }
 
     .ops-filter-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ops-filter-row.ops-filter-row-five {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }

@@ -17,7 +17,9 @@ public partial class ProductVariant
 
     public int StockQuantity { get; set; }
 
-    public decimal? PriceModifier { get; set; }
+    public decimal? SalePrice { get; set; }
+
+    public decimal? PurchasePrice { get; set; }
 
     public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
 

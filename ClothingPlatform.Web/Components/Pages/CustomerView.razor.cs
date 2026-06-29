@@ -410,7 +410,7 @@ namespace ClothingPlatform.Web.Components.Pages
             {
                 Name = prod.Name,
                 CategoryName = prod.CategoryName,
-                BasePrice = prod.BasePrice,
+                SalePrice = prod.SalePrice,
                 Description = prod.Description,
                 ImageDto = prod.ImageDto,
                 VariantsDto = prod.VariantsDto,
@@ -429,7 +429,7 @@ namespace ClothingPlatform.Web.Components.Pages
             {
                 Name = prod.Name,
                 CategoryName = prod.CategoryName,
-                BasePrice = prod.BasePrice,
+                SalePrice = prod.SalePrice,
                 Description = prod.Description,
                 ImageDto = prod.ImageDto,
                 VariantsDto = prod.VariantsDto ?? new List<VariantDto>(), // ✅ null guard
@@ -449,7 +449,7 @@ namespace ClothingPlatform.Web.Components.Pages
             {
                 Name = prod.Name,
                 CategoryName = prod.CategoryName,
-                BasePrice = prod.BasePrice,
+                SalePrice = prod.SalePrice,
                 Description = prod.Description,
                 ImageDto = prod.ImageDto,
                 VariantsDto = prod.VariantsDto ?? new List<VariantDto>(), // ✅ null guard
@@ -1145,7 +1145,7 @@ namespace ClothingPlatform.Web.Components.Pages
         {
             public string Name { get; set; } = "";
             public string CategoryName { get; set; } = "";
-            public decimal BasePrice { get; set; }
+            public decimal SalePrice { get; set; }
             public string Description { get; set; } = "";
             public string? ImageDto { get; set; }
             public List<VariantDto> VariantsDto { get; set; } = new();

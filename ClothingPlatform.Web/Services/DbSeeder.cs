@@ -71,7 +71,6 @@ namespace ClothingPlatform.Web.Services
                         {
                             Name = "Botanical Bloom Wrap Dress",
                             Description = "A flowing wrap dress in lightweight chiffon adorned with hand-drawn botanical prints. The adjustable tie waist flatters every silhouette, while the romantic flutter sleeves add effortless femininity.",
-                            BasePrice = 85000,
                             IsFeatured = true,
                             CategoryId = dresses.CategoryId,
                             CreatedAt = DateTime.Now
@@ -85,7 +84,6 @@ namespace ClothingPlatform.Web.Services
                         {
                             Name = "Petal Cascade Midi Dress",
                             Description = "Cascading layers of soft tulle form this dreamlike midi dress. Subtle floral embossing on the bodice elevates it from brunch to evening wear with equal grace.",
-                            BasePrice = 92000,
                             IsFeatured = true,
                             CategoryId = dresses.CategoryId,
                             CreatedAt = DateTime.Now
@@ -99,7 +97,6 @@ namespace ClothingPlatform.Web.Services
                         {
                             Name = "Garden Reverie Slip Dress",
                             Description = "A silky slip dress with delicate floral spaghetti straps, perfect for warm Yangon evenings. Pair with a denim jacket or wear alone for an effortlessly chic look.",
-                            BasePrice = 68000,
                             IsFeatured = true,
                             CategoryId = dresses.CategoryId,
                             CreatedAt = DateTime.Now
@@ -113,7 +110,6 @@ namespace ClothingPlatform.Web.Services
                         {
                             Name = "Azure Bloom Maxi Dress",
                             Description = "Floor-sweeping maxi silhouette in premium crepe fabric with an all-over watercolor floral pattern. The V-neckline and empire waist create a timeless, elongating effect.",
-                            BasePrice = 110000,
                             IsFeatured = true,
                             CategoryId = dresses.CategoryId,
                             CreatedAt = DateTime.Now
@@ -127,7 +123,6 @@ namespace ClothingPlatform.Web.Services
                         {
                             Name = "Sheer Poetry Blouse",
                             Description = "A billowing organza blouse with hand-sewn floral appliqués at the collar. The sheer fabric layers beautifully over slip tanks or high-waisted trousers.",
-                            BasePrice = 52000,
                             IsFeatured = false,
                             CategoryId = blouses.CategoryId,
                             CreatedAt = DateTime.Now
@@ -141,7 +136,6 @@ namespace ClothingPlatform.Web.Services
                         {
                             Name = "Magnolia Satin Blouse",
                             Description = "Luxurious satin blouse with a magnolia-inspired button placket. The draped front creates a sophisticated silhouette ideal for professional or evening settings.",
-                            BasePrice = 63000,
                             IsFeatured = false,
                             CategoryId = blouses.CategoryId,
                             CreatedAt = DateTime.Now
@@ -155,7 +149,6 @@ namespace ClothingPlatform.Web.Services
                         {
                             Name = "Rosewater Ruffle Blouse",
                             Description = "Tiered ruffle detailing cascades down the front of this romantic chiffon blouse. Lightweight and breathable, it pairs effortlessly with everything from wide-leg pants to pencil skirts.",
-                            BasePrice = 57000,
                             IsFeatured = false,
                             CategoryId = blouses.CategoryId,
                             CreatedAt = DateTime.Now
@@ -169,7 +162,6 @@ namespace ClothingPlatform.Web.Services
                         {
                             Name = "Floral Reverie Shift Dress",
                             Description = "A structured shift dress in premium cotton-blend fabric with an elegant floral jacquard pattern. The clean A-line silhouette is both modern and universally flattering.",
-                            BasePrice = 78000,
                             IsFeatured = false,
                             CategoryId = dresses.CategoryId,
                             CreatedAt = DateTime.Now
@@ -180,9 +172,23 @@ namespace ClothingPlatform.Web.Services
                     )
                 };
 
+                var seedSalePrices = new Dictionary<string, decimal>(StringComparer.Ordinal)
+                {
+                    ["Botanical Bloom Wrap Dress"] = 85000m,
+                    ["Petal Cascade Midi Dress"] = 92000m,
+                    ["Garden Reverie Slip Dress"] = 68000m,
+                    ["Azure Bloom Maxi Dress"] = 110000m,
+                    ["Sheer Poetry Blouse"] = 52000m,
+                    ["Magnolia Satin Blouse"] = 63000m,
+                    ["Rosewater Ruffle Blouse"] = 57000m,
+                    ["Floral Reverie Shift Dress"] = 78000m
+                };
+
                 int skuCounter = 1000;
                 foreach (var item in seedProducts)
                 {
+                    var salePrice = seedSalePrices.TryGetValue(item.Prod.Name, out var mappedPrice) ? mappedPrice : 0m;
+
                     db.Products.Add(item.Prod);
                     db.SaveChanges(); // to get ProductId
 
@@ -207,7 +213,8 @@ namespace ClothingPlatform.Web.Services
                                 Color = color,
                                 Sku = $"{item.Prod.Name.Substring(0, 3).ToUpper()}-{size}-{color.Replace(" ", "").ToUpper()}-{skuCounter}",
                                 StockQuantity = 25,
-                                PriceModifier = 0.00m
+                                SalePrice = salePrice,
+                                PurchasePrice = Math.Round(salePrice * 0.7m, 2)
                             });
                         }
                     }

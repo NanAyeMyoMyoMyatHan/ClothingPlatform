@@ -111,7 +111,7 @@ namespace ClothingPlatform.Api.Features.Cart
                     ProductName = ci.Variant.Product.Name,
                     Size = ci.Variant.Size,
                     Color = ci.Variant.Color,
-                    UnitPrice = ci.Variant.Product.BasePrice + (ci.Variant.PriceModifier ?? 0),
+                    UnitPrice = ci.Variant.SalePrice ?? 0,
                     ImageUrl = ci.Variant.Product.ProductImages
                         .Where(i => i.IsPrimary == true)
                         .Select(i => i.ImageUrl)

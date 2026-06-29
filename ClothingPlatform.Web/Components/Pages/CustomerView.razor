@@ -1425,6 +1425,16 @@
         padding: 4px 12px;
     }
 
+    .badge-cancelled {
+        background: #FCE8E6;
+        color: #B91C1C;
+        font-size: 0.62rem;
+        letter-spacing: 0.15em;
+        font-weight: 600;
+        text-transform: uppercase;
+        padding: 4px 12px;
+    }
+
     .history-items {
         padding: 16px 24px;
     }
@@ -1800,7 +1810,7 @@
                         <h3 class="card-name">@prod.Name</h3>
 
                         <p class="card-price">
-                            @prod.BasePrice.ToString("N0")
+                            @prod.SalePrice.ToString("N0")
                             <span class="currency">MMK</span>
                         </p>
                     </div>
@@ -1852,7 +1862,7 @@
                             <h3 class="card-name">@prod.Name</h3>
 
                             <p class="card-price">
-                                @prod.BasePrice.ToString("N0")
+                                @prod.SalePrice.ToString("N0")
                                 <span class="currency">MMK</span>
                             </p>
                         </div>
@@ -1903,7 +1913,7 @@
                         <h3 class="card-name">@prod.Name</h3>
 
                         <p class="card-price">
-                            @prod.BasePrice.ToString("N0")
+                            @prod.SalePrice.ToString("N0")
                             <span class="currency">MMK</span>
                         </p>
                     </div>
@@ -2098,6 +2108,10 @@
                                 else if (OrderWorkflow.Normalize(order.OrderStatus) == OrderWorkflow.Processing)
                                 {
                                     <span class="badge-processing px-3 py-1 rounded">Processing</span>
+                                }
+                                else if (OrderWorkflow.Normalize(order.OrderStatus) == OrderWorkflow.Cancelled)
+                                {
+                                    <span class="badge-cancelled px-3 py-1 rounded">Cancelled</span>
                                 }
                                 else
                                 {
@@ -2442,7 +2456,7 @@
                 <p class="modal-collection">@modalProduct.CategoryName</p>
                 <h2 class="modal-name">@modalProduct.Name</h2>
                 <p class="modal-price">
-                    @modalProduct.BasePrice.ToString("N0")
+                    @modalProduct.SalePrice.ToString("N0")
                     <span class="currency">MMK</span>
                 </p>
                 <p class="modal-desc">@modalProduct.Description</p>
@@ -2597,3 +2611,5 @@
         </div>
     }
 </div>
+
+

@@ -568,7 +568,7 @@ namespace ClothingPlatform.Web.Services
                 return 0;
             }
 
-            return (variant.Product?.BasePrice ?? 0) + (variant.PriceModifier ?? 0);
+            return variant.SalePrice ?? 0;
         }
 
         public decimal GetLineTotal(OrderLineDraft line) => GetVariantUnitPrice(line.VariantId) * line.Quantity;
@@ -867,6 +867,7 @@ namespace ClothingPlatform.Web.Services
 
         public MarkupString StatusBadge(string status) => OrderWorkflow.Normalize(status) switch
         {
+            OrderWorkflow.Cancelled => new MarkupString("<span class=\"status-badge badge-cancelled\"><i class=\"bi bi-x-circle\"></i> Cancelled</span>"),
             OrderWorkflow.Confirm => new MarkupString("<span class=\"status-badge badge-confirm\"><i class=\"bi bi-check-circle\"></i> Confirm</span>"),
             OrderWorkflow.Processing => new MarkupString("<span class=\"status-badge badge-processing\"><i class=\"bi bi-arrow-repeat\"></i> Processing</span>"),
             _ => new MarkupString("<span class=\"status-badge badge-pending\"><i class=\"bi bi-hourglass-split\"></i> Pending</span>")

@@ -328,6 +328,12 @@
         border: 1px solid var(--success-line);
     }
 
+    .badge-cancelled {
+        background-color: #FCE8E6;
+        color: #C62828;
+        border: 1px solid #F5C6C6;
+    }
+
     /* ── MODALS ── */
     .modal-content-luxury {
         background-color: var(--bg-card);

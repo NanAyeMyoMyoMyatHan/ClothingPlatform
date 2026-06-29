@@ -1,11 +1,12 @@
-﻿public class VariantDto
+public class VariantDto
 {
     public int VariantId { get; set; }
     public string Size { get; set; } = string.Empty;
     public string Color { get; set; } = string.Empty;
     public int StockQuantity { get; set; }
     public string Sku { get; set; } = string.Empty;
-    public decimal? PriceModifier { get; set; }
+    public decimal SalePrice { get; set; }
+    public decimal PurchasePrice { get; set; }
 }
 
 // GET All Products အတွက် သုံးမည့် Model
@@ -17,18 +18,19 @@ public class ProductModel
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public int CategoryId { get; set; }
-    public decimal BasePrice { get; set; }
+    public decimal SalePrice { get; set; }
     public List<VariantDto> VariantsDto { get; set; } = new();
     public ProductImageModel? ImageDto { get; set; }
-    public string? ImageBase64 { get; set; } // 🌟 Base64 စာသားအရှည်ကြီး သိမ်းရန်
+    public string? ImageBase64 { get; set; }
     public string? ImageFileName { get; set; }
 }
+
 public class ProductImageModel
 {
-    public string ImageUrl { get; set; }
-
+    public string ImageUrl { get; set; } = string.Empty;
     public byte IsPrimary { get; set; }
 }
+
 // GET Product By ID အတွက် DTO
 public class ProductDto
 {
@@ -37,13 +39,12 @@ public class ProductDto
     public DateTime CreatedAt { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public string CategoryName { get; set; }
-   public int CategoryId { get; set; }
-    public decimal BasePrice { get; set; }
+    public string CategoryName { get; set; } = string.Empty;
+    public int CategoryId { get; set; }
+    public decimal SalePrice { get; set; }
     public List<VariantDto> VariantsDto { get; set; } = new();
     public string? ImageDto { get; set; }
 }
-
 
 // PUT Request အတွက် Model
 public class UpdateProductRequest
@@ -54,10 +55,10 @@ public class UpdateProductRequest
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public int CategoryId { get; set; }
-    public decimal BasePrice { get; set; }
+    public decimal SalePrice { get; set; }
     public List<VariantDto> VariantsDto { get; set; } = new();
     public ProductImageModel? ImageDto { get; set; }
-    public string? ImageBase64 { get; set; } // 🌟 Base64 စာသားအရှည်ကြီး သိမ်းရန်
+    public string? ImageBase64 { get; set; }
     public string? ImageFileName { get; set; }
 }
 
@@ -68,16 +69,17 @@ public class UpdateVariantDto
     public string Color { get; set; } = "";
     public int StockQuantity { get; set; }
 }
+
 public class BestSellerDto
 {
     public int ProductId { get; set; }
-    public string Name { get; set; }= string.Empty;
+    public string Name { get; set; } = string.Empty;
     public int TotalSold { get; set; }
-    public decimal BasePrice { get; set; }
-    public string CategoryName { get; set; }
+    public decimal SalePrice { get; set; }
+    public string CategoryName { get; set; } = string.Empty;
     public int? CategoryId { get; set; }
     public string? ImageDto { get; set; }
-    public string Description { get; set; }
+    public string Description { get; set; } = string.Empty;
     public List<VariantDto> VariantsDto { get; set; } = new();
 }
 
@@ -86,13 +88,12 @@ public class NewCreationDto
     public int ProductId { get; set; }
     public string Name { get; set; } = string.Empty;
     public int TotalSold { get; set; }
-    public decimal BasePrice { get; set; }
+    public decimal SalePrice { get; set; }
     public string? CategoryName { get; set; }
     public int? CategoryId { get; set; }
     public string? ImageDto { get; set; }
     public string? Description { get; set; }
     public List<VariantDto> VariantsDto { get; set; } = new();
-
 }
 
 public class PagedResult<T>

@@ -196,7 +196,7 @@ namespace ClothingPlatform.Api.Features.Staff
             {
                 var variant = inventoryVariants.FirstOrDefault(v => v.VariantId == line.VariantId);
                 if (variant == null) continue;
-                var unit = variant.Product.BasePrice + (variant.PriceModifier ?? 0);
+                var unit = variant.SalePrice ?? 0;
                 orderTotal += unit * line.Quantity;
                 totalQuantity += line.Quantity;
             }

@@ -313,9 +313,6 @@ public partial class AppDbContext : DbContext
             entity.ToTable("products");
 
             entity.Property(e => e.ProductId).HasColumnName("product_id");
-            entity.Property(e => e.BasePrice)
-                .HasColumnType("decimal(10, 2)")
-                .HasColumnName("base_price");
             entity.Property(e => e.CategoryId).HasColumnName("category_id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -369,10 +366,14 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false)
                 .HasColumnName("color");
-            entity.Property(e => e.PriceModifier)
+            entity.Property(e => e.PurchasePrice)
                 .HasDefaultValue(0.00m)
                 .HasColumnType("decimal(10, 2)")
-                .HasColumnName("price_modifier");
+                .HasColumnName("purchase_price");
+            entity.Property(e => e.SalePrice)
+                .HasDefaultValue(0.00m)
+                .HasColumnType("decimal(10, 2)")
+                .HasColumnName("sale_price");
             entity.Property(e => e.ProductId).HasColumnName("product_id");
             entity.Property(e => e.Size)
                 .HasMaxLength(20)

@@ -7,6 +7,7 @@ using ClothingPlatform.Api.Features.Product;
 using ClothingPlatform.Api.Features.Report;
 using ClothingPlatform.Api.Features.User;
 using ClothingPlatform.Api.Filters;
+using ClothingPlatform.DB;
 using ClothingPlatform.DB.AppDbModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -107,6 +108,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await SchemaCompatibility.EnsureCancelledOrderStatusSupportAsync(db);
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

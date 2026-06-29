@@ -1,3 +1,4 @@
+using ClothingPlatform.DB;
 using ClothingPlatform.DB.AppDbModels;
 using ClothingPlatform.Web.Components;
 using ClothingPlatform.Web.Components.Pages;
@@ -44,8 +45,11 @@ builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
 
 var app = builder.Build();
 
-
-
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await SchemaCompatibility.EnsureCancelledOrderStatusSupportAsync(db);
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

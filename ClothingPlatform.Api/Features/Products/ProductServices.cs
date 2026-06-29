@@ -29,8 +29,7 @@ namespace ClothingPlatform.Api.Features.Product
                 {
                     Name = model.Name,
                     Description = model.Description,
-                    CategoryId = model.CategoryId,
-                    BasePrice = model.BasePrice
+                    CategoryId = model.CategoryId
                 };
                 context.Products.Add(newProduct);
                 await context.SaveChangesAsync();
@@ -76,7 +75,8 @@ namespace ClothingPlatform.Api.Features.Product
                         Size = v.Size,
                         Color = v.Color,
                         StockQuantity = v.StockQuantity,
-                        PriceModifier = v.PriceModifier,
+                        SalePrice = v.SalePrice,
+                        PurchasePrice = v.PurchasePrice,
                         Sku = $"{model.Name.Replace(" ", "").ToUpper()}-{v.Size.Replace(" ", "").ToUpper()}-{v.Color.Replace(" ", "").ToUpper()}-{Random.Shared.Next(1000, 9999)}"
                     }).ToList();
 
@@ -106,7 +106,10 @@ namespace ClothingPlatform.Api.Features.Product
         Id = p.ProductId,
         Name = p.Name,
         Description = p.Description,
-        BasePrice = p.BasePrice,
+        SalePrice = p.ProductVariants
+            .Select(v => v.SalePrice ?? 0m)
+            .DefaultIfEmpty(0m)
+            .Min(),
         CategoryName = p.Category.Name,
         CategoryId = p.CategoryId,
         VariantsDto = p.ProductVariants.Select(v => new VariantDto
@@ -115,7 +118,8 @@ namespace ClothingPlatform.Api.Features.Product
             Size = v.Size,
             Color = v.Color,
             StockQuantity = v.StockQuantity,
-            PriceModifier = v.PriceModifier
+            SalePrice = v.SalePrice ?? 0m,
+            PurchasePrice = v.PurchasePrice ?? 0m
         }).ToList(),
 
         ImageDto = p.ProductImages
@@ -147,7 +151,6 @@ namespace ClothingPlatform.Api.Features.Product
                 existingProduct.Name = request.Name;
                 existingProduct.Description = request.Description;
                 existingProduct.CategoryId = request.CategoryId;
-                existingProduct.BasePrice = request.BasePrice;
 
                 // ၃။ Image ကို စစ်ဆေးပြီး အစားထိုး ပြင်ဆင်ခြင်း
                 // User က ပုံအသစ် ရွေးပေးလိုက်မှသာ (Base64 ပါလာမှသာ) ပုံအသစ် သွားသိမ်းမယ်
@@ -209,7 +212,8 @@ namespace ClothingPlatform.Api.Features.Product
                     existingVariant.Size = safeSize;
                     existingVariant.Color = safeColor;
                     existingVariant.StockQuantity = Math.Max(0, requestedVariant.StockQuantity);
-                    existingVariant.PriceModifier = requestedVariant.PriceModifier;
+                    existingVariant.SalePrice = requestedVariant.SalePrice;
+                    existingVariant.PurchasePrice = requestedVariant.PurchasePrice;
                     existingVariant.Sku = $"{safeProdName.ToUpper()}-{safeSize.Replace(" ", "").ToUpper()}-{safeColor.Replace(" ", "").ToUpper()}-{Random.Shared.Next(1000, 9999)}";
 
                     consumedVariantIds.Add(existingVariant.VariantId);
@@ -241,7 +245,8 @@ namespace ClothingPlatform.Api.Features.Product
                             Size = safeSize,
                             Color = safeColor,
                             StockQuantity = Math.Max(0, v.StockQuantity),
-                            PriceModifier = v.PriceModifier,
+                            SalePrice = v.SalePrice,
+                            PurchasePrice = v.PurchasePrice,
                             Sku = $"{safeProdName.ToUpper()}-{safeSize.Replace(" ", "").ToUpper()}-{safeColor.Replace(" ", "").ToUpper()}-{Random.Shared.Next(1000, 9999)}"
                         };
                     })
@@ -323,7 +328,10 @@ namespace ClothingPlatform.Api.Features.Product
                     ProductId = g.Key,
                     Name = g.First().Variant.Product.Name,
                     TotalSold = g.Sum(x => x.Quantity),
-                    BasePrice = g.First().Variant.Product.BasePrice,
+                    SalePrice = g.First().Variant.Product.ProductVariants
+                        .Select(v => v.SalePrice ?? 0m)
+                        .DefaultIfEmpty(0m)
+                        .Min(),
                     CategoryName = g.First().Variant.Product.Category.Name,
                     Description = g.First().Variant.Product.Description ?? string.Empty,
                     ImageDto = g.First().Variant.Product.ProductImages
@@ -340,7 +348,8 @@ namespace ClothingPlatform.Api.Features.Product
                             Size = v.Size,
                             Color = v.Color,
                             StockQuantity = v.StockQuantity,
-                            PriceModifier = v.PriceModifier
+                            SalePrice = v.SalePrice ?? 0m,
+                            PurchasePrice = v.PurchasePrice ?? 0m
                         })
                         .ToList()
                 })
@@ -388,7 +397,10 @@ namespace ClothingPlatform.Api.Features.Product
                 {
                     ProductId = p.ProductId,
                     Name = p.Name,
-                    BasePrice = p.BasePrice,
+                    SalePrice = p.ProductVariants
+                        .Select(v => v.SalePrice ?? 0m)
+                        .DefaultIfEmpty(0m)
+                        .Min(),
                     Description = p.Description ?? string.Empty,
                     CategoryName = p.Category != null ? p.Category.Name : "General",
                     ImageDto = p.ProductImages
@@ -405,7 +417,8 @@ namespace ClothingPlatform.Api.Features.Product
                             Size = v.Size,
                             Color = v.Color,
                             StockQuantity = v.StockQuantity,
-                            PriceModifier = v.PriceModifier
+                            SalePrice = v.SalePrice ?? 0m,
+                            PurchasePrice = v.PurchasePrice ?? 0m
                         })
                         .ToList()
                 })
@@ -445,7 +458,10 @@ namespace ClothingPlatform.Api.Features.Product
                 {
                     Id = p.ProductId,
                     Name = p.Name,
-                    BasePrice = p.BasePrice,
+                    SalePrice = p.ProductVariants
+                        .Select(v => v.SalePrice ?? 0m)
+                        .DefaultIfEmpty(0m)
+                        .Min(),
                     Description = p.Description ?? string.Empty,
                     CategoryName = p.Category != null
                         ? p.Category.Name
@@ -464,7 +480,8 @@ namespace ClothingPlatform.Api.Features.Product
                             Size = v.Size,
                             Color = v.Color,
                             StockQuantity = v.StockQuantity,
-                            PriceModifier = v.PriceModifier
+                            SalePrice = v.SalePrice ?? 0m,
+                            PurchasePrice = v.PurchasePrice ?? 0m
                         })
                         .ToList()
                 })
