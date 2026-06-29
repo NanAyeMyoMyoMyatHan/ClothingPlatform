@@ -61,6 +61,7 @@ namespace ClothingPlatform.Web.Components.Pages
         private string PortalHeadline => Session.IsAdmin ? "Atelier Admin Panel" : "Atelier Operations Portal";
         private string PortalShellLabel => Session.IsAdmin ? "Admin Control" : "Shared Operations";
         private string ProductsNavLabel => CanManageProducts ? "Products" : "Inventory";
+        private bool IsProductsView => activeView == "products" || activeView == "products-new";
 
         // Lists
         private List<Order> allOrders = new();
@@ -89,9 +90,8 @@ namespace ClothingPlatform.Web.Components.Pages
         private decimal newProductBasePrice;
         private int newProductCategoryId;
         public string newProductImgUrl = "";
-        private string selectedSizesString = "";
-        private string selectedColorsString = "";
-        private int selectedquantity;
+        private static readonly string[] ProductSizeOptions = ["XS", "S", "M", "L", "XL"];
+        private List<ProductVariantDraft> variantDrafts = new();
 
         // Reports stats
         private decimal storeDailyRevenue;
@@ -576,13 +576,14 @@ namespace ClothingPlatform.Web.Components.Pages
             "staffs" => CanManageStaff,
             "reports" => CanViewReports,
             "permissions" => Session.IsAdmin,
-            "dashboard" or "products" or "orders" or "create-order" or "profile" => IsPortalOperator,
+            "dashboard" or "products" or "products-new" or "orders" or "create-order" or "profile" => IsPortalOperator,
             _ => false
         };
 
         private static string NormalizePortalView(string? viewName) => (viewName ?? string.Empty).Trim().ToLowerInvariant() switch
         {
             "products" => "products",
+            "products-new" => "products-new",
             "orders" => "orders",
             "create-order" => "create-order",
             "customers" => "customers",
@@ -724,9 +725,121 @@ namespace ClothingPlatform.Web.Components.Pages
             model = new();
             newProductCategoryId = allCategories.FirstOrDefault()?.CategoryId ?? 0;
             imageUrl = "";
-            selectedSizesString = "";
-            selectedColorsString = "";
-            selectedquantity = 0;
+            newProductImgUrl = "";
+            imageBase64 = "";
+            imageFileName = "";
+            previewImageUrl = "";
+            variantDrafts = ProductSizeOptions
+                .Select(size => new ProductVariantDraft { Size = size })
+                .ToList();
+        }
+
+        private void StartNewProduct()
+        {
+            SetView("products-new");
+        }
+
+        private void BackToProducts()
+        {
+            SetView("products");
+        }
+
+        private void CloseProductForm()
+        {
+            BackToProducts();
+        }
+
+        private int TotalVariantQuantity => variantDrafts
+            .Where(v => v.IsSelected)
+            .SelectMany(v => v.Entries)
+            .Sum(v => Math.Max(0, v.StockQuantity));
+
+        private void LoadVariantDrafts(IEnumerable<VariantDto>? variants = null)
+        {
+            variantDrafts = ProductSizeOptions
+                .Select(size =>
+                {
+                    var matchingVariants = variants?
+                        .Where(v => string.Equals(v.Size?.Trim(), size, StringComparison.OrdinalIgnoreCase))
+                        .ToList() ?? new List<VariantDto>();
+
+                    return new ProductVariantDraft
+                    {
+                        Size = size,
+                        IsSelected = matchingVariants.Count > 0,
+                        Entries = matchingVariants.Count > 0
+                            ? matchingVariants.Select(v => new ProductVariantEntryDraft
+                            {
+                                VariantId = v.VariantId > 0 ? v.VariantId : null,
+                                Color = v.Color ?? "",
+                                StockQuantity = v.StockQuantity,
+                                PriceModifier = v.PriceModifier ?? 0m
+                            }).ToList()
+                            : new List<ProductVariantEntryDraft>()
+                    };
+                })
+                .ToList();
+        }
+
+        private static List<VariantDto> BuildVariantDtos(IEnumerable<ProductVariantDraft> drafts, string productName)
+        {
+            var safeProdName = string.IsNullOrWhiteSpace(productName) ? "PROD" : productName.Replace(" ", "");
+
+            return drafts
+                .Where(v => v.IsSelected)
+                .SelectMany(v => v.Entries.Select(entry =>
+                {
+                    var safeSize = string.IsNullOrWhiteSpace(v.Size) ? "FREE" : v.Size.Trim();
+                    var safeColor = string.IsNullOrWhiteSpace(entry.Color) ? "MIX" : entry.Color.Trim();
+
+                    return new VariantDto
+                    {
+                        VariantId = entry.VariantId ?? 0,
+                        Size = safeSize,
+                        Color = safeColor,
+                        StockQuantity = Math.Max(0, entry.StockQuantity),
+                        PriceModifier = entry.PriceModifier,
+                        Sku = $"{safeProdName.ToUpper()}-{safeSize.Replace(" ", "").ToUpper()}-{safeColor.Replace(" ", "").ToUpper()}-{Random.Shared.Next(1000, 9999)}"
+                    };
+                }))
+                .ToList();
+        }
+
+        private void ToggleVariantSize(ProductVariantDraft draft, ChangeEventArgs e)
+        {
+            var isSelected = e.Value is bool boolValue
+                ? boolValue
+                : string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+
+            draft.IsSelected = isSelected;
+
+            if (draft.IsSelected)
+            {
+                if (!draft.Entries.Any())
+                {
+                    draft.Entries.Add(new ProductVariantEntryDraft());
+                }
+            }
+            else
+            {
+                draft.Entries.Clear();
+            }
+        }
+
+        private void AddVariantEntry(ProductVariantDraft draft)
+        {
+            draft.IsSelected = true;
+            draft.Entries.Add(new ProductVariantEntryDraft());
+        }
+
+        private void RemoveVariantEntry(ProductVariantDraft draft, ProductVariantEntryDraft entry)
+        {
+            draft.Entries.Remove(entry);
+
+            if (!draft.Entries.Any())
+            {
+                draft.IsSelected = false;
+            }
         }
 
         private async Task HandleCreateProduct()
@@ -743,6 +856,21 @@ namespace ClothingPlatform.Web.Components.Pages
             if (string.IsNullOrWhiteSpace(model.Name) || model.BasePrice <= 0)
             {
                 errorMessage = UiMessages.Admin.CreateProductRequiredFields;
+                return;
+            }
+
+            if (!variantDrafts.Any(v => v.IsSelected && v.Entries.Any()))
+            {
+                errorMessage = "Please select at least one size and fill its variant details.";
+                return;
+            }
+
+            if (variantDrafts
+                .Where(v => v.IsSelected)
+                .SelectMany(v => v.Entries)
+                .Any(v => string.IsNullOrWhiteSpace(v.Color)))
+            {
+                errorMessage = "Each selected size needs a color.";
                 return;
             }
 
@@ -767,7 +895,7 @@ namespace ClothingPlatform.Web.Components.Pages
                     CategoryId = newProductCategoryId,
                     IsFeatured = true,
                     CreatedAt = DateTime.Now,
-                    VariantsDto = new List<VariantDto>(),
+                    VariantsDto = BuildVariantDtos(variantDrafts, model.Name),
                     ImageBase64 = imageBase64,
                     ImageFileName = imageFileName,
                     ImageDto = new ProductImageModel
@@ -775,25 +903,6 @@ namespace ClothingPlatform.Web.Components.Pages
                         ImageUrl =""
                     }
                 };
-
-                
-
-                var sizes = selectedSizesString.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
-                var colors = selectedColorsString.Split(',').Select(c => c.Trim()).Where(c => !string.IsNullOrEmpty(c)).ToList();
-
-                foreach (var size in sizes)
-                {
-                    foreach (var color in colors)
-                    {
-                        product.VariantsDto.Add(new VariantDto
-                        {
-                            Size = size,
-                            Color = color,
-                            StockQuantity = selectedquantity,
-                            Sku = ""
-                        });
-                    }
-                }
 
                 var result = await HttpClientServices.ExecuteAsync<ProductModel>(
                     "api/product", product, EnumHttpMethod.Post);
@@ -806,10 +915,7 @@ namespace ClothingPlatform.Web.Components.Pages
                     imageFileName = "";
                     previewImageUrl = "";
                     newProductCategoryId = 0;
-                    selectedSizesString = "";
-                    selectedColorsString = "";
-                    selectedquantity = 0;
-                    ResetProductForm();
+                    CloseProductForm();
                     await LoadData();
                     StateHasChanged();
                 }
@@ -849,9 +955,28 @@ namespace ClothingPlatform.Web.Components.Pages
             public string FileName { get; set; } = "";
         }
 
+        public class ProductVariantDraft
+        {
+            public string Size { get; set; } = "";
+            public bool IsSelected { get; set; }
+            public List<ProductVariantEntryDraft> Entries { get; set; } = new();
+        }
+
+        public class ProductVariantEntryDraft
+        {
+            public int? VariantId { get; set; }
+            public string Color { get; set; } = "";
+            public int StockQuantity { get; set; }
+            public decimal PriceModifier { get; set; }
+        }
+
         private async Task EditProduct(Product prod)
         {
             editingProduct = prod;
+            imageUrl = "";
+            imageBase64 = "";
+            imageFileName = "";
+            previewImageUrl = "";
 
             var product = await HttpClientServices.ExecuteAsync<ProductDto>(
                 $"api/product/{prod.ProductId}",
@@ -870,22 +995,15 @@ namespace ClothingPlatform.Web.Components.Pages
 
             newProductImgUrl = prod.ProductImages
                 .FirstOrDefault(i => (bool)i.IsPrimary)?.ImageUrl ?? "";
+            LoadVariantDrafts(product.VariantsDto);
 
-            // =========================
-            // ✅ VARIANTS → INPUT FIELDS
-            // =========================
-
-            selectedColorsString = string.Join(", ",
-                product.VariantsDto?
-                    .Select(v => v.Color)
-                    .Distinct() ?? new List<string>());
-
-            selectedSizesString = string.Join(", ",
-                product.VariantsDto?
-                    .Select(v => v.Size)
-                    .Distinct() ?? new List<string>());
-
-            selectedquantity = product.VariantsDto?.FirstOrDefault()?.StockQuantity ?? 0;
+            activeView = "products-new";
+            var targetUrl = BuildPortalUrl("products-new");
+            var currentUrl = Nav.ToBaseRelativePath(Nav.Uri).Trim('/');
+            if (!string.Equals(currentUrl, targetUrl.TrimStart('/'), StringComparison.OrdinalIgnoreCase))
+            {
+                Nav.NavigateTo(targetUrl, replace: true);
+            }
         }
         private async Task HandleUpdateProduct()
         {
@@ -911,6 +1029,21 @@ namespace ClothingPlatform.Web.Components.Pages
                 return;
             }
 
+            if (!variantDrafts.Any(v => v.IsSelected && v.Entries.Any()))
+            {
+                errorMessage = "Please select at least one size and fill its variant details.";
+                return;
+            }
+
+            if (variantDrafts
+                .Where(v => v.IsSelected)
+                .SelectMany(v => v.Entries)
+                .Any(v => string.IsNullOrWhiteSpace(v.Color)))
+            {
+                errorMessage = "Each selected size needs a color.";
+                return;
+            }
+
             try
             {
                 var updateModel = new UpdateProductRequest
@@ -922,7 +1055,7 @@ namespace ClothingPlatform.Web.Components.Pages
                     CategoryId = newProductCategoryId,
                     IsFeatured = true,
                     CreatedAt = DateTime.Now,
-                    VariantsDto = new List<VariantDto>(),
+                    VariantsDto = BuildVariantDtos(variantDrafts, model.Name),
                     ImageBase64 = imageBase64,
                     ImageFileName = imageFileName,
                     ImageDto = new ProductImageModel
@@ -930,25 +1063,6 @@ namespace ClothingPlatform.Web.Components.Pages
                         ImageUrl = ""
                     }
                 };
-
-
-
-                var sizes = selectedSizesString.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
-                var colors = selectedColorsString.Split(',').Select(c => c.Trim()).Where(c => !string.IsNullOrEmpty(c)).ToList();
-
-                foreach (var size in sizes)
-                {
-                    foreach (var color in colors)
-                    {
-                        updateModel.VariantsDto.Add(new VariantDto
-                        {
-                            Size = size,
-                            Color = color,
-                            StockQuantity = selectedquantity,
-                            Sku = ""
-                        });
-                    }
-                }
 
                 var result = await HttpClientServices.ExecuteAsync<ProductModel>(
             "api/product",
@@ -964,10 +1078,7 @@ namespace ClothingPlatform.Web.Components.Pages
                     imageFileName = "";
                     previewImageUrl = "";
                     newProductCategoryId = 0;
-                    selectedSizesString = "";
-                    selectedColorsString = "";
-                    selectedquantity = 0;
-                    ResetProductForm();
+                    CloseProductForm();
                     await LoadData();
                     StateHasChanged();
                 }

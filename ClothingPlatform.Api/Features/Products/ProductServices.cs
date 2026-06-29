@@ -76,6 +76,7 @@ namespace ClothingPlatform.Api.Features.Product
                         Size = v.Size,
                         Color = v.Color,
                         StockQuantity = v.StockQuantity,
+                        PriceModifier = v.PriceModifier,
                         Sku = $"{model.Name.Replace(" ", "").ToUpper()}-{v.Size.Replace(" ", "").ToUpper()}-{v.Color.Replace(" ", "").ToUpper()}-{Random.Shared.Next(1000, 9999)}"
                     }).ToList();
 
@@ -113,7 +114,8 @@ namespace ClothingPlatform.Api.Features.Product
             VariantId = v.VariantId,
             Size = v.Size,
             Color = v.Color,
-            StockQuantity = v.StockQuantity
+            StockQuantity = v.StockQuantity,
+            PriceModifier = v.PriceModifier
         }).ToList(),
 
         ImageDto = p.ProductImages
@@ -184,31 +186,69 @@ namespace ClothingPlatform.Api.Features.Product
                     }
                 }
 
-                var oldVariants = context.ProductVariants.Where(v => v.ProductId == request.Id).ToList();
-                //if (oldVariants.Any())
-                //{
-                //    context.ProductVariants.RemoveRange(oldVariants);
-                //}
+                var oldVariants = context.ProductVariants
+                    .Where(v => v.ProductId == request.Id)
+                    .OrderBy(v => v.VariantId)
+                    .ToList();
 
-                if (request.VariantsDto != null && request.VariantsDto.Any())
+                var requestedVariants = request.VariantsDto ?? new List<VariantDto>();
+                var consumedVariantIds = new HashSet<int>();
+                var existingVariantsById = oldVariants.ToDictionary(v => v.VariantId);
+
+                foreach (var requestedVariant in requestedVariants.Where(v => v.VariantId > 0))
                 {
-                    var newVariants = request.VariantsDto.Select(v => {
+                    if (!existingVariantsById.TryGetValue(requestedVariant.VariantId, out var existingVariant))
+                    {
+                        continue;
+                    }
+
+                    var safeSize = string.IsNullOrWhiteSpace(requestedVariant.Size) ? "FREE" : requestedVariant.Size.Trim();
+                    var safeColor = string.IsNullOrWhiteSpace(requestedVariant.Color) ? "MIX" : requestedVariant.Color.Trim();
+                    var safeProdName = string.IsNullOrWhiteSpace(request.Name) ? "PROD" : request.Name.Replace(" ", "");
+
+                    existingVariant.Size = safeSize;
+                    existingVariant.Color = safeColor;
+                    existingVariant.StockQuantity = Math.Max(0, requestedVariant.StockQuantity);
+                    existingVariant.PriceModifier = requestedVariant.PriceModifier;
+                    existingVariant.Sku = $"{safeProdName.ToUpper()}-{safeSize.Replace(" ", "").ToUpper()}-{safeColor.Replace(" ", "").ToUpper()}-{Random.Shared.Next(1000, 9999)}";
+
+                    consumedVariantIds.Add(existingVariant.VariantId);
+                }
+
+                foreach (var existingVariant in oldVariants.Where(v => !consumedVariantIds.Contains(v.VariantId)))
+                {
+                    if (await VariantHasReferencesAsync(context, existingVariant.VariantId))
+                    {
+                        existingVariant.StockQuantity = 0;
+                    }
+                    else
+                    {
+                        context.ProductVariants.Remove(existingVariant);
+                    }
+                }
+
+                var newVariants = requestedVariants
+                    .Where(v => v.VariantId <= 0)
+                    .Select(v =>
+                    {
                         var safeSize = string.IsNullOrWhiteSpace(v.Size) ? "FREE" : v.Size.Trim();
                         var safeColor = string.IsNullOrWhiteSpace(v.Color) ? "MIX" : v.Color.Trim();
                         var safeProdName = string.IsNullOrWhiteSpace(request.Name) ? "PROD" : request.Name.Replace(" ", "");
-                        
-                        var sku = $"{safeProdName.ToUpper()}-{safeSize.Replace(" ", "").ToUpper()}-{safeColor.Replace(" ", "").ToUpper()}-{Random.Shared.Next(1000, 9999)}";
 
                         return new ProductVariant
                         {
-                            ProductId = request.Id, // သက်ဆိုင်ရာ Product ID အဟောင်းအတိုင်း ထည့်မယ်
+                            ProductId = request.Id,
                             Size = safeSize,
                             Color = safeColor,
-                            StockQuantity = v.StockQuantity,
-                            Sku = sku
+                            StockQuantity = Math.Max(0, v.StockQuantity),
+                            PriceModifier = v.PriceModifier,
+                            Sku = $"{safeProdName.ToUpper()}-{safeSize.Replace(" ", "").ToUpper()}-{safeColor.Replace(" ", "").ToUpper()}-{Random.Shared.Next(1000, 9999)}"
                         };
-                    }).ToList();
+                    })
+                    .ToList();
 
+                if (newVariants.Any())
+                {
                     context.ProductVariants.AddRange(newVariants);
                 }
 
@@ -222,6 +262,14 @@ namespace ClothingPlatform.Api.Features.Product
                 await transaction.RollbackAsync();
                 throw new Exception($"Database Update Failed: {ex.InnerException?.Message ?? ex.Message}");
             }
+        }
+
+        private async Task<bool> VariantHasReferencesAsync(AppDbContext context, int variantId)
+        {
+            return await context.OrderItems.AnyAsync(oi => oi.VariantId == variantId)
+                || await context.GuestOrderItems.AnyAsync(gi => gi.VariantId == variantId)
+                || await context.CartItems.AnyAsync(ci => ci.VariantId == variantId)
+                || await context.StaffSalesLogs.AnyAsync(sl => sl.VariantId == variantId);
         }
 
         public async Task<bool> DeleteProductAsync(int productId)
@@ -291,7 +339,8 @@ namespace ClothingPlatform.Api.Features.Product
                             VariantId = v.VariantId,
                             Size = v.Size,
                             Color = v.Color,
-                            StockQuantity = v.StockQuantity
+                            StockQuantity = v.StockQuantity,
+                            PriceModifier = v.PriceModifier
                         })
                         .ToList()
                 })
@@ -355,7 +404,8 @@ namespace ClothingPlatform.Api.Features.Product
                             VariantId = v.VariantId,
                             Size = v.Size,
                             Color = v.Color,
-                            StockQuantity = v.StockQuantity
+                            StockQuantity = v.StockQuantity,
+                            PriceModifier = v.PriceModifier
                         })
                         .ToList()
                 })
@@ -413,7 +463,8 @@ namespace ClothingPlatform.Api.Features.Product
                             VariantId = v.VariantId,
                             Size = v.Size,
                             Color = v.Color,
-                            StockQuantity = v.StockQuantity
+                            StockQuantity = v.StockQuantity,
+                            PriceModifier = v.PriceModifier
                         })
                         .ToList()
                 })

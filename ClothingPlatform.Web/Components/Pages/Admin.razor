@@ -155,7 +155,7 @@ else
             </li>
 
             <li>
-                <a class="nav-item-link @(activeView == "products" ? "active" : "")" @onclick='() => SetView("products")'>
+                <a class="nav-item-link @(IsProductsView ? "active" : "")" @onclick='() => SetView("products")'>
                     <i class="bi bi-bag"></i>
                     @ProductsNavLabel
                 </a>
@@ -376,68 +376,249 @@ else
         
         else if (activeView == "products")
         {
-            <div class="crud-grid">
+            <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
+                <div>
+                    <h1 class="mb-1">Catalog Items</h1>
+                    <p class="text-muted mb-0">Manage the boutique product list and stock overview.</p>
+                </div>
+
                 @if (CanManageProducts)
                 {
-                <!-- Product Form (Add / Edit) -->
-                <div class="luxury-card">
-                    <h4>@(editingProduct == null ? "Add Atelier Product" : "Edit Product")</h4>
-                    <hr />
+                    <button type="button" class="btn-luxury-solid" @onclick="StartNewProduct">+ New product</button>
+                }
+            </div>
 
-                    <div class="mb-3">
-                        <label class="form-label text-muted small uppercase fw-bold">Product Name</label>
-                        <input type="text" class="luxury-input" @bind="model.Name" placeholder="e.g., Silk Slip Dress" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label text-muted small uppercase fw-bold">Description</label>
-                        <textarea class="luxury-input" @bind="model.Description" rows="3" placeholder="Describe this luxury garment..."></textarea>
-                    </div>
-
-                    <div class="mb-3">
-
-                        <label class="form-label text-muted small uppercase fw-bold">Base Price (MMK)</label>
-                        <input type="text" class="luxury-input" @bind-value="model.BasePrice" placeholder="e.g., 75,000" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label text-muted small uppercase fw-bold">Category</label>
-                        <select class="luxury-select" @bind="newProductCategoryId">
-                            <option value="0">-- Select Category --</option>
-                            @foreach (var cat in allCategories)
+            <div class="table-responsive-wrapper">
+                <h4>Catalog Items</h4>
+                <table class="table luxury-table mt-3">
+                    <thead>
+                        <tr>
+                            <th>Thumbnail</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Base Price</th>
+                            <th>Variants</th>
+                            <th>Quantity</th>
+                            @if (CanManageProducts)
                             {
-                                <option value="@cat.CategoryId">@cat.Name</option>
+                                <th>Actions</th>
                             }
-                        </select>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!PagedProducts.Any())
+                        {
+                            <tr>
+                                <td colspan="@(CanManageProducts ? 7 : 6)" class="text-center py-4 text-muted">No products registered. Create one to display.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var prod in PagedProducts)
+                            {
+                                var raw = prod.ProductImages?
+                                .FirstOrDefault(i => i.IsPrimary == true)?.ImageUrl?.Trim() ?? "";
+
+                                var imgSrc = string.IsNullOrWhiteSpace(raw)
+                                    ? "/images/products/default.jpg"
+                                    : raw.StartsWith("http")
+                                        ? raw
+                                        : $"/images/products/{raw.Replace("images/products/", "").TrimStart('/')}";
+                                <tr>
+                                    <td>
+                                        <img src="@imgSrc" alt="@prod.Name" style="width:60px;height:60px;object-fit:cover;" />
+                                    </td>
+                                    <td>
+                                        <strong>@prod.Name</strong>
+                                        <p class="text-muted small m-0 text-truncate" style="max-width: 200px;">@prod.Description</p>
+                                    </td>
+                                    <td>@(prod.Category?.Name ?? "No Category")</td>
+                                    <td>@prod.BasePrice.ToString("N0") MMK</td>
+                                    <td>
+                                        <span class="badge bg-secondary">@prod.ProductVariants.Count variants</span>
+                                    </td>
+                                    <td>
+                                        @prod.ProductVariants.Sum(v => v.StockQuantity)
+                                    </td>
+                                    @if (CanManageProducts)
+                                    {
+                                        <td>
+                                            <LoadingButton Class="btn btn-sm btn-outline-primary me-1"
+                                                           IsLoading="@IsAdminActionLoading(EditProductAction(prod.ProductId))"
+                                                           OnClick="@(() => RunAdminAction(EditProductAction(prod.ProductId), () => EditProduct(prod)))">
+                                                <i class="bi bi-pencil"></i>
+                                            </LoadingButton>
+
+                                            <LoadingButton Class="btn btn-sm btn-outline-danger"
+                                                           IsLoading="@IsAdminActionLoading(DeleteProductAction(prod.ProductId))"
+                                                           OnClick="@(() => HandleDeleteClick(prod.ProductId))">
+                                                <i class="bi bi-trash"></i>
+                                            </LoadingButton>
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+                <ConfirmModal @ref="confirmModal"
+                              Title="Delete Product"
+                              Message="@UiMessages.Admin.DeleteProductConfirm"
+                              ConfirmText="Delete"
+                              CancelText="Cancel" />
+                <Pagination CurrentPage="@productPage"
+                            TotalPages="@ProductTotalPages"
+                            CurrentPageChanged="@OnProductPageChanged" />
+            </div>
+        }
+        else if (activeView == "products-new")
+        {
+            <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
+                <div>
+                    <h1 class="mb-1">@(editingProduct == null ? "Add Atelier Product" : "Edit Product")</h1>
+                    <p class="text-muted mb-0">Fill in the product details and publish them to the catalog.</p>
+                </div>
+
+                <button type="button" class="btn-luxury" @onclick="BackToProducts">Back to products</button>
+            </div>
+
+            @if (CanManageProducts)
+            {
+                <div class="d-grid gap-4" style="max-width: 980px;">
+                    <div class="luxury-card">
+                        <h4 class="mb-3">Product Details</h4>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small uppercase fw-bold">Product Name</label>
+                            <input type="text" class="luxury-input" @bind="model.Name" placeholder="e.g., Silk Slip Dress" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small uppercase fw-bold">Description</label>
+                            <textarea class="luxury-input" @bind="model.Description" rows="3" placeholder="Describe this luxury garment..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small uppercase fw-bold">Base Price (MMK)</label>
+                            <input type="text" class="luxury-input" @bind-value="model.BasePrice" placeholder="e.g., 75,000" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small uppercase fw-bold">Category</label>
+                            <select class="luxury-select" @bind="newProductCategoryId">
+                                <option value="0">-- Select Category --</option>
+                                @foreach (var cat in allCategories)
+                                {
+                                    <option value="@cat.CategoryId">@cat.Name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="form-label text-muted small uppercase fw-bold">Upload Product Image</label>
+                            <InputFile OnChange="HandleFileSelected"
+                                       class="form-control"
+                                       accept=".jpg,.jpeg,.png"
+                                       title="Upload Product Image" />
+
+                            @if (!string.IsNullOrEmpty(previewImageUrl))
+                            {
+                                <img src="@previewImageUrl" style="width:100px; height:100px; object-fit:cover; margin-top:8px;" />
+                            }
+                        </div>
                     </div>
-                    <div class="mb-3">
-                         <label class="form-label text-muted small uppercase fw-bold">Upload Product Image</label>
-                        <InputFile OnChange="HandleFileSelected" 
-           class="form-control" 
-           accept=".jpg,.jpeg,.png"
-           title="Upload Product Image" />
 
-@if (!string.IsNullOrEmpty(previewImageUrl))
-{
-    <img src="@previewImageUrl" style="width:100px; height:100px; object-fit:cover; margin-top:8px;" />
-}
+                    <div class="luxury-card">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+                            <h4 class="mb-0">Variant Details</h4>
+                            <span class="badge bg-secondary px-3 py-2">Total quantity: @TotalVariantQuantity</span>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex flex-wrap gap-3">
+                                @foreach (var draft in variantDrafts)
+                                {
+                                    <label class="d-inline-flex align-items-center gap-2 px-3 py-2 border rounded-3">
+                                        <input type="checkbox"
+                                               class="form-check-input m-0"
+                                               checked="@draft.IsSelected"
+                                               @onchange="e => ToggleVariantSize(draft, e)" />
+                                        <span class="fw-bold">@draft.Size</span>
+                                    </label>
+                                }
                             </div>
-
-                        <div class="mb-3">
-                            <label class="form-label text-muted small uppercase fw-bold">Create Sizes (Comma-separated)</label>
-                            <input type="text" class="luxury-input" @bind="selectedSizesString" placeholder="XS, S, M, L, XL" />
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label text-muted small uppercase fw-bold">Create Colors (Comma-separated)</label>
-                            <input type="text" class="luxury-input" @bind="selectedColorsString" placeholder="Blush Pink, Sage Green" />
-                        </div>
+                        @if (!variantDrafts.Any(v => v.IsSelected))
+                        {
+                            <div class="text-muted">Select a size to add its color variants.</div>
+                        }
+                        else
+                        {
+                            <div class="d-grid gap-3">
+                                @foreach (var draft in variantDrafts.Where(v => v.IsSelected))
+                                {
+                                    <div class="border rounded-3 p-3">
+                                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                                            <div class="fw-bold">@draft.Size</div>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="@(() => AddVariantEntry(draft))">Add color</button>
+                                        </div>
 
-                        <div class="mb-3">
-                            <label class="form-label text-muted small uppercase fw-bold">Quantity</label>
-                            <input type="text" class="luxury-input" @bind="selectedquantity" placeholder="1,2,3" />
+                                        <div class="table-responsive">
+                                            <table class="table luxury-table align-middle mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Color</th>
+                                                        <th>Quantity</th>
+                                                        <th>Price Modifier</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var entry in draft.Entries)
+                                                    {
+                                                        <tr>
+                                                            <td>
+                                                                <input type="text"
+                                                                       class="luxury-input"
+                                                                       @bind="entry.Color"
+                                                                       placeholder="e.g., Pink" />
+                                                            </td>
+                                                            <td style="max-width: 150px;">
+                                                                <input type="number"
+                                                                       class="luxury-input"
+                                                                       @bind="entry.StockQuantity"
+                                                                       min="0" />
+                                                            </td>
+                                                            <td style="max-width: 180px;">
+                                                                <input type="number"
+                                                                       class="luxury-input"
+                                                                       @bind="entry.PriceModifier"
+                                                                       step="0.01"
+                                                                       min="0" />
+                                                            </td>
+                                                            <td style="width: 90px;">
+                                                                <button type="button"
+                                                                        class="btn btn-sm btn-outline-danger"
+                                                                        @onclick="@(() => RemoveVariantEntry(draft, entry))">
+                                                                    Remove
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        <div class="mt-3 d-flex flex-wrap gap-2">
+                            <span class="text-muted">Selected sizes: @variantDrafts.Count(v => v.IsSelected)</span>
+                            <span class="text-muted">Total quantity will be shown in the product list.</span>
                         </div>
-                    
+                    </div>
 
                     <div class="mt-4 d-grid gap-2">
                         @if (editingProduct == null)
@@ -457,106 +638,19 @@ else
                                            OnClick="@(() => RunAdminAction(UpdateProductAction, HandleUpdateProduct))">
                                 Save Changes
                             </LoadingButton>
-                            <button class="btn-luxury" @onclick="ResetProductForm">Cancel</button>
                         }
+
+                        <button type="button" class="btn-luxury" @onclick="BackToProducts">Cancel</button>
                     </div>
                 </div>
-                }
-                else
-                {
+            }
+            else
+            {
                 <div class="luxury-card">
                     <h4>Inventory Overview</h4>
                     <p class="text-muted mb-0">Staff accounts can review the live catalog and stock counts here. Product creation and catalog edits stay with admin accounts.</p>
                 </div>
-                }
-
-                <!-- Product Catalog List -->
-                <div class="table-responsive-wrapper">
-                    <h4>@(CanManageProducts ? "Catalog Items" : "Inventory Catalog")</h4>
-                    <table class="table luxury-table mt-3">
-                        <thead>
-                            <tr>
-                                <th>Thumbnail</th>
-                                <th>Name</th>
-                                <th>Category</th>
-                                <th>Base Price</th>
-                                <th>Variants</th>
-                                <th>Quantity</th>
-                                @if (CanManageProducts)
-                                {
-                                <th>Actions</th>
-                                }
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if (!PagedProducts.Any())
-                            {
-                                <tr>
-                                    <td colspan="@(CanManageProducts ? 7 : 6)" class="text-center py-4 text-muted">No products registered. Create one to display.</td>
-                                </tr>
-                            }
-                            else
-                            {
-                                @foreach (var prod in PagedProducts)
-                                {
-                                    var raw = prod.ProductImages?
-                                    .FirstOrDefault(i => i.IsPrimary == true)?.ImageUrl?.Trim() ?? "";
-
-                                    var imgSrc = string.IsNullOrWhiteSpace(raw)
-                                        ? "/images/products/default.jpg"
-                                        : raw.StartsWith("http")
-                                            ? raw
-                                            : $"/images/products/{raw.Replace("images/products/", "").TrimStart('/')}";
-                                    <tr>
-                                        <td>
-                                            <img src="@imgSrc" alt="@prod.Name" style="width:60px;height:60px;object-fit:cover;" />
-                                        </td>
-                                        <td>
-                                            <strong>@prod.Name</strong>
-                                            <p class="text-muted small m-0 text-truncate" style="max-width: 200px;">@prod.Description</p>
-                                        </td>
-                                        <td>@(prod.Category?.Name ?? "No Category")</td>
-                                        <td>@prod.BasePrice.ToString("N0") MMK</td>
-                                        <td>
-                                            <span class="badge bg-secondary">@prod.ProductVariants.Count variants</span>
-                                        </td>
-                                        <td>
-                                            @prod.ProductVariants.FirstOrDefault()?.StockQuantity
-                                        </td>
-                                        @if (CanManageProducts)
-                                        {
-                                        <td>
-                                            <LoadingButton Class="btn btn-sm btn-outline-primary me-1"
-               IsLoading="@IsAdminActionLoading(EditProductAction(prod.ProductId))"
-               OnClick="@(() => RunAdminAction(EditProductAction(prod.ProductId), () => EditProduct(prod)))">
-    <i class="bi bi-pencil"></i>
-</LoadingButton>
-
-                                                <LoadingButton Class="btn btn-sm btn-outline-danger"
-                                                               IsLoading="@IsAdminActionLoading(DeleteProductAction(prod.ProductId))"
-                                                               OnClick="@(() => HandleDeleteClick(prod.ProductId))">
-                                                    <i class="bi bi-trash"></i>
-                                                </LoadingButton>
-
-<!-- Place ONCE outside the loop, not per-row -->
-<ConfirmModal @ref="confirmModal"
-              Title="Delete Product"
-              Message="@UiMessages.Admin.DeleteProductConfirm"
-              ConfirmText="Delete"
-              CancelText="Cancel" />
-                                         
-                                        </td>
-                                        }
-                                    </tr>
-                                }
-                            }
-                        </tbody>
-                    </table>
-                    <Pagination CurrentPage="@productPage" 
-                            TotalPages="@ProductTotalPages" 
-                             CurrentPageChanged="@OnProductPageChanged" />
-                </div>
-            </div>
+            }
         }
 
        
