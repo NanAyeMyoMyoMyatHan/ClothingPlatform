@@ -22,6 +22,28 @@ namespace ClothingPlatform.Web.Services
             EnsureSeedUser(db, "Thiri", "San", "staff@boutique.com", "staff123", staffRole.RoleId, "No. 456, Atelier Rd, Yangon", "09222333444");
             EnsureSeedUser(db, "Emily", "Watson", "emily@gmail.com", "12345678", customerRole.RoleId, "No. 789, Style Street, Yangon", "09999888777");
 
+            // 1b. Seed known permissions (matching mockup)
+            var permDashboardView  = EnsurePermission(db, "Dashboard.View",  "Can view dashboard");
+            var permUsersManage    = EnsurePermission(db, "Users.Manage",    "Can create, edit, delete users");
+            var permProductsManage = EnsurePermission(db, "Products.Manage", "Can add, edit, delete products");
+            var permOrdersManage   = EnsurePermission(db, "Orders.Manage",   "Can view and manage orders");
+            var permCustomersView  = EnsurePermission(db, "Customers.View",  "Can view and manage customers");
+            var permReportsGen     = EnsurePermission(db, "Reports.Generate","Can view reports and analytics");
+            var permSettingsManage = EnsurePermission(db, "Settings.Manage", "Can access system settings");
+            var permPermissionsManage = EnsurePermission(db, "Permissions.Manage", "Can manage roles and permissions");
+            var permLogsView       = EnsurePermission(db, "Logs.View",       "Can view audit logs");
+
+            // 1c. Grant all permissions to the admin role (admin always has full access)
+            EnsureRolePermission(db, adminRole.RoleId, permDashboardView.PermissionId);
+            EnsureRolePermission(db, adminRole.RoleId, permUsersManage.PermissionId);
+            EnsureRolePermission(db, adminRole.RoleId, permProductsManage.PermissionId);
+            EnsureRolePermission(db, adminRole.RoleId, permOrdersManage.PermissionId);
+            EnsureRolePermission(db, adminRole.RoleId, permCustomersView.PermissionId);
+            EnsureRolePermission(db, adminRole.RoleId, permReportsGen.PermissionId);
+            EnsureRolePermission(db, adminRole.RoleId, permSettingsManage.PermissionId);
+            EnsureRolePermission(db, adminRole.RoleId, permPermissionsManage.PermissionId);
+            EnsureRolePermission(db, adminRole.RoleId, permLogsView.PermissionId);
+
             // 2. Seed Categories
             if (!db.Categories.Any())
             {
@@ -242,6 +264,43 @@ namespace ClothingPlatform.Web.Services
                 RoleId = roleId,
                 Address = address,
                 PhoneNumber = phoneNumber,
+                CreatedAt = DateTime.Now
+            });
+            db.SaveChanges();
+        }
+
+        private static Permission EnsurePermission(AppDbContext db, string name, string description)
+        {
+            var existing = db.Permissions.FirstOrDefault(p => p.PermissionName == name);
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            var perm = new Permission
+            {
+                PermissionName = name,
+                Description = description,
+                CreatedAt = DateTime.Now
+            };
+            db.Permissions.Add(perm);
+            db.SaveChanges();
+            return perm;
+        }
+
+        private static void EnsureRolePermission(AppDbContext db, int roleId, int permissionId)
+        {
+            var exists = db.RolePermissions
+                .Any(rp => rp.RoleId == roleId && rp.PermissionId == permissionId);
+            if (exists)
+            {
+                return;
+            }
+
+            db.RolePermissions.Add(new RolePermission
+            {
+                RoleId = roleId,
+                PermissionId = permissionId,
                 CreatedAt = DateTime.Now
             });
             db.SaveChanges();

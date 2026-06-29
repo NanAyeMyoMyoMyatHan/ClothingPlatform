@@ -212,6 +212,16 @@ else
                 </a>
             </li>
 
+            @if (Session.IsAdmin)
+            {
+            <li>
+                <a class="nav-item-link @(activeView == "permissions" ? "active" : "")" @onclick='() => SetView("permissions")'>
+                    <i class="bi bi-shield-lock"></i>
+                    Permissions
+                </a>
+            </li>
+            }
+
             <li class="mt-5">
                     <a class="nav-item-link text-danger" @onclick="RequestLogout">
                     <i class="bi bi-box-arrow-right text-danger"></i>
@@ -1152,7 +1162,199 @@ else
             </div>
         }
 
+        else if (activeView == "permissions" && Session.IsAdmin)
+        {
+            <!-- ══ PERMISSION MANAGEMENT VIEW (GRID/MATRIX DESIGN) ══ -->
+            <div class="perm-page-wrapper">
+
+                <!-- Page Header with Breadcrumbs and Header Save Changes Button -->
+                <div class="perm-page-header">
+                    <div class="perm-page-header-left">
+                        <h2 class="luxury-text m-0">Permission Management</h2>
+                        <div class="perm-breadcrumbs">
+                            <span class="breadcrumb-item linkable" @onclick='() => SetView("dashboard")'>Dashboard</span>
+                            <i class="bi bi-chevron-right breadcrumb-separator"></i>
+                            <span class="breadcrumb-item active">Permissions</span>
+                        </div>
+                    </div>
+                    <div class="perm-page-header-right">
+                        @{
+                            var staffRoleObj = permRoles.FirstOrDefault(r => r.RoleName.Equals("staff", StringComparison.OrdinalIgnoreCase));
+                            var customerRoleObj = permRoles.FirstOrDefault(r => r.RoleName.Equals("customer", StringComparison.OrdinalIgnoreCase));
+                        }
+                        <LoadingButton Class="btn-luxury-solid perm-header-save-btn"
+                                       IsLoading="@(savingPermRoleId.HasValue)"
+                                       LoadingText="Saving..."
+                                       OnClick="@(async () => {
+                                           if (staffRoleObj != null) await SaveRolePermissions(staffRoleObj.RoleId);
+                                           if (customerRoleObj != null) await SaveRolePermissions(customerRoleObj.RoleId);
+                                       })">
+                            <i class="bi bi-save me-1"></i> Save Changes
+                        </LoadingButton>
+                    </div>
+                </div>
+
+                <!-- Info Banner -->
+                <div class="perm-info-banner">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <span>Manage what permissions are granted to the Staff role. Changes will be applied immediately.</span>
+                </div>
+
+                <!-- Feedback messages -->
+                @if (!string.IsNullOrEmpty(permSuccessMessage))
+                {
+                    <div class="alert-banner alert-banner-success">
+                        <i class="bi bi-check-circle-fill me-2"></i> @permSuccessMessage
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(permErrorMessage))
+                {
+                    <div class="alert-banner alert-banner-error">
+                        <i class="bi bi-exclamation-circle-fill me-2"></i> @permErrorMessage
+                    </div>
+                }
+
+                @if (isLoadingPermissions)
+                {
+                    <div class="perm-loading-state">
+                        <div class="perm-loading-spinner"></div>
+                        <p class="text-muted mt-3">Loading permission matrix…</p>
+                    </div>
+                }
+                else if (!permRoles.Any())
+                {
+                    <div class="luxury-card text-center py-5">
+                        <i class="bi bi-shield-exclamation" style="font-size:2rem; color: var(--accent-main);"></i>
+                        <p class="text-muted mt-3">No manageable roles found. Ensure the database is seeded.</p>
+                    </div>
+                }
+                else
+                {
+                    <!-- Role Tab Strip -->
+                    <div class="perm-role-tabs">
+                        @foreach (var role in permRoles)
+                        {
+                            <button type="button"
+                                    class="perm-role-tab @(activePermRoleId == role.RoleId ? "perm-role-tab-active" : "")"
+                                    @onclick="() => SetActivePermTab(role.RoleId)">
+                                <span>@(role.RoleName[0].ToString().ToUpper() + role.RoleName.Substring(1)) Role</span>
+                            </button>
+                        }
+                        <button type="button"
+                                class="perm-role-tab @(activePermRoleId == 9999 ? "perm-role-tab-active" : "")"
+                                @onclick="() => SetActivePermTab(9999)">
+                            <span>Role Overview</span>
+                        </button>
+                    </div>
+
+                    <!-- Permission Matrix Card Table -->
+                    <div class="perm-matrix-card luxury-card mt-3">
+                        <div class="table-responsive">
+                            <table class="table perm-matrix-table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 25%;">Permission Name</th>
+                                        <th style="width: 35%;">Description</th>
+                                        <th style="width: 15%; text-align: center;">Admin (Full Access)</th>
+                                        <th style="width: 12.5%; text-align: center;">Staff</th>
+                                        <th style="width: 12.5%; text-align: center;">Customer</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (!permList.Any())
+                                    {
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4 text-muted">No permissions defined in the database.</td>
+                                        </tr>
+                                    }
+                                    else
+                                    {
+                                        @foreach (var perm in permList)
+                                        {
+                                            var staffRole = permRoles.FirstOrDefault(r => r.RoleName.Equals("staff", StringComparison.OrdinalIgnoreCase));
+                                            var customerRole = permRoles.FirstOrDefault(r => r.RoleName.Equals("customer", StringComparison.OrdinalIgnoreCase));
+
+                                            var staffGranted = staffRole != null && IsPermGranted(staffRole.RoleId, perm.PermissionId);
+                                            var customerGranted = customerRole != null && IsPermGranted(customerRole.RoleId, perm.PermissionId);
+
+                                            var staffToggleId = $"toggle-staff-{perm.PermissionId}";
+                                            var customerToggleId = $"toggle-customer-{perm.PermissionId}";
+
+                                            // Determine bootstrap icon based on permission name
+                                            var iconClass = perm.PermissionName switch
+                                            {
+                                                "Products.Manage" => "bi-cart-dash",
+                                                "Customers.View" => "bi-people",
+                                                "Staff.Manage" => "bi-person-badge",
+                                                "Reports.Generate" => "bi-bar-chart",
+                                                _ => "bi-shield"
+                                            };
+
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <i class="bi @iconClass perm-icon"></i>
+                                                        <span class="perm-name">@perm.PermissionName</span>
+                                                    </div>
+                                                </td>
+                                                <td class="text-muted perm-desc">@(perm.Description ?? "No description provided.")</td>
+                                                <td style="text-align: center;">
+                                                    <span class="perm-badge-always-on">Always On</span>
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    @if (staffRole != null)
+                                                    {
+                                                        <label class="perm-toggle-switch" for="@staffToggleId">
+                                                            <input type="checkbox"
+                                                                   id="@staffToggleId"
+                                                                   checked="@staffGranted"
+                                                                   @onchange="() => TogglePermission(staffRole.RoleId, perm.PermissionId)" />
+                                                            <span class="perm-toggle-slider"></span>
+                                                        </label>
+                                                    }
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    @if (customerRole != null)
+                                                    {
+                                                        <label class="perm-toggle-switch" for="@customerToggleId">
+                                                            <input type="checkbox"
+                                                                   id="@customerToggleId"
+                                                                   checked="@customerGranted"
+                                                                   @onchange="() => TogglePermission(customerRole.RoleId, perm.PermissionId)" />
+                                                            <span class="perm-toggle-slider"></span>
+                                                        </label>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Legend Section -->
+                    <div class="perm-legend-container mt-3">
+                        <span class="legend-title">Legend:</span>
+                        <div class="legend-item">
+                            <span class="perm-toggle-switch-demo checked"></span>
+                            <span class="legend-text">Permission Granted</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="perm-toggle-switch-demo"></span>
+                            <span class="legend-text">Permission Denied</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="perm-badge-always-on">Always On</span>
+                            <span class="legend-text">Admin has full access</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
         else if (activeView == "create-order")
+
         {
             <div class="page-header order-page-header" style="margin-bottom: 1.5rem;">
                 <div>

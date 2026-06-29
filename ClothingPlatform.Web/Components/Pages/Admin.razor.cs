@@ -1,3 +1,4 @@
+using ClothingPlatform.Api.Features.Permission;
 using ClothingPlatform.Api.Models.Order;
 using ClothingPlatform.Api.Models.Report;
 using ClothingPlatform.Api.Models.User;
@@ -105,6 +106,17 @@ namespace ClothingPlatform.Web.Components.Pages
         private StaffFormModel staffForm = new();
         private bool isCreatingStaff = false;
         private List<UserModel> recentStaff = new();
+
+        // ─── Permission Management ────────────────────────────────────────────────
+        private List<RoleDto> permRoles = new();
+        private List<PermissionDto> permList = new();
+        /// <summary>Local mirror of grant states: (permId, roleId) → granted.</summary>
+        private Dictionary<(int permId, int roleId), bool> permGrants = new();
+        private bool isLoadingPermissions = false;
+        private int? savingPermRoleId = null;
+        private string permSuccessMessage = "";
+        private string permErrorMessage = "";
+        private int activePermRoleId = 0;   // which role tab is active in the permissions view
 
         //Pagination parameters
         private int staffPage = 1;
@@ -563,6 +575,7 @@ namespace ClothingPlatform.Web.Components.Pages
             "customers" => CanViewCustomers,
             "staffs" => CanManageStaff,
             "reports" => CanViewReports,
+            "permissions" => Session.IsAdmin,
             "dashboard" or "products" or "orders" or "create-order" or "profile" => IsPortalOperator,
             _ => false
         };
@@ -576,6 +589,7 @@ namespace ClothingPlatform.Web.Components.Pages
             "staffs" => "staffs",
             "reports" => "reports",
             "profile" => "profile",
+            "permissions" => "permissions",
             _ => "dashboard"
         };
 
@@ -614,6 +628,11 @@ namespace ClothingPlatform.Web.Components.Pages
             if (normalizedView == "create-order")
             {
                 _ = LoadAdminInventoryVariants();
+            }
+
+            if (normalizedView == "permissions")
+            {
+                _ = LoadPermissionMatrix();
             }
         }
 
@@ -1745,5 +1764,120 @@ namespace ClothingPlatform.Web.Components.Pages
             OrderWorkflow.Processing => new MarkupString("<span class=\"status-badge badge-processing\"><i class=\"bi bi-arrow-repeat\"></i> Processing</span>"),
             _ => new MarkupString("<span class=\"status-badge badge-pending\"><i class=\"bi bi-hourglass-split\"></i> Pending</span>")
         };
+
+        // ─── Permission Management Methods ────────────────────────────────────────
+
+        private async Task LoadPermissionMatrix()
+        {
+            if (isLoadingPermissions)
+            {
+                return;
+            }
+
+            isLoadingPermissions = true;
+            permErrorMessage = "";
+            permSuccessMessage = "";
+            StateHasChanged();
+
+            try
+            {
+                var matrix = await HttpClientServices.ExecuteAsync<PermissionMatrixDto>(
+                    "api/permission/matrix",
+                    null,
+                    EnumHttpMethod.Get);
+
+                if (matrix != null)
+                {
+                    permRoles = matrix.Roles ?? new();
+                    permList = matrix.Permissions ?? new();
+
+                    // Rebuild local grant dictionary
+                    permGrants = new Dictionary<(int, int), bool>();
+                    foreach (var grant in matrix.Grants ?? new())
+                    {
+                        permGrants[(grant.PermissionId, grant.RoleId)] = grant.Granted;
+                    }
+
+                    // Default to the first manageable role tab
+                    if (activePermRoleId == 0 && permRoles.Any())
+                    {
+                        activePermRoleId = permRoles[0].RoleId;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                permErrorMessage = $"Failed to load permission matrix: {ex.Message}";
+            }
+            finally
+            {
+                isLoadingPermissions = false;
+                StateHasChanged();
+            }
+        }
+
+        private void TogglePermission(int roleId, int permId)
+        {
+            var key = (permId, roleId);
+            if (permGrants.TryGetValue(key, out var current))
+            {
+                permGrants[key] = !current;
+            }
+            else
+            {
+                permGrants[key] = true;
+            }
+
+            StateHasChanged();
+        }
+
+        private bool IsPermGranted(int roleId, int permId)
+        {
+            return permGrants.TryGetValue((permId, roleId), out var granted) && granted;
+        }
+
+        private async Task SaveRolePermissions(int roleId)
+        {
+            savingPermRoleId = roleId;
+            permErrorMessage = "";
+            permSuccessMessage = "";
+            StateHasChanged();
+
+            try
+            {
+                // Collect the IDs of permissions currently toggled ON for this role
+                var grantedIds = permList
+                    .Where(p => IsPermGranted(roleId, p.PermissionId))
+                    .Select(p => p.PermissionId)
+                    .ToList();
+
+                var request = new UpdateRolePermissionsRequest { PermissionIds = grantedIds };
+
+                await HttpClientServices.ExecuteAsync<object>(
+                    $"api/permission/role/{roleId}",
+                    request,
+                    EnumHttpMethod.Put);
+
+                var roleName = permRoles.FirstOrDefault(r => r.RoleId == roleId)?.RoleName ?? "Role";
+                permSuccessMessage = $"✓ Permissions for '{roleName}' saved. Changes apply on next login.";
+            }
+            catch (Exception ex)
+            {
+                permErrorMessage = $"Failed to save permissions: {ex.Message}";
+            }
+            finally
+            {
+                savingPermRoleId = null;
+                StateHasChanged();
+            }
+        }
+
+        private void SetActivePermTab(int roleId)
+        {
+            activePermRoleId = roleId;
+            permSuccessMessage = "";
+            permErrorMessage = "";
+            StateHasChanged();
+        }
     }
 }

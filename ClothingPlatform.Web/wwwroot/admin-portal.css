@@ -1268,3 +1268,325 @@
     border: 1px solid #EDD9D0;
     margin: 0.5rem auto 0;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   PERMISSION MANAGEMENT PAGE STYLES
+   ══════════════════════════════════════════════════════════════ */
+
+/* Page wrapper */
+.perm-page-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-width: 100%;
+}
+
+/* Breadcrumbs style */
+.perm-breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 0.35rem;
+}
+
+.perm-breadcrumbs .breadcrumb-item.linkable {
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.perm-breadcrumbs .breadcrumb-item.linkable:hover {
+    color: #1E56E3;
+}
+
+.perm-breadcrumbs .breadcrumb-item.active {
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+.perm-breadcrumbs .breadcrumb-separator {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+/* Page header */
+.perm-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.25rem;
+}
+
+.perm-page-header-left {
+    flex: 1;
+}
+
+.perm-page-header-right {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Header Save Button */
+.perm-header-save-btn {
+    background-color: #1E56E3 !important;
+    color: #ffffff !important;
+    border: none !important;
+    font-family: 'Inter', 'DM Sans', sans-serif !important;
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.02em !important;
+    text-transform: none !important;
+    padding: 0.65rem 1.4rem !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+    box-shadow: 0 2px 4px rgba(30, 86, 227, 0.15) !important;
+    transition: background-color 0.2s, transform 0.1s !important;
+}
+
+.perm-header-save-btn:hover {
+    background-color: #1646C1 !important;
+    transform: translateY(-1px);
+}
+
+/* Info banner styled like the mockup (light blue outline box) */
+.perm-info-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    background-color: #F0F7FF;
+    border: 1px solid #D0E7FF;
+    border-radius: 8px;
+    padding: 0.85rem 1.2rem;
+    font-size: 0.82rem;
+    color: #1E56E3;
+    line-height: 1.5;
+}
+
+.perm-info-banner i {
+    flex-shrink: 0;
+    font-size: 1.05rem;
+}
+
+/* Role Tab Strip */
+.perm-role-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid #E5E7EB;
+    padding-bottom: 0;
+    margin-top: 0.5rem;
+}
+
+.perm-role-tab {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem 1.5rem;
+    border: 1px solid transparent;
+    border-bottom: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'Inter', 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s;
+    position: relative;
+    bottom: -1px;
+}
+
+.perm-role-tab:hover {
+    color: var(--text-main);
+}
+
+.perm-role-tab-active {
+    color: #1E56E3 !important;
+    font-weight: 600;
+}
+
+.perm-role-tab-active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: #1E56E3;
+}
+
+/* Matrix Card & Table */
+.perm-matrix-card {
+    padding: 0 !important;
+    overflow: hidden;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px !important;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.perm-matrix-table {
+    margin-bottom: 0;
+    width: 100%;
+}
+
+.perm-matrix-table th {
+    background-color: #F9FAFB;
+    color: var(--text-main);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.perm-matrix-table td {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #F3F4F6;
+    color: var(--text-main);
+}
+
+.perm-matrix-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Permission Row design details */
+.perm-icon {
+    font-size: 1.15rem;
+    color: var(--text-muted);
+    margin-right: 0.35rem;
+}
+
+.perm-name {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.perm-desc {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+/* Always On Badge */
+.perm-badge-always-on {
+    background-color: #ECFDF5;
+    color: #10B981;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    border: 1px solid #D1FAE5;
+    display: inline-block;
+}
+
+/* Toggle Switch matching mockup blue (#1E56E3) */
+.perm-toggle-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 44px;
+    height: 22px;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.perm-toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.perm-toggle-slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #E5E7EB;
+    border-radius: 22px;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.perm-toggle-slider::before {
+    content: '';
+    position: absolute;
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: #ffffff;
+    border-radius: 50%;
+    transition: transform 0.2s ease-in-out;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.perm-toggle-switch input:checked + .perm-toggle-slider {
+    background-color: #1E56E3;
+}
+
+.perm-toggle-switch input:checked + .perm-toggle-slider::before {
+    transform: translateX(22px);
+}
+
+/* Legend Section */
+.perm-legend-container {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    padding: 0.5rem 0;
+}
+
+.legend-title {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.legend-text {
+    font-size: 0.78rem;
+}
+
+/* Demo switcher shapes for Legend rendering */
+.perm-toggle-switch-demo {
+    width: 32px;
+    height: 16px;
+    background-color: #E5E7EB;
+    border-radius: 16px;
+    position: relative;
+    display: inline-block;
+}
+
+.perm-toggle-switch-demo::before {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #ffffff;
+    border-radius: 50%;
+    left: 3px;
+    top: 3px;
+}
+
+.perm-toggle-switch-demo.checked {
+    background-color: #1E56E3;
+}
+
+.perm-toggle-switch-demo.checked::before {
+    transform: translateX(16px);
+}
+

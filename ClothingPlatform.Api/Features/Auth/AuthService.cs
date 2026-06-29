@@ -1,4 +1,4 @@
-﻿
+
 using ClothingPlatform.DB.AppDbModels;
 using ClothingPlatform.Api.Models.Auth;
 using Microsoft.EntityFrameworkCore;
@@ -121,12 +121,12 @@ namespace ClothingPlatform.Api.Features.Auth
             return role;
         }
 
-        private async Task<Permission> EnsurePermissionAsync(string permissionName, string description)
+        private async Task<ClothingPlatform.DB.AppDbModels.Permission> EnsurePermissionAsync(string permissionName, string description)
         {
             var permission = await _db.Permissions.FirstOrDefaultAsync(p => p.PermissionName == permissionName);
             if (permission != null) return permission;
 
-            permission = new Permission
+            permission = new ClothingPlatform.DB.AppDbModels.Permission
             {
                 PermissionName = permissionName,
                 Description = description,
