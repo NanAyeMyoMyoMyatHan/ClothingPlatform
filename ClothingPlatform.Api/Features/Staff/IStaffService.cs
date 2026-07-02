@@ -1,4 +1,4 @@
-﻿using ClothingPlatform.DB.AppDbModels;
+using ClothingPlatform.DB.AppDbModels;
 
 namespace ClothingPlatform.Api.Features.Staff
 {
@@ -8,8 +8,9 @@ namespace ClothingPlatform.Api.Features.Staff
         Task<bool> UpdateOrderStatusAsync(int orderId, int staffId, string newStatus);
         Task<bool> UpdateGuestOrderStatusAsync(int guestOrderId, int staffId, string newStatus);
         Task<bool> AdjustStockAsync(int variantId, int adjustment, int staffId);
+        Task<bool> RestockVariantAsync(int variantId, int quantity, decimal purchasePrice, string notes, int staffId);
         Task<bool> SubmitPhoneOrderAsync(GuestOrderRequestDto request, int staffId);
-        Task<bool> UpdateProfileAsync(int staffId, string firstName, string lastName, string email);
+        Task<bool> UpdateProfileAsync(int staffId, string firstName, string lastName, string email, string? password);
     }
 
     public class StaffDashboardDataDto

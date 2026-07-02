@@ -101,6 +101,41 @@ namespace ClothingPlatform.Web.Components.Pages
         private DateTime reportTo = DateTime.Today;
         private AdminReportSummaryDto? adminReport;
 
+        // State variables for Stock Report and Restocking
+        private bool showRestockModal = false;
+        private ProductVariantEntryDraft? restockEntry;
+        private string restockSize = "";
+        private int restockQty = 1;
+        private decimal restockPurchasePrice = 0;
+        private string restockNotes = "";
+        private bool isSubmittingRestock = false;
+
+        private List<StaffActivityLog> stockInVouchers = new();
+        private StockReportSummaryDto? stockReport;
+        private string stockReportSearch = "";
+        private string stockReportCategoryFilter = "";
+        private DateTime stockReportFrom = DateTime.Today.AddDays(-30);
+        private DateTime stockReportTo = DateTime.Today;
+        private bool stockReportUseDateFilter = false;
+        private int stockReportPage = 1;
+        private int stockReportPageSize = 10;
+
+        // Category revenues for dashboard chart
+        private List<CategoryRevenueModel> categoryRevenues = new();
+
+        // Password properties for Profile
+        private string profilePassword = "";
+        private string profileConfirmPassword = "";
+
+        private List<ContactMessage> contactMessages = new();
+        private List<OrderReturn> orderReturns = new();
+
+        private IEnumerable<StockReportItemDto> FilteredStockItems => stockReport?.Items ?? Enumerable.Empty<StockReportItemDto>();
+        private int dailyReportPage = 1;
+        private int dailyReportPageSize = 10;
+        private int DailyReportTotalPages => (int)Math.Ceiling((double)dailyReportList.Count / dailyReportPageSize);
+        private IEnumerable<DailySummaryModel> PagedDailyReportList => dailyReportList.Skip((dailyReportPage - 1) * dailyReportPageSize).Take(dailyReportPageSize);
+
 
         // ─── Staff Creation ───────────────────────────────────────────────────────
         private StaffFormModel staffForm = new();
@@ -184,6 +219,7 @@ namespace ClothingPlatform.Web.Components.Pages
         private const string LoadReportAction = "load-report";
         private const string DownloadReportAction = "download-report";
         private const string DailyReportAction = "daily-report";
+        private const string LoadStockReportAction = "load-stock-report";
         private const string OrderFilterAll = "All";
         private const string OrderFilterPending = "Pending";
         private const string OrderFilterProcessing = "Processing";
@@ -489,12 +525,73 @@ namespace ClothingPlatform.Web.Components.Pages
                     .Take(50)
                     .ToListAsync();
 
+                // Load stock-in vouchers
+                stockInVouchers = await db.StaffActivityLogs
+                    .Include(l => l.Staff)
+                    .Where(l => l.Description != null && l.Description.Contains("Stock-In Voucher"))
+                    .AsNoTracking()
+                    .OrderByDescending(l => l.LogId)
+                    .ToListAsync();
+
+                // Load contact messages / reviews
+                contactMessages = await db.ContactMessages
+                    .AsNoTracking()
+                    .OrderByDescending(cm => cm.ContactMessageId)
+                    .ToListAsync();
+
+                // Load order returns
+                orderReturns = await db.OrderReturns
+                    .Include(r => r.Order)
+                        .ThenInclude(o => o.User)
+                    .Include(r => r.Variant)
+                        .ThenInclude(v => v.Product)
+                    .AsNoTracking()
+                    .OrderByDescending(r => r.OrderReturnId)
+                    .ToListAsync();
+
                 // Compute dashboard KPI stats
                 TotalRevenue = orders.Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Confirm).Sum(o => o.TotalAmount);
                 TotalOrders = orders.Count;
                 PendingOrders = orders.Count(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Pending);
-                CancelledOrders = orders.Count(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Cancelled);
+                CancelledOrders = orders.Count(o => OrderWorkflow.IsCancelled(o.OrderStatus));
                 TotalCustomers = customers.Count;
+
+                // Compute category revenues
+                var categoryRevsMap = new Dictionary<string, decimal>();
+                var totalProductRevenue = 0m;
+
+                foreach (var ord in orders.Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Confirm))
+                {
+                    foreach (var item in ord.OrderItems)
+                    {
+                        var prod = allProducts.FirstOrDefault(p => p.Name == item.ProductName);
+                        var catName = prod?.Category?.Name ?? "Uncategorized";
+                        var rev = item.Quantity * (item.PricePerUnit - item.PurchasePrice);
+                        
+                        if (categoryRevsMap.ContainsKey(catName))
+                        {
+                            categoryRevsMap[catName] += rev;
+                        }
+                        else
+                        {
+                            categoryRevsMap[catName] = rev;
+                        }
+                        totalProductRevenue += rev;
+                    }
+                }
+
+                categoryRevenues = categoryRevsMap.Select(kvp => new CategoryRevenueModel
+                {
+                    CategoryName = kvp.Key,
+                    Revenue = kvp.Value,
+                    Percentage = totalProductRevenue > 0 ? (double)Math.Round((kvp.Value / totalProductRevenue) * 100, 1) : 0,
+                    Color = GetColorHex(kvp.Key)
+                }).ToList();
+
+                if (activeView == "stock-report")
+                {
+                    _ = LoadStockReport();
+                }
 
                 // Load report lists
                 dailyReportList = allOrders
@@ -577,7 +674,7 @@ namespace ClothingPlatform.Web.Components.Pages
             "staffs" => CanManageStaff,
             "reports" => CanViewReports,
             "permissions" => Session.IsAdmin,
-            "dashboard" or "products" or "products-new" or "orders" or "create-order" or "profile" => IsPortalOperator,
+            "dashboard" or "products" or "products-new" or "orders" or "create-order" or "profile" or "stock-report" or "customer-reviews" or "returns" => IsPortalOperator,
             _ => false
         };
 
@@ -592,6 +689,9 @@ namespace ClothingPlatform.Web.Components.Pages
             "reports" => "reports",
             "profile" => "profile",
             "permissions" => "permissions",
+            "stock-report" => "stock-report",
+            "customer-reviews" => "customer-reviews",
+            "returns" => "returns",
             _ => "dashboard"
         };
 
@@ -636,6 +736,11 @@ namespace ClothingPlatform.Web.Components.Pages
             {
                 _ = LoadPermissionMatrix();
             }
+
+            if (normalizedView == "stock-report")
+            {
+                _ = LoadStockReport();
+            }
         }
 
         // Order methods
@@ -644,6 +749,10 @@ namespace ClothingPlatform.Web.Components.Pages
             if (orderFilter == "All")
             {
                 filteredOrders = orders;
+            }
+            else if (orderFilter == "Cancelled")
+            {
+                filteredOrders = orders.Where(o => OrderWorkflow.IsCancelled(o.OrderStatus)).ToList();
             }
             else
             {
@@ -713,13 +822,13 @@ namespace ClothingPlatform.Web.Components.Pages
                     return;
                 }
 
-                if (!OrderWorkflow.CanMoveTo(dbOrder.OrderStatus, OrderWorkflow.Cancelled))
+                if (!OrderWorkflow.CanMoveTo(dbOrder.OrderStatus, OrderWorkflow.CancelledByStaff))
                 {
                     errorMessage = UiMessages.Admin.OrderCancelNotAllowed;
                     return;
                 }
 
-                dbOrder.OrderStatus = OrderWorkflow.Cancelled;
+                dbOrder.OrderStatus = OrderWorkflow.CancelledByStaff;
                 await db.SaveChangesAsync();
 
                 successMessage = UiMessages.Admin.OrderCancelled(orderId);
@@ -1537,6 +1646,8 @@ namespace ClothingPlatform.Web.Components.Pages
 
         private static string NormalizeStatus(string? status) => OrderWorkflow.Normalize(status);
 
+        private static bool IsCancelledStatus(string? status) => OrderWorkflow.IsCancelled(status);
+
         private static bool IsFinalStatus(string? status) =>
             OrderWorkflow.IsFinal(OrderWorkflow.Normalize(status));
 
@@ -1568,9 +1679,8 @@ namespace ClothingPlatform.Web.Components.Pages
             return $"/images/payment-slips/{normalizedPath}";
         }
 
-        private static string StatusBadgeClass(string? status) => OrderWorkflow.Normalize(status) switch
+        private static string StatusBadgeClass(string? status) => OrderWorkflow.IsCancelled(status) ? "badge-cancelled text-danger" : OrderWorkflow.Normalize(status) switch
         {
-            OrderWorkflow.Cancelled => "badge-cancelled text-danger",
             OrderWorkflow.Confirm => "badge-confirm text-success",
             OrderWorkflow.Processing => "badge-processing text-primary",
             _ => "badge-pending text-warning"
@@ -1920,13 +2030,25 @@ namespace ClothingPlatform.Web.Components.Pages
                 : new MarkupString("<span class=\"status-badge badge-unpaid\"><i class=\"bi bi-clock-history\"></i> Unpaid</span>");
         }
 
-        private static MarkupString StatusBadge(string status) => OrderWorkflow.Normalize(status) switch
+        private static MarkupString StatusBadge(string status)
         {
-            OrderWorkflow.Cancelled => new MarkupString("<span class=\"status-badge badge-cancelled\"><i class=\"bi bi-x-circle\"></i> Cancelled</span>"),
-            OrderWorkflow.Confirm => new MarkupString("<span class=\"status-badge badge-confirm\"><i class=\"bi bi-check-circle\"></i> Confirm</span>"),
-            OrderWorkflow.Processing => new MarkupString("<span class=\"status-badge badge-processing\"><i class=\"bi bi-arrow-repeat\"></i> Processing</span>"),
-            _ => new MarkupString("<span class=\"status-badge badge-pending\"><i class=\"bi bi-hourglass-split\"></i> Pending</span>")
-        };
+            var normalized = OrderWorkflow.Normalize(status);
+            if (normalized == OrderWorkflow.CancelledByCustomer)
+            {
+                return new MarkupString("<span class=\"status-badge badge-cancelled\"><i class=\"bi bi-x-circle\"></i> Cancelled (Customer)</span>");
+            }
+            if (normalized == OrderWorkflow.CancelledByStaff)
+            {
+                return new MarkupString("<span class=\"status-badge badge-cancelled\"><i class=\"bi bi-x-circle\"></i> Cancelled (Staff)</span>");
+            }
+            return normalized switch
+            {
+                OrderWorkflow.Cancelled => new MarkupString("<span class=\"status-badge badge-cancelled\"><i class=\"bi bi-x-circle\"></i> Cancelled</span>"),
+                OrderWorkflow.Confirm => new MarkupString("<span class=\"status-badge badge-confirm\"><i class=\"bi bi-check-circle\"></i> Confirm</span>"),
+                OrderWorkflow.Processing => new MarkupString("<span class=\"status-badge badge-processing\"><i class=\"bi bi-arrow-repeat\"></i> Processing</span>"),
+                _ => new MarkupString("<span class=\"status-badge badge-pending\"><i class=\"bi bi-hourglass-split\"></i> Pending</span>")
+            };
+        }
 
         private static bool CanCancelOrder(string? status)
         {
@@ -2048,5 +2170,242 @@ namespace ClothingPlatform.Web.Components.Pages
             permErrorMessage = "";
             StateHasChanged();
         }
+
+        // --- BACKING METHODS AND MODELS RESTORED ---
+
+        private void OpenRestockModal(ProductVariantEntryDraft entry, string size)
+        {
+            restockEntry = entry;
+            restockSize = size;
+            restockQty = 1;
+            restockPurchasePrice = entry.PurchasePrice;
+            restockNotes = "";
+            showRestockModal = true;
+        }
+
+        private void CloseRestockModal()
+        {
+            showRestockModal = false;
+            restockEntry = null;
+        }
+
+        private async Task SubmitRestock()
+        {
+            if (restockEntry == null || restockQty <= 0 || !restockEntry.VariantId.HasValue)
+            {
+                return;
+            }
+
+            isSubmittingRestock = true;
+            StateHasChanged();
+
+            try
+            {
+                var staffId = Session.CurrentUser!.UserId;
+                var notesParam = string.IsNullOrWhiteSpace(restockNotes) ? "" : $"&notes={Uri.EscapeDataString(restockNotes)}";
+                
+                await HttpClientServices.ExecuteAsync<object>(
+                    $"api/staff/stock/restock?variantId={restockEntry.VariantId.Value}&quantity={restockQty}&purchasePrice={restockPurchasePrice}{notesParam}&staffId={staffId}",
+                    null,
+                    EnumHttpMethod.Post);
+
+                restockEntry.StockQuantity += restockQty;
+                restockEntry.PurchasePrice = restockPurchasePrice;
+
+                // Reload all data to refresh report charts and log
+                await LoadData();
+                CloseRestockModal();
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Failed to submit stock-in voucher: {ex.Message}";
+            }
+            finally
+            {
+                isSubmittingRestock = false;
+                StateHasChanged();
+            }
+        }
+
+        private async Task LoadStockReport()
+        {
+            try
+            {
+                var categoryParam = string.IsNullOrWhiteSpace(stockReportCategoryFilter)
+                    ? ""
+                    : $"&category={Uri.EscapeDataString(stockReportCategoryFilter)}";
+                var searchParam = string.IsNullOrWhiteSpace(stockReportSearch)
+                    ? ""
+                    : $"&search={Uri.EscapeDataString(stockReportSearch)}";
+                var fromParam = stockReportUseDateFilter
+                    ? $"&from={stockReportFrom:yyyy-MM-dd}"
+                    : "";
+                var toParam = stockReportUseDateFilter
+                    ? $"&to={stockReportTo:yyyy-MM-dd}"
+                    : "";
+
+                stockReport = await HttpClientServices.ExecuteAsync<StockReportSummaryDto>(
+                    $"api/report/stock?{categoryParam}{searchParam}{fromParam}{toParam}",
+                    null,
+                    EnumHttpMethod.Get);
+                stockReportPage = 1;
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Failed to load stock report: {ex.Message}";
+            }
+        }
+
+        private async Task ChangeStockReportPage(int newPage)
+        {
+            stockReportPage = newPage;
+            await Task.CompletedTask;
+            StateHasChanged();
+        }
+
+        private void ClearStockReportFilters()
+        {
+            stockReportSearch = "";
+            stockReportCategoryFilter = "";
+            stockReportFrom = DateTime.Today.AddDays(-30);
+            stockReportTo = DateTime.Today;
+            stockReportUseDateFilter = false;
+            stockReportPage = 1;
+            StateHasChanged();
+        }
+
+        private static string GetColorHex(string colorName)
+        {
+            return colorName.ToLowerInvariant() switch
+            {
+                "red" => "#E53E3E",
+                "blue" => "#3182CE",
+                "green" => "#38A169",
+                "yellow" => "#D69E2E",
+                "black" => "#1A202C",
+                "white" => "#F7FAFC",
+                "gray" or "grey" => "#718096",
+                "pink" => "#D53F8C",
+                "purple" => "#805AD5",
+                "orange" => "#DD6B20",
+                "brown" => "#7B341E",
+                "navy" => "#2C5282",
+                "beige" => "#D4A96A",
+                "cream" => "#FFFBEB",
+                _ => "#A0AEC0"
+            };
+        }
+
+        private async Task ChangeDailyReportPage(int newPage)
+        {
+            dailyReportPage = newPage;
+            await Task.CompletedTask;
+            StateHasChanged();
+        }
+
+        private static string CancelGuestOrderAction(int guestOrderId) => $"cancel-guest-order-{guestOrderId}";
+
+        private async Task CancelGuestOrder(GuestOrder go)
+        {
+            var confirmed = await ShowConfirmModalAsync(
+                title: "Cancel Guest Order",
+                message: $"Are you sure you want to cancel guest order #{go.GuestOrderId}?",
+                confirmText: "Cancel Order");
+
+            if (!confirmed)
+            {
+                return;
+            }
+
+            await RunAdminAction(CancelGuestOrderAction(go.GuestOrderId), async () =>
+            {
+                try
+                {
+                    await using var db = await DbFactory.CreateDbContextAsync();
+                    var dbGo = await db.GuestOrders.FirstOrDefaultAsync(g => g.GuestOrderId == go.GuestOrderId);
+                    if (dbGo == null)
+                    {
+                        errorMessage = "Guest order not found.";
+                        return;
+                    }
+                    dbGo.OrderStatus = OrderWorkflow.CancelledByStaff;
+                    await db.SaveChangesAsync();
+                    successMessage = $"Guest order #{go.GuestOrderId} cancelled successfully.";
+                    await LoadData();
+                }
+                catch (Exception ex)
+                {
+                    errorMessage = $"Failed to cancel guest order: {ex.Message}";
+                }
+            });
+        }
+
+        private async Task ApproveReturn(OrderReturn ret)
+        {
+            var confirmed = await ShowConfirmModalAsync(
+                title: "Approve Return",
+                message: $"Are you sure you want to approve return/exchange request #{ret.OrderReturnId}?",
+                confirmText: "Approve");
+
+            if (!confirmed) return;
+
+            try
+            {
+                await using var db = await DbFactory.CreateDbContextAsync();
+                var dbRet = await db.OrderReturns.FirstOrDefaultAsync(r => r.OrderReturnId == ret.OrderReturnId);
+                if (dbRet != null)
+                {
+                    var order = await db.Orders.FirstOrDefaultAsync(o => o.OrderId == ret.OrderId);
+                    if (order != null)
+                    {
+                        order.OrderStatus = OrderWorkflow.CancelledByStaff;
+                    }
+
+                    db.OrderReturns.Remove(dbRet);
+                    await db.SaveChangesAsync();
+                    successMessage = "Return request approved and processed.";
+                    await LoadData();
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Failed to approve return request: {ex.Message}";
+            }
+        }
+
+        private async Task RejectReturn(OrderReturn ret)
+        {
+            var confirmed = await ShowConfirmModalAsync(
+                title: "Reject Return",
+                message: $"Are you sure you want to reject return/exchange request #{ret.OrderReturnId}?",
+                confirmText: "Reject");
+
+            if (!confirmed) return;
+
+            try
+            {
+                await using var db = await DbFactory.CreateDbContextAsync();
+                var dbRet = await db.OrderReturns.FirstOrDefaultAsync(r => r.OrderReturnId == ret.OrderReturnId);
+                if (dbRet != null)
+                {
+                    db.OrderReturns.Remove(dbRet);
+                    await db.SaveChangesAsync();
+                    successMessage = "Return request rejected and removed.";
+                    await LoadData();
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Failed to reject return request: {ex.Message}";
+            }
+        }
+    }
+
+    public class CategoryRevenueModel
+    {
+        public string CategoryName { get; set; } = "";
+        public decimal Revenue { get; set; }
+        public double Percentage { get; set; }
+        public string Color { get; set; } = "";
     }
 }

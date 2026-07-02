@@ -1,4 +1,4 @@
-﻿namespace ClothingPlatform.Api.Models.Order
+namespace ClothingPlatform.Api.Models.Order
 {
     public class CheckoutItemRequest
     {
@@ -75,6 +75,7 @@
 
         public int Quantity { get; set; }
         public decimal PricePerUnit { get; set; }
+        public decimal PurchasePrice { get; set; }
         public decimal TotalPrice => Quantity * PricePerUnit; // Auto Calculation
     }
 

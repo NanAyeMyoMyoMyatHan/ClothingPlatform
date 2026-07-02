@@ -90,6 +90,17 @@ namespace ClothingPlatform.Api.Features.Report
             return File(Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", $"admin-report-{report.From:yyyyMMdd}-{report.To:yyyyMMdd}.csv");
         }
 
+        [HttpGet("stock")]
+        public IActionResult GetStockReport(
+            [FromQuery] string? category = null,
+            [FromQuery] string? search = null,
+            [FromQuery] DateTime? from = null,
+            [FromQuery] DateTime? to = null)
+        {
+            var result = _reportService.GetStockReport(category, search, from, to);
+            return Ok(result);
+        }
+
         private static string Csv(string value)
         {
             return "\"" + value.Replace("\"", "\"\"") + "\"";

@@ -14,7 +14,6 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddScoped<SessionState>();
 builder.Services.AddScoped<CustomerSessionState>();
-builder.Services.AddScoped<StaffPortalState>();
 builder.Services.AddScoped<IPortalSessionBootstrapper, PortalSessionBootstrapper>();
 
 string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");

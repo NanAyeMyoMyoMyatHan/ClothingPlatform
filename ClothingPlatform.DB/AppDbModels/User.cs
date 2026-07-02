@@ -19,15 +19,17 @@ public partial class User
 
     public string PhoneNumber { get; set; } = null!;
 
-    public int RoleId { get; set; }
-
     public DateTime? CreatedAt { get; set; }
 
-    public virtual Role Role { get; set; } = null!;
+    public int RoleId { get; set; }
 
     public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
 
+    public virtual ICollection<CustomerNotification> CustomerNotifications { get; set; } = new List<CustomerNotification>();
+
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+
+    public virtual Role Role { get; set; } = null!;
 
     public virtual ICollection<StaffActivityLog> StaffActivityLogs { get; set; } = new List<StaffActivityLog>();
 

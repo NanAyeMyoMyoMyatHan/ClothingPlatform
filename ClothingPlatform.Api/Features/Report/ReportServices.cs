@@ -1,4 +1,4 @@
-﻿using ClothingPlatform.DB.AppDbModels;
+using ClothingPlatform.DB.AppDbModels;
 using ClothingPlatform.Api.Models.Order;
 using ClothingPlatform.Api.Models.Report;
 using Microsoft.EntityFrameworkCore;
@@ -32,7 +32,7 @@ namespace ClothingPlatform.Api.Features.Report
                 {
                     StaffId = group.Key,
                     TotalQty = group.Sum(g => g.QuantitySold),
-                    TotalAmount = group.Sum(g => g.SaleAmount)
+                    TotalAmount = group.Sum(g => g.QuantitySold * ((g.Variant.SalePrice ?? 0) - g.Variant.PurchasePrice))
                 })
                 .ToList();
 
@@ -235,6 +235,8 @@ namespace ClothingPlatform.Api.Features.Report
                 .AsNoTracking()
                 .Include(o => o.User)
                 .Include(o => o.Payments)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Variant)
                 .Where(o => o.CreatedAt >= start && o.CreatedAt < end)
                 .OrderByDescending(o => o.CreatedAt)
                 .ToList();
@@ -247,7 +249,7 @@ namespace ClothingPlatform.Api.Features.Report
                 OrderStatus = OrderWorkflow.Normalize(o.OrderStatus),
                 PaymentStatus = o.PaymentStatus,
                 PaymentMethod = o.Payments.FirstOrDefault()?.PaymentMethod ?? "cod",
-                TotalAmount = o.TotalAmount
+                TotalAmount = o.OrderItems.Sum(oi => oi.Quantity * (oi.PriceAtPurchase - (oi.Variant != null ? oi.Variant.PurchasePrice : 0)))
             }).ToList();
 
             return new AdminReportSummaryDto
@@ -264,6 +266,114 @@ namespace ClothingPlatform.Api.Features.Report
                         string.Equals(o.PaymentStatus, "completed", StringComparison.OrdinalIgnoreCase))
                     .Sum(o => o.TotalAmount),
                 Orders = rows
+            };
+        }
+
+        public StockReportSummaryDto GetStockReport(string? categoryFilter = null, string? searchTerm = null, DateTime? from = null, DateTime? to = null)
+        {
+            // Compute date boundaries
+            DateTime? dateStart = from.HasValue ? from.Value.Date : null;
+            DateTime? dateEnd = to.HasValue ? to.Value.Date.AddDays(1) : null;  // exclusive upper bound
+
+            // Load all variants with product and category info
+            var variantsQuery = _db.ProductVariants
+                .AsNoTracking()
+                .Include(v => v.Product)
+                    .ThenInclude(p => p.Category)
+                .AsQueryable();
+
+            // Apply category filter
+            if (!string.IsNullOrWhiteSpace(categoryFilter))
+            {
+                variantsQuery = variantsQuery.Where(v =>
+                    v.Product.Category.Name.Contains(categoryFilter));
+            }
+
+            // Apply search term filter (product name, SKU, color, size)
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                variantsQuery = variantsQuery.Where(v =>
+                    v.Product.Name.Contains(searchTerm) ||
+                    v.Sku.Contains(searchTerm) ||
+                    v.Color.Contains(searchTerm) ||
+                    v.Size.Contains(searchTerm));
+            }
+
+            var variants = variantsQuery.ToList();
+
+            // Aggregate sold quantities from regular order items (date-filtered via Order.CreatedAt)
+            var regularOrdersQuery = _db.OrderItems
+                .AsNoTracking()
+                .Include(oi => oi.Order)
+                .AsQueryable();
+
+            if (dateStart.HasValue)
+                regularOrdersQuery = regularOrdersQuery.Where(oi => oi.Order.CreatedAt >= dateStart.Value);
+            if (dateEnd.HasValue)
+                regularOrdersQuery = regularOrdersQuery.Where(oi => oi.Order.CreatedAt < dateEnd.Value);
+
+            var soldFromOrders = regularOrdersQuery
+                .GroupBy(oi => oi.VariantId)
+                .Select(g => new { VariantId = g.Key, SoldQty = g.Sum(oi => oi.Quantity) })
+                .ToList();
+
+            // Aggregate sold quantities from guest order items (date-filtered via GuestOrder.CreatedAt)
+            var guestOrdersQuery = _db.GuestOrderItems
+                .AsNoTracking()
+                .Include(gi => gi.GuestOrder)
+                .AsQueryable();
+
+            if (dateStart.HasValue)
+                guestOrdersQuery = guestOrdersQuery.Where(gi => gi.GuestOrder.CreatedAt >= dateStart.Value);
+            if (dateEnd.HasValue)
+                guestOrdersQuery = guestOrdersQuery.Where(gi => gi.GuestOrder.CreatedAt < dateEnd.Value);
+
+            var soldFromGuestOrders = guestOrdersQuery
+                .GroupBy(gi => gi.VariantId)
+                .Select(g => new { VariantId = g.Key, SoldQty = g.Sum(gi => gi.Quantity) })
+                .ToList();
+
+            // Merge sold quantities
+            var soldDict = soldFromOrders
+                .Concat(soldFromGuestOrders)
+                .GroupBy(x => x.VariantId)
+                .ToDictionary(g => g.Key, g => g.Sum(x => x.SoldQty));
+
+            var items = variants.Select(v =>
+            {
+                var soldQty = soldDict.TryGetValue(v.VariantId, out var s) ? s : 0;
+                // TotalAddedStock = current remaining + units sold (within the date range if filtered)
+                var addedStock = v.StockQuantity + soldQty;
+                return new StockReportItemDto
+                {
+                    VariantId = v.VariantId,
+                    ProductId = v.ProductId,
+                    ProductName = v.Product.Name,
+                    CategoryName = v.Product.Category?.Name ?? "Uncategorized",
+                    Size = v.Size,
+                    Color = v.Color,
+                    Sku = v.Sku,
+                    CurrentStock = v.StockQuantity,
+                    TotalSoldQty = soldQty,
+                    TotalAddedStock = addedStock,
+                    SalePrice = v.SalePrice ?? 0,
+                    PurchasePrice = v.PurchasePrice
+                };
+            }).OrderByDescending(i => i.VariantId).ToList();
+
+            return new StockReportSummaryDto
+            {
+                GeneratedAt = DateTime.Now,
+                DateFrom = from.HasValue ? from.Value.Date : null,
+                DateTo = to.HasValue ? to.Value.Date : null,
+                TotalProducts = items.Select(i => i.ProductId).Distinct().Count(),
+                TotalVariants = items.Count,
+                TotalCurrentStock = items.Sum(i => i.CurrentStock),
+                TotalSoldUnits = items.Sum(i => i.TotalSoldQty),
+                TotalAddedStock = items.Sum(i => i.TotalAddedStock),
+                LowStockCount = items.Count(i => i.CurrentStock > 0 && i.CurrentStock < 5),
+                OutOfStockCount = items.Count(i => i.CurrentStock == 0),
+                Items = items
             };
         }
     }

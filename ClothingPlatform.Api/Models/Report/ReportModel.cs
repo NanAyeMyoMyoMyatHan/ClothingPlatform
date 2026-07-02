@@ -1,4 +1,4 @@
-﻿using ClothingPlatform.Api.Models.Order;
+using ClothingPlatform.Api.Models.Order;
 
 namespace ClothingPlatform.Api.Models.Report
 {
@@ -75,5 +75,37 @@ namespace ClothingPlatform.Api.Models.Report
         public string PaymentStatus { get; set; } = string.Empty;
         public string PaymentMethod { get; set; } = string.Empty;
         public decimal TotalAmount { get; set; }
+    }
+
+    // Stock Report DTOs
+    public class StockReportItemDto
+    {
+        public int VariantId { get; set; }
+        public int ProductId { get; set; }
+        public string ProductName { get; set; } = string.Empty;
+        public string CategoryName { get; set; } = string.Empty;
+        public string Size { get; set; } = string.Empty;
+        public string Color { get; set; } = string.Empty;
+        public string Sku { get; set; } = string.Empty;
+        public int CurrentStock { get; set; }
+        public int TotalSoldQty { get; set; }
+        public int TotalAddedStock { get; set; }  // CurrentStock + TotalSoldQty
+        public decimal SalePrice { get; set; }
+        public decimal PurchasePrice { get; set; }
+    }
+
+    public class StockReportSummaryDto
+    {
+        public DateTime GeneratedAt { get; set; }
+        public DateTime? DateFrom { get; set; }
+        public DateTime? DateTo { get; set; }
+        public int TotalProducts { get; set; }
+        public int TotalVariants { get; set; }
+        public int TotalCurrentStock { get; set; }
+        public int TotalSoldUnits { get; set; }
+        public int TotalAddedStock { get; set; }
+        public int LowStockCount { get; set; }   // variants with 1–4 units remaining
+        public int OutOfStockCount { get; set; } // variants with 0 units remaining
+        public List<StockReportItemDto> Items { get; set; } = new();
     }
 }

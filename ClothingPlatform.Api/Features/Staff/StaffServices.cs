@@ -1,4 +1,4 @@
-﻿using ClothingPlatform.DB.AppDbModels;
+using ClothingPlatform.DB.AppDbModels;
 using ClothingPlatform.Api.Models.Order;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -6,15 +6,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+using ClothingPlatform.Api.Features.Notifications;
+
 namespace ClothingPlatform.Api.Features.Staff
 {
     public class StaffServices : IStaffService
     {
         private readonly AppDbContext _db;
+        private readonly ICustomerNotificationService _notificationService;
 
-        public StaffServices(AppDbContext db)
+        public StaffServices(AppDbContext db, ICustomerNotificationService notificationService)
         {
             _db = db;
+            _notificationService = notificationService;
         }
 
         public async Task<StaffDashboardDataDto> GetDashboardDataAsync(int staffId, DateTime reportDate)
@@ -26,11 +30,14 @@ namespace ClothingPlatform.Api.Features.Staff
                 .Include(o => o.User)
                 .Include(o => o.Payments)
                 .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Variant)
                 .OrderByDescending(o => o.OrderId)
                 .AsNoTracking()
                 .ToListAsync();
 
             data.AllGuestOrders = await _db.GuestOrders
+                .Include(g => g.GuestOrderItems)
+                    .ThenInclude(gi => gi.Variant)
                 .OrderByDescending(g => g.GuestOrderId)
                 .AsNoTracking()
                 .ToListAsync();
@@ -64,6 +71,26 @@ namespace ClothingPlatform.Api.Features.Staff
                             item.Variant.OrderItems = null;
                             if (item.Variant.Product != null)
                                 item.Variant.Product.ProductVariants = null;
+                        }
+                    }
+                }
+            }
+
+            if (data.AllGuestOrders != null)
+            {
+                foreach (var guestOrder in data.AllGuestOrders)
+                {
+                    if (guestOrder.GuestOrderItems != null)
+                    {
+                        foreach (var item in guestOrder.GuestOrderItems)
+                        {
+                            item.GuestOrder = null;
+                            if (item.Variant != null)
+                            {
+                                item.Variant.GuestOrderItems = null;
+                                if (item.Variant.Product != null)
+                                    item.Variant.Product.ProductVariants = null;
+                            }
                         }
                     }
                 }
@@ -119,6 +146,23 @@ namespace ClothingPlatform.Api.Features.Staff
             });
 
             await _db.SaveChangesAsync();
+
+            if (OrderWorkflow.IsCancelled(normalizedStatus))
+            {
+                try
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        dbOrder.UserId,
+                        orderId,
+                        "Order Cancellation Update",
+                        $"Dear valued customer, we sincerely apologize, but your order ORD-{orderId:D4} has been cancelled due to an unexpected stock issue. We thank you so much for your interest in Chic Boutique and apologize for the inconvenience. To show how much we value you, please use the discount code CHIC10 for 10% off your next purchase!");
+                }
+                catch (Exception)
+                {
+                    // Ignore
+                }
+            }
+
             return true;
         }
 
@@ -168,6 +212,30 @@ namespace ClothingPlatform.Api.Features.Staff
                 TargetId = variantId,
                 ActionType = "update",
                 Description = $"Adjusted SKU {dbVariant.Sku} stock from {oldQty} to {dbVariant.StockQuantity}.",
+                CreatedAt = DateTime.Now
+            });
+
+            await _db.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> RestockVariantAsync(int variantId, int quantity, decimal purchasePrice, string notes, int staffId)
+        {
+            var operationalStaffId = await ResolveOperationalStaffIdAsync(staffId);
+            var dbVariant = await _db.ProductVariants.FirstOrDefaultAsync(v => v.VariantId == variantId);
+            if (dbVariant == null) return false;
+
+            int oldQty = dbVariant.StockQuantity;
+            dbVariant.StockQuantity += quantity;
+            dbVariant.PurchasePrice = purchasePrice;
+
+            _db.StaffActivityLogs.Add(new StaffActivityLog
+            {
+                StaffId = operationalStaffId,
+                TargetTable = "product_variants",
+                TargetId = variantId,
+                ActionType = "create",
+                Description = $"Stock-In Voucher: Restocked SKU {dbVariant.Sku}. Added {quantity} units (Old: {oldQty}, New: {dbVariant.StockQuantity}). Purchase Price: {purchasePrice:N0} MMK. Notes: {notes}",
                 CreatedAt = DateTime.Now
             });
 
@@ -260,7 +328,7 @@ namespace ClothingPlatform.Api.Features.Staff
             }
         }
 
-        public async Task<bool> UpdateProfileAsync(int staffId, string firstName, string lastName, string email)
+        public async Task<bool> UpdateProfileAsync(int staffId, string firstName, string lastName, string email, string? password)
         {
             var user = await _db.Users
                 .Include(u => u.Role)
@@ -271,6 +339,11 @@ namespace ClothingPlatform.Api.Features.Staff
             user.FirstName = firstName;
             user.LastName = lastName;
             user.Email = email;
+
+            if (!string.IsNullOrWhiteSpace(password))
+            {
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
+            }
 
             await _db.SaveChangesAsync();
             return true;

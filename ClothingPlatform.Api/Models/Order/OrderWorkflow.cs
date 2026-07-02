@@ -6,8 +6,10 @@ namespace ClothingPlatform.Api.Models.Order
         public const string Processing = "Processing";
         public const string Confirm = "Confirm";
         public const string Cancelled = "Cancelled";
+        public const string CancelledByCustomer = "CancelledByCustomer";
+        public const string CancelledByStaff = "CancelledByStaff";
 
-        public static readonly string[] Statuses = { Pending, Processing, Confirm, Cancelled };
+        public static readonly string[] Statuses = { Pending, Processing, Confirm, Cancelled, CancelledByCustomer, CancelledByStaff };
         private static readonly string[] FulfillmentStatuses = { Pending, Processing, Confirm };
 
         public static string Normalize(string? status)
@@ -16,9 +18,19 @@ namespace ClothingPlatform.Api.Models.Order
             {
                 "processing" => Processing,
                 "confirm" or "confirmed" or "completed" or "delivered" => Confirm,
+                "cancelledbycustomer" or "cancelled_by_customer" => CancelledByCustomer,
+                "cancelledbystaff" or "cancelled_by_staff" or "cancelledbyadmin" or "cancelled_by_admin" => CancelledByStaff,
                 "cancelled" or "canceled" => Cancelled,
                 _ => Pending
             };
+        }
+
+        public static bool IsCancelled(string? status)
+        {
+            var normalized = Normalize(status);
+            return normalized == Cancelled
+                || normalized == CancelledByCustomer
+                || normalized == CancelledByStaff;
         }
 
         public static bool CanMoveTo(string? currentStatus, string? requestedStatus)
@@ -26,12 +38,12 @@ namespace ClothingPlatform.Api.Models.Order
             var current = Normalize(currentStatus);
             var requested = Normalize(requestedStatus);
 
-            if (requested == Cancelled)
+            if (IsCancelled(requested))
             {
                 return current == Pending || current == Processing;
             }
 
-            if (current == Cancelled)
+            if (IsCancelled(current))
             {
                 return false;
             }
@@ -43,7 +55,7 @@ namespace ClothingPlatform.Api.Models.Order
         {
             var normalized = Normalize(status);
             return string.Equals(normalized, Confirm, StringComparison.Ordinal)
-                || string.Equals(normalized, Cancelled, StringComparison.Ordinal);
+                || IsCancelled(normalized);
         }
     }
 }

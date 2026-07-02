@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -61,6 +61,10 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Wishlist> Wishlists { get; set; }
 
+    public virtual DbSet<OrderReturn> OrderReturns { get; set; }
+
+    public virtual DbSet<ContactMessage> ContactMessages { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
@@ -115,7 +119,7 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnName("created_at");
 
-            entity.HasOne(d => d.User).WithMany()
+            entity.HasOne(d => d.User).WithMany(p => p.CustomerNotifications)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("FK_CustomerNotifications_Users");
         });
@@ -234,6 +238,7 @@ public partial class AppDbContext : DbContext
                 .HasColumnType("decimal(10, 2)")
                 .HasColumnName("total_amount");
             entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.CancelReason).HasColumnName("cancel_reason");
 
             entity.HasOne(d => d.User).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.UserId)
@@ -689,6 +694,60 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.Wishlists)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("FK_Wishlist_Users");
+        });
+
+        modelBuilder.Entity<OrderReturn>(entity =>
+        {
+            entity.HasKey(e => e.OrderReturnId).HasName("PK_order_returns");
+
+            entity.ToTable("order_returns");
+
+            entity.Property(e => e.OrderReturnId).HasColumnName("order_return_id");
+            entity.Property(e => e.OrderId).HasColumnName("order_id");
+            entity.Property(e => e.VariantId).HasColumnName("variant_id");
+            entity.Property(e => e.Quantity).HasColumnName("quantity");
+            entity.Property(e => e.ReasonCheckbox)
+                .HasMaxLength(255)
+                .HasColumnName("reason_checkbox");
+            entity.Property(e => e.ReasonText).HasColumnName("reason_text");
+            entity.Property(e => e.ReceiptImageUrl)
+                .HasMaxLength(500)
+                .HasColumnName("receipt_image_url");
+            entity.Property(e => e.ReturnOption)
+                .HasMaxLength(50)
+                .HasColumnName("return_option");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnName("created_at");
+
+            entity.HasOne(d => d.Order).WithMany()
+                .HasForeignKey(d => d.OrderId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_OrderReturns_Orders");
+
+            entity.HasOne(d => d.Variant).WithMany()
+                .HasForeignKey(d => d.VariantId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_OrderReturns_Variants");
+        });
+
+        modelBuilder.Entity<ContactMessage>(entity =>
+        {
+            entity.HasKey(e => e.ContactMessageId).HasName("PK_contact_messages");
+
+            entity.ToTable("contact_messages");
+
+            entity.Property(e => e.ContactMessageId).HasColumnName("contact_message_id");
+            entity.Property(e => e.FullName)
+                .HasMaxLength(255)
+                .HasColumnName("full_name");
+            entity.Property(e => e.Email)
+                .HasMaxLength(255)
+                .HasColumnName("email");
+            entity.Property(e => e.Message).HasColumnName("message");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnName("created_at");
         });
 
         OnModelCreatingPartial(modelBuilder);

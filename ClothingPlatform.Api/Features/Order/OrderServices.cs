@@ -1,4 +1,4 @@
-﻿using ClothingPlatform.DB.AppDbModels;
+using ClothingPlatform.DB.AppDbModels;
 using ClothingPlatform.Api.Features.Notifications;
 using ClothingPlatform.Api.Models.Order;
 using Microsoft.EntityFrameworkCore;
@@ -18,16 +18,26 @@ namespace ClothingPlatform.Api.Features.Order
 
         public List<OrderHistoryDto> GetUserOrderHistory(int userId)
         {
-            return _db.Orders.AsNoTracking()
+            var rawOrders = _db.Orders.AsNoTracking()
                 .Where(o => o.UserId == userId)
-                .Select(o => new OrderHistoryDto
+                .Select(o => new
                 {
-                    OrderId = o.OrderId,
-                    TotalPrice = o.TotalAmount,
-                    OrderStatus = OrderWorkflow.Normalize(o.OrderStatus),
-                    ShippingAddress = o.ShippingAddress,
-                    CreatedAt = (DateTime)o.CreatedAt
-                }).ToList();
+                    o.OrderId,
+                    o.TotalAmount,
+                    o.OrderStatus,
+                    o.ShippingAddress,
+                    o.CreatedAt
+                })
+                .ToList();
+
+            return rawOrders.Select(o => new OrderHistoryDto
+            {
+                OrderId = o.OrderId,
+                TotalPrice = o.TotalAmount,
+                OrderStatus = OrderWorkflow.Normalize(o.OrderStatus),
+                ShippingAddress = o.ShippingAddress,
+                CreatedAt = o.CreatedAt ?? DateTime.MinValue
+            }).ToList();
         }
 
         public OrderResultDto PlaceOrderTransaction(CheckoutRequest model)
@@ -87,59 +97,57 @@ namespace ClothingPlatform.Api.Features.Order
                 Message = "Order and Payment checkout process completed."
             };
         }
+
         public async Task<List<OrderDashboardDto>> GetAllOrder()
         {
-            return await _db.Orders
-                    .AsNoTracking() // 💡 Read-only ဖြစ်၍ Performance ပိုမြန်စေရန်
+            var dbOrders = await _db.Orders
+                    .AsNoTracking()
                     .Include(o => o.User)
                     .Include(o => o.Payments)
                     .Include(o => o.OrderItems)
                         .ThenInclude(oi => oi.Variant)
                             .ThenInclude(v => v.Product)
                     .OrderByDescending(o => o.OrderId)
-                    // 🟢 အမှန်ပြင်ဆင်ချက်: Entity (Order) မှ DTO (OrderDashboardDto) သို့ ဒေတာများ ပြောင်းလဲပေးခြင်း
-                    .Select(o => new OrderDashboardDto
-                    {
-                        OrderId = o.OrderId,
-                        UserId = o.UserId,
-                        // 🟢 အမှန်ပြင်ဆင်ချက်: FirstName နှင့် LastName ကို တစ်ခါတည်း တွဲပေးလိုက်ခြင်း
-                        UserName = o.User != null ? $"{o.User.FirstName} {o.User.LastName}".Trim() : "Guest",
-                        UserEmail = o.User != null ? o.User.Email : string.Empty,
-                        OrderDate = o.CreatedAt,
-                        TotalAmount = o.TotalAmount,
-                        OrderStatus = OrderWorkflow.Normalize(o.OrderStatus),
-                        PaymentStatus = o.PaymentStatus,
-                        ShippingAddress = o.ShippingAddress,
-                        PhoneNumber = o.User.PhoneNumber,
-                        
-
-                        // Payments များကို Mapping လုပ်ခြင်း
-                        Payments = o.Payments.Select(p => new OrderPaymentDto
-                        {
-                            PaymentId = p.PaymentId,
-                            PaymentMethod = p.PaymentMethod,
-                            TransactionNumber = p.TransactionId,
-                            AmountPaid = p.Amount,
-                            PaymentDate = p.CreatedAt,
-                            Status = p.PaymentStatus,
-                            SlipImageUrl = p.SlipImageUrl
-                        }).ToList(),
-
-                        // OrderItems များကို Mapping လုပ်ခြင်း
-                        OrderItems = o.OrderItems.Select(oi => new OrderItemDashboardDto
-                        {
-                            OrderItemId = oi.OrderItemId,
-                            VariantId = oi.VariantId,
-                            ProductId = oi.Variant != null ? oi.Variant.ProductId : 0,
-                            ProductName = oi.Variant != null && oi.Variant.Product != null ? oi.Variant.Product.Name : "Unknown Product",
-                            Size = oi.Variant != null ? oi.Variant.Size : string.Empty,
-                            Color = oi.Variant != null ? oi.Variant.Color : string.Empty,
-                            Sku = oi.Variant != null ? oi.Variant.Sku : string.Empty,
-                            PricePerUnit = oi.PriceAtPurchase,
-                            Quantity = oi.Quantity
-                        }).ToList()
-                    })
                     .ToListAsync();
+
+            return dbOrders.Select(o => new OrderDashboardDto
+            {
+                OrderId = o.OrderId,
+                UserId = o.UserId,
+                UserName = o.User != null ? $"{o.User.FirstName} {o.User.LastName}".Trim() : "Guest",
+                UserEmail = o.User != null ? o.User.Email : string.Empty,
+                OrderDate = o.CreatedAt,
+                TotalAmount = o.TotalAmount,
+                OrderStatus = OrderWorkflow.Normalize(o.OrderStatus),
+                PaymentStatus = o.PaymentStatus,
+                ShippingAddress = o.ShippingAddress,
+                PhoneNumber = o.User != null ? o.User.PhoneNumber : string.Empty,
+                
+                Payments = o.Payments.Select(p => new OrderPaymentDto
+                {
+                    PaymentId = p.PaymentId,
+                    PaymentMethod = p.PaymentMethod,
+                    TransactionNumber = p.TransactionId,
+                    AmountPaid = p.Amount,
+                    PaymentDate = p.CreatedAt,
+                    Status = p.PaymentStatus,
+                    SlipImageUrl = p.SlipImageUrl
+                }).ToList(),
+
+                OrderItems = o.OrderItems.Select(oi => new OrderItemDashboardDto
+                {
+                    OrderItemId = oi.OrderItemId,
+                    VariantId = oi.VariantId,
+                    ProductId = oi.Variant != null ? oi.Variant.ProductId : 0,
+                    ProductName = oi.Variant != null && oi.Variant.Product != null ? oi.Variant.Product.Name : "Unknown Product",
+                    Size = oi.Variant != null ? oi.Variant.Size : string.Empty,
+                    Color = oi.Variant != null ? oi.Variant.Color : string.Empty,
+                    Sku = oi.Variant != null ? oi.Variant.Sku : string.Empty,
+                    PricePerUnit = oi.PriceAtPurchase,
+                    PurchasePrice = oi.Variant != null ? oi.Variant.PurchasePrice : 0,
+                    Quantity = oi.Quantity
+                }).ToList()
+            }).ToList();
         }
 
         public async Task<bool> DeleteOrderAsync(int orderId)
@@ -175,6 +183,5 @@ namespace ClothingPlatform.Api.Features.Order
                 _ => "cod"
             };
         }
-
     }
 }

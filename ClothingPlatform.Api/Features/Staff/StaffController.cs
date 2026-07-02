@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using ClothingPlatform.Api.Features.Staff;
 using Microsoft.AspNetCore.Authorization;
 using System;
@@ -49,6 +49,14 @@ namespace ClothingPlatform.Api.Features.Staff
             return Ok();
         }
 
+        [HttpPost("stock/restock")]
+        public async Task<IActionResult> RestockVariant([FromQuery] int variantId, [FromQuery] int quantity, [FromQuery] decimal purchasePrice, [FromQuery] string notes, [FromQuery] int staffId)
+        {
+            var success = await _staffService.RestockVariantAsync(variantId, quantity, purchasePrice, notes, staffId);
+            if (!success) return BadRequest("Variant not found or restock failed.");
+            return Ok();
+        }
+
         [HttpPost("phoneorder")]
         public async Task<IActionResult> SubmitPhoneOrder([FromBody] GuestOrderRequestDto request, [FromQuery] int staffId)
         {
@@ -58,9 +66,9 @@ namespace ClothingPlatform.Api.Features.Staff
         }
 
         [HttpPost("profile/{staffId}")]
-        public async Task<IActionResult> UpdateProfile(int staffId, [FromQuery] string firstName, [FromQuery] string lastName, [FromQuery] string email)
+        public async Task<IActionResult> UpdateProfile(int staffId, [FromQuery] string firstName, [FromQuery] string lastName, [FromQuery] string email, [FromQuery] string? password = null)
         {
-            var success = await _staffService.UpdateProfileAsync(staffId, firstName, lastName, email);
+            var success = await _staffService.UpdateProfileAsync(staffId, firstName, lastName, email, password);
             if (!success) return BadRequest("Staff profile update failed.");
             return Ok();
         }

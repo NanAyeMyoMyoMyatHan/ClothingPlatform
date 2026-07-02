@@ -277,11 +277,12 @@ namespace ClothingPlatform.Web.Services
                     _reportGuestOrders = data.ReportGuestOrders ?? new List<GuestOrder>();
 
                     ReportOrderCount = _reportOrders.Count + _reportGuestOrders.Count;
-                    ReportRevenue = _reportOrders.Sum(o => o.TotalAmount) + _reportGuestOrders.Sum(g => g.TotalAmount);
+                    ReportRevenue = _reportOrders.Sum(o => o.OrderItems.Sum(oi => oi.Quantity * (oi.PriceAtPurchase - (oi.Variant != null ? oi.Variant.PurchasePrice : 0))))
+                                    + _reportGuestOrders.Sum(g => g.GuestOrderItems.Sum(gi => gi.Quantity * (gi.PriceAtPurchase - (gi.Variant != null ? gi.Variant.PurchasePrice : 0))));
 
                     RecentOrders = AllOrders.Take(5).ToList();
                     TotalOrdersCount = AllOrders.Count;
-                    TotalRevenue = AllOrders.Sum(o => o.TotalAmount);
+                    TotalRevenue = AllOrders.Sum(o => o.OrderItems.Sum(oi => oi.Quantity * (oi.PriceAtPurchase - (oi.Variant != null ? oi.Variant.PurchasePrice : 0))));
                     TotalSkusCount = InventoryVariants.Count;
                     LowStockCount = InventoryVariants.Count(v => v.StockQuantity < 5);
 
@@ -426,7 +427,14 @@ namespace ClothingPlatform.Web.Services
 
             if (!string.IsNullOrEmpty(CurrentFilter))
             {
-                query = query.Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Normalize(CurrentFilter));
+                if (CurrentFilter == OrderWorkflow.Cancelled)
+                {
+                    query = query.Where(o => OrderWorkflow.IsCancelled(o.OrderStatus));
+                }
+                else
+                {
+                    query = query.Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Normalize(CurrentFilter));
+                }
             }
 
             if (!string.IsNullOrWhiteSpace(RegularOrderSearch))
@@ -865,13 +873,25 @@ namespace ClothingPlatform.Web.Services
 
         public static bool IsFinalStatus(string? status) => OrderWorkflow.IsFinal(status);
 
-        public MarkupString StatusBadge(string status) => OrderWorkflow.Normalize(status) switch
+        public MarkupString StatusBadge(string status)
         {
-            OrderWorkflow.Cancelled => new MarkupString("<span class=\"status-badge badge-cancelled\"><i class=\"bi bi-x-circle\"></i> Cancelled</span>"),
-            OrderWorkflow.Confirm => new MarkupString("<span class=\"status-badge badge-confirm\"><i class=\"bi bi-check-circle\"></i> Confirm</span>"),
-            OrderWorkflow.Processing => new MarkupString("<span class=\"status-badge badge-processing\"><i class=\"bi bi-arrow-repeat\"></i> Processing</span>"),
-            _ => new MarkupString("<span class=\"status-badge badge-pending\"><i class=\"bi bi-hourglass-split\"></i> Pending</span>")
-        };
+            var normalized = OrderWorkflow.Normalize(status);
+            if (normalized == OrderWorkflow.CancelledByCustomer)
+            {
+                return new MarkupString("<span class=\"status-badge badge-cancelled\"><i class=\"bi bi-x-circle\"></i> Cancelled (Customer)</span>");
+            }
+            if (normalized == OrderWorkflow.CancelledByStaff)
+            {
+                return new MarkupString("<span class=\"status-badge badge-cancelled\"><i class=\"bi bi-x-circle\"></i> Cancelled (Staff)</span>");
+            }
+            return normalized switch
+            {
+                OrderWorkflow.Cancelled => new MarkupString("<span class=\"status-badge badge-cancelled\"><i class=\"bi bi-x-circle\"></i> Cancelled</span>"),
+                OrderWorkflow.Confirm => new MarkupString("<span class=\"status-badge badge-confirm\"><i class=\"bi bi-check-circle\"></i> Confirm</span>"),
+                OrderWorkflow.Processing => new MarkupString("<span class=\"status-badge badge-processing\"><i class=\"bi bi-arrow-repeat\"></i> Processing</span>"),
+                _ => new MarkupString("<span class=\"status-badge badge-pending\"><i class=\"bi bi-hourglass-split\"></i> Pending</span>")
+            };
+        }
 
         private void NotifyStateChanged() => StateChanged?.Invoke();
 

@@ -50,6 +50,29 @@ namespace ClothingPlatform.Api.Features.Notifications
             return notifications.Select(ToDto).ToList();
         }
 
+        public async Task<CustomerNotificationDto> CreateNotificationAsync(int userId, int? orderId, string title, string message)
+        {
+            var notification = new CustomerNotification
+            {
+                UserId = userId,
+                OrderId = orderId,
+                Title = title,
+                Message = message,
+                IsRead = false,
+                CreatedAt = DateTime.Now
+            };
+
+            _db.CustomerNotifications.Add(notification);
+            await _db.SaveChangesAsync();
+
+            var dto = ToDto(notification);
+            await _hubContext.Clients
+                .Group(CustomerNotificationHub.CustomerGroup(userId))
+                .SendAsync("CustomerNotification", dto);
+
+            return dto;
+        }
+
         public async Task<bool> MarkReadAsync(int notificationId)
         {
             var notification = await _db.CustomerNotifications.FirstOrDefaultAsync(n => n.NotificationId == notificationId);

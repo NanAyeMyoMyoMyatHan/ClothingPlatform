@@ -19,6 +19,8 @@ public partial class Order
 
     public DateTime? CreatedAt { get; set; }
 
+    public string? CancelReason { get; set; }
+
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();

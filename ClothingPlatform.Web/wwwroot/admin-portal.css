@@ -62,7 +62,8 @@
         background-image: none !important;
         background-color: var(--bg-sidebar) !important;
         border-right: 1px solid var(--accent-hover) !important;
-        min-height: 100vh;
+        height: 100vh;
+        overflow-y: auto;
         position: fixed;
         top: 0;
         left: 0;
@@ -257,6 +258,17 @@
     }
 
         .luxury-input:focus, .luxury-select:focus {
+            border-color: var(--accent-main) !important;
+            box-shadow: 0 0 0 0.2rem rgba(139, 26, 26, 0.12) !important;
+        }
+
+        /* Suppress browser native :invalid red border on optional password fields */
+        .luxury-input:invalid {
+            border-color: var(--border-color) !important;
+            box-shadow: none !important;
+        }
+
+        .luxury-input:invalid:focus {
             border-color: var(--accent-main) !important;
             box-shadow: 0 0 0 0.2rem rgba(139, 26, 26, 0.12) !important;
         }

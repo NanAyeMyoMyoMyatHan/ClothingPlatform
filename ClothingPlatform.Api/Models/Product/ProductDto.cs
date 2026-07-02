@@ -23,6 +23,8 @@ public class ProductModel
     public ProductImageModel? ImageDto { get; set; }
     public string? ImageBase64 { get; set; }
     public string? ImageFileName { get; set; }
+    /// <summary>UserId of the admin/staff who created the product — used for stock-in voucher logging.</summary>
+    public int StaffId { get; set; }
 }
 
 public class ProductImageModel

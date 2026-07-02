@@ -6,7 +6,7 @@
 
 @inject AuthenticationStateProvider AuthenStateProvider
 
-<PageTitle>Chic Boutique — Luxury Atelier</PageTitle>
+<PageTitle>Chic Boutique  Luxury Atelier</PageTitle>
 
 <style>
     :root {
@@ -163,6 +163,107 @@
         align-items: center;
         justify-content: center;
         padding: 0 4px;
+    }
+
+    /* -- Notifications Dropdown -- */
+    .notifications-dropdown-menu {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        width: 320px;
+        max-height: 400px;
+        background: #FFFFFF;
+        border: 1px solid #EDD9D0;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(139,26,26,0.15);
+        z-index: 1000;
+        margin-top: 8px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .notifications-dropdown-menu .dropdown-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid #EDD9D0;
+        background: #FFF3EE;
+        font-family: 'DM Sans', sans-serif;
+    }
+
+    .notifications-dropdown-menu .dropdown-header span {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #3C1F10;
+    }
+
+    .notifications-dropdown-menu .mark-all-read-btn {
+        background: none;
+        border: none;
+        color: #8B1A1A;
+        font-size: 0.72rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: underline;
+    }
+
+    .notifications-dropdown-menu .dropdown-body {
+        overflow-y: auto;
+        flex-grow: 1;
+    }
+
+    .notifications-dropdown-menu .empty-notifications {
+        padding: 24px;
+        text-align: center;
+        color: #7A5C50;
+        font-size: 0.8rem;
+    }
+
+    .notifications-dropdown-menu .notification-item {
+        padding: 12px 16px;
+        border-bottom: 1px solid #FAF0EE;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .notifications-dropdown-menu .notification-item:hover {
+        background-color: #FFF3EE;
+    }
+
+    .notifications-dropdown-menu .notification-item.unread {
+        background-color: rgba(139, 26, 26, 0.03);
+    }
+
+    .notifications-dropdown-menu .noti-title {
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: #3C1F10;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .notifications-dropdown-menu .unread-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: #8B1A1A;
+    }
+
+    .notifications-dropdown-menu .noti-message {
+        font-size: 0.75rem;
+        color: #7A5C50;
+        margin-top: 4px;
+        line-height: 1.3;
+    }
+
+    .notifications-dropdown-menu .noti-time {
+        font-size: 0.65rem;
+        color: #C9A96E;
+        margin-top: 6px;
+        text-align: right;
     }
 
     /* Nav Tabs */
@@ -1362,6 +1463,20 @@
         border: 1px solid var(--border);
         margin-bottom: 24px;
         overflow: hidden;
+        transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .history-card.is-expanded {
+        border-color: var(--rose);
+        box-shadow: 0 4px 15px rgba(139, 26, 26, 0.1);
+    }
+
+    .history-card.is-expanded .history-card-header {
+        background: #edd8cd; /* Richer pale rose highlight when active/expanded */
+    }
+
+    .history-card.is-expanded .history-card-header:hover {
+        background: #e4ccbf;
     }
 
     .history-card-header {
@@ -1373,6 +1488,44 @@
         padding: 18px 24px;
         background: var(--rose-pale);
         border-bottom: 1px solid var(--rose-light);
+        transition: background-color 0.2s;
+    }
+
+    .history-card-header:hover {
+        background: #f7ebe4;
+    }
+
+    .rotate-chevron {
+        transition: transform 0.25s ease;
+    }
+
+    .rotate-180 {
+        transform: rotate(180deg);
+    }
+
+    .history-details-expanded {
+        padding: 24px;
+        border-top: 1px solid var(--border);
+        background: #fdfcfb;
+    }
+
+    .btn-cancel-order {
+        background: transparent;
+        border: 1px solid #b91c1c;
+        color: #b91c1c;
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.72rem;
+        letter-spacing: 0.15em;
+        font-weight: 600;
+        text-transform: uppercase;
+        padding: 8px 18px;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .btn-cancel-order:hover {
+        background: #b91c1c;
+        color: #fff;
     }
 
     .history-order-id {
@@ -1442,8 +1595,15 @@
     .history-item-row {
         display: flex;
         gap: 14px;
-        padding: 12px 0;
+        padding: 12px 8px;
         border-bottom: 1px solid var(--border);
+        transition: all 0.2s ease;
+        border-radius: 4px;
+    }
+
+    .history-item-row:hover {
+        background-color: var(--rose-pale);
+        padding-left: 12px;
     }
 
         .history-item-row:last-child {
@@ -1476,6 +1636,101 @@
         font-weight: 500;
         color: var(--charcoal-soft);
         margin-top: 4px;
+    }
+
+    /* Order Detail Hover Modal */
+    .order-hover-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 2100;
+        background: rgba(60, 31, 16, 0.4);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        animation: fadeIn 0.25s ease;
+    }
+
+    .order-hover-modal {
+        background: var(--white);
+        max-width: 650px;
+        width: 100%;
+        max-height: 85vh;
+        overflow-y: auto;
+        border-radius: 16px;
+        box-shadow: 0 20px 50px rgba(139, 26, 26, 0.18);
+        border: 1px solid var(--rose-light);
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        animation: slideUp 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    .order-hover-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 24px 28px;
+        border-bottom: 1px solid var(--border);
+        background: var(--rose-pale);
+    }
+
+    .order-hover-title {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--charcoal);
+        letter-spacing: 0.05em;
+    }
+
+    .order-hover-close {
+        background: none;
+        border: none;
+        font-size: 1.25rem;
+        color: var(--charcoal-soft);
+        cursor: pointer;
+        transition: color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(139, 26, 26, 0.05);
+    }
+
+    .order-hover-close:hover {
+        color: var(--rose);
+        background: rgba(139, 26, 26, 0.1);
+    }
+
+    .order-hover-body {
+        padding: 28px;
+        overflow-y: auto;
+        text-align: left;
+    }
+
+    .order-hover-section-title {
+        font-size: 0.75rem;
+        letter-spacing: 0.15em;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: var(--rose);
+        margin-bottom: 12px;
+        border-bottom: 1px solid var(--rose-light);
+        padding-bottom: 6px;
+    }
+
+    @@keyframes slideUp {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
     }
 
     /* Toast */
@@ -1656,6 +1911,17 @@
     .nav-tabs-bar {
         border-bottom: 1px solid var(--border);
     }
+
+    .exchange-prod-card:hover {
+        border-color: var(--rose-light) !important;
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .toast-msg, .toast-msg span {
+        color: #FFFFFF !important;
+        font-weight: 500;
+    }
 </style>
 
 
@@ -1689,13 +1955,51 @@
 
             @if (currentUser != null)
             {
-                <button class="notification-btn" title="Notifications">
-                    <i class="bi bi-bell"></i>
-                    @if (notifications.Any(n => !n.IsRead))
+                <div style="position: relative; display: inline-block;">
+                    <button class="notification-btn" title="Notifications" @onclick="ToggleNotificationsDropdown">
+                        <i class="bi bi-bell"></i>
+                        @if (notifications.Any(n => !n.IsRead))
+                        {
+                            <span class="notification-badge">@notifications.Count(n => !n.IsRead)</span>
+                        }
+                    </button>
+                    
+                    @if (showNotificationsDropdown)
                     {
-                        <span class="notification-badge">@notifications.Count(n => !n.IsRead)</span>
+                        <div class="notifications-dropdown-menu">
+                            <div class="dropdown-header">
+                                <span>Notifications (@notifications.Count)</span>
+                                @if (notifications.Any(n => !n.IsRead))
+                                {
+                                    <button class="mark-all-read-btn" @onclick="MarkAllNotificationsAsRead" @onclick:stopPropagation="true">Mark all read</button>
+                                }
+                            </div>
+                            <div class="dropdown-body">
+                                @if (!notifications.Any())
+                                {
+                                    <div class="empty-notifications">No notifications yet.</div>
+                                }
+                                else
+                                {
+                                    @foreach (var noti in notifications)
+                                    {
+                                        <div class="notification-item @(noti.IsRead ? "" : "unread")" @onclick="() => HandleNotificationClick(noti)" @onclick:stopPropagation="true">
+                                            <div class="noti-title">
+                                                @noti.Title
+                                                @if (!noti.IsRead)
+                                                {
+                                                    <span class="unread-dot"></span>
+                                                }
+                                            </div>
+                                            <div class="noti-message">@noti.Message</div>
+                                            <div class="noti-time">@noti.CreatedAt.ToString("g")</div>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
                     }
-                </button>
+                </div>
             }
 
             @if (currentUser != null)
@@ -1714,6 +2018,7 @@
         <button class="nav-tab @(activeTab == "best" ? "active" : "")" @onclick='() => Navigate("best")'>Best Seller</button>
         <button class="nav-tab @(activeTab == "shop" ? "active" : "")" @onclick='() => Navigate("shop")'>The Collection</button>
         <button class="nav-tab @(activeTab == "history" ? "active" : "")" @onclick='() => Navigate("history")'>My Purchases</button>
+        <button class="nav-tab @(activeTab == "return" ? "active" : "")" @onclick='() => NavigateToReturnTab()'>Return / Exchange</button>
         <button class="nav-tab @(activeTab == "profile" ? "active" : "")" @onclick='() => Navigate("profile")'>My Profile</button>
        @if (currentUser != null)
         {
@@ -2050,7 +2355,7 @@
                                     <FallbackImage Src="@item.ImgUrl" Alt="@item.Name" CssClass="order-summary-img" />
                                     <div>
                                         <p class="order-sum-name">@item.Name</p>
-                                        <p class="order-sum-meta">@item.Size · @item.Color · Qty @item.Qty</p>
+                                        <p class="order-sum-meta">@item.Size  @item.Color  Qty @item.Qty</p>
                                         <p class="order-sum-price">@((item.Price * item.Qty).ToString("N0")) MMK</p>
                                     </div>
                                 </div>
@@ -2094,8 +2399,8 @@
             {
                 @foreach (var order in userOrders)
                 {
-                    <div class="history-card">
-                        <div class="history-card-header">
+                    <div class="history-card @(expandedOrderId == order.OrderId ? "is-expanded" : "")">
+                        <div class="history-card-header" @onclick="() => ToggleOrderDetails(order.OrderId)" style="cursor: pointer; user-select: none;">
                             <div>
                                 <p class="history-order-id">Order ORD-@order.OrderId.ToString("D4")</p>
                                 <p class="history-date">@(order.CreatedAt?.ToString("dd MMM yyyy HH:mm") ?? "N/A")</p>
@@ -2109,37 +2414,163 @@
                                 {
                                     <span class="badge-processing px-3 py-1 rounded">Processing</span>
                                 }
-                                else if (OrderWorkflow.Normalize(order.OrderStatus) == OrderWorkflow.Cancelled)
+                                else if (OrderWorkflow.IsCancelled(order.OrderStatus))
                                 {
-                                    <span class="badge-cancelled px-3 py-1 rounded">Cancelled</span>
+                                    <span class="badge-cancelled px-3 py-1 rounded">
+                                        @(OrderWorkflow.Normalize(order.OrderStatus) == OrderWorkflow.CancelledByCustomer ? "Cancelled (Customer)" :
+                                          OrderWorkflow.Normalize(order.OrderStatus) == OrderWorkflow.CancelledByStaff ? "Cancelled (Staff)" : "Cancelled")
+                                    </span>
                                 }
                                 else
                                 {
                                     <span class="badge-pending px-3 py-1 rounded">Pending</span>
                                 }
                             </div>
-                            <span class="history-total">@order.TotalAmount.ToString("N0") MMK</span>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span class="history-total">@order.TotalAmount.ToString("N0") MMK</span>
+                                <span class="rotate-chevron @(expandedOrderId == order.OrderId ? "rotate-180" : "")" style="display: inline-flex; align-items: center; color: var(--charcoal-soft);">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </span>
+                            </div>
                         </div>
-                            <div class="history-items">
-                                @foreach (var item in order.OrderItems)
-                                {
-                                    // ?? ?? ????????????? ????????? ?????????? ????????????????
-                                    var imgObj = item.Variant?.Product?.ProductImages?.FirstOrDefault(i => i.IsPrimary == true);
-                                    var primaryImg = NormalizeImageUrl(imgObj?.ImageUrl);
-                                    <div class="history-item-row">
-                                        <FallbackImage Src="@primaryImg" Alt="@(item.Variant?.Product?.Name ?? "Product")" CssClass="history-item-img" />
+
+                        @if (expandedOrderId == order.OrderId)
+                        {
+                            <div class="order-hover-overlay" @onclick="() => ToggleOrderDetails(order.OrderId)">
+                                <div class="order-hover-modal" @onclick:stopPropagation="true">
+                                    <div class="order-hover-header">
                                         <div>
-                                            <h4 class="history-item-name">@(item.Variant?.Product?.Name ?? "Unknown Product")</h4>
-                                            <p class="history-item-meta">
-                                                Size: @(item.Variant?.Size ?? "-") ·
-                                                Color: @(item.Variant?.Color ?? "-") ·
-                                                Qty: @item.Quantity
-                                            </p>
-                                            <p class="history-item-price">@((item.PriceAtPurchase * item.Quantity).ToString("N0")) MMK</p>
+                                            <span class="order-hover-title">Order Details (ORD-@order.OrderId.ToString("D4"))</span>
+                                            <div style="font-size: 0.75rem; color: var(--charcoal-soft); margin-top: 4px;">
+                                                Placed on @(order.CreatedAt?.ToString("dd MMM yyyy HH:mm") ?? "N/A")
+                                            </div>
+                                        </div>
+                                        <button class="order-hover-close" @onclick="() => ToggleOrderDetails(order.OrderId)">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </div>
+                                    <div class="order-hover-body">
+                                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 24px;">
+                                            <!-- Delivery details -->
+                                            <div>
+                                                <h5 class="order-hover-section-title">Delivery Details</h5>
+                                                <p style="font-size: 0.82rem; color: var(--charcoal); margin: 0 0 6px; line-height: 1.4;">
+                                                    <strong>Address:</strong> @order.ShippingAddress
+                                                </p>
+                                                
+                                                @{
+                                                    var normStatus = OrderWorkflow.Normalize(order.OrderStatus);
+                                                    if (normStatus == OrderWorkflow.Confirm)
+                                                    {
+                                                        var confirmLog = order.StaffFulfillmentLogs?.FirstOrDefault(l => OrderWorkflow.Normalize(l.ActionTaken) == OrderWorkflow.Confirm);
+                                                        var deliveryTime = confirmLog?.ActionAt ?? order.CreatedAt?.AddDays(2);
+                                                        <p style="font-size: 0.82rem; color: #2e7d5e; margin: 0 0 6px; line-height: 1.4;">
+                                                            <strong>Delivered on:</strong> @(deliveryTime?.ToString("dd MMM yyyy 'at' hh:mm tt") ?? "N/A")
+                                                        </p>
+                                                    }
+                                                    else if (OrderWorkflow.IsCancelled(normStatus))
+                                                    {
+                                                        <p style="font-size: 0.82rem; color: #b91c1c; margin: 0 0 6px; line-height: 1.4;">
+                                                            <strong>Status:</strong> @(normStatus == OrderWorkflow.CancelledByCustomer ? "Cancelled (Customer)" :
+                                                                                       normStatus == OrderWorkflow.CancelledByStaff ? "Cancelled (Staff)" : "Cancelled")
+                                                        </p>
+                                                    }
+                                                    else
+                                                    {
+                                                        var estDeliveryTime = order.CreatedAt?.AddDays(3);
+                                                        <p style="font-size: 0.82rem; color: #c07826; margin: 0 0 6px; line-height: 1.4;">
+                                                            <strong>Estimated Delivery:</strong> @(estDeliveryTime?.ToString("dd MMM yyyy") ?? "N/A") (within 3 days)
+                                                        </p>
+                                                    }
+                                                }
+                                            </div>
+
+                                            <!-- Payment details -->
+                                            <div>
+                                                <h5 class="order-hover-section-title">Payment Details</h5>
+                                                @{
+                                                    var payment = order.Payments?.FirstOrDefault();
+                                                    if (payment != null)
+                                                    {
+                                                        <p style="font-size: 0.82rem; color: var(--charcoal); margin: 0 0 6px; line-height: 1.4;">
+                                                            <strong>Method:</strong> @(payment.PaymentMethod == "cod" ? "Cash on Delivery" : payment.PaymentMethod.ToUpperInvariant())
+                                                        </p>
+                                                        <p style="font-size: 0.82rem; color: var(--charcoal); margin: 0 0 6px; line-height: 1.4;">
+                                                            <strong>Transaction ID:</strong> @(payment.TransactionId ?? "N/A")
+                                                        </p>
+                                                        <p style="font-size: 0.82rem; color: var(--charcoal); margin: 0 0 6px; line-height: 1.4;">
+                                                            <strong>Status:</strong> <span style="text-transform: capitalize;">@payment.PaymentStatus</span>
+                                                        </p>
+                                                    }
+                                                    else
+                                                    {
+                                                        <p style="font-size: 0.82rem; color: var(--charcoal-soft); margin: 0;">No payment information available.</p>
+                                                    }
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <!-- Action Buttons -->
+                                        @if (OrderWorkflow.Normalize(order.OrderStatus) != OrderWorkflow.Confirm && !OrderWorkflow.IsCancelled(order.OrderStatus))
+                                        {
+                                            <div style="margin-bottom: 24px; display: flex; justify-content: flex-end;">
+                                                <button class="btn-cancel-order" @onclick="() => OpenCancelModal(order.OrderId)" @onclick:stopPropagation="true">
+                                                    Cancel Order
+                                                </button>
+                                            </div>
+                                        }
+                                        else if (OrderWorkflow.Normalize(order.OrderStatus) == OrderWorkflow.Confirm)
+                                        {
+                                            <div style="margin-bottom: 24px; display: flex; justify-content: flex-end;">
+                                                <button class="btn-primary-rose" @onclick="() => InitiateReturn(order)" @onclick:stopPropagation="true" style="padding: 10px 24px; font-size: 0.72rem;">
+                                                    Request Return / Exchange
+                                                </button>
+                                            </div>
+                                        }
+
+                                        <!-- Items List -->
+                                        <h5 class="order-hover-section-title">Creations Ordered</h5>
+                                        <div class="history-items" style="padding: 0;">
+                                            @foreach (var item in order.OrderItems)
+                                            {
+                                                var imgObj = item.Variant?.Product?.ProductImages?.FirstOrDefault(i => i.IsPrimary == true);
+                                                var primaryImg = NormalizeImageUrl(imgObj?.ImageUrl);
+                                                @if (item.Variant != null)
+                                                {
+                                                    <div class="history-item-row" style="padding: 12px 8px;">
+                                                        <FallbackImage Src="@primaryImg" Alt="@(item.Variant?.Product?.Name ?? "Product")" CssClass="history-item-img" style="width: 55px; height: 75px;" />
+                                                        <div>
+                                                            <h4 class="history-item-name" style="font-size: 0.9rem; font-weight: 500;">@(item.Variant?.Product?.Name ?? "Unknown Product")</h4>
+                                                            <p class="history-item-meta" style="font-size: 0.72rem; margin-top: 2px;">
+                                                                Size: @(item.Variant?.Size ?? "-") &middot;
+                                                                Color: @(item.Variant?.Color ?? "-") &middot;
+                                                                Qty: @item.Quantity
+                                                            </p>
+                                                            <p class="history-item-price" style="font-size: 0.8rem; margin-top: 3px;">@((item.PriceAtPurchase * item.Quantity).ToString("N0")) MMK</p>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="history-item-row" style="padding: 12px 8px;">
+                                                        <FallbackImage Src="@primaryImg" Alt="Product" CssClass="history-item-img" style="width: 55px; height: 75px;" />
+                                                        <div>
+                                                            <h4 class="history-item-name" style="font-size: 0.9rem; font-weight: 500;">Unknown Product</h4>
+                                                            <p class="history-item-meta" style="font-size: 0.72rem; margin-top: 2px;">
+                                                                Qty: @item.Quantity
+                                                            </p>
+                                                            <p class="history-item-price" style="font-size: 0.8rem; margin-top: 3px;">@((item.PriceAtPurchase * item.Quantity).ToString("N0")) MMK</p>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            }
                                         </div>
                                     </div>
-                                }
+                                </div>
                             </div>
+                        }
                     </div>
                 }
             }
@@ -2147,7 +2578,190 @@
     </div>
     }
 
-    
+    else if (activeTab == "return")
+    {
+    <div class="checkout-view" style="max-width: 800px; margin: 0 auto; padding: 50px 20px;">
+        <h2 class="section-title mb-4">Request <span>Return / Exchange</span></h2>
+        
+        @if (selectedReturnOrder == null)
+        {
+            <div class="alert alert-warning text-center py-5" style="background: var(--rose-pale); border: 1px solid var(--rose-light); color: var(--charcoal); border-radius: 12px;">
+                <i class="bi bi-exclamation-triangle" style="font-size: 2rem; display: block; margin-bottom: 12px; color: var(--rose);"></i>
+                You do not have any delivered orders eligible for return or exchange yet. Discover creations in the catalog!
+            </div>
+        }
+        else
+        {
+            <div class="order-summary-panel" style="padding: 30px; border-radius: 12px; background: var(--white); box-shadow: var(--shadow-lg);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+                    <div>
+                        <span style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; color: var(--charcoal); letter-spacing: 0.05em;">Order ORD-@selectedReturnOrder.OrderId.ToString("D4")</span>
+                        <p class="mb-0" style="font-size: 0.78rem; color: var(--charcoal-soft); margin-top: 4px;">Order Date: @(selectedReturnOrder.CreatedAt?.ToString("dd MMM yyyy") ?? "N/A")</p>
+                    </div>
+                    <button class="btn btn-cancel" style="background: var(--off-white); border: 1px solid var(--border); color: var(--charcoal); padding: 8px 16px; font-family: 'DM Sans', sans-serif; font-size: 0.72rem; cursor: pointer; text-transform: uppercase;" @onclick='() => Navigate("history")'>Back to History</button>
+                </div>
+
+                <!-- Select Order Dropdown -->
+                <div class="form-group mb-4" style="text-align: left;">
+                    <label class="form-label-custom">Select Order to Return / Exchange</label>
+                    <select class="form-control-custom" style="border-radius: 8px; font-family: 'DM Sans', sans-serif;" @onchange="OnReturnOrderChanged">
+                        @foreach (var order in userOrders.Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Confirm))
+                        {
+                            <option value="@order.OrderId" selected="@(selectedReturnOrder?.OrderId == order.OrderId)">
+                                Order ORD-@order.OrderId.ToString("D4") (Date: @(order.CreatedAt?.ToString("dd MMM yyyy") ?? "N/A"))
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Select Item to Return -->
+                <div class="form-group mb-4" style="text-align: left;">
+                    <label class="form-label-custom">Select Item to Return / Exchange</label>
+                    <select class="form-control-custom" style="border-radius: 8px; font-family: 'DM Sans', sans-serif;" value="@selectedReturnItemId" @onchange="OnReturnItemChanged">
+                        @foreach (var item in selectedReturnOrder.OrderItems)
+                        {
+                            <option value="@item.OrderItemId">
+                                @(item.Variant?.Product?.Name ?? "Product") (Size: @(item.Variant?.Size ?? "-"), Color: @(item.Variant?.Color ?? "-"), Qty: @item.Quantity)
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Show Item Preview -->
+                @if (selectedReturnItem != null)
+                {
+                    var imgObj = selectedReturnItem.Variant?.Product?.ProductImages?.FirstOrDefault(i => i.IsPrimary == true);
+                    var itemImg = NormalizeImageUrl(imgObj?.ImageUrl);
+                    <div style="display: flex; gap: 16px; background: var(--rose-pale); padding: 16px; border-radius: 8px; margin-bottom: 24px; text-align: left;">
+                        <FallbackImage Src="@itemImg" Alt="Product Image" style="width: 60px; height: 80px; object-fit: cover; border-radius: 4px;" />
+                        <div style="display: flex; flex-direction: column; justify-content: center;">
+                            <h4 style="font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--charcoal); margin-bottom: 4px;">@(selectedReturnItem.Variant?.Product?.Name ?? "Product")</h4>
+                            <p style="font-size: 0.78rem; color: var(--charcoal-soft); margin-bottom: 0;">Size: @(selectedReturnItem.Variant?.Size ?? "-") &middot; Color: @(selectedReturnItem.Variant?.Color ?? "-") &middot; Qty: @selectedReturnItem.Quantity</p>
+                            <p style="font-size: 0.85rem; font-weight: 600; color: var(--rose); margin-top: 4px; margin-bottom: 0;">@((selectedReturnItem.PriceAtPurchase * selectedReturnItem.Quantity).ToString("N0")) MMK</p>
+                        </div>
+                    </div>
+                }
+
+                <!-- Receipt Upload -->
+                <div class="form-group mb-4" style="text-align: left;">
+                    <label class="form-label-custom">Upload Receipt / Bill Image</label>
+                    <label class="slip-upload-zone" for="return-receipt-input" style="border-radius: 8px; padding: 24px; border: 2px dashed var(--rose-light);">
+                        <i class="bi bi-cloud-arrow-up slip-upload-icon" style="font-size: 1.8rem; margin-bottom: 8px; color: var(--rose-light);"></i>
+                        <p class="slip-upload-text" style="font-size: 0.75rem; color: var(--charcoal-soft);">Choose a JPG, PNG, or WEBP receipt file</p>
+                    </label>
+                    <InputFile id="return-receipt-input"
+                               class="slip-file-input"
+                               OnChange="HandleReturnReceiptSelected"
+                               accept="image/jpeg,image/png,image/webp" />
+
+                    @if (!string.IsNullOrEmpty(returnReceiptError))
+                    {
+                        <p class="modal-error mt-2" style="color: var(--red);">
+                            <i class="bi bi-exclamation-triangle"></i> @returnReceiptError
+                        </p>
+                    }
+
+                    @if (returnReceiptBytes != null && !string.IsNullOrEmpty(returnReceiptFileName) && !string.IsNullOrEmpty(returnReceiptPreviewUrl))
+                    {
+                        <div class="slip-preview" style="margin-top: 14px; text-align: center;">
+                            <img src="@returnReceiptPreviewUrl" style="width: 110px; height: 140px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border);" alt="Receipt slip" />
+                            <p class="slip-preview-name text-center text-success mt-2" style="font-size: 0.72rem; color: var(--success);"><i class="bi bi-patch-check-fill"></i> @returnReceiptFileName</p>
+                        </div>
+                    }
+                </div>
+
+                <!-- Predefined Reasons (Checkboxes) -->
+                <div class="form-group mb-4" style="text-align: left;">
+                    <label class="form-label-custom">Reason for Return (Select at least one checkbox OR type below)</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--charcoal); cursor: pointer;">
+                            <input type="checkbox" @bind="retReasonColorMismatch" style="accent-color: var(--rose); width: 16px; height: 16px;" />
+                            Color didn't match
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--charcoal); cursor: pointer;">
+                            <input type="checkbox" @bind="retReasonDamage" style="accent-color: var(--rose); width: 16px; height: 16px;" />
+                            Damage order
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--charcoal); cursor: pointer;">
+                            <input type="checkbox" @bind="retReasonSizeIssue" style="accent-color: var(--rose); width: 16px; height: 16px;" />
+                            Size issue
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--charcoal); cursor: pointer;">
+                            <input type="checkbox" @bind="retReasonExchangeRequest" style="accent-color: var(--rose); width: 16px; height: 16px;" />
+                            Want to exchange with other item
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Text message box -->
+                <div class="form-group mb-4" style="text-align: left;">
+                    <label class="form-label-custom">Additional Details / Custom Message</label>
+                    <textarea class="form-control-custom" style="min-height: 100px; border-radius: 8px; resize: vertical; font-family: 'DM Sans', sans-serif;" 
+                              placeholder="Describe your issue or what item you want to exchange with..." 
+                              @bind="returnCustomMessage"></textarea>
+                </div>
+
+                <!-- Return Option (Refund / Exchange) -->
+                <div class="form-group mb-4" style="text-align: left;">
+                    <label class="form-label-custom">Choose Option</label>
+                    <div style="display: flex; gap: 24px; margin-top: 8px;">
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--charcoal); cursor: pointer;">
+                            <input type="radio" name="return_option" checked='@(returnOption == "Refund")' @onclick='() => returnOption = "Refund"' style="accent-color: var(--rose); width: 18px; height: 18px;" />
+                            Take Money Back (Refund)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--charcoal); cursor: pointer;">
+                            <input type="radio" name="return_option" checked='@(returnOption == "Exchange")' @onclick='() => returnOption = "Exchange"' style="accent-color: var(--rose); width: 18px; height: 18px;" />
+                            Exchange with Other Item
+                        </label>
+                    </div>
+                </div>
+
+                @if (returnOption == "Exchange")
+                {
+                    <div style="background: var(--rose-pale); border: 1px dashed var(--rose-light); padding: 20px; border-radius: 8px; margin-bottom: 24px; text-align: left;">
+                        <h4 style="font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600; color: var(--charcoal); margin-bottom: 12px; margin-top: 0;">Exchange Item Details</h4>
+                        
+                        @if (selectedExchangeVariant == null)
+                        {
+                            <p style="font-size: 0.8rem; color: var(--charcoal-soft); margin-bottom: 12px;">Please select the creation you would like to exchange your item with.</p>
+                            <button type="button" class="btn btn-primary-rose" style="font-size: 0.72rem; padding: 8px 16px; cursor: pointer; text-transform: uppercase;" @onclick="() => showExchangePicker = true">
+                                <i class="bi bi-search"></i> Select Replacement Item
+                            </button>
+                        }
+                        else
+                        {
+                             var matchingProduct = allProducts.FirstOrDefault(p => p.ProductId == selectedExchangeVariant.ProductId);
+                             var imgObj = matchingProduct?.ProductImages?.FirstOrDefault(i => i.IsPrimary == true);
+                             var replacementImg = NormalizeImageUrl(imgObj?.ImageUrl);
+                             <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 12px;">
+                                 <FallbackImage Src="@replacementImg" Alt="Replacement Product" style="width: 50px; height: 65px; object-fit: cover; border-radius: 4px;" />
+                                 <div style="display: flex; flex-direction: column;">
+                                     <span style="font-size: 0.65rem; color: var(--rose); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Replacement Selection</span>
+                                     <h5 style="font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600; color: var(--charcoal); margin: 2px 0;">@(matchingProduct?.Name ?? "Product")</h5>
+                                    <p style="font-size: 0.75rem; color: var(--charcoal-soft); margin: 0;">Size: @selectedExchangeVariant.Size &middot; Color: @selectedExchangeVariant.Color</p>
+                                    <p style="font-size: 0.82rem; font-weight: 600; color: var(--rose); margin-top: 2px; margin-bottom: 0;">@(selectedExchangeVariant.SalePrice?.ToString("N0") ?? "0") MMK</p>
+                                </div>
+                            </div>
+                            <button type="button" class="btn" style="background: var(--white); border: 1px solid var(--border); color: var(--charcoal-soft); font-size: 0.7rem; padding: 6px 12px; cursor: pointer; border-radius: 4px;" @onclick="() => showExchangePicker = true">
+                                Change Selection
+                            </button>
+                        }
+                    </div>
+                }
+
+                <!-- Submit Button -->
+                <LoadingButton Class="btn-primary-rose"
+                               IsLoading="@isSubmittingReturn"
+                               LoadingText="Submitting..."
+                               OnClick="SubmitReturnRequest"
+                               style="width: 100%; padding: 16px; border-radius: 8px; margin-top: 12px;">
+                    Submit Return / Exchange Request
+                </LoadingButton>
+            </div>
+        }
+    </div>
+    }
+
     else if (activeTab == "profile")
     {
         if (currentUser == null)
@@ -2289,7 +2903,7 @@
                 Contact <em style="color:#8B1A1A; font-style:italic;">Chic Boutique</em>
             </h2>
             <p style="font-size:0.88rem; color:#7A5C50; line-height:1.8; margin-bottom:32px;">
-                We would love to hear from you. Whether you have questions about our collections, sizing, or custom orders — our atelier team is here to assist.
+                We would love to hear from you. Whether you have questions about our collections, sizing, or custom orders  our atelier team is here to assist.
             </p>
 
             <div style="display:flex; flex-direction:column; gap:20px;">
@@ -2329,7 +2943,7 @@
                     </div>
                     <div>
                         <p style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:#7A5C50; font-weight:600; margin:0;">Hours</p>
-                        <p style="font-size:0.88rem; color:#3C1F10; margin:0;">Mon – Sat: 10:00 AM – 7:00 PM</p>
+                        <p style="font-size:0.88rem; color:#3C1F10; margin:0;">Mon  Sat: 10:00 AM  7:00 PM</p>
                     </div>
                 </div>
             </div>
@@ -2338,22 +2952,22 @@
         <div style="background:#FFFFFF; border:1px solid #EDD9D0; border-radius:12px; padding:32px;">
             <h3 style="font-family: 'DM Sans', sans-serif; font-size:1.4rem; font-weight:400; color:#3C1F10; margin-bottom:24px;">Send a Message</h3>
 
-            <div style="margin-bottom:16px;">
+             <div style="margin-bottom:16px;">
                 <label style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; font-weight:600; color:#7A5C50; display:block; margin-bottom:6px;">Full Name</label>
-                <input type="text" placeholder="Your name" style="width:100%; border:1px solid #EDD9D0; border-radius:8px; padding:10px 14px; font-size:0.88rem; color:#3C1F10; background:#FDFAF8; outline:none; font-family:inherit;" />
+                <input type="text" placeholder="Your name" @bind="contactFullName" style="width:100%; border:1px solid #EDD9D0; border-radius:8px; padding:10px 14px; font-size:0.88rem; color:#3C1F10; background:#FDFAF8; outline:none; font-family:inherit;" />
             </div>
 
             <div style="margin-bottom:16px;">
                 <label style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; font-weight:600; color:#7A5C50; display:block; margin-bottom:6px;">Email Address</label>
-                <input type="email" placeholder="you@example.com" style="width:100%; border:1px solid #EDD9D0; border-radius:8px; padding:10px 14px; font-size:0.88rem; color:#3C1F10; background:#FDFAF8; outline:none; font-family:inherit;" />
+                <input type="email" placeholder="you@example.com" @bind="contactEmail" style="width:100%; border:1px solid #EDD9D0; border-radius:8px; padding:10px 14px; font-size:0.88rem; color:#3C1F10; background:#FDFAF8; outline:none; font-family:inherit;" />
             </div>
 
             <div style="margin-bottom:24px;">
                 <label style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; font-weight:600; color:#7A5C50; display:block; margin-bottom:6px;">Message</label>
-                <textarea placeholder="How can we assist you?" rows="4" style="width:100%; border:1px solid #EDD9D0; border-radius:8px; padding:10px 14px; font-size:0.88rem; color:#3C1F10; background:#FDFAF8; outline:none; font-family:inherit; resize:none;"></textarea>
+                <textarea placeholder="How can we assist you?" @bind="contactMessage" rows="4" style="width:100%; border:1px solid #EDD9D0; border-radius:8px; padding:10px 14px; font-size:0.88rem; color:#3C1F10; background:#FDFAF8; outline:none; font-family:inherit; resize:none;"></textarea>
             </div>
 
-            <button style="width:100%; background:linear-gradient(135deg,#8B1A1A,#6B0F0F); color:#F5F0E8; border:none; border-radius:8px; padding:14px; font-size:0.78rem; letter-spacing:0.2em; text-transform:uppercase; font-weight:600; cursor:pointer;">
+            <button @onclick="SubmitContactMessage" style="width:100%; background:linear-gradient(135deg,#8B1A1A,#6B0F0F); color:#F5F0E8; border:none; border-radius:8px; padding:14px; font-size:0.78rem; letter-spacing:0.2em; text-transform:uppercase; font-weight:600; cursor:pointer;">
                 Send Message
             </button>
         </div>
@@ -2429,7 +3043,7 @@
         <!-- Bottom Row -->
         <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
             <p style="font-size:0.72rem; color:rgba(245,240,232,0.4); margin:0; letter-spacing:0.05em;">
-                © 2026 The Boutique Atelier Coterie. All rights reserved.
+                 2026 The Boutique Atelier Coterie. All rights reserved.
             </p>
             <p style="font-size:0.72rem; color:rgba(245,240,232,0.4); margin:0; letter-spacing:0.05em;">
                 Crafted with <span style="color:#C8837A;">??</span> in Yangon, Myanmar
@@ -2537,7 +3151,7 @@
                     <FallbackImage Src="@item.ImgUrl" Alt="@item.Name" CssClass="cart-item-img" />
                     <div class="cart-item-info">
                         <p class="cart-item-name">@item.Name</p>
-                        <p class="cart-item-meta">@item.Size · @item.Color</p>
+                        <p class="cart-item-meta">@item.Size  @item.Color</p>
                         <div class="cart-qty">
                             <LoadingButton Class="qty-btn"
                                                    IsLoading="@IsCartItemBusy(item.CartItemId)"
@@ -2601,6 +3215,37 @@
     </LoadingButton>
 </div>
 
+<!-- Cancel Reason Modal -->
+@if (isCancelModalOpen)
+{
+    <div class="confirm-overlay" @onclick="CloseCancelModal">
+        <div class="confirm-modal" @onclick:stopPropagation="true" style="width: 440px; padding: 30px; background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); text-align: center;">
+            <div class="confirm-icon" style="background: #fef2f2; color: #dc2626;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 28px; height: 28px;">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="15" y1="9" x2="9" y2="15" />
+                    <line x1="9" y1="9" x2="15" y2="15" />
+                </svg>
+            </div>
+            <h3 class="confirm-title" style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 600; margin-bottom: 8px;">Cancel Order ORD-@cancelOrderId.ToString("D4")</h3>
+            <p class="confirm-message" style="font-size: 0.85rem; color: #71717a; margin-bottom: 20px; line-height: 1.4;">Please tell us why you want to cancel this order (optional).</p>
+            
+            <div style="margin-bottom: 24px; text-align: left;">
+                <textarea style="width: 100%; min-height: 90px; padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-family: 'Outfit', sans-serif; font-size: 0.85rem; resize: vertical; box-sizing: border-box;" 
+                          placeholder="Type your reason here (optional)..." 
+                          @bind="cancelReason" 
+                          @bind:event="oninput">
+                </textarea>
+            </div>
+
+            <div class="confirm-actions" style="display: flex; gap: 12px;">
+                <button class="btn btn-cancel" style="background: #f4f4f5; color: #3f3f46; font-family: 'Outfit', sans-serif; flex: 1; padding: 10px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; border: none; cursor: pointer;" @onclick="CloseCancelModal">Close</button>
+                <button class="btn btn-confirm" style="background: #dc2626; color: #fff; font-family: 'Outfit', sans-serif; flex: 1; padding: 10px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; border: none; cursor: pointer;" @onclick="SubmitCancelOrder">Confirm Cancellation</button>
+            </div>
+        </div>
+    </div>
+}
+
 <!-- Toast container -->
 <div class="toast-wrap">
     @foreach (var toast in toasts)
@@ -2611,5 +3256,49 @@
         </div>
     }
 </div>
+
+<!-- Exchange Picker Hover Overlay Modal -->
+@if (showExchangePicker)
+{
+    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 99999;" @onclick="() => showExchangePicker = false">
+        <div class="confirm-modal" style="width: 90%; max-width: 650px; max-height: 80vh; padding: 30px; display: flex; flex-direction: column; overflow: hidden; background: var(--white); border-radius: 16px; box-shadow: var(--shadow-xl);" @onclick:stopPropagation="true">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+                <h3 style="font-family: 'DM Sans', sans-serif; font-size: 1.2rem; font-weight: 600; color: var(--charcoal); margin: 0;">Select Replacement Creation</h3>
+                <button type="button" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--charcoal-soft); line-height: 1;" @onclick="() => showExchangePicker = false">&times;</button>
+            </div>
+
+            <div style="flex: 1; overflow-y: auto; padding-right: 8px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    @foreach (var prod in allProducts)
+                    {
+                        var imgObj = prod.ProductImages?.FirstOrDefault(i => i.IsPrimary == true);
+                        var prodImg = NormalizeImageUrl(imgObj?.ImageUrl);
+                        <div class="exchange-prod-card" style="border: 1px solid var(--border); border-radius: 8px; padding: 12px; transition: all 0.3s ease; position: relative; background: var(--white);">
+                            <div style="display: flex; gap: 12px;">
+                                <FallbackImage Src="@prodImg" Alt="@prod.Name" style="width: 55px; height: 75px; object-fit: cover; border-radius: 4px;" />
+                                <div style="flex: 1; text-align: left;">
+                                    <h4 style="font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--charcoal); margin-bottom: 4px; margin-top: 0; line-height: 1.2;">@prod.Name</h4>
+                                    <p style="font-size: 0.75rem; color: var(--charcoal-soft); margin-bottom: 8px; margin-top: 0;">@prod.Category?.Name</p>
+                                    
+                                    <label style="font-size: 0.68rem; color: var(--charcoal-soft); display: block; margin-bottom: 2px; font-weight: 600;">Select Variant:</label>
+                                    <select class="form-control-custom" style="padding: 4px 8px; font-size: 0.72rem; border-radius: 4px; height: auto;" 
+                                            @onchange="(e) => OnSelectExchangeVariant(prod, e)">
+                                        <option value="">-- Choose Variant --</option>
+                                        @foreach (var variant in prod.ProductVariants)
+                                        {
+                                            <option value="@variant.VariantId">
+                                                Size: @variant.Size, Color: @variant.Color (@(variant.SalePrice?.ToString("N0") ?? "0") MMK)
+                                            </option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 

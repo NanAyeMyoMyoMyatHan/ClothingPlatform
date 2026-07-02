@@ -49,7 +49,9 @@ namespace ClothingPlatform.Web.Components.Pages
         private bool initializedFromStorage;
         private HubConnection? notificationHub;
         private List<CustomerNotificationDto> notifications = new();
+        private bool showNotificationsDropdown = false;
         private ConfirmModal confirmModal = default!;
+        private int? expandedOrderId;
 
         private List<ProductDto> allProduct = new();
         private List<BestSellerDto> allBestSellers = new();
@@ -322,7 +324,9 @@ namespace ClothingPlatform.Web.Components.Pages
                         .Include(o => o.OrderItems)
                             .ThenInclude(oi => oi.Variant)
                                 .ThenInclude(v => v.Product)
+                                    .ThenInclude(p => p.ProductImages)
                         .Include(o => o.Payments)
+                        .Include(o => o.StaffFulfillmentLogs)
                         .Where(o => o.UserId == currentUser.UserId)
                         .OrderByDescending(o => o.OrderId)
                         .ToListAsync();
@@ -1025,13 +1029,19 @@ namespace ClothingPlatform.Web.Components.Pages
         private void ShowToast(string message)
         {
             var msg = new ToastMessage { Text = message };
-            toasts.Add(msg);
-            StateHasChanged();
+            InvokeAsync(() =>
+            {
+                toasts.Add(msg);
+                StateHasChanged();
+            });
             
             Task.Delay(3000).ContinueWith(_ =>
             {
-                toasts.Remove(msg);
-                InvokeAsync(StateHasChanged);
+                InvokeAsync(() =>
+                {
+                    toasts.Remove(msg);
+                    StateHasChanged();
+                });
             });
         }
 
@@ -1093,7 +1103,7 @@ namespace ClothingPlatform.Web.Components.Pages
         private bool showLogoutConfirm = false;
         private void GotoLogin()
         {
-            Nav.NavigateTo("/customer-login");
+            Nav.NavigateTo("/portal-login");
         }
         private void RequestLogout() => showLogoutConfirm = true;
         private void CancelLogout() => showLogoutConfirm = false;
@@ -1128,6 +1138,180 @@ namespace ClothingPlatform.Web.Components.Pages
             Nav.NavigateTo("/customer-login");
         }
 
+        private void ToggleNotificationsDropdown()
+        {
+            showNotificationsDropdown = !showNotificationsDropdown;
+        }
+
+        private async Task MarkAllNotificationsAsRead()
+        {
+            if (currentUser == null) return;
+            foreach (var noti in notifications.Where(n => !n.IsRead))
+            {
+                try
+                {
+                    await httpClientServices.ExecuteAsync<object>($"api/notifications/{noti.NotificationId}/read", null, EnumHttpMethod.Post);
+                    noti.IsRead = true;
+                }
+                catch { }
+            }
+            StateHasChanged();
+        }
+
+        private async Task HandleNotificationClick(CustomerNotificationDto noti)
+        {
+            if (!noti.IsRead)
+            {
+                try
+                {
+                    await httpClientServices.ExecuteAsync<object>($"api/notifications/{noti.NotificationId}/read", null, EnumHttpMethod.Post);
+                    noti.IsRead = true;
+                }
+                catch { }
+            }
+            showNotificationsDropdown = false;
+            if (noti.OrderId.HasValue)
+            {
+                Navigate("history");
+            }
+            StateHasChanged();
+        }
+
+        private void ToggleOrderDetails(int orderId)
+        {
+            if (expandedOrderId == orderId)
+            {
+                expandedOrderId = null;
+            }
+            else
+            {
+                expandedOrderId = orderId;
+            }
+        }
+
+        private async Task OpenProductFromOrder(int productId)
+        {
+            var prod = await _db.Products
+                .Include(p => p.Category)
+                .Include(p => p.ProductImages)
+                .Include(p => p.ProductVariants)
+                .FirstOrDefaultAsync(p => p.ProductId == productId);
+
+            if (prod != null)
+            {
+                var primaryImage = prod.ProductImages.FirstOrDefault(i => i.IsPrimary == true)?.ImageUrl;
+                modalProduct = new ModalProductDto
+                {
+                    Name = prod.Name,
+                    CategoryName = prod.Category?.Name ?? "Collection",
+                    SalePrice = prod.ProductVariants.FirstOrDefault()?.SalePrice ?? 0,
+                    Description = prod.Description ?? "",
+                    ImageDto = primaryImage,
+                    VariantsDto = prod.ProductVariants.Select(v => new VariantDto
+                    {
+                        VariantId = v.VariantId,
+                        Size = v.Size ?? "",
+                        Color = v.Color ?? "",
+                        StockQuantity = v.StockQuantity,
+                        Sku = v.Sku ?? "",
+                        SalePrice = v.SalePrice ?? 0,
+                        PurchasePrice = v.PurchasePrice
+                    }).ToList(),
+                    AddToBagMethod = "collection"
+                };
+                selectedSize = "";
+                selectedColor = "";
+                selectedQuantity = 1;
+                modalErrorMessage = "";
+                isModalOpen = true;
+            }
+        }
+
+        private bool isCancelModalOpen = false;
+        private string cancelReason = "";
+        private int cancelOrderId = 0;
+        private string cancelModalErrorMessage = "";
+
+        private void OpenCancelModal(int orderId)
+        {
+            cancelOrderId = orderId;
+            cancelReason = "";
+            cancelModalErrorMessage = "";
+            isCancelModalOpen = true;
+        }
+
+        private void CloseCancelModal()
+        {
+            isCancelModalOpen = false;
+        }
+
+        private async Task SubmitCancelOrder()
+        {
+            var reason = string.IsNullOrWhiteSpace(cancelReason) ? "No reason provided" : cancelReason.Trim();
+            isCancelModalOpen = false;
+            await CancelCustomerOrder(cancelOrderId, reason);
+        }
+
+        private async Task CancelCustomerOrder(int orderId, string reason)
+        {
+            try
+            {
+                await using var transaction = await _db.Database.BeginTransactionAsync();
+
+                var order = await _db.Orders
+                    .Include(o => o.OrderItems)
+                    .FirstOrDefaultAsync(o => o.OrderId == orderId);
+
+                if (order == null)
+                {
+                    ShowToast("Order not found.");
+                    return;
+                }
+
+                var normalizedStatus = OrderWorkflow.Normalize(order.OrderStatus);
+                if (normalizedStatus == OrderWorkflow.Confirm || OrderWorkflow.IsCancelled(normalizedStatus))
+                {
+                    ShowToast("This order cannot be cancelled as it is already delivered or cancelled.");
+                    return;
+                }
+
+                order.OrderStatus = OrderWorkflow.CancelledByCustomer;
+                order.CancelReason = reason;
+
+                // Restock items
+                foreach (var item in order.OrderItems)
+                {
+                    var variant = await _db.ProductVariants.FirstOrDefaultAsync(v => v.VariantId == item.VariantId);
+                    if (variant != null)
+                    {
+                        variant.StockQuantity += item.Quantity;
+                    }
+                }
+
+                await _db.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                // Send a cancellation notification to the API
+                try
+                {
+                    await httpClientServices.ExecuteAsync<object>(
+                        $"api/notifications/send-cancelled?userId={order.UserId}&orderId={orderId}",
+                        null,
+                        EnumHttpMethod.Post);
+                }
+                catch (Exception) { /* Ignore notification send failures */ }
+
+                ShowToast($"Order ORD-{orderId:D4} has been cancelled successfully.");
+                
+                // Reload data to reflect changes
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                ShowToast($"Failed to cancel order: {ex.Message}");
+            }
+        }
+
         // Client model for memory cart
         public class CartItemModel
         {
@@ -1153,6 +1337,308 @@ namespace ClothingPlatform.Web.Components.Pages
         }
 
         private ModalProductDto? modalProduct = null;
+
+        // Order Return / Exchange Tab State
+        private Order? selectedReturnOrder;
+        private OrderItem? selectedReturnItem;
+        private int selectedReturnItemId;
+        
+        private string returnReceiptFileName = "";
+        private byte[]? returnReceiptBytes;
+        private string returnReceiptContentType = "";
+        private string returnReceiptExtension = "";
+        private string returnReceiptPreviewUrl = "";
+        private string returnReceiptError = "";
+        
+        private bool retReasonColorMismatch;
+        private bool retReasonDamage;
+        private bool retReasonSizeIssue;
+        private bool retReasonExchangeRequest;
+        
+        private string returnCustomMessage = "";
+        private string returnOption = "Refund"; // "Refund" or "Exchange"
+        private bool isSubmittingReturn = false;
+
+        private ProductVariant? selectedExchangeVariant;
+        private bool showExchangePicker = false;
+
+        private void InitiateReturn(Order order)
+        {
+            selectedReturnOrder = order;
+            selectedReturnItem = order.OrderItems.FirstOrDefault();
+            selectedReturnItemId = selectedReturnItem?.OrderItemId ?? 0;
+            
+            returnReceiptFileName = "";
+            returnReceiptBytes = null;
+            returnReceiptContentType = "";
+            returnReceiptExtension = "";
+            returnReceiptPreviewUrl = "";
+            returnReceiptError = "";
+            
+            retReasonColorMismatch = false;
+            retReasonDamage = false;
+            retReasonSizeIssue = false;
+            retReasonExchangeRequest = false;
+            
+            returnCustomMessage = "";
+            returnOption = "Refund";
+            isSubmittingReturn = false;
+
+            selectedExchangeVariant = null;
+            showExchangePicker = false;
+            
+            activeTab = "return";
+            StateHasChanged();
+        }
+
+        private void NavigateToReturnTab()
+        {
+            if (currentUser != null)
+            {
+                var latestDelivered = userOrders
+                    .FirstOrDefault(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Confirm);
+                if (latestDelivered != null)
+                {
+                    InitiateReturn(latestDelivered);
+                    return;
+                }
+            }
+            activeTab = "return";
+            StateHasChanged();
+        }
+
+        private void OnReturnOrderChanged(ChangeEventArgs e)
+        {
+            if (e.Value != null && int.TryParse(e.Value.ToString(), out var orderId))
+            {
+                var order = userOrders.FirstOrDefault(o => o.OrderId == orderId);
+                if (order != null)
+                {
+                    selectedReturnOrder = order;
+                    selectedReturnItem = order.OrderItems.FirstOrDefault();
+                    selectedReturnItemId = selectedReturnItem?.OrderItemId ?? 0;
+                    selectedExchangeVariant = null;
+                    StateHasChanged();
+                }
+            }
+        }
+
+        private void OnReturnItemChanged(ChangeEventArgs e)
+        {
+            if (e.Value != null && int.TryParse(e.Value.ToString(), out var itemId))
+            {
+                selectedReturnItemId = itemId;
+                selectedReturnItem = selectedReturnOrder?.OrderItems.FirstOrDefault(oi => oi.OrderItemId == itemId);
+                StateHasChanged();
+            }
+        }
+
+        private void OnSelectExchangeVariant(Product product, ChangeEventArgs e)
+        {
+            if (e.Value != null && int.TryParse(e.Value.ToString(), out var variantId))
+            {
+                var variant = product.ProductVariants.FirstOrDefault(v => v.VariantId == variantId);
+                if (variant != null)
+                {
+                    variant.Product = product;
+                    selectedExchangeVariant = variant;
+                    showExchangePicker = false;
+                    StateHasChanged();
+                }
+            }
+        }
+
+        private async Task HandleReturnReceiptSelected(InputFileChangeEventArgs e)
+        {
+            returnReceiptError = "";
+            var file = e.File;
+            if (file == null)
+            {
+                returnReceiptError = "Receipt image is required.";
+                return;
+            }
+
+            var extension = Path.GetExtension(file.Name);
+            if (!AllowedSlipExtensions.Contains(extension) ||
+                !AllowedSlipContentTypes.Contains(file.ContentType))
+            {
+                returnReceiptError = "Please select a valid JPG, PNG, or WEBP image.";
+                return;
+            }
+
+            if (file.Size > MaxSlipFileSizeBytes)
+            {
+                returnReceiptError = "Image file size exceeds the 5MB limit.";
+                return;
+            }
+
+            try
+            {
+                await using var stream = file.OpenReadStream(MaxSlipFileSizeBytes);
+                using var memoryStream = new MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+
+                returnReceiptBytes = memoryStream.ToArray();
+                returnReceiptContentType = file.ContentType;
+                returnReceiptExtension = extension.ToLowerInvariant();
+                returnReceiptFileName = Path.GetFileName(file.Name);
+                returnReceiptPreviewUrl = $"data:{returnReceiptContentType};base64,{Convert.ToBase64String(returnReceiptBytes)}";
+                ShowToast("Receipt uploaded successfully.");
+            }
+            catch (Exception ex)
+            {
+                returnReceiptBytes = null;
+                returnReceiptError = $"Failed to read file: {ex.Message}";
+            }
+        }
+
+        private async Task SubmitReturnRequest()
+        {
+            if (selectedReturnOrder == null || selectedReturnItem == null)
+            {
+                ShowToast("Please select a valid order and item to return.");
+                return;
+            }
+
+            // Validation check: Either checkbox is checked OR text message box is filled
+            bool hasCheckboxSelected = retReasonColorMismatch || retReasonDamage || retReasonSizeIssue || retReasonExchangeRequest;
+            bool hasCustomMessage = !string.IsNullOrWhiteSpace(returnCustomMessage);
+
+            if (!hasCheckboxSelected && !hasCustomMessage)
+            {
+                ShowToast("Please select at least one predefined reason checkbox or write details in the message box.");
+                return;
+            }
+
+            if (returnReceiptBytes == null)
+            {
+                ShowToast("Please upload a receipt/bill image.");
+                return;
+            }
+
+            if (returnOption == "Exchange" && selectedExchangeVariant == null)
+            {
+                ShowToast("Please select a replacement item for the exchange.");
+                return;
+            }
+
+            bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to submit this return/exchange request?");
+            if (!confirmed)
+            {
+                return;
+            }
+
+            if (isSubmittingReturn) return;
+            isSubmittingReturn = true;
+            StateHasChanged();
+
+            try
+            {
+                // Save receipt image
+                var webRootPath = WebHostEnvironment.WebRootPath
+                    ?? Path.Combine(WebHostEnvironment.ContentRootPath, "wwwroot");
+                var folder = Path.Combine(webRootPath, "images", "returns");
+                Directory.CreateDirectory(folder);
+
+                var fileName = $"{Guid.NewGuid():N}{returnReceiptExtension}";
+                var physicalPath = Path.Combine(folder, fileName);
+                await File.WriteAllBytesAsync(physicalPath, returnReceiptBytes);
+                var savedReceiptUrl = $"/images/returns/{fileName}";
+
+                // Gather checkbox reasons
+                var reasonsList = new List<string>();
+                if (retReasonColorMismatch) reasonsList.Add("Color didn't match");
+                if (retReasonDamage) reasonsList.Add("Damage order");
+                if (retReasonSizeIssue) reasonsList.Add("Size issue");
+                if (retReasonExchangeRequest) reasonsList.Add("Want to exchange with other item");
+                var reasonCheckboxStr = string.Join(", ", reasonsList);
+
+                // Save to database
+                var customMessage = returnCustomMessage.Trim();
+                if (returnOption == "Exchange" && selectedExchangeVariant != null)
+                {
+                    var exchangeDetail = $"[EXCHANGE REQUEST: {selectedExchangeVariant.Product?.Name ?? "Product"} (Variant ID: {selectedExchangeVariant.VariantId}, Size: {selectedExchangeVariant.Size}, Color: {selectedExchangeVariant.Color})]";
+                    customMessage = string.IsNullOrWhiteSpace(customMessage) 
+                        ? exchangeDetail 
+                        : $"{exchangeDetail}\n\nAdditional comments:\n{customMessage}";
+                }
+
+                var newReturn = new OrderReturn
+                {
+                    OrderId = selectedReturnOrder.OrderId,
+                    VariantId = selectedReturnItem.VariantId,
+                    Quantity = selectedReturnItem.Quantity,
+                    ReasonCheckbox = reasonCheckboxStr,
+                    ReasonText = customMessage,
+                    ReceiptImageUrl = savedReceiptUrl,
+                    ReturnOption = returnOption,
+                    CreatedAt = DateTime.Now
+                };
+
+                _db.OrderReturns.Add(newReturn);
+                await _db.SaveChangesAsync();
+
+                ShowToast("Return/Exchange request submitted successfully!");
+                activeTab = "history";
+            }
+            catch (Exception ex)
+            {
+                ShowToast($"Failed to submit return request: {ex.Message}");
+            }
+            finally
+            {
+                isSubmittingReturn = false;
+                StateHasChanged();
+            }
+        }
+
+        private string contactFullName = "";
+        private string contactEmail = "";
+        private string contactMessage = "";
+
+        private async Task SubmitContactMessage()
+        {
+            if (string.IsNullOrWhiteSpace(contactFullName))
+            {
+                ShowToast("Please enter your name.");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(contactEmail))
+            {
+                ShowToast("Please enter your email.");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(contactMessage))
+            {
+                ShowToast("Please enter your message.");
+                return;
+            }
+
+            try
+            {
+                var newMsg = new ContactMessage
+                {
+                    FullName = contactFullName.Trim(),
+                    Email = contactEmail.Trim(),
+                    Message = contactMessage.Trim(),
+                    CreatedAt = DateTime.Now
+                };
+
+                _db.ContactMessages.Add(newMsg);
+                await _db.SaveChangesAsync();
+
+                ShowToast("Thank you for your message! Our team will get back to you shortly.");
+                contactFullName = "";
+                contactEmail = "";
+                contactMessage = "";
+            }
+            catch (Exception ex)
+            {
+                ShowToast($"Failed to send message: {ex.Message}");
+            }
+            
+            StateHasChanged();
+        }
 
     }
 }

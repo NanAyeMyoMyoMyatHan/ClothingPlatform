@@ -34,11 +34,6 @@ namespace ClothingPlatform.Api.Features.Auth
             }
 
             var roleName = user.Role?.RoleName ?? string.Empty;
-            if (!string.Equals(roleName, "admin", StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals(roleName, "staff", StringComparison.OrdinalIgnoreCase))
-            {
-                throw new UnauthorizedAccessException("Customer accounts must use the Customer Login page.");
-            }
 
             if (!user.PasswordHash.Trim().StartsWith("$2", StringComparison.Ordinal))
             {

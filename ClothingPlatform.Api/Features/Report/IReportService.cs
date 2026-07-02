@@ -1,4 +1,4 @@
-﻿using ClothingPlatform.Api.Models.Report;
+using ClothingPlatform.Api.Models.Report;
 
 namespace ClothingPlatform.Api.Features.Report
 {
@@ -22,5 +22,8 @@ namespace ClothingPlatform.Api.Features.Report
         List<StaffActivityLogDto> GetStaffActivityLogs(DateTime date);
 
         AdminReportSummaryDto GetAdminReport(DateTime from, DateTime to);
+
+        // Stock report: how many units were added vs sold per product variant
+        StockReportSummaryDto GetStockReport(string? categoryFilter = null, string? searchTerm = null, DateTime? from = null, DateTime? to = null);
     }
 }

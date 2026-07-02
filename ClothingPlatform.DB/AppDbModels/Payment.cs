@@ -19,9 +19,9 @@ public partial class Payment
 
     public string? ErrorMessage { get; set; }
 
-    public string? SlipImageUrl { get; set; }
-
     public DateTime? CreatedAt { get; set; }
+
+    public string? SlipImageUrl { get; set; }
 
     public virtual Order Order { get; set; } = null!;
 }

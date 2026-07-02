@@ -203,7 +203,27 @@ else
                     Admin Reports
                 </a>
             </li>
+            <li>
+                <a class="nav-item-link @(activeView == "stock-report" ? "active" : "")" @onclick='() => SetView("stock-report")'>
+                    <i class="bi bi-boxes"></i>
+                    Stock Report
+                </a>
+            </li>
             }
+
+            <li>
+                <a class="nav-item-link @(activeView == "customer-reviews" ? "active" : "")" @onclick='() => SetView("customer-reviews")'>
+                    <i class="bi bi-chat-square-text"></i>
+                    Customer Reviews
+                </a>
+            </li>
+
+            <li>
+                <a class="nav-item-link @(activeView == "returns" ? "active" : "")" @onclick='() => SetView("returns")'>
+                    <i class="bi bi-arrow-left-right"></i>
+                    Return Requests
+                </a>
+            </li>
 
             <li>
                 <a class="nav-item-link @(activeView == "profile" ? "active" : "")" @onclick='() => SetView("profile")'>
@@ -325,51 +345,64 @@ else
                 </div>
             </div>
 
-            <div class="d-flex justify-content-between align-items-center mt-5 mb-3">
-                <h3 class="m-0">Recent Orders Queue</h3>
-                <button class="btn-luxury" @onclick='() => SetView("orders")'>View All Orders</button>
-            </div>
-
-            <div class="table-responsive-wrapper">
-                <table class="table luxury-table">
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Customer</th>
-                            <th>Address</th>
-                            <th>Total Amount</th>
-                            <th>Status</th>
-                            <th>Date Created</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (!Pagedorders.Any())
-                        {
-                            <tr>
-                                <td colspan="6" class="text-center py-4 text-muted">No orders found in the boutique queue.</td>
-                            </tr>
-                        }
-                        else
-                        {
-                            @foreach (var order in Pagedorders)
-                            {
-                                <tr>
-                                    <td><strong>ORD-@order.OrderId.ToString("D4")</strong></td>
-                                    <td>@order.User.FirstName @order.User.LastName</td>
-                                    <td>@order.ShippingAddress</td>
-                                    <td>@order.TotalAmount.ToString("N0") MMK</td>
-                                    <td>
-                                        <span class="badge @StatusBadgeClass(order.OrderStatus) px-3 py-2 rounded-pill">@NormalizeStatus(order.OrderStatus)</span>
-                                    </td>
-                                    <td>@(order.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")</td>
-                                </tr>
-                            }
-                        }
-                    </tbody>
-                </table>
-                <Pagination CurrentPage="@orderPage"
-                            TotalPages="@OrderTotalPages"
-                            CurrentPageChanged="@ChangeOrderPage" />
+            <div class="row mt-5 mb-3">
+                <div class="col-md-12">
+                    <div class="luxury-card">
+                        <h3 class="m-0 mb-4 text-center">Revenue by Product Category</h3>
+                        <div class="row align-items-center">
+                            <div class="col-md-6 text-center position-relative">
+                                @if (categoryRevenues.Any())
+                                {
+                                    <svg viewBox="0 0 100 100" style="max-height: 280px; width: 100%;">
+                                        <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--border-color, #eaeaea)" stroke-width="10" />
+                                        @{
+                                            double cumulativeAngle = 0;
+                                            foreach (var item in categoryRevenues)
+                                            {
+                                                double strokeLength = (item.Percentage / 100.0) * 251.3;
+                                                double strokeOffset = 251.3 - cumulativeAngle;
+                                                <circle cx="50" cy="50" r="40" fill="transparent" 
+                                                        stroke="@item.Color" 
+                                                        stroke-width="10" 
+                                                        stroke-dasharray="@($"{strokeLength} {251.3 - strokeLength}")" 
+                                                        stroke-dashoffset="@strokeOffset" 
+                                                        transform="rotate(-90 50 50)" />
+                                                cumulativeAngle += strokeLength;
+                                            }
+                                        }
+                                    </svg>
+                                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                                        <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Total Profit</div>
+                                        <div style="font-size: 1.3rem; font-weight: 700; color: var(--text-main);">@TotalRevenue.ToString("N0") MMK</div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="text-muted py-5">No category revenue data available.</div>
+                                }
+                            </div>
+                            <div class="col-md-6">
+                                <div class="pe-3">
+                                    <table class="table table-sm table-borderless">
+                                        <tbody>
+                                            @foreach (var item in categoryRevenues)
+                                            {
+                                                <tr>
+                                                    <td style="width: 20px; vertical-align: middle;">
+                                                        <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: @item.Color;"></span>
+                                                    </td>
+                                                    <td style="font-weight: 500; color: var(--text-main); font-size: 0.95rem;">@item.CategoryName</td>
+                                                    <td style="text-align: right; color: var(--text-muted); font-size: 0.9rem;">@item.Revenue.ToString("N0") MMK</td>
+                                                    <td style="text-align: right; font-weight: 600; color: var(--text-main); font-size: 0.95rem; width: 80px;">@item.Percentage.ToString("F1")%</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         }
 
@@ -576,10 +609,23 @@ else
                                                                        placeholder="e.g., Pink" />
                                                             </td>
                                                             <td style="max-width: 150px;">
-                                                                <input type="number"
-                                                                       class="luxury-input"
-                                                                       @bind="entry.StockQuantity"
-                                                                       min="0" />
+                                                                @if (entry.VariantId.HasValue)
+                                                                {
+                                                                    <div class="d-flex align-items-center gap-2">
+                                                                        <span class="fw-bold" style="min-width: 20px;">@entry.StockQuantity</span>
+                                                                        <button type="button" class="btn btn-sm btn-luxury-solid py-1 px-2" style="font-size: 0.75rem; white-space: nowrap;" 
+                                                                                @onclick="() => OpenRestockModal(entry, draft.Size)">
+                                                                            <i class="bi bi-plus-lg"></i> Restock
+                                                                        </button>
+                                                                    </div>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <input type="number"
+                                                                           class="luxury-input"
+                                                                           @bind="entry.StockQuantity"
+                                                                           min="0" />
+                                                                }
                                                             </td>
                                                             <td style="max-width: 180px;">
                                                                 <input type="number"
@@ -619,6 +665,18 @@ else
                     </div>
 
                     <div class="mt-4 d-grid gap-2">
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="alert-banner alert-banner-error">
+                                <i class="bi bi-exclamation-circle-fill me-2"></i> @errorMessage
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(successMessage))
+                        {
+                            <div class="alert-banner alert-banner-success">
+                                <i class="bi bi-check-circle-fill me-2"></i> @successMessage
+                            </div>
+                        }
                         @if (editingProduct == null)
                         {
                             <LoadingButton Class="btn-luxury-solid"
@@ -688,7 +746,7 @@ else
                                 <strong>@allOrders.Count(o => NormalizeStatus(o.OrderStatus) == "Confirm")</strong><span>Confirm</span>
                             </button>
                             <button type="button" class="filter-chip @(orderFilter == "Cancelled" ? "active" : "")" @onclick='() => FilterOrders("Cancelled")'>
-                                <strong>@allOrders.Count(o => NormalizeStatus(o.OrderStatus) == "Cancelled")</strong><span>Cancelled</span>
+                                <strong>@allOrders.Count(o => IsCancelledStatus(o.OrderStatus))</strong><span>Cancelled</span>
                             </button>
                         </div>
 
@@ -747,15 +805,16 @@ else
                                                             <img class="payment-slip-thumb" src="@slipUrl" alt="Payment slip" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;" />
                                                         </a>
                                                     }
-                                                </td>
+                                                 </td>
                                                 <td><strong>@order.TotalAmount.ToString("N0") MMK</strong></td>
                                                 <td @onclick:stopPropagation="true">
                                                     <span class="badge @StatusBadgeClass(order.OrderStatus) px-3 py-2 rounded-pill">@NormalizeStatus(order.OrderStatus)</span>
                                                 </td>
                                                 <td @onclick:stopPropagation="true">
-                                                    @if (NormalizeStatus(order.OrderStatus) == "Cancelled")
+                                                    @if (IsCancelledStatus(order.OrderStatus))
                                                     {
-                                                        <span class="text-danger small"><i class="bi bi-x-circle-fill"></i> Cancelled</span>
+                                                        <span class="text-danger small"><i class="bi bi-x-circle-fill"></i> @(NormalizeStatus(order.OrderStatus) == "CancelledByCustomer" ? "Cancelled (Customer)" :
+                                                                                                                         NormalizeStatus(order.OrderStatus) == "CancelledByStaff" ? "Cancelled (Staff)" : "Cancelled")</span>
                                                     }
                                                     else if (IsFinalStatus(order.OrderStatus))
                                                     {
@@ -771,7 +830,7 @@ else
                                                             <option value="Confirm" selected="@(NormalizeStatus(order.OrderStatus) == "Confirm")">Confirm</option>
                                                         </select>
                                                     }
-                                                    @if (Session.IsAdmin && CanCancelOrder(order.OrderStatus))
+                                                    @if (IsPortalOperator && CanCancelOrder(order.OrderStatus))
                                                     {
                                                         <LoadingButton Class="btn btn-sm btn-outline-danger ms-2"
                                                                        IsLoading="@IsAdminActionLoading(CancelOrderAction(order.OrderId))"
@@ -855,7 +914,12 @@ else
                                                     <span class="badge @StatusBadgeClass(go.OrderStatus) px-3 py-2 rounded-pill">@NormalizeStatus(go.OrderStatus)</span>
                                                 </td>
                                                 <td @onclick:stopPropagation="true">
-                                                    @if (IsFinalStatus(go.OrderStatus))
+                                                    @if (IsCancelledStatus(go.OrderStatus))
+                                                    {
+                                                        <span class="text-danger small"><i class="bi bi-x-circle-fill"></i> @(NormalizeStatus(go.OrderStatus) == "CancelledByCustomer" ? "Cancelled (Customer)" :
+                                                                                                                         NormalizeStatus(go.OrderStatus) == "CancelledByStaff" ? "Cancelled (Staff)" : "Cancelled")</span>
+                                                    }
+                                                    else if (IsFinalStatus(go.OrderStatus))
                                                     {
                                                         <span class="text-muted small"><i class="bi bi-lock-fill"></i> Locked</span>
                                                     }
@@ -868,6 +932,17 @@ else
                                                             <option value="Processing" selected="@(NormalizeStatus(go.OrderStatus) == "Processing")">Processing</option>
                                                             <option value="Confirm" selected="@(NormalizeStatus(go.OrderStatus) == "Confirm")">Confirm</option>
                                                         </select>
+                                                        @if (IsPortalOperator && CanCancelOrder(go.OrderStatus))
+                                                        {
+                                                            <div class="mt-1">
+                                                                <LoadingButton Class="btn btn-sm btn-link text-danger p-0 border-0 small text-decoration-none"
+                                                                                Style="font-size: 0.8rem;"
+                                                                                IsLoading="@IsAdminActionLoading(CancelGuestOrderAction(go.GuestOrderId))"
+                                                                                OnClick="@(() => CancelGuestOrder(go))">
+                                                                    <i class="bi bi-x-circle"></i> Cancel
+                                                                </LoadingButton>
+                                                            </div>
+                                                        }
                                                     }
                                                 </td>
                                             </tr>
@@ -1158,7 +1233,7 @@ else
                                 </tr>
                             </thead>
                             <tbody>
-                                @if (!dailyReportList.Any())
+                                @if (!PagedDailyReportList.Any())
                                 {
                                     <tr>
                                         <td colspan="3" class="text-center text-muted py-3">No sales reports logged.</td>
@@ -1166,7 +1241,7 @@ else
                                 }
                                 else
                                 {
-                                    @foreach (var day in dailyReportList)
+                                    @foreach (var day in PagedDailyReportList)
                                     {
                                         <tr>
                                             <td>@day.Date.ToString("dd MMM yyyy")</td>
@@ -1177,6 +1252,9 @@ else
                                 }
                             </tbody>
                         </table>
+                        <Pagination CurrentPage="@dailyReportPage"
+                                    TotalPages="@DailyReportTotalPages"
+                                    CurrentPageChanged="@ChangeDailyReportPage" />
                     </div>
                 </div>
 
@@ -1211,6 +1289,437 @@ else
             </div>
         }
 
+        else if (activeView == "stock-report")
+        {
+            <!-- ── STOCK REPORT VIEW ── -->
+            <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
+                <div>
+                    <h1 class="mb-1">Stock Report</h1>
+                    <p class="text-muted mb-0">Track how much stock was added and sold for each product variant.</p>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <LoadingButton Class="btn-luxury-solid"
+                                   IsLoading="@IsAdminActionLoading(LoadStockReportAction)"
+                                   LoadingText="Generating..."
+                                   OnClick="@(() => RunAdminAction(LoadStockReportAction, LoadStockReport))">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                    </LoadingButton>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="luxury-card mb-4">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Search Product / SKU / Color / Size</label>
+                        <input type="text" class="luxury-input" placeholder="Search..." @bind="stockReportSearch" @bind:event="oninput" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Filter by Category</label>
+                        <select class="luxury-input" @bind="stockReportCategoryFilter">
+                            <option value="">All Categories</option>
+                            @foreach (var cat in allCategories)
+                            {
+                                <option value="@cat.Name">@cat.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex gap-2">
+                        <LoadingButton Class="btn-luxury-solid w-100"
+                                       IsLoading="@IsAdminActionLoading(LoadStockReportAction)"
+                                       LoadingText="Applying..."
+                                       OnClick="@(() => RunAdminAction(LoadStockReportAction, LoadStockReport))">
+                            <i class="bi bi-funnel me-1"></i> Apply Filter
+                        </LoadingButton>
+                        <button class="btn-luxury" style="white-space:nowrap;" @onclick="ClearStockReportFilters">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Date Range Toggle -->
+                <div class="mt-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.06);">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="stockDateFilterToggle"
+                                   @bind="stockReportUseDateFilter" />
+                            <label class="form-check-label text-muted small fw-bold text-uppercase" for="stockDateFilterToggle">
+                                Filter Sold Units by Date Range
+                            </label>
+                        </div>
+                    </div>
+                    @if (stockReportUseDateFilter)
+                    {
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label text-muted small text-uppercase fw-bold">
+                                    <i class="bi bi-calendar-event me-1"></i> From Date
+                                </label>
+                                <input type="date" class="luxury-input"
+                                       @bind="stockReportFrom"
+                                       max="@stockReportTo.ToString("yyyy-MM-dd")" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-muted small text-uppercase fw-bold">
+                                    <i class="bi bi-calendar-check me-1"></i> To Date
+                                </label>
+                                <input type="date" class="luxury-input"
+                                       @bind="stockReportTo"
+                                       min="@stockReportFrom.ToString("yyyy-MM-dd")"
+                                       max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex gap-2">
+                                    <button class="btn-luxury small" @onclick="@(() => { stockReportFrom = DateTime.Today; stockReportTo = DateTime.Today; })">
+                                        Today
+                                    </button>
+                                    <button class="btn-luxury small" @onclick="@(() => { stockReportFrom = DateTime.Today.AddDays(-6); stockReportTo = DateTime.Today; })">
+                                        7 Days
+                                    </button>
+                                    <button class="btn-luxury small" @onclick="@(() => { stockReportFrom = DateTime.Today.AddDays(-29); stockReportTo = DateTime.Today; })">
+                                        30 Days
+                                    </button>
+                                    <button class="btn-luxury small" @onclick="@(() => { stockReportFrom = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1); stockReportTo = DateTime.Today; })">
+                                        This Month
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (stockReport is null)
+            {
+                <div class="luxury-card text-center py-5">
+                    <i class="bi bi-boxes" style="font-size: 3rem; color: var(--slate);"></i>
+                    <p class="text-muted mt-3 mb-0">Click <strong>Refresh</strong> to generate the stock report.</p>
+                </div>
+            }
+            else
+            {
+                <!-- KPI Summary Cards -->
+                <div class="row g-4 mb-4">
+                    <div class="col-md-2">
+                        <div class="luxury-card" style="border-left: 4px solid #4A6B82;">
+                            <div class="kpi-title">Total Products</div>
+                            <h2 class="kpi-value">@stockReport.TotalProducts</h2>
+                            <div class="kpi-icon-box" style="background: rgba(74,107,130,0.12); color: #4A6B82;">
+                                <i class="bi bi-bag"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="luxury-card" style="border-left: 4px solid #2E5A44;">
+                            <div class="kpi-title">Total Added Stock</div>
+                            <h2 class="kpi-value">@stockReport.TotalAddedStock <span style="font-size:1rem; font-weight:400;">units</span></h2>
+                            <div class="kpi-icon-box" style="background: rgba(46,90,68,0.12); color: #2E5A44;">
+                                <i class="bi bi-box-arrow-in-down"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="luxury-card" style="border-left: 4px solid #DAA520;">
+                            <div class="kpi-title">Total Sold Units</div>
+                            <h2 class="kpi-value">@stockReport.TotalSoldUnits <span style="font-size:1rem; font-weight:400;">units</span></h2>
+                            <div class="kpi-icon-box" style="background: rgba(218,165,32,0.12); color: #DAA520;">
+                                <i class="bi bi-cart-check"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="luxury-card" style="border-left: 4px solid #8A3324;">
+                            <div class="kpi-title">Remaining Stock</div>
+                            <h2 class="kpi-value">@stockReport.TotalCurrentStock <span style="font-size:1rem; font-weight:400;">units</span></h2>
+                            <div class="kpi-icon-box" style="background: rgba(138,51,36,0.12); color: #8A3324;">
+                                <i class="bi bi-archive"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="luxury-card" style="border-left: 4px solid #B8860B;">
+                            <div class="kpi-title">Low Stock Variants</div>
+                            <h2 class="kpi-value" style="color: #B8860B;">@stockReport.LowStockCount <span style="font-size:1rem; font-weight:400;">variants</span></h2>
+                            <div class="kpi-icon-box" style="background: rgba(184,134,11,0.12); color: #B8860B;">
+                                <i class="bi bi-exclamation-triangle"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="luxury-card" style="border-left: 4px solid #C0392B;">
+                            <div class="kpi-title">Out of Stock Variants</div>
+                            <h2 class="kpi-value" style="color: #C0392B;">@stockReport.OutOfStockCount <span style="font-size:1rem; font-weight:400;">variants</span></h2>
+                            <div class="kpi-icon-box" style="background: rgba(192,57,43,0.12); color: #C0392B;">
+                                <i class="bi bi-x-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stock Movement Charts -->
+                <div class="row g-4 mb-4">
+                    <!-- Left: Category Movement Chart -->
+                    <div class="col-md-6">
+                        <div class="luxury-card h-100">
+                            <h3 class="m-0 mb-3" style="color: #3C1F10; font-size: 1.1rem; font-weight: 700;">
+                                <i class="bi bi-bar-chart-steps me-2"></i>Stock Movement by Category
+                            </h3>
+                            @if (stockReport.Items.Any())
+                            {
+                                var categoryStockData = stockReport.Items
+                                    .GroupBy(i => i.CategoryName)
+                                    .Select(g => new {
+                                        CategoryName = g.Key,
+                                        TotalAdded = g.Sum(i => i.TotalAddedStock),
+                                        TotalSold = g.Sum(i => i.TotalSoldQty),
+                                        TotalRemaining = g.Sum(i => i.CurrentStock)
+                                    })
+                                    .OrderByDescending(c => c.TotalAdded)
+                                    .Take(5)
+                                    .ToList();
+
+                                var maxVal = Math.Max(1, categoryStockData.Max(c => Math.Max(c.TotalAdded, Math.Max(c.TotalSold, c.TotalRemaining))));
+
+                                <div class="d-flex flex-column gap-3">
+                                    @foreach (var cat in categoryStockData)
+                                    {
+                                        <div style="border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 10px;">
+                                            <div class="fw-bold mb-2" style="color: #3C1F10; font-size: 0.85rem;">@cat.CategoryName</div>
+                                            
+                                            <div class="d-flex flex-column gap-1 ms-2">
+                                                <!-- Added -->
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span style="width: 80px; font-size: 0.75rem; color: var(--text-muted);">Added</span>
+                                                    <div class="flex-grow-1" style="height: 6px; background: rgba(0,0,0,0.05); border-radius: 3px; position: relative;">
+                                                        <div style="width: @(cat.TotalAdded * 100.0 / maxVal)%; height: 100%; background: #2E5A44; border-radius: 3px;"></div>
+                                                    </div>
+                                                    <span class="fw-bold" style="width: 50px; text-align: right; font-size: 0.75rem; color: #2E5A44;">@cat.TotalAdded</span>
+                                                </div>
+                                                <!-- Sold -->
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span style="width: 80px; font-size: 0.75rem; color: var(--text-muted);">Sold</span>
+                                                    <div class="flex-grow-1" style="height: 6px; background: rgba(0,0,0,0.05); border-radius: 3px; position: relative;">
+                                                        <div style="width: @(cat.TotalSold * 100.0 / maxVal)%; height: 100%; background: #DAA520; border-radius: 3px;"></div>
+                                                    </div>
+                                                    <span class="fw-bold" style="width: 50px; text-align: right; font-size: 0.75rem; color: #DAA520;">@cat.TotalSold</span>
+                                                </div>
+                                                <!-- Remaining -->
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span style="width: 80px; font-size: 0.75rem; color: var(--text-muted);">Remaining</span>
+                                                    <div class="flex-grow-1" style="height: 6px; background: rgba(0,0,0,0.05); border-radius: 3px; position: relative;">
+                                                        <div style="width: @(cat.TotalRemaining * 100.0 / maxVal)%; height: 100%; background: #8A3324; border-radius: 3px;"></div>
+                                                    </div>
+                                                    <span class="fw-bold" style="width: 50px; text-align: right; font-size: 0.75rem; color: #8A3324;">@cat.TotalRemaining</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-muted text-center py-4">No data available</div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Right: Top Selling Variants Movement -->
+                    <div class="col-md-6">
+                        <div class="luxury-card h-100">
+                            <h3 class="m-0 mb-3" style="color: #3C1F10; font-size: 1.1rem; font-weight: 700;">
+                                <i class="bi bi-graph-up-arrow me-2"></i>Top 5 Moving Product Variants
+                            </h3>
+                            @if (stockReport.Items.Any())
+                            {
+                                var topMovingVariants = stockReport.Items
+                                    .OrderByDescending(i => i.TotalSoldQty)
+                                    .Take(5)
+                                    .ToList();
+
+                                <div class="d-flex flex-column gap-3">
+                                    @foreach (var variant in topMovingVariants)
+                                    {
+                                        <div style="border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 10px;">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <span class="fw-bold" style="color: #3C1F10; font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%;">
+                                                    @variant.ProductName (@variant.Size / @variant.Color)
+                                                </span>
+                                                <span class="text-muted small" style="font-size: 0.72rem;">SKU: @variant.Sku</span>
+                                            </div>
+
+                                            <div class="d-flex align-items-center gap-2 mt-1">
+                                                <div class="flex-grow-1" style="height: 10px; background: rgba(0,0,0,0.05); border-radius: 5px; overflow: hidden; display: flex;">
+                                                    @if (variant.TotalAddedStock > 0)
+                                                    {
+                                                        double soldPercent = (variant.TotalSoldQty * 100.0) / variant.TotalAddedStock;
+                                                        double remainingPercent = (variant.CurrentStock * 100.0) / variant.TotalAddedStock;
+                                                        <div style="width: @(soldPercent)%; height: 100%; background: #DAA520;" title="Sold: @variant.TotalSoldQty"></div>
+                                                        <div style="width: @(remainingPercent)%; height: 100%; background: #8A3324;" title="Remaining: @variant.CurrentStock"></div>
+                                                    }
+                                                </div>
+                                            </div>
+                                            <div class="d-flex justify-content-between mt-1" style="font-size: 0.7rem;">
+                                                <span style="color: #DAA520; font-weight: 500;">Sold: @variant.TotalSoldQty</span>
+                                                <span class="text-muted">Total: @variant.TotalAddedStock</span>
+                                                <span style="color: #8A3324; font-weight: 500;">Remaining: @variant.CurrentStock</span>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-muted text-center py-4">No data available</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stock Report Generated At + Date Range Badge -->
+                <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+                    <span class="text-muted small">
+                        <i class="bi bi-clock me-1"></i> Report generated at @stockReport.GeneratedAt.ToString("dd MMM yyyy, HH:mm:ss") — @stockReport.TotalVariants variant(s) found.
+                    </span>
+                    @if (stockReport.DateFrom.HasValue && stockReport.DateTo.HasValue)
+                    {
+                        <span class="badge" style="background: rgba(218,165,32,0.15); color: #DAA520; border: 1px solid rgba(218,165,32,0.3); padding: 5px 10px; border-radius: 6px; font-size: 0.78rem;">
+                            <i class="bi bi-calendar-range me-1"></i>
+                            Sales period: @stockReport.DateFrom.Value.ToString("dd MMM yyyy") – @stockReport.DateTo.Value.ToString("dd MMM yyyy")
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge" style="background: rgba(74,107,130,0.15); color: #4A6B82; border: 1px solid rgba(74,107,130,0.3); padding: 5px 10px; border-radius: 6px; font-size: 0.78rem;">
+                            <i class="bi bi-infinity me-1"></i> All-time data
+                        </span>
+                    }
+                </div>
+
+                <!-- Detailed Table -->
+                <div class="luxury-card">
+                    <div class="table-responsive-wrapper">
+                        <table class="table table-sm luxury-table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Category</th>
+                                    <th>Size</th>
+                                    <th>Color</th>
+                                    <th>SKU</th>
+                                    <th class="text-end">Added Stock</th>
+                                    <th class="text-end">Sold Units</th>
+                                    <th class="text-end">Remaining</th>
+                                    <th class="text-end">Stock%</th>
+                                    <th class="text-end">Sale Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    var stockItems = FilteredStockItems.ToList();
+                                }
+                                @if (!stockItems.Any())
+                                {
+                                    <tr>
+                                        <td colspan="10" class="text-center text-muted py-4">No stock data found for the current filter.</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @foreach (var item in stockItems.Skip((stockReportPage - 1) * stockReportPageSize).Take(stockReportPageSize))
+                                    {
+                                        var pct = item.TotalAddedStock > 0 ? (int)Math.Round((double)item.CurrentStock / item.TotalAddedStock * 100) : 0;
+                                        var barColor = pct >= 60 ? "#2E5A44" : pct >= 30 ? "#DAA520" : "#8A3324";
+                                        <tr>
+                                            <td><strong>@item.ProductName</strong></td>
+                                            <td><span class="badge bg-light text-dark border">@item.CategoryName</span></td>
+                                            <td>@item.Size</td>
+                                            <td>
+                                                <span style="display:inline-flex;align-items:center;gap:6px;">
+                                                    <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:@(GetColorHex(item.Color));border:1px solid #ccc;"></span>
+                                                    @item.Color
+                                                </span>
+                                            </td>
+                                            <td class="small text-muted">@item.Sku</td>
+                                            <td class="text-end fw-bold">@item.TotalAddedStock</td>
+                                            <td class="text-end text-warning fw-bold">@item.TotalSoldQty</td>
+                                            <td class="text-end fw-bold" style="color: @(item.CurrentStock == 0 ? "#8A3324" : "inherit");">
+                                                @item.CurrentStock
+                                                @if (item.CurrentStock == 0)
+                                                {
+                                                    <span class="badge ms-1" style="background:#8A3324;color:white;font-size:0.65rem;">OUT</span>
+                                                }
+                                            </td>
+                                            <td class="text-end" style="min-width:100px;">
+                                                <div style="display:flex;align-items:center;gap:6px;">
+                                                    <div style="flex:1;height:6px;border-radius:3px;background:#eee;overflow:hidden;">
+                                                        <div style="width:@pct%;height:100%;background:@barColor;border-radius:3px;transition:width .4s;"></div>
+                                                    </div>
+                                                    <span class="small" style="min-width:32px;text-align:right;color:@barColor;">@pct%</span>
+                                                </div>
+                                            </td>
+                                            <td class="text-end">@item.SalePrice.ToString("N0") MMK</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    @{
+                        var totalStockItems = FilteredStockItems.Count();
+                        var totalStockPages = (int)Math.Ceiling((double)totalStockItems / stockReportPageSize);
+                    }
+                    @if (totalStockPages > 1)
+                    {
+                        <div class="d-flex align-items-center justify-content-between mt-3 flex-wrap gap-2">
+                            <span class="text-muted small">Showing @(Math.Min((stockReportPage - 1) * stockReportPageSize + 1, totalStockItems))–@(Math.Min(stockReportPage * stockReportPageSize, totalStockItems)) of @totalStockItems variants</span>
+                            <Pagination CurrentPage="@stockReportPage"
+                                        TotalPages="@totalStockPages"
+                                        CurrentPageChanged="@ChangeStockReportPage" />
+                        </div>
+                    }
+                </div>
+
+                <!-- Stock-In Voucher History Log -->
+                <div class="luxury-card mt-4">
+                    <h3 class="m-0 mb-3" style="color: #3C1F10; font-size: 1.1rem; font-weight: 700;">
+                        <i class="bi bi-journal-text me-2"></i>Stock-In Voucher History
+                    </h3>
+                    <div class="table-responsive-wrapper">
+                        <table class="table table-sm luxury-table">
+                            <thead>
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Operator</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!stockInVouchers.Any())
+                                {
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted py-3">No stock-in vouchers have been issued yet.</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @foreach (var log in stockInVouchers)
+                                    {
+                                        <tr>
+                                            <td style="white-space: nowrap;">@log.CreatedAt?.ToString("dd MMM yyyy, HH:mm:ss")</td>
+                                            <td><strong style="color: #8B1A1A;">@log.Staff?.FirstName @log.Staff?.LastName</strong></td>
+                                            <td>@log.Description</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        }
+
         else if (activeView == "profile")
         {
             <div class="luxury-card" style="max-width: 760px;">
@@ -1239,7 +1748,22 @@ else
                         <label class="form-label text-muted small text-uppercase fw-bold">Phone Number</label>
                         <input type="text" class="luxury-input" @bind="profilePhone" />
                     </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">New Password (Optional)</label>
+                        <input type="password" class="luxury-input" @bind="profilePassword" placeholder="Leave blank to keep current" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Confirm New Password</label>
+                        <input type="password" class="luxury-input" @bind="profileConfirmPassword" placeholder="Confirm your new password" />
+                    </div>
                 </div>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger mt-4" role="alert" style="font-size: 0.9rem;">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> @errorMessage
+                    </div>
+                }
 
                 @if (profileSaved)
                 {
@@ -1446,6 +1970,150 @@ else
                             <span class="perm-badge-always-on">Always On</span>
                             <span class="legend-text">Admin has full access</span>
                         </div>
+                    </div>
+                }
+            </div>
+        }
+
+        else if (activeView == "customer-reviews")
+        {
+            <div class="page-header" style="margin-bottom: 1.5rem;">
+                <div>
+                    <div class="page-sub" style="font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);margin-bottom:.25rem;">Feedback Channel</div>
+                    <h2 class="luxury-text m-0">Customer Reviews & Messages</h2>
+                </div>
+                <span class="badge bg-secondary">@contactMessages.Count Message(s)</span>
+            </div>
+
+            <div class="luxury-card" style="padding: 24px; background: #fff; border-radius: 12px; border: 1px solid #EDD9D0;">
+                @if (!contactMessages.Any())
+                {
+                    <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        <i class="bi bi-chat-square-dots" style="font-size: 3rem; color: #EDD9D0; display: block; margin-bottom: 15px;"></i>
+                        <p style="margin: 0; font-size: 0.95rem; font-weight: 500;">No customer reviews or messages have been received yet.</p>
+                    </div>
+                }
+                else
+                {
+                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                        @foreach (var msg in contactMessages)
+                        {
+                            <div style="border: 1px solid #EDD9D0; border-radius: 10px; padding: 20px; background: #FDFAF8; transition: transform 0.2s, box-shadow 0.2s;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; border-bottom: 1px dashed #EDD9D0; padding-bottom: 10px;">
+                                    <div>
+                                        <h4 style="margin: 0 0 4px; font-family: 'DM Sans', sans-serif; font-size: 1.05rem; font-weight: 600; color: #3C1F10;">@msg.FullName</h4>
+                                        <a href="mailto:@msg.Email" style="font-size: 0.8rem; color: #8B1A1A; text-decoration: none;">
+                                            <i class="bi bi-envelope me-1"></i> @msg.Email
+                                        </a>
+                                    </div>
+                                    <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">
+                                        <i class="bi bi-calendar3 me-1"></i> @msg.CreatedAt.ToString("dd MMM yyyy hh:mm tt")
+                                    </span>
+                                </div>
+                                <p style="margin: 0; font-size: 0.9rem; line-height: 1.6; color: #3C1F10; white-space: pre-line;">
+                                    @msg.Message
+                                </p>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        else if (activeView == "returns")
+        {
+            <div class="page-header" style="margin-bottom: 1.5rem;">
+                <div>
+                    <div class="page-sub" style="font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);margin-bottom:.25rem;">Quality Assurance</div>
+                    <h2 class="luxury-text m-0">Return & Exchange Requests</h2>
+                </div>
+                <span class="badge bg-secondary">@orderReturns.Count Request(s)</span>
+            </div>
+
+            <div class="luxury-card" style="padding: 24px; background: #fff; border-radius: 12px; border: 1px solid #EDD9D0;">
+                @if (!orderReturns.Any())
+                {
+                    <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        <i class="bi bi-arrow-left-right" style="font-size: 3rem; color: #EDD9D0; display: block; margin-bottom: 15px;"></i>
+                        <p style="margin: 0; font-size: 0.95rem; font-weight: 500;">No return or exchange requests have been submitted yet.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table luxury-table align-middle" style="margin:0;">
+                            <thead>
+                                <tr>
+                                    <th>Return ID</th>
+                                    <th>Date</th>
+                                    <th>Customer</th>
+                                    <th>Original Order</th>
+                                    <th>Returned Item</th>
+                                    <th>Type</th>
+                                    <th>Reason / Message</th>
+                                    <th>Receipt</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var ret in orderReturns)
+                                {
+                                    <tr>
+                                        <td><strong>#@ret.OrderReturnId</strong></td>
+                                        <td class="small text-muted">@ret.CreatedAt.ToString("dd MMM yyyy")</td>
+                                        <td>
+                                            <div><strong>@(ret.Order?.User?.FirstName ?? "Guest") @(ret.Order?.User?.LastName ?? "")</strong></div>
+                                            <span class="small text-muted">@ret.Order?.User?.Email</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light text-dark border">Order #@ret.OrderId</span>
+                                        </td>
+                                        <td>
+                                            <div><strong>@ret.Variant?.Product?.Name</strong></div>
+                                            <span class="small text-muted">Size: @ret.Variant?.Size | Color: @ret.Variant?.Color</span>
+                                        </td>
+                                        <td>
+                                            @if (ret.ReturnOption == "Exchange")
+                                            {
+                                                <span class="badge bg-info text-dark"><i class="bi bi-arrow-left-right me-1"></i> Exchange</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning text-dark"><i class="bi bi-cash me-1"></i> Refund</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="small fw-semibold text-danger">@ret.ReasonCheckbox</div>
+                                            <div class="small text-muted" style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@ret.ReasonText">
+                                                @ret.ReasonText
+                                            </div>
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(ret.ReceiptImageUrl))
+                                            {
+                                                <a href="@ret.ReceiptImageUrl" target="_blank" style="display:inline-block;">
+                                                    <img src="@ret.ReceiptImageUrl" alt="Receipt" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #EDD9D0; cursor: zoom-in;" />
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">No Image</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="d-flex justify-content-end gap-2">
+                                                <button class="btn btn-sm btn-outline-success" @onclick="() => ApproveReturn(ret)" title="Approve Request">
+                                                    <i class="bi bi-check-lg"></i> Approve
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" @onclick="() => RejectReturn(ret)" title="Reject Request">
+                                                    <i class="bi bi-x-lg"></i> Reject
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
                     </div>
                 }
             </div>
@@ -1861,5 +2529,61 @@ else
         </div>
     </div>
 }
+
+@if (showRestockModal && restockEntry != null)
+{
+    <div class="restock-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 32, 80, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 10050;">
+        <div class="restock-modal" style="background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); max-width: 480px; width: 90%; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #EDD9D0;">
+            <div class="restock-header" style="background: #8B1A1A; color: #fff; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 1.2rem; font-family: 'DM Sans', sans-serif; letter-spacing: 0.05em; color: #fff;">
+                    <i class="bi bi-box-seam me-2"></i>Issue Stock-In Voucher
+                </h3>
+                <button class="receipt-close-btn" style="background: transparent; border: none; color: #fff; font-size: 1.8rem; cursor: pointer; line-height: 1; opacity: 0.8;" @onclick="CloseRestockModal">&times;</button>
+            </div>
+            <div class="restock-body" style="padding: 1.5rem; color: #3C1F10;">
+                <div class="mb-3">
+                    <label class="form-label text-muted small text-uppercase fw-bold">Variant Details</label>
+                    <div style="background: #FFF3EE; padding: 10px; border-radius: 6px; font-weight: 500; border: 1px solid var(--border-color);">
+                        Size: @restockSize &nbsp;|&nbsp; Color: @restockEntry.Color &nbsp;|&nbsp; Current Stock: @restockEntry.StockQuantity units
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-muted small text-uppercase fw-bold">Restock Quantity (+)</label>
+                    <input type="number" class="luxury-input" @bind="restockQty" min="1" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-muted small text-uppercase fw-bold">Purchase Price (per unit)</label>
+                    <input type="number" class="luxury-input" @bind="restockPurchasePrice" min="0" step="0.01" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-muted small text-uppercase fw-bold">Voucher Notes / Supplier Info</label>
+                    <textarea class="luxury-input" @bind="restockNotes" rows="3" placeholder="Enter supplier name, voucher reference number, or other restock notes..."></textarea>
+                </div>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger py-2" role="alert" style="font-size: 0.85rem;">
+                        @errorMessage
+                    </div>
+                }
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <button type="button" class="btn-luxury" style="padding: 8px 16px;" @onclick="CloseRestockModal">Cancel</button>
+                    <LoadingButton Class="btn-luxury-solid"
+                                   IsLoading="isSubmittingRestock"
+                                   LoadingText="Issuing..."
+                                   OnClick="SubmitRestock"
+                                   Style="padding: 8px 16px;">
+                        Confirm & Issue Voucher
+                    </LoadingButton>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <ConfirmModal @ref="confirmModal" />
 }

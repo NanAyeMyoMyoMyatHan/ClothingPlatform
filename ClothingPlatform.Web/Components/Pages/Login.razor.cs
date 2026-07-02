@@ -1,4 +1,4 @@
-﻿using ClothingPlatform.DB.AppDbModels;
+using ClothingPlatform.DB.AppDbModels;
 using ClothingPlatform.Api.Models.Auth;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
@@ -161,7 +161,7 @@ namespace ClothingPlatform.Web.Components.Pages
                         }
                         else
                         {
-                            loginErrorMessage = UiMessages.PortalLogin.StaffOnly;
+                            Nav.NavigateTo("/");
                         }
                     }
                     else
@@ -176,9 +176,7 @@ namespace ClothingPlatform.Web.Components.Pages
             }
             catch (Exception ex)
             {
-                loginErrorMessage = ex.Message.Contains("Customer accounts must use", StringComparison.OrdinalIgnoreCase)
-                    ? UiMessages.PortalLogin.CustomerMustUseCustomerLogin
-                    : UiMessages.PortalLogin.LoginFailed(ex.Message);
+                loginErrorMessage = UiMessages.PortalLogin.LoginFailed(ex.Message);
             }
             finally
             {

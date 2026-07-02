@@ -2,7 +2,7 @@ using ClothingPlatform.Api.Features.Auth;
 using ClothingPlatform.Api.Features.Cart;
 using ClothingPlatform.Api.Features.Notifications;
 using ClothingPlatform.Api.Features.Order;
-//using ClothingPlatform.Api.Features.Permission;
+using ClothingPlatform.Api.Features.Permission;
 using ClothingPlatform.Api.Features.Product;
 using ClothingPlatform.Api.Features.Report;
 using ClothingPlatform.Api.Features.User;
@@ -60,7 +60,7 @@ builder.Services.AddScoped<IOrderService, OrderServices>();
 builder.Services.AddScoped<ICartService, CartServices>();
 builder.Services.AddScoped<IReportService, ReportServices>();
 builder.Services.AddScoped<ICustomerNotificationService, CustomerNotificationService>();
-//builder.Services.AddScoped<IPermissionService, PermissionService>();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddSignalR();
 builder.Services.AddAuthentication(options =>
 {

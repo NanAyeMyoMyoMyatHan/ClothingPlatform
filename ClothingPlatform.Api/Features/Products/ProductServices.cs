@@ -1,4 +1,4 @@
-﻿using ClothingPlatform.DB.AppDbModels;
+using ClothingPlatform.DB.AppDbModels;
 using ClothingPlatform.Api.Models.User;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -84,6 +84,33 @@ namespace ClothingPlatform.Api.Features.Product
                 }
 
                 await context.SaveChangesAsync();
+
+                // Log initial stock as Stock-In Voucher entries so they appear in Stock-In Voucher History
+                if (model.StaffId > 0 && model.VariantsDto != null)
+                {
+                    // Reload the saved variants to get their generated IDs and SKUs
+                    var savedVariants = await context.ProductVariants
+                        .Where(v => v.ProductId == newProductId && v.StockQuantity > 0)
+                        .ToListAsync();
+
+                    // Use the current user's ID directly as the log's StaffId (works for both Admin and Staff users)
+                    int operationalStaffId = model.StaffId;
+
+                    foreach (var variant in savedVariants)
+                    {
+                        context.StaffActivityLogs.Add(new StaffActivityLog
+                        {
+                            StaffId = operationalStaffId,
+                            TargetTable = "product_variants",
+                            TargetId = variant.VariantId,
+                            ActionType = "create",
+                            Description = $"Stock-In Voucher: New product '{model.Name}' — SKU {variant.Sku}. Initial stock: {variant.StockQuantity} units. Purchase Price: {variant.PurchasePrice:N0} MMK.",
+                            CreatedAt = DateTime.Now
+                        });
+                    }
+                    await context.SaveChangesAsync();
+                }
+
                 await transaction.CommitAsync();
                 return newProductId;
             }
@@ -106,10 +133,9 @@ namespace ClothingPlatform.Api.Features.Product
         Id = p.ProductId,
         Name = p.Name,
         Description = p.Description,
-        SalePrice = p.ProductVariants
-            .Select(v => v.SalePrice ?? 0m)
-            .DefaultIfEmpty(0m)
-            .Min(),
+        SalePrice = p.ProductVariants.Any()
+            ? p.ProductVariants.Min(v => v.SalePrice ?? 0m)
+            : 0m,
         CategoryName = p.Category.Name,
         CategoryId = p.CategoryId,
         VariantsDto = p.ProductVariants.Select(v => new VariantDto
@@ -119,7 +145,7 @@ namespace ClothingPlatform.Api.Features.Product
             Color = v.Color,
             StockQuantity = v.StockQuantity,
             SalePrice = v.SalePrice ?? 0m,
-            PurchasePrice = v.PurchasePrice ?? 0m
+            PurchasePrice = v.PurchasePrice
         }).ToList(),
 
         ImageDto = p.ProductImages
@@ -211,7 +237,9 @@ namespace ClothingPlatform.Api.Features.Product
 
                     existingVariant.Size = safeSize;
                     existingVariant.Color = safeColor;
-                    existingVariant.StockQuantity = Math.Max(0, requestedVariant.StockQuantity);
+                    // Prevent directly editing the existing stock quantity on normal product updates.
+                    // Instead, restocking is done via dedicated Stock-In Vouchers.
+                    // existingVariant.StockQuantity = Math.Max(0, requestedVariant.StockQuantity);
                     existingVariant.SalePrice = requestedVariant.SalePrice;
                     existingVariant.PurchasePrice = requestedVariant.PurchasePrice;
                     existingVariant.Sku = $"{safeProdName.ToUpper()}-{safeSize.Replace(" ", "").ToUpper()}-{safeColor.Replace(" ", "").ToUpper()}-{Random.Shared.Next(1000, 9999)}";
@@ -307,41 +335,69 @@ namespace ClothingPlatform.Api.Features.Product
         public async Task<PagedResult<BestSellerDto>> GetAllBestSellersAsync(
     int page, int pageSize, string? search = null, int categoryId = 0)
         {
-            var query = _db.OrderItems
+            // Step 1: Group OrderItems → get (ProductId, TotalSold).
+            // Avoid deep g.First().Variant.Product.* navigation inside GroupBy projections
+            // as EF Core's NavigationExpandingExpressionVisitor cannot resolve them correctly.
+            var salesQuery = _db.OrderItems
                 .AsNoTracking()
-                .Where(x => x.Variant != null && x.Variant.Product != null); // safety guard
+                .Where(x => x.Variant != null && x.Variant.ProductId != null);
 
-            // Filter BEFORE GroupBy
             if (categoryId > 0)
-                query = query.Where(x => x.Variant.Product.CategoryId == categoryId);
+                salesQuery = salesQuery.Where(x => x.Variant.Product.CategoryId == categoryId);
 
             if (!string.IsNullOrWhiteSpace(search))
-                query = query.Where(x =>
+                salesQuery = salesQuery.Where(x =>
                     x.Variant.Product.Name.Contains(search) ||
                     (x.Variant.Product.Description != null &&
                      x.Variant.Product.Description.Contains(search)));
 
-            var grouped = query
+            var salesTotals = await salesQuery
                 .GroupBy(x => x.Variant.ProductId)
-                .Select(g => new BestSellerDto
+                .Select(g => new { ProductId = g.Key, TotalSold = g.Sum(x => x.Quantity) })
+                .ToListAsync();
+
+            var productIds = salesTotals.Select(s => s.ProductId).ToList();
+            var totalCount = productIds.Count;
+
+            // Step 2: Fetch product data via a clean Products query (no GroupBy navigation issues).
+            var pagedProductIds = salesTotals
+                .OrderByDescending(s => s.TotalSold)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(s => s.ProductId)
+                .ToList();
+
+            var products = await _db.Products
+                .AsNoTracking()
+                .Where(p => pagedProductIds.Contains(p.ProductId))
+                .Include(p => p.Category)
+                .Include(p => p.ProductImages)
+                .Include(p => p.ProductVariants)
+                .ToListAsync();
+
+            var salesLookup = salesTotals.ToDictionary(s => s.ProductId, s => s.TotalSold);
+
+            var items = pagedProductIds
+                .Select(pid => products.FirstOrDefault(p => p.ProductId == pid))
+                .Where(p => p != null)
+                .Select(p => new BestSellerDto
                 {
-                    ProductId = g.Key,
-                    Name = g.First().Variant.Product.Name,
-                    TotalSold = g.Sum(x => x.Quantity),
-                    SalePrice = g.First().Variant.Product.ProductVariants
-                        .Select(v => v.SalePrice ?? 0m)
-                        .DefaultIfEmpty(0m)
-                        .Min(),
-                    CategoryName = g.First().Variant.Product.Category.Name,
-                    Description = g.First().Variant.Product.Description ?? string.Empty,
-                    ImageDto = g.First().Variant.Product.ProductImages
+                    ProductId = p!.ProductId,
+                    Name = p.Name,
+                    TotalSold = salesLookup.TryGetValue(p.ProductId, out var ts) ? ts : 0,
+                    SalePrice = p.ProductVariants.Any()
+                        ? p.ProductVariants.Min(v => v.SalePrice ?? 0m)
+                        : 0m,
+                    CategoryName = p.Category?.Name ?? "General",
+                    Description = p.Description ?? string.Empty,
+                    ImageDto = p.ProductImages
                         .Where(i => i.IsPrimary == true)
                         .Select(i => i.ImageUrl)
                         .FirstOrDefault()
-                        ?? g.First().Variant.Product.ProductImages
+                        ?? p.ProductImages
                             .Select(i => i.ImageUrl)
                             .FirstOrDefault(),
-                    VariantsDto = g.First().Variant.Product.ProductVariants
+                    VariantsDto = p.ProductVariants
                         .Select(v => new VariantDto
                         {
                             VariantId = v.VariantId,
@@ -349,18 +405,11 @@ namespace ClothingPlatform.Api.Features.Product
                             Color = v.Color,
                             StockQuantity = v.StockQuantity,
                             SalePrice = v.SalePrice ?? 0m,
-                            PurchasePrice = v.PurchasePrice ?? 0m
+                            PurchasePrice = v.PurchasePrice
                         })
                         .ToList()
                 })
-                .OrderByDescending(x => x.TotalSold);
-
-            var totalCount = await grouped.CountAsync();
-
-            var items = await grouped
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+                .ToList();
 
             return new PagedResult<BestSellerDto>
             {
@@ -397,10 +446,9 @@ namespace ClothingPlatform.Api.Features.Product
                 {
                     ProductId = p.ProductId,
                     Name = p.Name,
-                    SalePrice = p.ProductVariants
-                        .Select(v => v.SalePrice ?? 0m)
-                        .DefaultIfEmpty(0m)
-                        .Min(),
+                    SalePrice = p.ProductVariants.Any()
+                        ? p.ProductVariants.Min(v => v.SalePrice ?? 0m)
+                        : 0m,
                     Description = p.Description ?? string.Empty,
                     CategoryName = p.Category != null ? p.Category.Name : "General",
                     ImageDto = p.ProductImages
@@ -418,7 +466,7 @@ namespace ClothingPlatform.Api.Features.Product
                             Color = v.Color,
                             StockQuantity = v.StockQuantity,
                             SalePrice = v.SalePrice ?? 0m,
-                            PurchasePrice = v.PurchasePrice ?? 0m
+                            PurchasePrice = v.PurchasePrice
                         })
                         .ToList()
                 })
@@ -458,10 +506,9 @@ namespace ClothingPlatform.Api.Features.Product
                 {
                     Id = p.ProductId,
                     Name = p.Name,
-                    SalePrice = p.ProductVariants
-                        .Select(v => v.SalePrice ?? 0m)
-                        .DefaultIfEmpty(0m)
-                        .Min(),
+                    SalePrice = p.ProductVariants.Any()
+                        ? p.ProductVariants.Min(v => v.SalePrice ?? 0m)
+                        : 0m,
                     Description = p.Description ?? string.Empty,
                     CategoryName = p.Category != null
                         ? p.Category.Name
@@ -481,7 +528,7 @@ namespace ClothingPlatform.Api.Features.Product
                             Color = v.Color,
                             StockQuantity = v.StockQuantity,
                             SalePrice = v.SalePrice ?? 0m,
-                            PurchasePrice = v.PurchasePrice ?? 0m
+                            PurchasePrice = v.PurchasePrice
                         })
                         .ToList()
                 })
