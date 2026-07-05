@@ -196,7 +196,16 @@
             PasswordHash = string.Empty
         });
 
-        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "customerId", result.UserId.ToString());
+        // Clean up legacy localStorage items
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "customerId");
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+        }
+        catch {}
+
+        // Store customerId in cookie
+        await CookieStorage.SetCookieAsync(JSRuntime, "customerId", result.UserId.ToString());
         Nav.NavigateTo("/customer");
     }
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace ClothingPlatform.DB.AppDbModels;
@@ -16,6 +16,9 @@ public partial class Product
     public bool? IsFeatured { get; set; }
 
     public DateTime? CreatedAt { get; set; }
+
+    [System.ComponentModel.DataAnnotations.Schema.Column("promo_id")]
+    public int? PromoId { get; set; }
 
     public virtual Category Category { get; set; } = null!;
 

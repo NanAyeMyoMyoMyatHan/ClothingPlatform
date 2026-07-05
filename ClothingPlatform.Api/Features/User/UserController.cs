@@ -8,7 +8,6 @@ namespace ClothingPlatform.Api.Features.User
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Policy = "AdminOrStaff")]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;

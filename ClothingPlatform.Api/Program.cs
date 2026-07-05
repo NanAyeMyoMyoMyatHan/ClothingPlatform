@@ -81,17 +81,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("AdminOnly", policy => policy.RequireRole("admin"));
-    options.AddPolicy("StaffOnly", policy => policy.RequireRole("staff"));
-    options.AddPolicy("AdminOrStaff", policy => policy.RequireRole("admin", "staff"));
-    options.AddPolicy("Reports.Generate", policy =>
-    {
-        policy.RequireRole("admin");
-        policy.RequireClaim("permission", "Reports.Generate");
-    });
-});
+builder.Services.AddAuthorization();
 
 
 builder.Services.AddControllers().AddJsonOptions(options =>

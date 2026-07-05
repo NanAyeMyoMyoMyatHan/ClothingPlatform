@@ -1,0 +1,411 @@
+@page "/receipt/{OrderId:int}"
+@using ClothingPlatform.DB.AppDbModels
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject NavigationManager Nav
+@inject IJSRuntime JSRuntime
+
+<div class="receipt-outer-container">
+    <div class="receipt-action-bar">
+        <button class="btn-back" @onclick="GoBack">
+            <i class="bi bi-arrow-left"></i> Back to Shop
+        </button>
+        <button class="btn-print" @onclick="PrintReceipt">
+            <i class="bi bi-printer"></i> Print Receipt
+        </button>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="receipt-loading">
+            <div class="spinner"></div>
+            <p>Generating Receipt...</p>
+        </div>
+    }
+    else if (order == null)
+    {
+        <div class="receipt-error">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <h3>Receipt Not Found</h3>
+            <p>The requested order receipt could not be loaded or you do not have permission to view it.</p>
+        </div>
+    }
+    else
+    {
+        <div class="receipt-ticket" id="thermal-receipt">
+            <!-- Store Header -->
+            <div class="receipt-ticket-header">
+                <h1 class="store-name">Primrose</h1>
+                <p class="store-subtitle">Premium Atelier & Boutique</p>
+            </div>
+
+            <!-- Receipt Metadata -->
+            <div class="receipt-meta">
+                <div class="meta-row">
+                    <span class="meta-label">Date:</span>
+                    <span class="meta-value">@formattedDate</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Cashier Name:</span>
+                    <span class="meta-value">@cashierName</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Order Id:</span>
+                    <span class="meta-value">ORD-@order.OrderId.ToString("D5")</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Customer:</span>
+                    <span class="meta-value">@customerName (@customerPhone)</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Address:</span>
+                    <span class="meta-value">@order.ShippingAddress</span>
+                </div>
+            </div>
+
+            <div class="divider-dashed"></div>
+
+            <!-- Items Header -->
+            <div class="items-header-row">
+                <span>Qty</span>
+                <span class="text-right">MMK</span>
+            </div>
+
+            <!-- Items List -->
+            <div class="receipt-items">
+                @foreach (var item in order.OrderItems)
+                {
+                    <div class="item-row">
+                        <span class="item-desc">
+                            @item.Quantity - @(item.Variant?.Product?.Name ?? "Item") ✅ - @(item.Variant?.Size ?? "N/A"), @(item.Variant?.Color ?? "N/A")
+                        </span>
+                        <span class="item-price text-right">@((item.PriceAtPurchase * item.Quantity).ToString("N0"))</span>
+                    </div>
+                }
+            </div>
+
+            <div class="divider-dashed"></div>
+
+            <!-- Summary Breakdown -->
+            <div class="receipt-summary">
+                <div class="summary-row">
+                    <span>Discount:</span>
+                    <span class="text-right">( 0 )</span>
+                </div>
+                <div class="summary-row">
+                    <span>Tax:</span>
+                    <span class="text-right">0</span>
+                </div>
+                <div class="summary-row">
+                    <span>Shipping Fee:</span>
+                    <span class="text-right">0</span>
+                </div>
+            </div>
+
+            <div class="divider-dashed"></div>
+
+            <!-- Totals -->
+            <div class="receipt-totals">
+                <div class="total-row font-bold">
+                    <span>Total Qty: @totalQty</span>
+                    <span class="text-right">Total: @order.TotalAmount.ToString("N0")</span>
+                </div>
+                <div class="total-row font-bold">
+                    <span>Paid(CASH)</span>
+                    <span class="text-right">(@order.TotalAmount.ToString("N0"))</span>
+                </div>
+            </div>
+
+            <div class="divider-dashed"></div>
+
+            <!-- Balance Due -->
+            <div class="balance-row font-bold">
+                <span>Balance Due</span>
+                <span class="text-right">0</span>
+            </div>
+
+            <div class="divider-dashed"></div>
+
+            <!-- Footer -->
+            <div class="receipt-footer">
+                <p class="footer-note">Note: Viber</p>
+                <p class="thanks-msg">Thanks for shopping with us</p>
+                <p class="store-location">Yangon</p>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .receipt-outer-container {
+        max-width: 480px;
+        margin: 40px auto;
+        padding: 0 15px;
+        font-family: 'Courier New', Courier, monospace;
+    }
+
+    .receipt-action-bar {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+
+    .btn-back, .btn-print {
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: 1px solid #EDD9D0;
+        background: #fff;
+        color: #555;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: sans-serif;
+    }
+
+    .btn-back:hover, .btn-print:hover {
+        background: #FDF9F7;
+        border-color: #D4B2A7;
+    }
+
+    .btn-print {
+        background: #D4B2A7;
+        color: #fff;
+        border-color: #D4B2A7;
+    }
+
+    .btn-print:hover {
+        background: #c39d91;
+        border-color: #c39d91;
+    }
+
+    .receipt-loading, .receipt-error {
+        text-align: center;
+        padding: 40px;
+        background: #fff;
+        border-radius: 8px;
+        border: 1px solid #EDD9D0;
+        font-family: sans-serif;
+    }
+
+    .spinner {
+        width: 30px;
+        height: 30px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #D4B2A7;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 15px;
+    }
+
+    @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .receipt-ticket {
+        background: #FFFFFF !important;
+        padding: 30px 20px;
+        border: 1px solid #E5E5E5;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        color: #000000 !important;
+        font-size: 0.88rem;
+        line-height: 1.4;
+    }
+
+    .receipt-ticket-header {
+        background: #FFFFFF !important;
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    .store-name {
+        color: #000000 !important;
+        font-size: 1.6rem;
+        font-weight: bold;
+        margin: 0 0 5px 0;
+        letter-spacing: 1px;
+    }
+
+    .store-subtitle {
+        color: #555555 !important;
+        font-size: 0.8rem;
+        margin: 0;
+    }
+
+    .receipt-meta {
+        margin-bottom: 20px;
+    }
+
+    .meta-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 4px;
+    }
+
+    .meta-label {
+        font-weight: bold;
+        margin-right: 10px;
+        white-space: nowrap;
+    }
+
+    .meta-value {
+        text-align: right;
+        word-break: break-all;
+    }
+
+    .divider-dashed {
+        border-top: 1px dashed #000;
+        margin: 15px 0;
+    }
+
+    .items-header-row {
+        display: flex;
+        justify-content: space-between;
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+
+    .receipt-items {
+        margin-bottom: 15px;
+    }
+
+    .item-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 6px;
+    }
+
+    .item-desc {
+        flex: 1;
+        padding-right: 15px;
+        word-break: break-word;
+    }
+
+    .text-right {
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .receipt-summary, .receipt-totals {
+        margin-bottom: 10px;
+    }
+
+    .summary-row, .total-row, .balance-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+    }
+
+    .font-bold {
+        font-weight: bold;
+    }
+
+    .receipt-footer {
+        text-align: center;
+        margin-top: 25px;
+    }
+
+    .footer-note {
+        margin: 0 0 8px 0;
+    }
+
+    .thanks-msg {
+        font-weight: bold;
+        margin: 0 0 5px 0;
+    }
+
+    .store-location {
+        margin: 0;
+    }
+
+    @@media print {
+        body * {
+            visibility: hidden;
+        }
+        #thermal-receipt, #thermal-receipt * {
+            visibility: visible;
+        }
+        #thermal-receipt {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            border: none;
+            box-shadow: none;
+            padding: 0;
+        }
+        .receipt-action-bar {
+            display: none;
+        }
+    }
+</style>
+
+@code {
+    [Parameter]
+    public int OrderId { get; set; }
+
+    private Order? order;
+    private bool isLoading = true;
+
+    private string formattedDate = "";
+    private string cashierName = "Administrator";
+    private string customerName = "";
+    private string customerPhone = "";
+    private int totalQty = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+            order = await db.Orders
+                .Include(o => o.User)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Variant)
+                        .ThenInclude(v => v.Product)
+                .Include(o => o.StaffFulfillmentLogs)
+                .FirstOrDefaultAsync(o => o.OrderId == OrderId);
+
+            if (order != null)
+            {
+                formattedDate = order.CreatedAt?.ToString("dd-MMM-yyyy") ?? DateTime.Now.ToString("dd-MMM-yyyy");
+                
+                // Get cashier name from StaffFulfillmentLogs for 'Confirm' action
+                var confirmLog = order.StaffFulfillmentLogs
+                    .FirstOrDefault(l => string.Equals(l.ActionTaken, "Confirm", StringComparison.OrdinalIgnoreCase));
+                
+                if (confirmLog != null)
+                {
+                    // Find staff name
+                    var staffUser = await db.Users.FirstOrDefaultAsync(u => u.UserId == confirmLog.StaffId);
+                    if (staffUser != null)
+                    {
+                        cashierName = $"{staffUser.FirstName} {staffUser.LastName}";
+                    }
+                }
+
+                customerName = $"{order.User?.FirstName} {order.User?.LastName}";
+                customerPhone = order.User?.PhoneNumber ?? "N/A";
+                totalQty = order.OrderItems.Sum(oi => oi.Quantity);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading receipt: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo("/");
+    }
+
+    private async Task PrintReceipt()
+    {
+        await JSRuntime.InvokeVoidAsync("window.print");
+    }
+}

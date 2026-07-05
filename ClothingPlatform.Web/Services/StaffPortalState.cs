@@ -816,7 +816,7 @@ namespace ClothingPlatform.Web.Services
         public async Task Logout()
         {
             _session.Logout();
-            await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+            await CookieStorage.RemoveTokenAsync(_jsRuntime);
             _nav.NavigateTo("/portal-login", replace: true);
         }
 

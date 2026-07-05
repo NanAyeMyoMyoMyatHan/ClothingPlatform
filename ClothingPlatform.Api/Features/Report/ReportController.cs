@@ -1,13 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ClothingPlatform.Api.Filters;
 using System.Text;
 
 namespace ClothingPlatform.Api.Features.Report
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Policy = "Reports.Generate")]
+    [Permission("Reports.Generate")]
     public class ReportController : ControllerBase
     {
         private readonly IReportService _reportService;

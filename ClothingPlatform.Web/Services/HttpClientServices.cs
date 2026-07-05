@@ -58,7 +58,7 @@ namespace ClothingPlatform.Web.Services
         {
             try
             {
-                var token = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
+                var token = await CookieStorage.GetTokenAsync(_jsRuntime);
                 client.DefaultRequestHeaders.Authorization = string.IsNullOrWhiteSpace(token)
                     ? null
                     : new AuthenticationHeaderValue("Bearer", token);

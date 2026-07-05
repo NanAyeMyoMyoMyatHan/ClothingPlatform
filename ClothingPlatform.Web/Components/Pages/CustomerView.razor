@@ -3,6 +3,7 @@
 @using ClothingPlatform.Web.Components.Partial
 @using ClothingPlatform.Api.Models.Order
 @inject IJSRuntime JSRuntime
+@implements IDisposable
 
 @inject AuthenticationStateProvider AuthenStateProvider
 
@@ -165,105 +166,164 @@
         padding: 0 4px;
     }
 
-    /* -- Notifications Dropdown -- */
-    .notifications-dropdown-menu {
-        position: absolute;
-        top: 100%;
+    /* -- Notifications Drawer -- */
+    .noti-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 800;
+        background: rgba(0,0,0,0.4);
+        backdrop-filter: blur(3px);
+        display: none;
+    }
+
+    .noti-backdrop.open {
+        display: block;
+        animation: fadeIn 0.25s;
+    }
+
+    .noti-drawer {
+        position: fixed;
+        top: 0;
         right: 0;
-        width: 320px;
-        max-height: 400px;
-        background: #FFFFFF;
-        border: 1px solid #EDD9D0;
-        border-radius: 12px;
-        box-shadow: 0 10px 25px rgba(139,26,26,0.15);
-        z-index: 1000;
-        margin-top: 8px;
+        bottom: 0;
+        z-index: 850;
+        width: min(420px, 100vw);
+        background: var(--white);
+        transform: translateX(100%);
+        transition: transform 0.38s cubic-bezier(.77,0,.175,1);
         display: flex;
         flex-direction: column;
-        overflow: hidden;
+        box-shadow: -8px 0 48px rgba(139,26,26,0.12);
     }
 
-    .notifications-dropdown-menu .dropdown-header {
+    .noti-drawer.open {
+        transform: translateX(0);
+    }
+
+    .noti-header {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        padding: 12px 16px;
-        border-bottom: 1px solid #EDD9D0;
-        background: #FFF3EE;
+        justify-content: space-between;
+        padding: 24px 28px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .noti-title {
         font-family: 'DM Sans', sans-serif;
+        font-size: 1.3rem;
+        font-weight: 500;
+        color: var(--charcoal);
+        letter-spacing: 0.05em;
     }
 
-    .notifications-dropdown-menu .dropdown-header span {
-        font-weight: 600;
-        font-size: 0.85rem;
-        color: #3C1F10;
-    }
-
-    .notifications-dropdown-menu .mark-all-read-btn {
+    .noti-close {
         background: none;
         border: none;
-        color: #8B1A1A;
-        font-size: 0.72rem;
-        font-weight: 500;
+        font-size: 1.1rem;
+        color: var(--charcoal-soft);
         cursor: pointer;
-        text-decoration: underline;
     }
 
-    .notifications-dropdown-menu .dropdown-body {
+    .noti-close:hover {
+        color: var(--rose);
+    }
+
+    .noti-body {
+        flex: 1;
         overflow-y: auto;
-        flex-grow: 1;
+        padding: 20px 28px;
     }
 
-    .notifications-dropdown-menu .empty-notifications {
-        padding: 24px;
+    .noti-empty {
         text-align: center;
-        color: #7A5C50;
-        font-size: 0.8rem;
+        padding: 60px 20px;
     }
 
-    .notifications-dropdown-menu .notification-item {
-        padding: 12px 16px;
+    .noti-empty i {
+        font-size: 3rem;
+        color: var(--rose-light);
+    }
+
+    .noti-empty p {
+        margin-top: 15px;
+        color: #7A5C50;
+        font-size: 0.95rem;
+    }
+
+    /* Notification Items in Drawer */
+    .noti-drawer-item {
+        padding: 16px 20px;
         border-bottom: 1px solid #FAF0EE;
         cursor: pointer;
-        transition: background-color 0.2s;
+        transition: background-color 0.2s, transform 0.2s;
+        border-radius: 8px;
+        margin-bottom: 8px;
     }
 
-    .notifications-dropdown-menu .notification-item:hover {
+    .noti-drawer-item:hover {
         background-color: #FFF3EE;
+        transform: translateY(-1px);
     }
 
-    .notifications-dropdown-menu .notification-item.unread {
-        background-color: rgba(139, 26, 26, 0.03);
+    .noti-drawer-item.unread {
+        background-color: rgba(139, 26, 26, 0.04);
+        border-left: 3px solid #8B1A1A;
     }
 
-    .notifications-dropdown-menu .noti-title {
+    .noti-drawer-title {
         font-weight: 600;
-        font-size: 0.8rem;
+        font-size: 0.9rem;
         color: #3C1F10;
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
 
-    .notifications-dropdown-menu .unread-dot {
-        width: 6px;
-        height: 6px;
+    .noti-drawer-dot {
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
         background-color: #8B1A1A;
     }
 
-    .notifications-dropdown-menu .noti-message {
-        font-size: 0.75rem;
+    .noti-drawer-message {
+        font-size: 0.82rem;
         color: #7A5C50;
-        margin-top: 4px;
-        line-height: 1.3;
+        margin-top: 6px;
+        line-height: 1.4;
     }
 
-    .notifications-dropdown-menu .noti-time {
-        font-size: 0.65rem;
+    .noti-drawer-time {
+        font-size: 0.72rem;
         color: #C9A96E;
-        margin-top: 6px;
+        margin-top: 8px;
         text-align: right;
+    }
+
+    .noti-drawer-footer {
+        padding: 20px 28px;
+        border-top: 1px solid var(--border);
+        background: #FFF3EE;
+        display: flex;
+        justify-content: center;
+    }
+
+    .noti-drawer-mark-btn {
+        background: #8B1A1A;
+        border: none;
+        color: #F5F0E8;
+        padding: 10px 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        width: 100%;
+        text-align: center;
+        transition: background 0.15s;
+    }
+
+    .noti-drawer-mark-btn:hover {
+        background: #6E1212;
     }
 
     /* Nav Tabs */
@@ -1922,6 +1982,505 @@
         color: #FFFFFF !important;
         font-weight: 500;
     }
+
+    /* Notification Detail Styles */
+    .noti-detail-container {
+        max-width: 650px;
+        margin: 60px auto;
+        padding: 0 24px;
+        font-family: 'DM Sans', 'Outfit', system-ui, -apple-system, sans-serif;
+    }
+
+    .noti-detail-header {
+        margin-bottom: 24px;
+    }
+
+    .btn-back {
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: 1px solid rgba(212, 178, 167, 0.4);
+        background: rgba(255, 255, 255, 0.8);
+        color: #7A5C50;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .btn-back:hover {
+        background: #3C1F10;
+        border-color: #3C1F10;
+        color: #FFF;
+        transform: translateX(-3px);
+    }
+
+    .noti-detail-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        border: 1px solid rgba(212, 178, 167, 0.25);
+        box-shadow: 0 15px 35px rgba(122, 92, 80, 0.06), 0 5px 15px rgba(0, 0, 0, 0.02);
+        padding: 40px;
+        transition: all 0.3s ease;
+    }
+
+    .noti-card-header {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+    }
+
+    .noti-icon-wrapper {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        flex-shrink: 0;
+        box-shadow: inset 0 -2px 4px rgba(0,0,0,0.02);
+    }
+
+    .noti-icon-wrapper.confirmed {
+        background: rgba(46, 90, 68, 0.08);
+        color: #2E5A44;
+        border: 1px solid rgba(46, 90, 68, 0.15);
+    }
+
+    .noti-icon-wrapper.cancelled {
+        background: rgba(192, 57, 43, 0.08);
+        color: #C0392B;
+        border: 1px solid rgba(192, 57, 43, 0.15);
+    }
+
+    .noti-icon-wrapper.info {
+        background: rgba(218, 165, 32, 0.08);
+        color: #DAA520;
+        border: 1px solid rgba(218, 165, 32, 0.15);
+    }
+
+    .noti-icon-wrapper.error {
+        background: rgba(220, 53, 69, 0.08);
+        color: #dc3545;
+        border: 1px solid rgba(220, 53, 69, 0.15);
+        margin: 0 auto 20px;
+    }
+
+    .noti-meta-info {
+        flex-grow: 1;
+    }
+
+    .noti-title {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #3C1F10;
+        margin: 0 0 6px 0;
+        line-height: 1.25;
+        letter-spacing: -0.2px;
+    }
+
+    .noti-date {
+        font-size: 0.8rem;
+        color: #9C8070;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 500;
+    }
+
+    .noti-divider {
+        height: 1px;
+        background: linear-gradient(90deg, rgba(212, 178, 167, 0) 0%, rgba(212, 178, 167, 0.3) 20%, rgba(212, 178, 167, 0.3) 80%, rgba(212, 178, 167, 0) 100%);
+        margin: 28px 0;
+    }
+
+    .noti-card-body {
+        margin-bottom: 30px;
+    }
+
+    .noti-message-bubble {
+        background: #FAF8F6;
+        border-radius: 14px;
+        padding: 24px;
+        border: 1px solid rgba(212, 178, 167, 0.12);
+    }
+
+    .noti-message-text {
+        font-size: 0.95rem;
+        line-height: 1.65;
+        color: #554844;
+        margin: 0;
+        white-space: pre-line;
+    }
+
+    .noti-card-footer {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .action-buttons-group {
+        display: flex;
+        gap: 16px;
+        width: 100%;
+    }
+
+    .btn-primary-action {
+        width: 100%;
+        padding: 14px 28px;
+        border-radius: 12px;
+        border: none;
+        background: #3C1F10;
+        color: white;
+        font-size: 0.92rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        box-shadow: 0 4px 15px rgba(60, 31, 16, 0.15);
+    }
+
+    .btn-primary-action:hover {
+        background: #502A16;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(60, 31, 16, 0.25);
+    }
+
+    .btn-secondary-action {
+        padding: 12px 24px;
+        border-radius: 12px;
+        border: 1px solid rgba(212, 178, 167, 0.4);
+        background: transparent;
+        color: #7A5C50;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-secondary-action:hover {
+        background: #FAF8F6;
+        border-color: #3C1F10;
+        color: #3C1F10;
+    }
+
+    /* Promotion Slide/Carousel */
+    .promo-carousel-wrapper {
+        padding: 40px 40px 10px;
+        margin-top: 10px;
+    }
+
+    .promo-slide {
+        position: relative;
+        border-radius: 16px;
+        padding: 48px 60px;
+        color: #F5ECD7;
+        overflow: hidden;
+        min-height: 280px;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 12px 32px rgba(60, 31, 16, 0.12);
+        transition: background 0.5s ease-in-out;
+    }
+
+    .promo-decor {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.03);
+        pointer-events: none;
+    }
+
+    .promo-decor.decor-1 {
+        width: 300px;
+        height: 300px;
+        top: -100px;
+        right: -50px;
+        border: 2px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .promo-decor.decor-2 {
+        width: 180px;
+        height: 180px;
+        bottom: -50px;
+        left: 20%;
+        background: radial-gradient(circle, rgba(201, 169, 110, 0.08) 0%, transparent 70%);
+    }
+
+    .promo-content {
+        max-width: 500px;
+        z-index: 10;
+        position: relative;
+        text-align: left;
+    }
+
+    .promo-subtitle {
+        font-size: 0.72rem;
+        letter-spacing: 0.25em;
+        text-transform: uppercase;
+        color: var(--gold);
+        font-weight: 700;
+        margin-bottom: 12px;
+        display: block;
+    }
+
+    .promo-title {
+        font-family: 'DM Sans', sans-serif;
+        font-size: clamp(1.8rem, 4vw, 2.5rem);
+        font-weight: 300;
+        line-height: 1.2;
+        color: #FFFFFF;
+        margin-bottom: 14px;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .promo-desc {
+        font-size: 0.9rem;
+        font-weight: 300;
+        color: rgba(245, 236, 215, 0.85);
+        line-height: 1.6;
+        margin-bottom: 24px;
+    }
+
+    .promo-code-container {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px dashed rgba(255, 255, 255, 0.3);
+        padding: 8px 16px;
+        font-size: 0.82rem;
+        color: #FFFFFF;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-right: 16px;
+        margin-bottom: 16px;
+        transition: background 0.2s, transform 0.2s;
+    }
+
+    .promo-code-container:hover {
+        background: rgba(255, 255, 255, 0.18);
+        transform: translateY(-1px);
+    }
+
+    .promo-cta-btn {
+        background: #FFFFFF;
+        color: var(--charcoal);
+        border: none;
+        border-radius: 8px;
+        padding: 10px 24px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        cursor: pointer;
+        transition: all 0.25s;
+        margin-bottom: 16px;
+        font-family: 'DM Sans', sans-serif;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .promo-cta-btn:hover {
+        background: var(--gold);
+        color: #FFFFFF;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+    }
+
+    .promo-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #FFFFFF;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 20;
+        transition: all 0.2s;
+    }
+
+    .promo-arrow:hover {
+        background: #FFFFFF;
+        color: var(--charcoal);
+    }
+
+    .promo-arrow.prev {
+        left: 20px;
+    }
+
+    .promo-arrow.next {
+        right: 20px;
+    }
+
+    .promo-dots {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 8px;
+        z-index: 20;
+    }
+
+    .promo-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+        transition: all 0.25s;
+    }
+
+    .promo-dot.active {
+        background: #FFFFFF;
+        width: 24px;
+        border-radius: 4px;
+    }
+
+    .promo-page-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 16px 36px var(--shadow);
+        border-color: var(--rose-light) !important;
+    }
+
+    @@media (max-width: 768px) {
+        .promo-slide {
+            padding: 36px 30px;
+        }
+        .promo-arrow {
+            display: none; /* Hide arrows on mobile, dots are fine */
+        }
+    }
+
+    /* Promotional Product Grid styles */
+    .promo-grid-card {
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.28s, box-shadow 0.28s;
+        padding: 16px;
+    }
+
+    .promo-grid-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 28px var(--shadow);
+    }
+
+    .promo-grid-img-wrap {
+        aspect-ratio: 3/4;
+        width: 100%;
+        background: var(--rose-pale);
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 12px;
+    }
+
+    .promo-grid-img-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .promo-grid-title {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: var(--charcoal);
+        margin-bottom: 6px;
+        line-height: 1.3;
+        min-height: 40px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .promo-grid-rating {
+        font-size: 0.75rem;
+        color: #b12704;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-bottom: 8px;
+    }
+
+    .promo-grid-stars {
+        color: #FFA41C;
+    }
+
+    .promo-grid-price-row {
+        margin-bottom: 6px;
+        font-size: 1.05rem;
+        font-weight: 600;
+    }
+
+    .promo-grid-price-original {
+        font-size: 0.8rem;
+        color: #767676;
+        text-decoration: line-through;
+        margin-right: 6px;
+        font-weight: 400;
+    }
+
+    .promo-grid-price-discounted {
+        color: var(--rose);
+        font-weight: 600;
+    }
+
+    .promo-grid-badge {
+        display: inline-block;
+        font-size: 0.65rem;
+        background: #FEE2E2;
+        color: #9F1D1D;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        align-self: flex-start;
+    }
+
+    .promo-grid-delivery {
+        font-size: 0.72rem;
+        color: #565959;
+        margin-bottom: 14px;
+        line-height: 1.4;
+    }
+
+    .promo-grid-add-btn {
+        background: #FFD814;
+        border: 1px solid #FCD200;
+        border-radius: 100px;
+        color: #0F1111;
+        padding: 8px 16px;
+        font-size: 0.78rem;
+        font-weight: 500;
+        cursor: pointer;
+        width: 100%;
+        font-family: 'DM Sans', sans-serif;
+        text-align: center;
+        transition: background 0.2s;
+        box-shadow: 0 2px 5px rgba(213,217,217,.5);
+        margin-top: auto;
+        border-style: solid;
+    }
+
+    .promo-grid-add-btn:hover {
+        background: #F7CA00;
+        border-color: #F2C200;
+    }
 </style>
 
 
@@ -1955,51 +2514,13 @@
 
             @if (currentUser != null)
             {
-                <div style="position: relative; display: inline-block;">
-                    <button class="notification-btn" title="Notifications" @onclick="ToggleNotificationsDropdown">
-                        <i class="bi bi-bell"></i>
-                        @if (notifications.Any(n => !n.IsRead))
-                        {
-                            <span class="notification-badge">@notifications.Count(n => !n.IsRead)</span>
-                        }
-                    </button>
-                    
-                    @if (showNotificationsDropdown)
+                <button class="notification-btn" title="Notifications" @onclick="ToggleNotificationsDropdown">
+                    <i class="bi bi-bell"></i>
+                    @if (notifications.Any(n => !n.IsRead))
                     {
-                        <div class="notifications-dropdown-menu">
-                            <div class="dropdown-header">
-                                <span>Notifications (@notifications.Count)</span>
-                                @if (notifications.Any(n => !n.IsRead))
-                                {
-                                    <button class="mark-all-read-btn" @onclick="MarkAllNotificationsAsRead" @onclick:stopPropagation="true">Mark all read</button>
-                                }
-                            </div>
-                            <div class="dropdown-body">
-                                @if (!notifications.Any())
-                                {
-                                    <div class="empty-notifications">No notifications yet.</div>
-                                }
-                                else
-                                {
-                                    @foreach (var noti in notifications)
-                                    {
-                                        <div class="notification-item @(noti.IsRead ? "" : "unread")" @onclick="() => HandleNotificationClick(noti)" @onclick:stopPropagation="true">
-                                            <div class="noti-title">
-                                                @noti.Title
-                                                @if (!noti.IsRead)
-                                                {
-                                                    <span class="unread-dot"></span>
-                                                }
-                                            </div>
-                                            <div class="noti-message">@noti.Message</div>
-                                            <div class="noti-time">@noti.CreatedAt.ToString("g")</div>
-                                        </div>
-                                    }
-                                }
-                            </div>
-                        </div>
+                        <span class="notification-badge">@notifications.Count(n => !n.IsRead)</span>
                     }
-                </div>
+                </button>
             }
 
             @if (currentUser != null)
@@ -2017,6 +2538,7 @@
         <button class="nav-tab @(activeTab == "home" ? "active" : "")" @onclick='() => Navigate("home")'>Home</button>
         <button class="nav-tab @(activeTab == "best" ? "active" : "")" @onclick='() => Navigate("best")'>Best Seller</button>
         <button class="nav-tab @(activeTab == "shop" ? "active" : "")" @onclick='() => Navigate("shop")'>The Collection</button>
+        <button class="nav-tab @(activeTab == "promotions" ? "active" : "")" @onclick='() => Navigate("promotions")'>Promotions</button>
         <button class="nav-tab @(activeTab == "history" ? "active" : "")" @onclick='() => Navigate("history")'>My Purchases</button>
         <button class="nav-tab @(activeTab == "return" ? "active" : "")" @onclick='() => NavigateToReturnTab()'>Return / Exchange</button>
         <button class="nav-tab @(activeTab == "profile" ? "active" : "")" @onclick='() => Navigate("profile")'>My Profile</button>
@@ -2089,6 +2611,34 @@
                 <button class="btn-primary-rose" @onclick='() => Navigate("shop")'>Explore Catalog</button>
             </div>
         </section>
+
+        <!-- Promotion Slide Container -->
+        @if (promotionsList != null && promotionsList.Any() && currentPromoSlideIndex >= 0 && currentPromoSlideIndex < promotionsList.Count)
+        {
+            <div class="promo-carousel-wrapper">
+                <div class="promo-slide" 
+                     style="background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.65) 100%), url('@promotionsList[currentPromoSlideIndex].ImageUrl') center/cover no-repeat; cursor: pointer;"
+                     @onclick="() => ClickPromoSlide(promotionsList[currentPromoSlideIndex])">
+                    <div class="promo-decor decor-1"></div>
+                    <div class="promo-decor decor-2"></div>
+                    
+                    <div class="promo-content">
+                        <span class="promo-subtitle">@promotionsList[currentPromoSlideIndex].Subtitle</span>
+                        <h2 class="promo-title">@promotionsList[currentPromoSlideIndex].Title</h2>
+                        <p class="promo-desc" style="margin-bottom: 0;">@promotionsList[currentPromoSlideIndex].Description</p>
+                    </div>
+                    
+                    <div class="promo-dots">
+                        @for (int i = 0; i < promotionsList.Count; i++)
+                        {
+                            int index = i;
+                            <span class="promo-dot @(currentPromoSlideIndex == index ? "active" : "")" 
+                                  @onclick="() => SetPromoSlide(index)" @onclick:stopPropagation="true"></span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
 
         <div class="section-head">
             <h2 class="section-title">New <span>Creations</span></h2>
@@ -2366,6 +2916,37 @@
                             <span class="summary-total-val">@CartTotal.ToString("N0") MMK</span>
                         </div>
 
+                        <!-- Promo Code section -->
+                        <div style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px; text-align: left;">
+                            <label class="form-label-custom">Promo / Coupon Code</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" class="form-control-custom" style="padding: 8px 12px; font-size: 0.8rem; text-transform: uppercase;" 
+                                       @bind="enteredPromoCode" placeholder="Code (e.g. SUMMER20)" />
+                                <button type="button" class="btn-primary-rose" style="padding: 8px 16px; font-size: 0.65rem; border-radius: 4px; letter-spacing: 0.05em; font-weight: 600;" 
+                                        @onclick="ApplyPromoCodeCheckout">
+                                    Apply
+                                </button>
+                            </div>
+                            @if (!string.IsNullOrEmpty(promoCodeMessage))
+                            {
+                                <p style="font-size: 0.72rem; margin-top: 6px; font-weight: 500; color: @(promoCodeSuccess ? "var(--success)" : "var(--red)"); margin-bottom: 0;">
+                                    <i class="bi @(promoCodeSuccess ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill")"></i> @promoCodeMessage
+                                </p>
+                            }
+                        </div>
+
+                        @if (appliedPromoDiscount > 0)
+                        {
+                            <div class="summary-total-row" style="border-top: none; padding-top: 8px; margin-top: 0;">
+                                <span class="summary-total-label" style="color: var(--success); font-weight: 600;">Discount (@appliedPromoCode: -@appliedPromoPercent%)</span>
+                                <span class="summary-total-val" style="color: var(--success); font-weight: 600;">-@appliedPromoDiscount.ToString("N0") MMK</span>
+                            </div>
+                            <div class="summary-total-row" style="border-top: 1px solid var(--rose); margin-top: 8px; padding-top: 12px;">
+                                <span class="summary-total-label" style="font-weight: 600; color: var(--charcoal);">Grand Total</span>
+                                <span class="summary-total-val" style="font-weight: 700; color: var(--rose);">@GrandTotal.ToString("N0") MMK</span>
+                            </div>
+                        }
+
                         <LoadingButton Class="btn-place-order"
                                        IsLoading="@isPlacingOrder"
                                        LoadingText="Confirming..."
@@ -2374,9 +2955,6 @@
                         </LoadingButton>
                     </div>
                 </div>
-
-                <!-- ONE modal for the whole page, placed at the root level -->
-                <ConfirmModal @ref="confirmModal" />
         </div>
     </div>
     }
@@ -2417,7 +2995,7 @@
                                 else if (OrderWorkflow.IsCancelled(order.OrderStatus))
                                 {
                                     <span class="badge-cancelled px-3 py-1 rounded">
-                                        @(OrderWorkflow.Normalize(order.OrderStatus) == OrderWorkflow.CancelledByCustomer ? "Cancelled (Customer)" :
+                                        @(OrderWorkflow.Normalize(order.OrderStatus) == OrderWorkflow.CancelledByCustomer ? "Cancellation Pending" :
                                           OrderWorkflow.Normalize(order.OrderStatus) == OrderWorkflow.CancelledByStaff ? "Cancelled (Staff)" : "Cancelled")
                                     </span>
                                 }
@@ -2473,7 +3051,7 @@
                                                     else if (OrderWorkflow.IsCancelled(normStatus))
                                                     {
                                                         <p style="font-size: 0.82rem; color: #b91c1c; margin: 0 0 6px; line-height: 1.4;">
-                                                            <strong>Status:</strong> @(normStatus == OrderWorkflow.CancelledByCustomer ? "Cancelled (Customer)" :
+                                                            <strong>Status:</strong> @(normStatus == OrderWorkflow.CancelledByCustomer ? "Cancellation Pending" :
                                                                                        normStatus == OrderWorkflow.CancelledByStaff ? "Cancelled (Staff)" : "Cancelled")
                                                         </p>
                                                     }
@@ -2521,7 +3099,7 @@
                                                 </button>
                                             </div>
                                         }
-                                        else if (OrderWorkflow.Normalize(order.OrderStatus) == OrderWorkflow.Confirm)
+                                        else if (OrderWorkflow.Normalize(order.OrderStatus) == OrderWorkflow.Confirm && CanRequestReturn(order))
                                         {
                                             <div style="margin-bottom: 24px; display: flex; justify-content: flex-end;">
                                                 <button class="btn-primary-rose" @onclick="() => InitiateReturn(order)" @onclick:stopPropagation="true" style="padding: 10px 24px; font-size: 0.72rem;">
@@ -2605,7 +3183,7 @@
                 <div class="form-group mb-4" style="text-align: left;">
                     <label class="form-label-custom">Select Order to Return / Exchange</label>
                     <select class="form-control-custom" style="border-radius: 8px; font-family: 'DM Sans', sans-serif;" @onchange="OnReturnOrderChanged">
-                        @foreach (var order in userOrders.Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Confirm))
+                        @foreach (var order in userOrders.Where(o => CanSelectForReturn(o)))
                         {
                             <option value="@order.OrderId" selected="@(selectedReturnOrder?.OrderId == order.OrderId)">
                                 Order ORD-@order.OrderId.ToString("D4") (Date: @(order.CreatedAt?.ToString("dd MMM yyyy") ?? "N/A"))
@@ -2614,149 +3192,201 @@
                     </select>
                 </div>
 
-                <!-- Select Item to Return -->
-                <div class="form-group mb-4" style="text-align: left;">
-                    <label class="form-label-custom">Select Item to Return / Exchange</label>
-                    <select class="form-control-custom" style="border-radius: 8px; font-family: 'DM Sans', sans-serif;" value="@selectedReturnItemId" @onchange="OnReturnItemChanged">
-                        @foreach (var item in selectedReturnOrder.OrderItems)
-                        {
-                            <option value="@item.OrderItemId">
-                                @(item.Variant?.Product?.Name ?? "Product") (Size: @(item.Variant?.Size ?? "-"), Color: @(item.Variant?.Color ?? "-"), Qty: @item.Quantity)
-                            </option>
-                        }
-                    </select>
-                </div>
-
-                <!-- Show Item Preview -->
-                @if (selectedReturnItem != null)
+                @if (CanRequestReturn(selectedReturnOrder))
                 {
-                    var imgObj = selectedReturnItem.Variant?.Product?.ProductImages?.FirstOrDefault(i => i.IsPrimary == true);
-                    var itemImg = NormalizeImageUrl(imgObj?.ImageUrl);
-                    <div style="display: flex; gap: 16px; background: var(--rose-pale); padding: 16px; border-radius: 8px; margin-bottom: 24px; text-align: left;">
-                        <FallbackImage Src="@itemImg" Alt="Product Image" style="width: 60px; height: 80px; object-fit: cover; border-radius: 4px;" />
-                        <div style="display: flex; flex-direction: column; justify-content: center;">
-                            <h4 style="font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--charcoal); margin-bottom: 4px;">@(selectedReturnItem.Variant?.Product?.Name ?? "Product")</h4>
-                            <p style="font-size: 0.78rem; color: var(--charcoal-soft); margin-bottom: 0;">Size: @(selectedReturnItem.Variant?.Size ?? "-") &middot; Color: @(selectedReturnItem.Variant?.Color ?? "-") &middot; Qty: @selectedReturnItem.Quantity</p>
-                            <p style="font-size: 0.85rem; font-weight: 600; color: var(--rose); margin-top: 4px; margin-bottom: 0;">@((selectedReturnItem.PriceAtPurchase * selectedReturnItem.Quantity).ToString("N0")) MMK</p>
-                        </div>
+                    <!-- Select Item to Return -->
+                    <div class="form-group mb-4" style="text-align: left;">
+                        <label class="form-label-custom">Select Item to Return / Exchange</label>
+                        <select class="form-control-custom" style="border-radius: 8px; font-family: 'DM Sans', sans-serif;" value="@selectedReturnItemId" @onchange="OnReturnItemChanged">
+                            @foreach (var item in selectedReturnOrder.OrderItems.Where(oi => !HasBeenReturned(selectedReturnOrder.OrderId, oi.VariantId)))
+                            {
+                                <option value="@item.OrderItemId">
+                                    @(item.Variant?.Product?.Name ?? "Product") (Size: @(item.Variant?.Size ?? "-"), Color: @(item.Variant?.Color ?? "-"), Qty: @item.Quantity)
+                                </option>
+                            }
+                        </select>
                     </div>
-                }
 
-                <!-- Receipt Upload -->
-                <div class="form-group mb-4" style="text-align: left;">
-                    <label class="form-label-custom">Upload Receipt / Bill Image</label>
-                    <label class="slip-upload-zone" for="return-receipt-input" style="border-radius: 8px; padding: 24px; border: 2px dashed var(--rose-light);">
-                        <i class="bi bi-cloud-arrow-up slip-upload-icon" style="font-size: 1.8rem; margin-bottom: 8px; color: var(--rose-light);"></i>
-                        <p class="slip-upload-text" style="font-size: 0.75rem; color: var(--charcoal-soft);">Choose a JPG, PNG, or WEBP receipt file</p>
-                    </label>
-                    <InputFile id="return-receipt-input"
-                               class="slip-file-input"
-                               OnChange="HandleReturnReceiptSelected"
-                               accept="image/jpeg,image/png,image/webp" />
-
-                    @if (!string.IsNullOrEmpty(returnReceiptError))
+                    <!-- Show Item Preview -->
+                    @if (selectedReturnItem != null)
                     {
-                        <p class="modal-error mt-2" style="color: var(--red);">
-                            <i class="bi bi-exclamation-triangle"></i> @returnReceiptError
-                        </p>
-                    }
-
-                    @if (returnReceiptBytes != null && !string.IsNullOrEmpty(returnReceiptFileName) && !string.IsNullOrEmpty(returnReceiptPreviewUrl))
-                    {
-                        <div class="slip-preview" style="margin-top: 14px; text-align: center;">
-                            <img src="@returnReceiptPreviewUrl" style="width: 110px; height: 140px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border);" alt="Receipt slip" />
-                            <p class="slip-preview-name text-center text-success mt-2" style="font-size: 0.72rem; color: var(--success);"><i class="bi bi-patch-check-fill"></i> @returnReceiptFileName</p>
-                        </div>
-                    }
-                </div>
-
-                <!-- Predefined Reasons (Checkboxes) -->
-                <div class="form-group mb-4" style="text-align: left;">
-                    <label class="form-label-custom">Reason for Return (Select at least one checkbox OR type below)</label>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
-                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--charcoal); cursor: pointer;">
-                            <input type="checkbox" @bind="retReasonColorMismatch" style="accent-color: var(--rose); width: 16px; height: 16px;" />
-                            Color didn't match
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--charcoal); cursor: pointer;">
-                            <input type="checkbox" @bind="retReasonDamage" style="accent-color: var(--rose); width: 16px; height: 16px;" />
-                            Damage order
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--charcoal); cursor: pointer;">
-                            <input type="checkbox" @bind="retReasonSizeIssue" style="accent-color: var(--rose); width: 16px; height: 16px;" />
-                            Size issue
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--charcoal); cursor: pointer;">
-                            <input type="checkbox" @bind="retReasonExchangeRequest" style="accent-color: var(--rose); width: 16px; height: 16px;" />
-                            Want to exchange with other item
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Text message box -->
-                <div class="form-group mb-4" style="text-align: left;">
-                    <label class="form-label-custom">Additional Details / Custom Message</label>
-                    <textarea class="form-control-custom" style="min-height: 100px; border-radius: 8px; resize: vertical; font-family: 'DM Sans', sans-serif;" 
-                              placeholder="Describe your issue or what item you want to exchange with..." 
-                              @bind="returnCustomMessage"></textarea>
-                </div>
-
-                <!-- Return Option (Refund / Exchange) -->
-                <div class="form-group mb-4" style="text-align: left;">
-                    <label class="form-label-custom">Choose Option</label>
-                    <div style="display: flex; gap: 24px; margin-top: 8px;">
-                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--charcoal); cursor: pointer;">
-                            <input type="radio" name="return_option" checked='@(returnOption == "Refund")' @onclick='() => returnOption = "Refund"' style="accent-color: var(--rose); width: 18px; height: 18px;" />
-                            Take Money Back (Refund)
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--charcoal); cursor: pointer;">
-                            <input type="radio" name="return_option" checked='@(returnOption == "Exchange")' @onclick='() => returnOption = "Exchange"' style="accent-color: var(--rose); width: 18px; height: 18px;" />
-                            Exchange with Other Item
-                        </label>
-                    </div>
-                </div>
-
-                @if (returnOption == "Exchange")
-                {
-                    <div style="background: var(--rose-pale); border: 1px dashed var(--rose-light); padding: 20px; border-radius: 8px; margin-bottom: 24px; text-align: left;">
-                        <h4 style="font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600; color: var(--charcoal); margin-bottom: 12px; margin-top: 0;">Exchange Item Details</h4>
-                        
-                        @if (selectedExchangeVariant == null)
-                        {
-                            <p style="font-size: 0.8rem; color: var(--charcoal-soft); margin-bottom: 12px;">Please select the creation you would like to exchange your item with.</p>
-                            <button type="button" class="btn btn-primary-rose" style="font-size: 0.72rem; padding: 8px 16px; cursor: pointer; text-transform: uppercase;" @onclick="() => showExchangePicker = true">
-                                <i class="bi bi-search"></i> Select Replacement Item
-                            </button>
-                        }
-                        else
-                        {
-                             var matchingProduct = allProducts.FirstOrDefault(p => p.ProductId == selectedExchangeVariant.ProductId);
-                             var imgObj = matchingProduct?.ProductImages?.FirstOrDefault(i => i.IsPrimary == true);
-                             var replacementImg = NormalizeImageUrl(imgObj?.ImageUrl);
-                             <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 12px;">
-                                 <FallbackImage Src="@replacementImg" Alt="Replacement Product" style="width: 50px; height: 65px; object-fit: cover; border-radius: 4px;" />
-                                 <div style="display: flex; flex-direction: column;">
-                                     <span style="font-size: 0.65rem; color: var(--rose); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Replacement Selection</span>
-                                     <h5 style="font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600; color: var(--charcoal); margin: 2px 0;">@(matchingProduct?.Name ?? "Product")</h5>
-                                    <p style="font-size: 0.75rem; color: var(--charcoal-soft); margin: 0;">Size: @selectedExchangeVariant.Size &middot; Color: @selectedExchangeVariant.Color</p>
-                                    <p style="font-size: 0.82rem; font-weight: 600; color: var(--rose); margin-top: 2px; margin-bottom: 0;">@(selectedExchangeVariant.SalePrice?.ToString("N0") ?? "0") MMK</p>
-                                </div>
+                        var imgObj = selectedReturnItem.Variant?.Product?.ProductImages?.FirstOrDefault(i => i.IsPrimary == true);
+                        var itemImg = NormalizeImageUrl(imgObj?.ImageUrl);
+                        <div style="display: flex; gap: 16px; background: var(--rose-pale); padding: 16px; border-radius: 8px; margin-bottom: 24px; text-align: left;">
+                            <FallbackImage Src="@itemImg" Alt="Product Image" style="width: 60px; height: 80px; object-fit: cover; border-radius: 4px;" />
+                            <div style="display: flex; flex-direction: column; justify-content: center;">
+                                <h4 style="font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--charcoal); margin-bottom: 4px;">@(selectedReturnItem.Variant?.Product?.Name ?? "Product")</h4>
+                                <p style="font-size: 0.78rem; color: var(--charcoal-soft); margin-bottom: 0;">Size: @(selectedReturnItem.Variant?.Size ?? "-") &middot; Color: @(selectedReturnItem.Variant?.Color ?? "-") &middot; Qty: @selectedReturnItem.Quantity</p>
+                                <p style="font-size: 0.85rem; font-weight: 600; color: var(--rose); margin-top: 4px; margin-bottom: 0;">@((selectedReturnItem.PriceAtPurchase * selectedReturnItem.Quantity).ToString("N0")) MMK</p>
                             </div>
-                            <button type="button" class="btn" style="background: var(--white); border: 1px solid var(--border); color: var(--charcoal-soft); font-size: 0.7rem; padding: 6px 12px; cursor: pointer; border-radius: 4px;" @onclick="() => showExchangePicker = true">
-                                Change Selection
-                            </button>
+                        </div>
+                    }
+
+                    <!-- Receipt Upload -->
+                    <div class="form-group mb-4" style="text-align: left;">
+                        <label class="form-label-custom">Upload Receipt / Bill Image</label>
+                        <label class="slip-upload-zone" for="return-receipt-input" style="border-radius: 8px; padding: 24px; border: 2px dashed var(--rose-light);">
+                            <i class="bi bi-cloud-arrow-up slip-upload-icon" style="font-size: 1.8rem; margin-bottom: 8px; color: var(--rose-light);"></i>
+                            <p class="slip-upload-text" style="font-size: 0.75rem; color: var(--charcoal-soft);">Choose a JPG, PNG, or WEBP receipt file</p>
+                        </label>
+                        <InputFile id="return-receipt-input"
+                                   class="slip-file-input"
+                                   OnChange="HandleReturnReceiptSelected"
+                                   accept="image/jpeg,image/png,image/webp" />
+
+                        @if (!string.IsNullOrEmpty(returnReceiptError))
+                        {
+                            <p class="modal-error mt-2" style="color: var(--red);">
+                                <i class="bi bi-exclamation-triangle"></i> @returnReceiptError
+                            </p>
+                        }
+
+                        @if (returnReceiptBytes != null && !string.IsNullOrEmpty(returnReceiptFileName) && !string.IsNullOrEmpty(returnReceiptPreviewUrl))
+                        {
+                            <div class="slip-preview" style="margin-top: 14px; text-align: center;">
+                                <img src="@returnReceiptPreviewUrl" style="width: 110px; height: 140px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border);" alt="Receipt slip" />
+                                <p class="slip-preview-name text-center text-success mt-2" style="font-size: 0.72rem; color: var(--success);"><i class="bi bi-patch-check-fill"></i> @returnReceiptFileName</p>
+                            </div>
                         }
                     </div>
+
+                    <!-- Predefined Reasons (Checkboxes) -->
+                    <div class="form-group mb-4" style="text-align: left;">
+                        <label class="form-label-custom">Reason for Return (Select at least one checkbox OR type below)</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--charcoal); cursor: pointer;">
+                                <input type="checkbox" @bind="retReasonColorMismatch" style="accent-color: var(--rose); width: 16px; height: 16px;" />
+                                Color didn't match
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--charcoal); cursor: pointer;">
+                                <input type="checkbox" @bind="retReasonDamage" style="accent-color: var(--rose); width: 16px; height: 16px;" />
+                                Damage order
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--charcoal); cursor: pointer;">
+                                <input type="checkbox" @bind="retReasonSizeIssue" style="accent-color: var(--rose); width: 16px; height: 16px;" />
+                                Size issue
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--charcoal); cursor: pointer;">
+                                <input type="checkbox" @bind="retReasonExchangeRequest" style="accent-color: var(--rose); width: 16px; height: 16px;" />
+                                Want to exchange with other item
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Text message box -->
+                    <div class="form-group mb-4" style="text-align: left;">
+                        <label class="form-label-custom">Additional Details / Custom Message</label>
+                        <textarea class="form-control-custom" style="min-height: 100px; border-radius: 8px; resize: vertical; font-family: 'DM Sans', sans-serif;" 
+                                  placeholder="Describe your issue or what item you want to exchange with..." 
+                                  @bind="returnCustomMessage"></textarea>
+                    </div>
+
+                    <!-- Return Option (Refund / Exchange) -->
+                    <div class="form-group mb-4" style="text-align: left;">
+                        <label class="form-label-custom">Choose Option</label>
+                        <div style="display: flex; gap: 24px; margin-top: 8px;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--charcoal); cursor: pointer;">
+                                <input type="radio" name="return_option" checked='@(returnOption == "Refund")' @onclick='() => returnOption = "Refund"' style="accent-color: var(--rose); width: 18px; height: 18px;" />
+                                Take Money Back (Refund)
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--charcoal); cursor: pointer;">
+                                <input type="radio" name="return_option" checked='@(returnOption == "Exchange")' @onclick='() => returnOption = "Exchange"' style="accent-color: var(--rose); width: 18px; height: 18px;" />
+                                Exchange with Other Item
+                            </label>
+                        </div>
+                    </div>
+
+                    @if (returnOption == "Exchange")
+                    {
+                        <div style="background: var(--rose-pale); border: 1px dashed var(--rose-light); padding: 20px; border-radius: 8px; margin-bottom: 24px; text-align: left;">
+                            <h4 style="font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600; color: var(--charcoal); margin-bottom: 12px; margin-top: 0;">Exchange Item Details</h4>
+                            
+                            @if (selectedExchangeVariant == null)
+                            {
+                                <p style="font-size: 0.8rem; color: var(--charcoal-soft); margin-bottom: 12px;">Please select the creation you would like to exchange your item with.</p>
+                                <button type="button" class="btn btn-primary-rose" style="font-size: 0.72rem; padding: 8px 16px; cursor: pointer; text-transform: uppercase;" @onclick="() => showExchangePicker = true">
+                                    <i class="bi bi-search"></i> Select Replacement Item
+                                </button>
+                            }
+                            else
+                            {
+                                 var matchingProduct = allProducts.FirstOrDefault(p => p.ProductId == selectedExchangeVariant.ProductId);
+                                 var imgObj = matchingProduct?.ProductImages?.FirstOrDefault(i => i.IsPrimary == true);
+                                 var replacementImg = NormalizeImageUrl(imgObj?.ImageUrl);
+                                 <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 12px;">
+                                     <FallbackImage Src="@replacementImg" Alt="Replacement Product" style="width: 50px; height: 65px; object-fit: cover; border-radius: 4px;" />
+                                     <div style="display: flex; flex-direction: column;">
+                                         <span style="font-size: 0.65rem; color: var(--rose); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Replacement Selection</span>
+                                         <h5 style="font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600; color: var(--charcoal); margin: 2px 0;">@(matchingProduct?.Name ?? "Product")</h5>
+                                        <p style="font-size: 0.75rem; color: var(--charcoal-soft); margin: 0;">Size: @selectedExchangeVariant.Size &middot; Color: @selectedExchangeVariant.Color</p>
+                                        <p style="font-size: 0.82rem; font-weight: 600; color: var(--rose); margin-top: 2px; margin-bottom: 0;">@(selectedExchangeVariant.SalePrice?.ToString("N0") ?? "0") MMK</p>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn" style="background: var(--white); border: 1px solid var(--border); color: var(--charcoal-soft); font-size: 0.7rem; padding: 6px 12px; cursor: pointer; border-radius: 4px;" @onclick="() => showExchangePicker = true">
+                                    Change Selection
+                                </button>
+                            }
+                        </div>
+                    }
+
+                    <!-- Submit Button -->
+                    <LoadingButton Class="btn-primary-rose"
+                                   IsLoading="@isSubmittingReturn"
+                                   LoadingText="Submitting..."
+                                   OnClick="SubmitReturnRequest"
+                                   style="width: 100%; padding: 16px; border-radius: 8px; margin-top: 12px;">
+                        Submit Return / Exchange Request
+                    </LoadingButton>
                 }
 
-                <!-- Submit Button -->
-                <LoadingButton Class="btn-primary-rose"
-                               IsLoading="@isSubmittingReturn"
-                               LoadingText="Submitting..."
-                               OnClick="SubmitReturnRequest"
-                               style="width: 100%; padding: 16px; border-radius: 8px; margin-top: 12px;">
-                    Submit Return / Exchange Request
-                </LoadingButton>
+                <!-- Previously Returned Items Section -->
+                @{
+                    var returnedItems = selectedReturnOrder.OrderItems
+                        .Where(oi => HasBeenReturned(selectedReturnOrder.OrderId, oi.VariantId, out _))
+                        .ToList();
+                }
+
+                @if (returnedItems.Any())
+                {
+                    <div style="margin-top: 30px; border-top: 1px solid var(--border); padding-top: 24px; text-align: left;">
+                        <h4 style="font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--charcoal); margin-bottom: 12px;">
+                            <i class="bi bi-clock-history" style="color: var(--rose); margin-right: 6px;"></i> Already Returned Creations in this Order
+                        </h4>
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            @foreach (var item in returnedItems)
+                            {
+                                string option = "";
+                                HasBeenReturned(selectedReturnOrder.OrderId, item.VariantId, out option);
+                                var imgObj = item.Variant?.Product?.ProductImages?.FirstOrDefault(i => i.IsPrimary == true);
+                                var itemImg = NormalizeImageUrl(imgObj?.ImageUrl);
+
+                                <div style="display: flex; justify-content: space-between; align-items: center; background: #fafafa; border: 1px solid var(--border); padding: 12px 16px; border-radius: 8px;">
+                                    <div style="display: flex; gap: 12px; align-items: center;">
+                                        <FallbackImage Src="@itemImg" Alt="Product Image" style="width: 40px; height: 55px; object-fit: cover; border-radius: 4px;" />
+                                        <div>
+                                            <h5 style="font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--charcoal); margin: 0 0 2px 0;">@(item.Variant?.Product?.Name ?? "Product")</h5>
+                                            <p style="font-size: 0.72rem; color: var(--charcoal-soft); margin: 0;">Size: @(item.Variant?.Size ?? "-") &middot; Color: @(item.Variant?.Color ?? "-") &middot; Qty: @item.Quantity</p>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        @{
+                                            var retObj = GetOrderReturn(selectedReturnOrder.OrderId, item.VariantId);
+                                        }
+                                        @if (!string.IsNullOrEmpty(retObj?.ReceiptImageUrl))
+                                        {
+                                            <a href="@retObj.ReceiptImageUrl" target="_blank" title="View Uploaded Receipt" style="display: block;">
+                                                <img src="@retObj.ReceiptImageUrl" alt="Receipt Preview" style="width: 38px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); cursor: zoom-in;" />
+                                            </a>
+                                        }
+                                        <span class="badge" style="background: rgba(212,178,167,0.15); color: var(--rose); border: 1px solid rgba(212,178,167,0.3); padding: 4px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase;">
+                                            @option (@(retObj?.Status ?? "Pending"))
+                                        </span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
             </div>
         }
     </div>
@@ -2882,6 +3512,222 @@
                             Save Member Profile
                         </LoadingButton>
                     </div>
+                </div>
+            </div>
+        }
+    }
+    else if (activeTab == "notification-detail")
+    {
+        @if (selectedNotification != null)
+        {
+            <div class="noti-detail-container">
+                <div class="noti-detail-header">
+                    <button class="btn-back" @onclick="GoBackFromNotification">
+                        <i class="bi bi-arrow-left-short"></i> Back to Atelier
+                    </button>
+                </div>
+
+                <div class="noti-detail-card">
+                    <!-- Notification Icon and Metadata -->
+                    <div class="noti-card-header">
+                        <div class="noti-icon-wrapper @(selectedNotification.Title.Contains("Confirmed", StringComparison.OrdinalIgnoreCase) ? "confirmed" : 
+                                                         selectedNotification.Title.Contains("Cancel", StringComparison.OrdinalIgnoreCase) ? "cancelled" : "info")">
+                            @if (selectedNotification.Title.Contains("Confirmed", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <i class="bi bi-check-circle"></i>
+                            }
+                            else if (selectedNotification.Title.Contains("Cancel", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <i class="bi bi-x-circle"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-bell"></i>
+                            }
+                        </div>
+                        <div class="noti-meta-info">
+                            <h2 class="noti-title">@selectedNotification.Title</h2>
+                            <span class="noti-date"><i class="bi bi-calendar3"></i> @selectedNotification.CreatedAt.ToString("dd-MMM-yyyy hh:mm tt")</span>
+                        </div>
+                    </div>
+
+                    <div class="noti-divider"></div>
+
+                    <!-- Message Content -->
+                    <div class="noti-card-body">
+                        <div class="noti-message-bubble">
+                            <p class="noti-message-text">@selectedNotification.Message</p>
+                        </div>
+                    </div>
+
+                    <!-- Action Area -->
+                    <div class="noti-card-footer">
+                        @if (selectedNotification.OrderId.HasValue)
+                        {
+                            <div class="action-buttons-group">
+                                @if (selectedNotification.Title.Contains("Confirmed", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <button class="btn-primary-action" @onclick="ViewReceiptFromNotification">
+                                        <i class="bi bi-receipt-cutoff"></i> View Official Receipt
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn-primary-action" @onclick="ViewPurchasesFromNotification">
+                                        <i class="bi bi-bag-heart"></i> View My Purchases
+                                    </button>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <button class="btn-secondary-action" @onclick="GoBackFromNotification">
+                                Return to Atelier
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else if (activeTab == "promotions")
+    {
+        @if (selectedPromotionDetail == null)
+        {
+            <div class="checkout-view" style="max-width: 1000px; margin: 0 auto; padding: 50px 20px;">
+                <h2 class="section-title mb-2">Exclusive <span>Atelier Offers</span></h2>
+                <p class="text-muted mb-5" style="font-size: 0.9rem; font-weight: 300;">Claim exclusive promo codes, special reward point campaigns, and early-bird benefits available only to Salon Members.</p>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
+                    @foreach (var promo in promotionsList)
+                    {
+                        <div class="promo-page-card" style="background: var(--white); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; transition: all 0.3s; box-shadow: var(--shadow); border-color: var(--border);">
+                            <div style="background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.5) 100%), url('@promo.ImageUrl') center/cover no-repeat; padding: 40px 30px; color: #FFF; position: relative; min-height: 140px; display: flex; flex-direction: column; justify-content: flex-end;">
+                                <span style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: var(--gold); letter-spacing: 0.15em; display: block; margin-bottom: 6px;">@promo.Subtitle</span>
+                                <h3 style="font-family: 'DM Sans', sans-serif; font-size: 1.4rem; font-weight: 400; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">@promo.Title</h3>
+                            </div>
+                            <div style="padding: 24px; display: flex; flex-direction: column; flex: 1;">
+                                <p style="font-size: 0.88rem; color: var(--charcoal-soft); line-height: 1.6; margin-bottom: 20px; flex: 1;">@promo.Description</p>
+                                
+                                @if (!string.IsNullOrEmpty(promo.PromoCode))
+                                {
+                                    <div style="background: var(--rose-pale); border: 1px dashed var(--rose-light); border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; cursor: pointer;" 
+                                         @onclick="() => CopyPromoCode(promo.PromoCode)">
+                                        <div>
+                                            <span style="font-size: 0.68rem; color: var(--charcoal-soft); display: block; text-transform: uppercase; font-weight: 600;">PROMO CODE</span>
+                                            <span style="font-size: 1.05rem; font-weight: 700; color: var(--rose); letter-spacing: 0.05em;">@promo.PromoCode</span>
+                                        </div>
+                                        <span style="font-size: 0.72rem; color: var(--rose); font-weight: 500; display: flex; align-items: center; gap: 4px;">
+                                            <i class="bi bi-files"></i> COPY CODE
+                                        </span>
+                                    </div>
+                                }
+                                
+                                <div style="display: flex; gap: 12px;">
+                                    <button class="btn-primary-rose" style="flex: 1; padding: 12px 20px; font-size: 0.72rem; border-radius: 8px;" @onclick="() => SelectPromotion(promo)">
+                                        Shop Promo Creations
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="checkout-view" style="max-width: 1100px; margin: 0 auto; padding: 40px 20px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <button class="btn-back" style="border-radius: 8px; font-size: 0.75rem; text-transform: uppercase; font-weight: 600;" @onclick="() => selectedPromotionDetail = null">
+                            <i class="bi bi-arrow-left"></i> Back to All Offers
+                        </button>
+                        <h2 class="section-title mt-3 mb-1" style="font-size: 1.75rem;">@selectedPromotionDetail.Title</h2>
+                        <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--rose); letter-spacing: 0.05em;">Active Coupon: @selectedPromotionDetail.PromoCode (@selectedPromotionDetail.Subtitle)</span>
+                    </div>
+                    <div style="background: var(--rose-pale); border: 1px solid var(--rose-light); border-radius: 8px; padding: 12px 20px; text-align: right; max-width: 320px;">
+                        <p style="font-size: 0.75rem; color: var(--charcoal-soft); margin: 0; line-height: 1.4;">@selectedPromotionDetail.Description</p>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 24px;">
+                    @foreach (var prod in allProducts.Where(p => p.PromoId == selectedPromotionDetail.PromoId))
+                    {
+                        var primaryImg = NormalizeImageUrl(prod.ProductImages?.FirstOrDefault(i => i.IsPrimary == true)?.ImageUrl);
+                        var originalPrice = prod.ProductVariants?.FirstOrDefault()?.SalePrice ?? 0;
+                        var hasDiscount = selectedPromotionDetail.DiscountPercent > 0;
+                        var discountedPrice = hasDiscount ? originalPrice * (1 - selectedPromotionDetail.DiscountPercent / 100) : originalPrice;
+
+                        // Mock ratings for realism
+                        var mockRating = 4.5 + (prod.ProductId % 6) * 0.1;
+                        var mockReviewCount = 12 + (prod.ProductId * 7) % 85;
+
+                        <div class="promo-grid-card">
+                            <div class="promo-grid-img-wrap" style="cursor: pointer;" @onclick="() => OpenQuickViewFromProduct(prod)">
+                                <FallbackImage Src="@primaryImg" Alt="@prod.Name" />
+                            </div>
+                            
+                            <h3 class="promo-grid-title">@prod.Name</h3>
+                            <p style="font-size: 0.7rem; color: var(--rose); font-weight: 600; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.04em;">@prod.Category?.Name</p>
+
+                            <!-- Star Rating -->
+                            <div class="promo-grid-rating">
+                                <span class="promo-grid-stars">
+                                    @for (int s = 1; s <= 5; s++)
+                                    {
+                                        if (s <= Math.Round(mockRating))
+                                        {
+                                            <span>★</span>
+                                        }
+                                        else
+                                        {
+                                            <span>☆</span>
+                                        }
+                                    }
+                                </span>
+                                <span>@mockRating.ToString("F1")</span>
+                                <span style="color: #565959;">(@mockReviewCount)</span>
+                            </div>
+
+                            <!-- Pricing details -->
+                            <div class="promo-grid-price-row">
+                                @if (hasDiscount)
+                                {
+                                    <span class="promo-grid-price-original">@originalPrice.ToString("N0") MMK</span>
+                                    <span class="promo-grid-price-discounted">@discountedPrice.ToString("N0") MMK</span>
+                                }
+                                else
+                                {
+                                    <span class="promo-grid-price-discounted">@originalPrice.ToString("N0") MMK</span>
+                                }
+                            </div>
+
+                            <!-- Badges -->
+                            @if (selectedPromotionDetail.PromoCode == "SUMMER20")
+                            {
+                                <span class="promo-grid-badge">Savings: 20% OFF applied</span>
+                            }
+                            else if (selectedPromotionDetail.PromoCode == "LOYAL2X")
+                            {
+                                <span class="promo-grid-badge" style="background:#FFF3EE; color:#C9A96E; border:1px solid #EDD9D0;">Promo: Double Points Active</span>
+                            }
+                            else if (selectedPromotionDetail.PromoCode == "MONSOON10")
+                            {
+                                <span class="promo-grid-badge">Savings: Buy 2, save 5%</span>
+                            }
+
+                            <!-- Delivery -->
+                            <p class="promo-grid-delivery">
+                                FREE delivery <strong>tomorrow</strong> in Yangon.<br/>
+                                Or fastest delivery <strong>today</strong>.
+                            </p>
+
+                            <!-- Amazon-style Yellow Add to Cart Button -->
+                            <button class="promo-grid-add-btn" @onclick="() => OpenQuickViewFromProduct(prod)">
+                                Add to Cart
+                            </button>
+                        </div>
+                    }
                 </div>
             </div>
         }
@@ -3121,9 +3967,45 @@
                                    OnClick="AddToBagUnified">
                         Add to Bag
                     </LoadingButton>
-                    <ConfirmModal @ref="confirmModal" />
                 </div>
             </div>
+        </div>
+    }
+</div>
+
+<!-- --------------- NOTIFICATION DRAWER --------------- -->
+<div class="noti-backdrop @(showNotificationsDropdown ? "open" : "")" @onclick="ToggleNotificationsDropdown"></div>
+<div class="noti-drawer @(showNotificationsDropdown ? "open" : "")">
+    <div class="noti-header">
+        <span class="noti-title">Notifications</span>
+        <button class="noti-close" @onclick="ToggleNotificationsDropdown"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="noti-body">
+        @if (!notifications.Any())
+        {
+            <div class="noti-empty">
+                <i class="bi bi-bell-slash" style="font-size:3rem; color:var(--rose-light);"></i>
+                <p class="mt-3">No notifications yet.</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var noti in notifications)
+            {
+                <div class="noti-drawer-item @(noti.IsRead ? "" : "unread")" @onclick="() => HandleNotificationClick(noti)">
+                    <div class="noti-drawer-title">
+                        @noti.Title
+                    </div>
+                    <div class="noti-drawer-message">@noti.Message</div>
+                    <div class="noti-drawer-time">@noti.CreatedAt.ToString("M/d/yyyy h:mm tt")</div>
+                </div>
+            }
+        }
+    </div>
+    @if (notifications.Any(n => !n.IsRead))
+    {
+        <div class="noti-drawer-footer">
+            <button class="noti-drawer-mark-btn" @onclick="MarkAllNotificationsAsRead">Mark all read</button>
         </div>
     }
 </div>
@@ -3300,5 +4182,8 @@
         </div>
     </div>
 }
+
+<ConfirmModal @ref="confirmModal" />
+
 
 

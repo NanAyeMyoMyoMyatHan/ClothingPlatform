@@ -12,6 +12,7 @@ public partial class OrderReturn
     public string? ReasonText { get; set; }
     public string? ReceiptImageUrl { get; set; }
     public string ReturnOption { get; set; } = ""; // "Refund" or "Exchange"
+    public string Status { get; set; } = "Pending"; // "Pending", "Approved", "Rejected"
     public DateTime CreatedAt { get; set; }
 
     public virtual Order Order { get; set; } = null!;

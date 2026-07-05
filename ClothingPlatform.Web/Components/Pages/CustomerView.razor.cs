@@ -27,6 +27,9 @@ namespace ClothingPlatform.Web.Components.Pages
         public AppDbContext _db { get; set; }
 
         [Inject]
+        public IDbContextFactory<AppDbContext> DbFactory { get; set; }
+
+        [Inject]
         public NavigationManager Nav { get; set; }
 
         [Inject]
@@ -45,13 +48,30 @@ namespace ClothingPlatform.Web.Components.Pages
         private List<ProductDto> filteredProduct = new();
         private List<Category> allCategories = new();
         private List<Order> userOrders = new();
+        private List<OrderReturn> userReturns = new();
         private User? currentUser;
         private bool initializedFromStorage;
         private HubConnection? notificationHub;
         private List<CustomerNotificationDto> notifications = new();
         private bool showNotificationsDropdown = false;
-        private ConfirmModal confirmModal = default!;
+        private ConfirmModal?confirmModal;
         private int? expandedOrderId;
+        private CustomerNotificationDto? selectedNotification;
+        private string previousTabBeforeNoti = "home";
+
+        // Promotions slide and pages state variables
+        private int currentPromoSlideIndex = 0;
+        private bool isPromoSliderRunning = false;
+        private List<Promotion> promotionsList = new();
+        private Promotion? selectedPromotionDetail;
+
+        private string enteredPromoCode = "";
+        private string appliedPromoCode = "";
+        private decimal appliedPromoPercent = 0;
+        private decimal appliedPromoDiscount => CartTotal * (appliedPromoPercent / 100);
+        private decimal GrandTotal => CartTotal - appliedPromoDiscount;
+        private string promoCodeMessage = "";
+        private bool promoCodeSuccess = false;
 
         private List<ProductDto> allProduct = new();
         private List<BestSellerDto> allBestSellers = new();
@@ -65,7 +85,7 @@ namespace ClothingPlatform.Web.Components.Pages
         private string searchQuery = "";
         private int PageNoB = 1;
         private int PageNoC = 1;
-        private int PageSize = 5;
+        private int PageSize = 10;
         private int TotalPageCountB;
         private int TotalPageCountC;
         private int TotalPagesB;
@@ -74,7 +94,7 @@ namespace ClothingPlatform.Web.Components.Pages
         private int PageNo = 1;
         private int TotalPageCount;
         private int TotalPages;
-        private int pageSize = 5;
+        private int pageSize = 10;
         // Quick View Modal
         private Product? selectedProduct;
         private ProductDto? selectedProductDto;
@@ -84,6 +104,7 @@ namespace ClothingPlatform.Web.Components.Pages
         private string modalErrorMessage = "";
         private bool isModalOpen = false;
         private bool isLoggedIn = false;
+        private string debugError = "";
         // Shopping Bag drawer
         private bool isCartOpen = false;
         private List<CartItemModel> cart = new();
@@ -165,6 +186,7 @@ namespace ClothingPlatform.Web.Components.Pages
                 await LoadCartAsync();
                 await LoadNotificationsAsync();
             }
+            _ = StartPromoSlider();
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -174,10 +196,19 @@ namespace ClothingPlatform.Web.Components.Pages
 
             try
             {
-                var customerIdValue = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "customerId");
+                // Clean up legacy localStorage items to prevent confusion and sync to cookie
+                try
+                {
+                    await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "customerId");
+                    await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+                }
+                catch {}
+
+                var customerIdValue = await CookieStorage.GetCookieAsync(JSRuntime, "customerId");
                 if (int.TryParse(customerIdValue, out var customerId) && currentUser == null)
                 {
-                    var dbUser = await _db.Users
+                    await using var db = await DbFactory.CreateDbContextAsync();
+                    var dbUser = await db.Users
                         .Include(u => u.Role)
                         .FirstOrDefaultAsync(u => u.UserId == customerId && u.Role.RoleName == "customer");
                     if (dbUser != null)
@@ -197,9 +228,11 @@ namespace ClothingPlatform.Web.Components.Pages
                     await ConnectNotificationHubAsync();
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Local storage and SignalR are unavailable during prerendering.
+                Console.WriteLine($"[DEBUG] Error in OnAfterRenderAsync: {ex}");
+                debugError = ex.ToString();
+                StateHasChanged();
             }
         }
 
@@ -307,6 +340,7 @@ namespace ClothingPlatform.Web.Components.Pages
             try
             {
                 allCategories = await _db.Categories.AsNoTracking().ToListAsync();
+                promotionsList = await _db.Promotions.AsNoTracking().ToListAsync();
                 
                 allProducts = await _db.Products
                     .Include(p => p.Category)
@@ -329,6 +363,11 @@ namespace ClothingPlatform.Web.Components.Pages
                         .Include(o => o.StaffFulfillmentLogs)
                         .Where(o => o.UserId == currentUser.UserId)
                         .OrderByDescending(o => o.OrderId)
+                        .ToListAsync();
+
+                    var orderIds = userOrders.Select(o => o.OrderId).ToList();
+                    userReturns = await _db.OrderReturns
+                        .Where(r => orderIds.Contains(r.OrderId))
                         .ToListAsync();
 
                     // Calculate loyalty points for confirmed orders.
@@ -389,6 +428,18 @@ namespace ClothingPlatform.Web.Components.Pages
             if (tab == "checkout")
             {
                 AutofillCheckoutFromProfile();
+            }
+            if (tab == "promotions")
+            {
+                if (selectedPromotionDetail == null && promotionsList != null && promotionsList.Any())
+                {
+                    selectedPromotionDetail = promotionsList.FirstOrDefault();
+                    if (selectedPromotionDetail != null && !string.IsNullOrEmpty(selectedPromotionDetail.PromoCode))
+                    {
+                        enteredPromoCode = selectedPromotionDetail.PromoCode;
+                        ApplyPromoCodeCheckoutSilent();
+                    }
+                }
             }
         }
 
@@ -522,7 +573,7 @@ namespace ClothingPlatform.Web.Components.Pages
                 var wantsToSignIn = await confirmModal.ShowAsync(title:
                     "Sign In Required",
                     message: UiMessages.CustomerShop.AddToBagSignInConfirm, confirmText: "Sign In"); 
-                if (wantsToSignIn) { Nav.NavigateTo("customer-login?returnUrl=" + Uri.EscapeDataString(Nav.Uri)); }
+                if (wantsToSignIn) { Nav.NavigateTo("portal-login?returnUrl=" + Uri.EscapeDataString(Nav.Uri)); }
                 return;
             }
                 if (modalProduct == null) return;
@@ -851,7 +902,7 @@ namespace ClothingPlatform.Web.Components.Pages
 
                 await using var transaction = await _db.Database.BeginTransactionAsync();
 
-                var total = CartTotal;
+                var total = GrandTotal;
 
                 var order = new Order
                 {
@@ -899,7 +950,7 @@ namespace ClothingPlatform.Web.Components.Pages
                 await transaction.CommitAsync();
                 dbCommitted = true;
 
-                pointsEarnedInOrder = (int)(total / 100);
+                pointsEarnedInOrder = (int)(total / 100) * (appliedPromoCode == "LOYAL2X" ? 2 : 1);
                 confirmedOrderId = $"ORD-{order.OrderId:D4}";
                 isSuccessOpen = true;
 
@@ -951,6 +1002,12 @@ namespace ClothingPlatform.Web.Components.Pages
                 selectedPayment = "";
                 paymentReference = "";
                 ClearSlipSelection();
+
+                appliedPromoCode = "";
+                appliedPromoPercent = 0;
+                enteredPromoCode = "";
+                promoCodeMessage = "";
+                promoCodeSuccess = false;
 
                 await LoadData(); // reload history
                 Navigate("history");
@@ -1134,8 +1191,15 @@ namespace ClothingPlatform.Web.Components.Pages
             CustomerSession.Logout();
             currentUser = null;
             cart.Clear();
-            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "customerId");
-            Nav.NavigateTo("/customer-login");
+            await CookieStorage.RemoveCookieAsync(JSRuntime, "customerId");
+            await CookieStorage.RemoveCookieAsync(JSRuntime, "authToken");
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "customerId");
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+            }
+            catch {}
+            Nav.NavigateTo("/portal-login");
         }
 
         private void ToggleNotificationsDropdown()
@@ -1170,10 +1234,31 @@ namespace ClothingPlatform.Web.Components.Pages
                 catch { }
             }
             showNotificationsDropdown = false;
-            if (noti.OrderId.HasValue)
+            previousTabBeforeNoti = activeTab;
+            selectedNotification = noti;
+            activeTab = "notification-detail";
+            StateHasChanged();
+        }
+
+        private void GoBackFromNotification()
+        {
+            activeTab = string.IsNullOrEmpty(previousTabBeforeNoti) || previousTabBeforeNoti == "notification-detail" ? "home" : previousTabBeforeNoti;
+            selectedNotification = null;
+            StateHasChanged();
+        }
+
+        private void ViewReceiptFromNotification()
+        {
+            if (selectedNotification?.OrderId != null)
             {
-                Navigate("history");
+                Nav.NavigateTo($"/receipt/{selectedNotification.OrderId}");
             }
+        }
+
+        private void ViewPurchasesFromNotification()
+        {
+            activeTab = "history";
+            selectedNotification = null;
             StateHasChanged();
         }
 
@@ -1278,30 +1363,10 @@ namespace ClothingPlatform.Web.Components.Pages
                 order.OrderStatus = OrderWorkflow.CancelledByCustomer;
                 order.CancelReason = reason;
 
-                // Restock items
-                foreach (var item in order.OrderItems)
-                {
-                    var variant = await _db.ProductVariants.FirstOrDefaultAsync(v => v.VariantId == item.VariantId);
-                    if (variant != null)
-                    {
-                        variant.StockQuantity += item.Quantity;
-                    }
-                }
-
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                // Send a cancellation notification to the API
-                try
-                {
-                    await httpClientServices.ExecuteAsync<object>(
-                        $"api/notifications/send-cancelled?userId={order.UserId}&orderId={orderId}",
-                        null,
-                        EnumHttpMethod.Post);
-                }
-                catch (Exception) { /* Ignore notification send failures */ }
-
-                ShowToast($"Order ORD-{orderId:D4} has been cancelled successfully.");
+                ShowToast($"Cancellation request for Order ORD-{orderId:D4} has been submitted for approval.");
                 
                 // Reload data to reflect changes
                 await LoadData();
@@ -1356,16 +1421,63 @@ namespace ClothingPlatform.Web.Components.Pages
         private bool retReasonExchangeRequest;
         
         private string returnCustomMessage = "";
-        private string returnOption = "Refund"; // "Refund" or "Exchange"
         private bool isSubmittingReturn = false;
-
         private ProductVariant? selectedExchangeVariant;
         private bool showExchangePicker = false;
+
+        private string returnOption = "Refund"; // "Refund" or "Exchange"
+        
+        private bool HasBeenReturned(int orderId, int variantId)
+        {
+            return userReturns.Any(r => r.OrderId == orderId && r.VariantId == variantId && !string.Equals(r.Status, "Rejected", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private bool HasBeenReturned(int orderId, int variantId, out string option)
+        {
+            var ret = userReturns.FirstOrDefault(r => r.OrderId == orderId && r.VariantId == variantId && !string.Equals(r.Status, "Rejected", StringComparison.OrdinalIgnoreCase));
+            option = ret?.ReturnOption ?? "";
+            return ret != null;
+        }
+
+        private OrderReturn? GetOrderReturn(int orderId, int variantId)
+        {
+            return userReturns.FirstOrDefault(r => r.OrderId == orderId && r.VariantId == variantId);
+        }
+
+        private bool CanSelectForReturn(Order order)
+        {
+            if (order == null) return false;
+            if (CanRequestReturn(order)) return true;
+            return userReturns.Any(r => r.OrderId == order.OrderId);
+        }
+
+        private bool CanRequestReturn(Order order)
+        {
+            if (order == null || OrderWorkflow.Normalize(order.OrderStatus) != OrderWorkflow.Confirm)
+            {
+                return false;
+            }
+
+            // Must have at least one item that hasn't been returned yet
+            if (order.OrderItems.All(oi => HasBeenReturned(order.OrderId, oi.VariantId)))
+            {
+                return false;
+            }
+
+            // The delivery (confirmation) date is retrieved from the StaffFulfillmentLogs where ActionTaken is Confirm
+            var confirmLog = order.StaffFulfillmentLogs?
+                .FirstOrDefault(l => string.Equals(l.ActionTaken, "Confirm", StringComparison.OrdinalIgnoreCase));
+
+            DateTime deliveryDate = confirmLog?.ActionAt ?? order.CreatedAt ?? DateTime.Now;
+
+            // Customer can only return the order during 7 days after delivered
+            return (DateTime.Now - deliveryDate).TotalDays <= 7;
+        }
 
         private void InitiateReturn(Order order)
         {
             selectedReturnOrder = order;
-            selectedReturnItem = order.OrderItems.FirstOrDefault();
+            selectedReturnItem = order.OrderItems.FirstOrDefault(oi => !HasBeenReturned(order.OrderId, oi.VariantId));
             selectedReturnItemId = selectedReturnItem?.OrderItemId ?? 0;
             
             returnReceiptFileName = "";
@@ -1396,7 +1508,7 @@ namespace ClothingPlatform.Web.Components.Pages
             if (currentUser != null)
             {
                 var latestDelivered = userOrders
-                    .FirstOrDefault(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Confirm);
+                    .FirstOrDefault(o => CanSelectForReturn(o));
                 if (latestDelivered != null)
                 {
                     InitiateReturn(latestDelivered);
@@ -1415,7 +1527,7 @@ namespace ClothingPlatform.Web.Components.Pages
                 if (order != null)
                 {
                     selectedReturnOrder = order;
-                    selectedReturnItem = order.OrderItems.FirstOrDefault();
+                    selectedReturnItem = order.OrderItems.FirstOrDefault(oi => !HasBeenReturned(order.OrderId, oi.VariantId));
                     selectedReturnItemId = selectedReturnItem?.OrderItemId ?? 0;
                     selectedExchangeVariant = null;
                     StateHasChanged();
@@ -1522,7 +1634,10 @@ namespace ClothingPlatform.Web.Components.Pages
                 return;
             }
 
-            bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to submit this return/exchange request?");
+            bool confirmed = await confirmModal.ShowAsync(
+                title: "Submit Return / Exchange",
+                message: "Are you sure you want to submit this return/exchange request?",
+                confirmText: "Submit");
             if (!confirmed)
             {
                 return;
@@ -1534,6 +1649,14 @@ namespace ClothingPlatform.Web.Components.Pages
 
             try
             {
+                if (selectedReturnOrder == null || !CanRequestReturn(selectedReturnOrder))
+                {
+                    ShowToast("Error: This order is no longer eligible for returns (exceeded 7 days after delivery).");
+                    isSubmittingReturn = false;
+                    StateHasChanged();
+                    return;
+                }
+
                 // Save receipt image
                 var webRootPath = WebHostEnvironment.WebRootPath
                     ?? Path.Combine(WebHostEnvironment.ContentRootPath, "wwwroot");
@@ -1577,6 +1700,11 @@ namespace ClothingPlatform.Web.Components.Pages
 
                 _db.OrderReturns.Add(newReturn);
                 await _db.SaveChangesAsync();
+
+                var orderIds = userOrders.Select(o => o.OrderId).ToList();
+                userReturns = await _db.OrderReturns
+                    .Where(r => orderIds.Contains(r.OrderId))
+                    .ToListAsync();
 
                 ShowToast("Return/Exchange request submitted successfully!");
                 activeTab = "history";
@@ -1638,6 +1766,178 @@ namespace ClothingPlatform.Web.Components.Pages
             }
             
             StateHasChanged();
+        }
+
+        private async Task StartPromoSlider()
+        {
+            if (isPromoSliderRunning) return;
+            isPromoSliderRunning = true;
+            while (isPromoSliderRunning)
+            {
+                try
+                {
+                    await Task.Delay(5000);
+                    if (!isPromoSliderRunning) break;
+                    if (promotionsList.Any())
+                    {
+                        currentPromoSlideIndex = (currentPromoSlideIndex + 1) % promotionsList.Count;
+                        await InvokeAsync(StateHasChanged);
+                    }
+                }
+                catch
+                {
+                    break;
+                }
+            }
+        }
+
+        private void NextPromoSlide()
+        {
+            if (promotionsList.Any())
+            {
+                currentPromoSlideIndex = (currentPromoSlideIndex + 1) % promotionsList.Count;
+                StateHasChanged();
+            }
+        }
+
+        private void PrevPromoSlide()
+        {
+            if (promotionsList.Any())
+            {
+                currentPromoSlideIndex = (currentPromoSlideIndex - 1 + promotionsList.Count) % promotionsList.Count;
+                StateHasChanged();
+            }
+        }
+
+        private void SetPromoSlide(int index)
+        {
+            currentPromoSlideIndex = index;
+            StateHasChanged();
+        }
+
+        private void ClickPromoSlide(Promotion promo)
+        {
+            selectedPromotionDetail = promo;
+            if (!string.IsNullOrEmpty(promo.PromoCode))
+            {
+                enteredPromoCode = promo.PromoCode;
+                ApplyPromoCodeCheckoutSilent();
+            }
+            Navigate("promotions");
+        }
+
+        private void SelectPromotion(Promotion promo)
+        {
+            selectedPromotionDetail = promo;
+            if (!string.IsNullOrEmpty(promo.PromoCode))
+            {
+                enteredPromoCode = promo.PromoCode;
+                ApplyPromoCodeCheckoutSilent();
+            }
+            StateHasChanged();
+        }
+
+        private void OpenQuickViewFromProduct(Product prod)
+        {
+            if (prod == null) return;
+            var primaryImage = prod.ProductImages?.FirstOrDefault(i => i.IsPrimary == true)?.ImageUrl;
+            
+            modalProduct = new ModalProductDto
+            {
+                Name = prod.Name,
+                CategoryName = prod.Category?.Name ?? "Collection",
+                SalePrice = prod.ProductVariants?.FirstOrDefault()?.SalePrice ?? 0,
+                Description = prod.Description ?? "",
+                ImageDto = primaryImage,
+                VariantsDto = prod.ProductVariants?.Select(v => new VariantDto
+                {
+                    VariantId = v.VariantId,
+                    Size = v.Size ?? "",
+                    Color = v.Color ?? "",
+                    StockQuantity = v.StockQuantity,
+                    Sku = v.Sku ?? "",
+                    SalePrice = v.SalePrice ?? 0,
+                    PurchasePrice = v.PurchasePrice
+                }).ToList() ?? new List<VariantDto>(),
+                AddToBagMethod = "collection"
+            };
+            selectedSize = "";
+            selectedColor = "";
+            selectedQuantity = 1;
+            modalErrorMessage = "";
+            isModalOpen = true;
+            StateHasChanged();
+        }
+
+        private async Task CopyPromoCode(string code)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", code);
+                ShowToast($"Promo code '{code}' copied to clipboard!");
+            }
+            catch
+            {
+                ShowToast($"Promo Code: {code}");
+            }
+        }
+
+        private void ApplyPromoAndGoToShop(Promotion promo)
+        {
+            if (!string.IsNullOrEmpty(promo.PromoCode))
+            {
+                enteredPromoCode = promo.PromoCode;
+                ApplyPromoCodeCheckoutSilent();
+            }
+            Navigate("shop");
+        }
+
+        private void ApplyPromoCodeCheckoutSilent()
+        {
+            var matchingPromo = promotionsList.FirstOrDefault(p => string.Equals(p.PromoCode, enteredPromoCode, StringComparison.OrdinalIgnoreCase));
+            if (matchingPromo != null)
+            {
+                appliedPromoCode = matchingPromo.PromoCode;
+                appliedPromoPercent = matchingPromo.DiscountPercent;
+                promoCodeMessage = $"Promo '{appliedPromoCode}' applied successfully! ({appliedPromoPercent}% Off)";
+                promoCodeSuccess = true;
+            }
+        }
+
+        private void ApplyPromoCodeCheckout()
+        {
+            if (string.IsNullOrWhiteSpace(enteredPromoCode))
+            {
+                promoCodeMessage = "Please enter a promo code.";
+                promoCodeSuccess = false;
+                return;
+            }
+
+            var matchingPromo = promotionsList.FirstOrDefault(p => string.Equals(p.PromoCode.Trim(), enteredPromoCode.Trim(), StringComparison.OrdinalIgnoreCase));
+            if (matchingPromo != null)
+            {
+                appliedPromoCode = matchingPromo.PromoCode;
+                appliedPromoPercent = matchingPromo.DiscountPercent;
+                promoCodeMessage = matchingPromo.DiscountPercent > 0 
+                    ? $"Promo '{appliedPromoCode}' applied successfully! ({appliedPromoPercent}% Off)"
+                    : $"Promo '{appliedPromoCode}' applied successfully! (Double Points Active)";
+                promoCodeSuccess = true;
+                ShowToast($"Discount code '{appliedPromoCode}' applied!");
+            }
+            else
+            {
+                appliedPromoCode = "";
+                appliedPromoPercent = 0;
+                promoCodeMessage = "Invalid promo code.";
+                promoCodeSuccess = false;
+                ShowToast("Failed to apply promo code.");
+            }
+            StateHasChanged();
+        }
+
+        public void Dispose()
+        {
+            isPromoSliderRunning = false;
         }
 
     }

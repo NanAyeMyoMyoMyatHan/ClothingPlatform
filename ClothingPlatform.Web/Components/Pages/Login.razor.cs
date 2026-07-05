@@ -10,7 +10,7 @@ namespace ClothingPlatform.Web.Components.Pages
     public partial class Login
     {
         [Inject]
-        public AppDbContext _db { get; set; }
+        public IDbContextFactory<AppDbContext> DbFactory { get; set; }
         [Inject]
         public SessionState Session { get; set; }
         [Inject]
@@ -21,6 +21,8 @@ namespace ClothingPlatform.Web.Components.Pages
         public CustomAuthStateProvider AuthStateProvider { get; set; }
         [Inject]
         public Microsoft.JSInterop.IJSRuntime JSRuntime { get; set; }
+        [Inject]
+        public CustomerSessionState CustomerSession { get; set; }
         public AuthRequest data { get; set; } = new();
 
         protected override void OnInitialized()
@@ -133,28 +135,56 @@ namespace ClothingPlatform.Web.Components.Pages
 
                 if (response != null && !string.IsNullOrWhiteSpace(response.AccessToken))
                 {
-                    // Save token to localStorage
-                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", "authToken", response.AccessToken);
+                    // Save token to cookie
+                    await CookieStorage.SetTokenAsync(JSRuntime, response.AccessToken);
+
+                    // Clean up legacy localStorage items to prevent confusion
+                    try
+                    {
+                        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "customerId");
+                        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+                    }
+                    catch {}
 
                     // Notify authentication state provider
                     AuthStateProvider.NotifyUserAuthentication(response.AccessToken);
 
                     // Fetch user details from DB to initialize SessionState
-                    var user = _db.Users
+                    await using var db = await DbFactory.CreateDbContextAsync();
+                    var user = await db.Users
                         .Include(u => u.Role)
                             .ThenInclude(r => r.RolePermissions)
                                 .ThenInclude(rp => rp.Permission)
-                        .FirstOrDefault(u => u.Email.ToLower() == loginEmail.Trim().ToLower());
+                        .FirstOrDefaultAsync(u => u.Email.ToLower() == loginEmail.Trim().ToLower());
 
                     if (user != null)
                     {
+                        var roleName = response.Role.ToLower();
+                        if (roleName == "customer")
+                        {
+                            CustomerSession.Login(user);
+                            // Clean up legacy localStorage items
+                            try
+                            {
+                                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "customerId");
+                                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+                            }
+                            catch {}
+                            // Store customerId in cookie
+                            await CookieStorage.SetCookieAsync(JSRuntime, "customerId", user.UserId.ToString());
+                            showToast = true;
+                            StateHasChanged();
+                            await Task.Delay(1500);
+                            Nav.NavigateTo("/");
+                            return;
+                        }
+
                         Session.Login(user, response.Permissions);
                         showToast = true;
                         StateHasChanged();
 
                         // Redirect based on dynamic role
                         await Task.Delay(1500);
-                        var roleName = response.Role.ToLower();
                         if (roleName == "admin" || roleName == "staff")
                         {
                             Nav.NavigateTo("/dashboard");
@@ -184,10 +214,11 @@ namespace ClothingPlatform.Web.Components.Pages
                 StateHasChanged();
             }
         }
-        private void HandleSignup()
+        private async Task HandleSignup()
         {
             ClearAllErrors();
             signupErrorMessage = "";
+            await using var db = await DbFactory.CreateDbContextAsync();
             bool isValid = true;
             if (string.IsNullOrWhiteSpace(regFirstName))
             {
@@ -211,7 +242,7 @@ namespace ClothingPlatform.Web.Components.Pages
                 regEmailErrorMsg = UiMessages.PortalLogin.RegisterEmailInvalid;
                 isValid = false;
             }
-            else if (_db.Users.Any(u => u.Email.ToLower() == regEmail.Trim().ToLower()))
+            else if (await db.Users.AnyAsync(u => u.Email.ToLower() == regEmail.Trim().ToLower()))
             {
                 regEmailInvalid = true;
                 regEmailErrorMsg = UiMessages.PortalLogin.RegisterEmailDuplicate;
@@ -254,7 +285,7 @@ namespace ClothingPlatform.Web.Components.Pages
             }
             if (!isValid) return;
 
-            var customerRole = _db.Roles.FirstOrDefault(r => r.RoleName.ToLower() == "customer");
+            var customerRole = await db.Roles.FirstOrDefaultAsync(r => r.RoleName.ToLower() == "customer");
             if (customerRole == null)
             {
                 signupErrorMessage = UiMessages.PortalLogin.RegisterUnavailable;
@@ -272,8 +303,8 @@ namespace ClothingPlatform.Web.Components.Pages
                 RoleId = customerRole.RoleId,
                 CreatedAt = DateTime.Now
             };
-            _db.Users.Add(newUser);
-            _db.SaveChanges();
+            db.Users.Add(newUser);
+            await db.SaveChangesAsync();
             // Save email, switch back to login panel and show success alert
             var registeredEmail = regEmail;
 

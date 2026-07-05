@@ -37,7 +37,6 @@ namespace ClothingPlatform.Api.Features.Category
         }
 
         [HttpPost]
-        [Authorize(Policy = "AdminOrStaff")]
         [Permission("Products.Manage", true)]
         public IActionResult CreateCategory(CategoryRequestModel model)
         {
@@ -46,7 +45,6 @@ namespace ClothingPlatform.Api.Features.Category
         }
 
         [HttpPut("{id}")]
-        [Authorize(Policy = "AdminOrStaff")]
         [Permission("Products.Manage", true)]
         public IActionResult UpdateCategory(UpdateRequsetModel model, int id)
         {
@@ -55,7 +53,6 @@ namespace ClothingPlatform.Api.Features.Category
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Policy = "AdminOrStaff")]
         [Permission("Products.Manage", true)]
         public IActionResult DeleteCategory(int id)
         {

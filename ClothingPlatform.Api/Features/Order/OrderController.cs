@@ -1,7 +1,8 @@
-﻿using ClothingPlatform.Api.Models.Order;
+using ClothingPlatform.Api.Models.Order;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ClothingPlatform.Api.Filters;
 
 namespace ClothingPlatform.Api.Features.Order
 {
@@ -34,15 +35,15 @@ namespace ClothingPlatform.Api.Features.Order
             return Ok(result);
         }
 
-        [Authorize(Policy = "AdminOrStaff")]
         [HttpGet("getAllOrder")]
+        [Permission("Orders.Manage")]
         public async Task<ActionResult<List<OrderDashboardDto>>> GetAllOrdersAsync()
         {
             return await _orderService.GetAllOrder();
         }
 
-        [Authorize(Policy = "AdminOnly")]
         [HttpDelete("{orderId}")]
+        [Permission("Orders.Manage")]
         public async Task<IActionResult> DeleteOrder(int orderId)
         {
             var success = await _orderService.DeleteOrderAsync(orderId);

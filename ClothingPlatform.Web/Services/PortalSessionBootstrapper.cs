@@ -17,7 +17,6 @@ namespace ClothingPlatform.Web.Services
             _jsRuntime = jsRuntime;
             _session = session;
         }
-
         public async Task<bool> RestorePortalSessionAsync()
         {
             if (_session.IsLoggedIn)
@@ -25,10 +24,18 @@ namespace ClothingPlatform.Web.Services
                 return _session.IsAdmin || _session.IsStaff;
             }
 
+            // Clean up legacy localStorage items
+            try
+            {
+                await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "customerId");
+                await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+            }
+            catch {}
+
             string? token;
             try
             {
-                token = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
+                token = await CookieStorage.GetTokenAsync(_jsRuntime);
             }
             catch
             {
@@ -94,7 +101,7 @@ namespace ClothingPlatform.Web.Services
         {
             try
             {
-                await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+                await CookieStorage.RemoveTokenAsync(_jsRuntime);
             }
             catch
             {

@@ -162,6 +162,13 @@ else
             </li>
 
             <li>
+                <a class="nav-item-link @(activeView == "promotions" ? "active" : "")" @onclick='() => SetView("promotions")'>
+                    <i class="bi bi-tags"></i>
+                    Promotions
+                </a>
+            </li>
+
+            <li>
                 <a class="nav-item-link @(activeView == "orders" ? "active" : "")" @onclick='() => SetView("orders")'>
                     <i class="bi bi-cart"></i>
                     Orders
@@ -211,12 +218,15 @@ else
             </li>
             }
 
+            @if (Session.IsAdmin)
+            {
             <li>
                 <a class="nav-item-link @(activeView == "customer-reviews" ? "active" : "")" @onclick='() => SetView("customer-reviews")'>
                     <i class="bi bi-chat-square-text"></i>
                     Customer Reviews
                 </a>
             </li>
+            }
 
             <li>
                 <a class="nav-item-link @(activeView == "returns" ? "active" : "")" @onclick='() => SetView("returns")'>
@@ -349,51 +359,72 @@ else
                 <div class="col-md-12">
                     <div class="luxury-card">
                         <h3 class="m-0 mb-4 text-center">Revenue by Product Category</h3>
-                        <div class="row align-items-center">
-                            <div class="col-md-6 text-center position-relative">
+                        <style>
+                            .bar-hover {
+                                transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), filter 0.25s, box-shadow 0.25s;
+                                transform-origin: bottom center;
+                            }
+                            .bar-hover:hover {
+                                transform: scaleY(1.05);
+                                filter: brightness(1.1);
+                                box-shadow: 0 8px 20px rgba(0,0,0,0.15) !important;
+                            }
+                            .bar-container:hover .chart-tooltip {
+                                opacity: 1 !important;
+                                transform: translate(-50%, -8px) !important;
+                            }
+                        </style>
+                        <div class="row align-items-end">
+                            <div class="col-md-8 position-relative" style="padding-bottom: 50px;">
                                 @if (categoryRevenues.Any())
                                 {
-                                    <svg viewBox="0 0 100 100" style="max-height: 280px; width: 100%;">
-                                        <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--border-color, #eaeaea)" stroke-width="10" />
-                                        @{
-                                            double cumulativeAngle = 0;
-                                            foreach (var item in categoryRevenues)
-                                            {
-                                                double strokeLength = (item.Percentage / 100.0) * 251.3;
-                                                double strokeOffset = 251.3 - cumulativeAngle;
-                                                <circle cx="50" cy="50" r="40" fill="transparent" 
-                                                        stroke="@item.Color" 
-                                                        stroke-width="10" 
-                                                        stroke-dasharray="@($"{strokeLength} {251.3 - strokeLength}")" 
-                                                        stroke-dashoffset="@strokeOffset" 
-                                                        transform="rotate(-90 50 50)" />
-                                                cumulativeAngle += strokeLength;
-                                            }
+                                    <div style="height: 280px; display: flex; align-items: flex-end; justify-content: space-around; padding: 20px 10px 10px 10px; border-bottom: 2px solid #EDD9D0; position: relative;">
+                                        @foreach (var item in categoryRevenues)
+                                        {
+                                            double barHeight = Math.Max(item.Percentage * 2.2, 8); // Scale percentage to height
+                                            <div class="bar-container" style="display: flex; flex-direction: column; align-items: center; width: calc(100% / @categoryRevenues.Count - 8px); max-width: 45px; height: 100%; justify-content: flex-end; position: relative;">
+                                                <!-- Tooltip/Value on Hover -->
+                                                <div class="chart-tooltip" style="position: absolute; bottom: calc(@(barHeight)px + 20px); left: 50%; transform: translate(-50%, 0); background: #3C1F10; color: #fff; padding: 5px 9px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; pointer-events: none; opacity: 0; transition: opacity 0.2s, transform 0.2s; white-space: nowrap; z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+                                                    @item.Percentage.ToString("F1")% &middot; @item.Revenue.ToString("N0") MMK
+                                                    <span style="position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%) rotate(45deg); width: 8px; height: 8px; background: #3C1F10;"></span>
+                                                </div>
+                                                
+                                                <!-- Value Label on Top of Bar -->
+                                                <div style="font-size: 0.7rem; font-weight: 700; color: #3C1F10; margin-bottom: 6px; white-space: nowrap;">
+                                                    @item.Percentage.ToString("F1")%
+                                                </div>
+
+                                                <!-- The Bar -->
+                                                <div style="width: 100%; height: @(barHeight)px; background: @item.Color; border-radius: 6px 6px 0 0; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05);"
+                                                     class="bar-hover">
+                                                </div>
+
+                                                <!-- Bottom Label -->
+                                                <div style="position: absolute; bottom: -38px; font-size: 0.68rem; font-weight: 700; color: #3C1F10; text-align: center; width: 75px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transform: rotate(-20deg); transform-origin: top center;" title="@item.CategoryName">
+                                                    @item.CategoryName
+                                                </div>
+                                            </div>
                                         }
-                                    </svg>
-                                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
-                                        <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Total Profit</div>
-                                        <div style="font-size: 1.3rem; font-weight: 700; color: var(--text-main);">@TotalRevenue.ToString("N0") MMK</div>
                                     </div>
                                 }
                                 else
                                 {
-                                    <div class="text-muted py-5">No category revenue data available.</div>
+                                    <div class="text-muted py-5 text-center">No category revenue data available.</div>
                                 }
                             </div>
-                            <div class="col-md-6">
-                                <div class="pe-3">
-                                    <table class="table table-sm table-borderless">
+                            <div class="col-md-4">
+                                <div class="pe-2">
+                                    <table class="table table-sm table-borderless align-middle" style="margin: 0;">
                                         <tbody>
                                             @foreach (var item in categoryRevenues)
                                             {
                                                 <tr>
-                                                    <td style="width: 20px; vertical-align: middle;">
-                                                        <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: @item.Color;"></span>
+                                                    <td style="width: 16px; padding: 6px 0;">
+                                                        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: @item.Color;"></span>
                                                     </td>
-                                                    <td style="font-weight: 500; color: var(--text-main); font-size: 0.95rem;">@item.CategoryName</td>
-                                                    <td style="text-align: right; color: var(--text-muted); font-size: 0.9rem;">@item.Revenue.ToString("N0") MMK</td>
-                                                    <td style="text-align: right; font-weight: 600; color: var(--text-main); font-size: 0.95rem; width: 80px;">@item.Percentage.ToString("F1")%</td>
+                                                    <td style="font-weight: 600; color: #3C1F10; font-size: 0.82rem; padding: 6px 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px;" title="@item.CategoryName">@item.CategoryName</td>
+                                                    <td style="text-align: right; color: var(--text-muted); font-size: 0.8rem; padding: 6px 4px;">@item.Revenue.ToString("N0") MMK</td>
+                                                    <td style="text-align: right; font-weight: 700; color: #3C1F10; font-size: 0.82rem; width: 60px; padding: 6px 0;">@item.Percentage.ToString("F1")%</td>
                                                 </tr>
                                             }
                                         </tbody>
@@ -732,7 +763,7 @@ else
                 @if (ordersTab == "regular")
                 {
                     <section class="ops-section p-0">
-                        <div class="ops-filter-row ops-filter-row-five mb-3">
+                         <div class="ops-filter-row ops-filter-row-six mb-3">
                             <button type="button" class="filter-chip @(string.IsNullOrWhiteSpace(orderFilter) || orderFilter == "All" ? "active" : "")" @onclick='() => FilterOrders("All")'>
                                 <strong>@allOrders.Count</strong><span>All</span>
                             </button>
@@ -745,8 +776,11 @@ else
                             <button type="button" class="filter-chip @(orderFilter == "Confirm" ? "active" : "")" @onclick='() => FilterOrders("Confirm")'>
                                 <strong>@allOrders.Count(o => NormalizeStatus(o.OrderStatus) == "Confirm")</strong><span>Confirm</span>
                             </button>
-                            <button type="button" class="filter-chip @(orderFilter == "Cancelled" ? "active" : "")" @onclick='() => FilterOrders("Cancelled")'>
-                                <strong>@allOrders.Count(o => IsCancelledStatus(o.OrderStatus))</strong><span>Cancelled</span>
+                            <button type="button" class="filter-chip @(orderFilter == "CancelledByCustomer" ? "active" : "")" @onclick='() => FilterOrders("CancelledByCustomer")'>
+                                <strong>@allOrders.Count(o => NormalizeStatus(o.OrderStatus) == "CancelledByCustomer" || NormalizeStatus(o.OrderStatus) == "Cancelled")</strong><span>Cancelled (Customer)</span>
+                            </button>
+                            <button type="button" class="filter-chip @(orderFilter == "CancelledByStaff" ? "active" : "")" @onclick='() => FilterOrders("CancelledByStaff")'>
+                                <strong>@allOrders.Count(o => NormalizeStatus(o.OrderStatus) == "CancelledByStaff")</strong><span>Cancelled (Staff)</span>
                             </button>
                         </div>
 
@@ -813,8 +847,16 @@ else
                                                 <td @onclick:stopPropagation="true">
                                                     @if (IsCancelledStatus(order.OrderStatus))
                                                     {
-                                                        <span class="text-danger small"><i class="bi bi-x-circle-fill"></i> @(NormalizeStatus(order.OrderStatus) == "CancelledByCustomer" ? "Cancelled (Customer)" :
+                                                        <span class="text-danger small"><i class="bi bi-x-circle-fill"></i> @(NormalizeStatus(order.OrderStatus) == "CancelledByCustomer" ? "Cancellation Requested" :
                                                                                                                          NormalizeStatus(order.OrderStatus) == "CancelledByStaff" ? "Cancelled (Staff)" : "Cancelled")</span>
+                                                        @if (NormalizeStatus(order.OrderStatus) == "CancelledByCustomer")
+                                                        {
+                                                            <LoadingButton Class="btn btn-sm btn-success ms-2"
+                                                                           IsLoading="@IsAdminActionLoading("approve-cancel-" + order.OrderId)"
+                                                                           OnClick="@(() => RunAdminAction("approve-cancel-" + order.OrderId, () => ApproveCancellation(order)))">
+                                                                <i class="bi bi-check-lg"></i> Approve Cancel
+                                                            </LoadingButton>
+                                                        }
                                                     }
                                                     else if (IsFinalStatus(order.OrderStatus))
                                                     {
@@ -1401,55 +1443,55 @@ else
                 <!-- KPI Summary Cards -->
                 <div class="row g-4 mb-4">
                     <div class="col-md-2">
-                        <div class="luxury-card" style="border-left: 4px solid #4A6B82;">
-                            <div class="kpi-title">Total Products</div>
-                            <h2 class="kpi-value">@stockReport.TotalProducts</h2>
-                            <div class="kpi-icon-box" style="background: rgba(74,107,130,0.12); color: #4A6B82;">
+                        <div class="luxury-card" style="border-left: 4px solid #4A6B82; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); background: #ffffff; padding: 1.2rem;">
+                            <div class="kpi-title" style="font-size: 0.72rem; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Total Products</div>
+                            <h2 class="kpi-value" style="font-size: 1.6rem; color: #3C1F10; font-weight: 700; margin-top: 5px;">@stockReport.TotalProducts</h2>
+                            <div class="kpi-icon-box" style="background: rgba(74,107,130,0.08); color: #4A6B82; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; right: 1rem; font-size: 1.2rem;">
                                 <i class="bi bi-bag"></i>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-2">
-                        <div class="luxury-card" style="border-left: 4px solid #2E5A44;">
-                            <div class="kpi-title">Total Added Stock</div>
-                            <h2 class="kpi-value">@stockReport.TotalAddedStock <span style="font-size:1rem; font-weight:400;">units</span></h2>
-                            <div class="kpi-icon-box" style="background: rgba(46,90,68,0.12); color: #2E5A44;">
+                        <div class="luxury-card" style="border-left: 4px solid #2E5A44; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); background: #ffffff; padding: 1.2rem;">
+                            <div class="kpi-title" style="font-size: 0.72rem; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Total Added Stock</div>
+                            <h2 class="kpi-value" style="font-size: 1.6rem; color: #3C1F10; font-weight: 700; margin-top: 5px;">@stockReport.TotalAddedStock <span style="font-size:0.8rem; font-weight:400; color: var(--text-muted);">units</span></h2>
+                            <div class="kpi-icon-box" style="background: rgba(46,90,68,0.08); color: #2E5A44; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; right: 1rem; font-size: 1.2rem;">
                                 <i class="bi bi-box-arrow-in-down"></i>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-2">
-                        <div class="luxury-card" style="border-left: 4px solid #DAA520;">
-                            <div class="kpi-title">Total Sold Units</div>
-                            <h2 class="kpi-value">@stockReport.TotalSoldUnits <span style="font-size:1rem; font-weight:400;">units</span></h2>
-                            <div class="kpi-icon-box" style="background: rgba(218,165,32,0.12); color: #DAA520;">
+                        <div class="luxury-card" style="border-left: 4px solid #DAA520; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); background: #ffffff; padding: 1.2rem;">
+                            <div class="kpi-title" style="font-size: 0.72rem; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Total Sold Units</div>
+                            <h2 class="kpi-value" style="font-size: 1.6rem; color: #3C1F10; font-weight: 700; margin-top: 5px;">@stockReport.TotalSoldUnits <span style="font-size:0.8rem; font-weight:400; color: var(--text-muted);">units</span></h2>
+                            <div class="kpi-icon-box" style="background: rgba(218,165,32,0.08); color: #DAA520; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; right: 1rem; font-size: 1.2rem;">
                                 <i class="bi bi-cart-check"></i>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-2">
-                        <div class="luxury-card" style="border-left: 4px solid #8A3324;">
-                            <div class="kpi-title">Remaining Stock</div>
-                            <h2 class="kpi-value">@stockReport.TotalCurrentStock <span style="font-size:1rem; font-weight:400;">units</span></h2>
-                            <div class="kpi-icon-box" style="background: rgba(138,51,36,0.12); color: #8A3324;">
+                        <div class="luxury-card" style="border-left: 4px solid #8A3324; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); background: #ffffff; padding: 1.2rem;">
+                            <div class="kpi-title" style="font-size: 0.72rem; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Remaining Stock</div>
+                            <h2 class="kpi-value" style="font-size: 1.6rem; color: #3C1F10; font-weight: 700; margin-top: 5px;">@stockReport.TotalCurrentStock <span style="font-size:0.8rem; font-weight:400; color: var(--text-muted);">units</span></h2>
+                            <div class="kpi-icon-box" style="background: rgba(138,51,36,0.08); color: #8A3324; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; right: 1rem; font-size: 1.2rem;">
                                 <i class="bi bi-archive"></i>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-2">
-                        <div class="luxury-card" style="border-left: 4px solid #B8860B;">
-                            <div class="kpi-title">Low Stock Variants</div>
-                            <h2 class="kpi-value" style="color: #B8860B;">@stockReport.LowStockCount <span style="font-size:1rem; font-weight:400;">variants</span></h2>
-                            <div class="kpi-icon-box" style="background: rgba(184,134,11,0.12); color: #B8860B;">
+                        <div class="luxury-card" style="border-left: 4px solid #B8860B; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); background: #ffffff; padding: 1.2rem;">
+                            <div class="kpi-title" style="font-size: 0.72rem; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Low Stock Variants</div>
+                            <h2 class="kpi-value" style="font-size: 1.6rem; color: #B8860B; font-weight: 700; margin-top: 5px;">@stockReport.LowStockCount <span style="font-size:0.8rem; font-weight:400; color: #B8860B;">variants</span></h2>
+                            <div class="kpi-icon-box" style="background: rgba(184,134,11,0.08); color: #B8860B; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; right: 1rem; font-size: 1.2rem;">
                                 <i class="bi bi-exclamation-triangle"></i>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-2">
-                        <div class="luxury-card" style="border-left: 4px solid #C0392B;">
-                            <div class="kpi-title">Out of Stock Variants</div>
-                            <h2 class="kpi-value" style="color: #C0392B;">@stockReport.OutOfStockCount <span style="font-size:1rem; font-weight:400;">variants</span></h2>
-                            <div class="kpi-icon-box" style="background: rgba(192,57,43,0.12); color: #C0392B;">
+                        <div class="luxury-card" style="border-left: 4px solid #C0392B; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); background: #ffffff; padding: 1.2rem;">
+                            <div class="kpi-title" style="font-size: 0.72rem; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Out of Stock Variants</div>
+                            <h2 class="kpi-value" style="font-size: 1.6rem; color: #C0392B; font-weight: 700; margin-top: 5px;">@stockReport.OutOfStockCount <span style="font-size:0.8rem; font-weight:400; color: #C0392B;">variants</span></h2>
+                            <div class="kpi-icon-box" style="background: rgba(192,57,43,0.08); color: #C0392B; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; right: 1rem; font-size: 1.2rem;">
                                 <i class="bi bi-x-circle"></i>
                             </div>
                         </div>
@@ -1483,34 +1525,26 @@ else
                                 <div class="d-flex flex-column gap-3">
                                     @foreach (var cat in categoryStockData)
                                     {
-                                        <div style="border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 10px;">
-                                            <div class="fw-bold mb-2" style="color: #3C1F10; font-size: 0.85rem;">@cat.CategoryName</div>
+                                        <div style="border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 12px;">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="fw-bold" style="color: #3C1F10; font-size: 0.85rem;">@cat.CategoryName</span>
+                                                <div style="font-size: 0.72rem; color: var(--text-muted);">
+                                                    <span>Added: <strong style="color: #4A6B82;">@cat.TotalAdded</strong></span>
+                                                    <span class="mx-1" style="opacity: 0.4;">|</span>
+                                                    <span>Sold: <strong style="color: #DAA520;">@cat.TotalSold</strong></span>
+                                                    <span class="mx-1" style="opacity: 0.4;">|</span>
+                                                    <span>Remaining: <strong style="color: #2E5A44;">@cat.TotalRemaining</strong></span>
+                                                </div>
+                                            </div>
                                             
-                                            <div class="d-flex flex-column gap-1 ms-2">
-                                                <!-- Added -->
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <span style="width: 80px; font-size: 0.75rem; color: var(--text-muted);">Added</span>
-                                                    <div class="flex-grow-1" style="height: 6px; background: rgba(0,0,0,0.05); border-radius: 3px; position: relative;">
-                                                        <div style="width: @(cat.TotalAdded * 100.0 / maxVal)%; height: 100%; background: #2E5A44; border-radius: 3px;"></div>
-                                                    </div>
-                                                    <span class="fw-bold" style="width: 50px; text-align: right; font-size: 0.75rem; color: #2E5A44;">@cat.TotalAdded</span>
-                                                </div>
-                                                <!-- Sold -->
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <span style="width: 80px; font-size: 0.75rem; color: var(--text-muted);">Sold</span>
-                                                    <div class="flex-grow-1" style="height: 6px; background: rgba(0,0,0,0.05); border-radius: 3px; position: relative;">
-                                                        <div style="width: @(cat.TotalSold * 100.0 / maxVal)%; height: 100%; background: #DAA520; border-radius: 3px;"></div>
-                                                    </div>
-                                                    <span class="fw-bold" style="width: 50px; text-align: right; font-size: 0.75rem; color: #DAA520;">@cat.TotalSold</span>
-                                                </div>
-                                                <!-- Remaining -->
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <span style="width: 80px; font-size: 0.75rem; color: var(--text-muted);">Remaining</span>
-                                                    <div class="flex-grow-1" style="height: 6px; background: rgba(0,0,0,0.05); border-radius: 3px; position: relative;">
-                                                        <div style="width: @(cat.TotalRemaining * 100.0 / maxVal)%; height: 100%; background: #8A3324; border-radius: 3px;"></div>
-                                                    </div>
-                                                    <span class="fw-bold" style="width: 50px; text-align: right; font-size: 0.75rem; color: #8A3324;">@cat.TotalRemaining</span>
-                                                </div>
+                                            <div style="height: 10px; background: rgba(0,0,0,0.04); border-radius: 5px; overflow: hidden; display: flex;">
+                                                @if (cat.TotalAdded > 0)
+                                                {
+                                                    double soldPercent = (cat.TotalSold * 100.0) / cat.TotalAdded;
+                                                    double remainingPercent = (cat.TotalRemaining * 100.0) / cat.TotalAdded;
+                                                    <div style="width: @(soldPercent)%; height: 100%; background: linear-gradient(90deg, #F9D066, #DAA520);" title="Sold: @cat.TotalSold (@soldPercent.ToString("N1")%)"></div>
+                                                    <div style="width: @(remainingPercent)%; height: 100%; background: linear-gradient(90deg, #488E6B, #2E5A44);" title="Remaining: @cat.TotalRemaining (@remainingPercent.ToString("N1")%)"></div>
+                                                }
                                             </div>
                                         </div>
                                     }
@@ -1539,29 +1573,28 @@ else
                                 <div class="d-flex flex-column gap-3">
                                     @foreach (var variant in topMovingVariants)
                                     {
-                                        <div style="border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 10px;">
-                                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                                <span class="fw-bold" style="color: #3C1F10; font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%;">
+                                        <div style="border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 12px;">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="fw-bold" style="color: #3C1F10; font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65%;">
                                                     @variant.ProductName (@variant.Size / @variant.Color)
                                                 </span>
-                                                <span class="text-muted small" style="font-size: 0.72rem;">SKU: @variant.Sku</span>
+                                                <span class="text-muted small" style="font-size: 0.72rem; font-family: monospace;">SKU: @variant.Sku</span>
                                             </div>
 
-                                            <div class="d-flex align-items-center gap-2 mt-1">
-                                                <div class="flex-grow-1" style="height: 10px; background: rgba(0,0,0,0.05); border-radius: 5px; overflow: hidden; display: flex;">
-                                                    @if (variant.TotalAddedStock > 0)
-                                                    {
-                                                        double soldPercent = (variant.TotalSoldQty * 100.0) / variant.TotalAddedStock;
-                                                        double remainingPercent = (variant.CurrentStock * 100.0) / variant.TotalAddedStock;
-                                                        <div style="width: @(soldPercent)%; height: 100%; background: #DAA520;" title="Sold: @variant.TotalSoldQty"></div>
-                                                        <div style="width: @(remainingPercent)%; height: 100%; background: #8A3324;" title="Remaining: @variant.CurrentStock"></div>
-                                                    }
-                                                </div>
+                                            <div style="height: 10px; background: rgba(0,0,0,0.04); border-radius: 5px; overflow: hidden; display: flex; margin-bottom: 6px;">
+                                                @if (variant.TotalAddedStock > 0)
+                                                {
+                                                    double soldPercent = (variant.TotalSoldQty * 100.0) / variant.TotalAddedStock;
+                                                    double remainingPercent = (variant.CurrentStock * 100.0) / variant.TotalAddedStock;
+                                                    <div style="width: @(soldPercent)%; height: 100%; background: linear-gradient(90deg, #F9D066, #DAA520);" title="Sold: @variant.TotalSoldQty (@soldPercent.ToString("N1")%)"></div>
+                                                    <div style="width: @(remainingPercent)%; height: 100%; background: linear-gradient(90deg, #488E6B, #2E5A44);" title="Remaining: @variant.CurrentStock (@remainingPercent.ToString("N1")%)"></div>
+                                                }
                                             </div>
-                                            <div class="d-flex justify-content-between mt-1" style="font-size: 0.7rem;">
-                                                <span style="color: #DAA520; font-weight: 500;">Sold: @variant.TotalSoldQty</span>
-                                                <span class="text-muted">Total: @variant.TotalAddedStock</span>
-                                                <span style="color: #8A3324; font-weight: 500;">Remaining: @variant.CurrentStock</span>
+                                            
+                                            <div class="d-flex justify-content-between" style="font-size: 0.72rem; color: var(--text-muted);">
+                                                <span>Sold: <strong style="color: #DAA520;">@variant.TotalSoldQty</strong></span>
+                                                <span>Total Added: <strong>@variant.TotalAddedStock</strong></span>
+                                                <span>Remaining: <strong style="color: #2E5A44;">@variant.CurrentStock</strong></span>
                                             </div>
                                         </div>
                                     }
@@ -1996,7 +2029,7 @@ else
                 else
                 {
                     <div style="display: flex; flex-direction: column; gap: 16px;">
-                        @foreach (var msg in contactMessages)
+                        @foreach (var msg in PagedContactMessages)
                         {
                             <div style="border: 1px solid #EDD9D0; border-radius: 10px; padding: 20px; background: #FDFAF8; transition: transform 0.2s, box-shadow 0.2s;">
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; border-bottom: 1px dashed #EDD9D0; padding-bottom: 10px;">
@@ -2016,6 +2049,15 @@ else
                             </div>
                         }
                     </div>
+
+                    @if (ReviewTotalPages > 1)
+                    {
+                        <div class="mt-4 d-flex justify-content-center">
+                            <Pagination CurrentPage="@reviewPage"
+                                        TotalPages="@ReviewTotalPages"
+                                        CurrentPageChanged="ChangeReviewPage" />
+                        </div>
+                    }
                 }
             </div>
         }
@@ -2030,12 +2072,24 @@ else
                 <span class="badge bg-secondary">@orderReturns.Count Request(s)</span>
             </div>
 
+            <div class="d-flex gap-2 mb-3">
+                <button type="button" class="filter-chip @(selectedReturnFilter == "Pending" ? "active" : "")" @onclick='() => SetReturnFilter("Pending")'>
+                    <span>Pending</span>
+                </button>
+                <button type="button" class="filter-chip @(selectedReturnFilter == "Approved" ? "active" : "")" @onclick='() => SetReturnFilter("Approved")'>
+                    <span>Approved</span>
+                </button>
+                <button type="button" class="filter-chip @(selectedReturnFilter == "Rejected" ? "active" : "")" @onclick='() => SetReturnFilter("Rejected")'>
+                    <span>Rejected</span>
+                </button>
+            </div>
+
             <div class="luxury-card" style="padding: 24px; background: #fff; border-radius: 12px; border: 1px solid #EDD9D0;">
                 @if (!orderReturns.Any())
                 {
                     <div style="text-align: center; padding: 40px; color: var(--text-muted);">
                         <i class="bi bi-arrow-left-right" style="font-size: 3rem; color: #EDD9D0; display: block; margin-bottom: 15px;"></i>
-                        <p style="margin: 0; font-size: 0.95rem; font-weight: 500;">No return or exchange requests have been submitted yet.</p>
+                        <p style="margin: 0; font-size: 0.95rem; font-weight: 500;">No return or exchange requests have been found for status "@selectedReturnFilter".</p>
                     </div>
                 }
                 else
@@ -2052,11 +2106,11 @@ else
                                     <th>Type</th>
                                     <th>Reason / Message</th>
                                     <th>Receipt</th>
-                                    <th class="text-end">Actions</th>
+                                    <th class="text-end">@(selectedReturnFilter == "Pending" ? "Actions" : "Status")</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var ret in orderReturns)
+                                @foreach (var ret in PagedOrderReturns)
                                 {
                                     <tr>
                                         <td><strong>#@ret.OrderReturnId</strong></td>
@@ -2101,21 +2155,194 @@ else
                                             }
                                         </td>
                                         <td class="text-end">
-                                            <div class="d-flex justify-content-end gap-2">
-                                                <button class="btn btn-sm btn-outline-success" @onclick="() => ApproveReturn(ret)" title="Approve Request">
-                                                    <i class="bi bi-check-lg"></i> Approve
-                                                </button>
-                                                <button class="btn btn-sm btn-outline-danger" @onclick="() => RejectReturn(ret)" title="Reject Request">
-                                                    <i class="bi bi-x-lg"></i> Reject
-                                                </button>
-                                            </div>
+                                            @if (selectedReturnFilter == "Pending")
+                                            {
+                                                <div class="d-flex justify-content-end gap-2">
+                                                    <button class="btn btn-sm btn-outline-success" @onclick="() => ApproveReturn(ret)" title="Approve Request">
+                                                        <i class="bi bi-check-lg"></i> Approve
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => RejectReturn(ret)" title="Reject Request">
+                                                        <i class="bi bi-x-lg"></i> Reject
+                                                    </button>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                @if (selectedReturnFilter == "Approved")
+                                                {
+                                                    <span class="badge bg-success" style="padding: 6px 12px; font-size: 0.75rem;"><i class="bi bi-patch-check-fill me-1"></i> Approved</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-danger" style="padding: 6px 12px; font-size: 0.75rem;"><i class="bi bi-x-circle-fill me-1"></i> Rejected</span>
+                                                }
+                                            }
                                         </td>
                                     </tr>
                                 }
                             </tbody>
                         </table>
                     </div>
+
+                    @if (ReturnTotalPages > 1)
+                    {
+                        <div class="mt-4 d-flex justify-content-center">
+                            <Pagination CurrentPage="@returnPage"
+                                        TotalPages="@ReturnTotalPages"
+                                        CurrentPageChanged="ChangeReturnPage" />
+                        </div>
+                    }
                 }
+            </div>
+        }
+        else if (activeView == "promotions")
+        {
+            <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
+                <div>
+                    <h1 class="mb-1">Active Promotions</h1>
+                    <p class="text-muted mb-0">Manage boutique campaigns, coupon codes, and slideshow banners.</p>
+                </div>
+                <button type="button" class="btn-luxury-solid" @onclick="StartNewPromotion">+ New Promotion</button>
+            </div>
+
+            <div class="row g-4">
+                <!-- Promotion Editor Form -->
+                <div class="col-lg-4">
+                    <div class="luxury-card" style="padding: 24px; background: #fff; border-radius: 12px; border: 1px solid #EDD9D0;">
+                        <h4 style="color: #3C1F10; font-family: 'DM Sans', sans-serif; margin-bottom: 16px; font-weight: 700;">
+                            @(editingPromo.PromoId == 0 ? "Add New Campaign" : "Edit Campaign Details")
+                        </h4>
+                        <hr style="border-color: #EDD9D0; margin-bottom: 20px;" />
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small text-uppercase fw-bold">Promo Code <span class="text-danger">*</span></label>
+                            <input type="text" class="luxury-input" @bind="editingPromo.PromoCode" placeholder="e.g., AUTUMN15" style="text-transform: uppercase;" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small text-uppercase fw-bold">Title <span class="text-danger">*</span></label>
+                            <input type="text" class="luxury-input" @bind="editingPromo.Title" placeholder="e.g., Autumn Velvet Sale" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small text-uppercase fw-bold">Subtitle</label>
+                            <input type="text" class="luxury-input" @bind="editingPromo.Subtitle" placeholder="e.g., SPECIAL SEASONAL REWARD" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small text-uppercase fw-bold">Description</label>
+                            <textarea class="luxury-input" @bind="editingPromo.Description" rows="3" placeholder="Campaign details..."></textarea>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label text-muted small text-uppercase fw-bold">Discount (%)</label>
+                                <input type="number" class="luxury-input" @bind="editingPromo.DiscountPercent" min="0" max="100" />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label text-muted small text-uppercase fw-bold">Button Label</label>
+                                <input type="text" class="luxury-input" @bind="editingPromo.ButtonText" placeholder="e.g., Shop Now" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small text-uppercase fw-bold">Lifestyle Photo URL</label>
+                            <input type="text" class="luxury-input" @bind="editingPromo.ImageUrl" placeholder="https://images.unsplash.com/..." />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small text-uppercase fw-bold">Gradient CSS Background (Fallback)</label>
+                            <input type="text" class="luxury-input" @bind="editingPromo.GradientCss" placeholder="linear-gradient(135deg, ...)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small text-uppercase fw-bold">Select Products for Campaign</label>
+                            <div style="max-height: 200px; overflow-y: auto; border: 1px solid #EDD9D0; border-radius: 8px; padding: 12px; background: #FDFAF8; display: flex; flex-direction: column; gap: 8px;">
+                                @foreach (var prod in allProducts)
+                                {
+                                    var pId = prod.ProductId;
+                                    var isChecked = selectedProductIdsForPromo.Contains(pId);
+                                    <div class="d-flex align-items-center" style="gap: 8px;">
+                                        <input type="checkbox" id="chk-promo-prod-@pId" 
+                                               checked="@isChecked" 
+                                               @onchange="@(e => ToggleProductForPromo(pId, e.Value))" 
+                                               style="cursor: pointer; width: 16px; height: 16px; accent-color: var(--rose);" />
+                                        <label for="chk-promo-prod-@pId" style="cursor: pointer; font-size: 0.8rem; color: #3C1F10; margin: 0; font-family: 'DM Sans', sans-serif;">
+                                            @prod.Name <span style="color: var(--text-muted); font-size: 0.72rem;">(@prod.Category?.Name)</span>
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="mt-4 d-grid gap-2">
+                            <LoadingButton Class="btn-luxury-solid"
+                                           IsLoading="@IsAdminActionLoading(SavePromotionAction)"
+                                           LoadingText="Saving Campaign..."
+                                           OnClick="@(() => RunAdminAction(SavePromotionAction, HandleSavePromotion))">
+                                <i class="bi bi-check-circle me-1"></i> Save Promotion
+                            </LoadingButton>
+                            @if (editingPromo.PromoId != 0)
+                            {
+                                <button type="button" class="btn-luxury" @onclick="StartNewPromotion">Cancel Edit</button>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Promotions Display List -->
+                <div class="col-lg-8">
+                    <div class="luxury-card" style="padding: 24px; background: #fff; border-radius: 12px; border: 1px solid #EDD9D0;">
+                        <h4 style="color: #3C1F10; font-family: 'DM Sans', sans-serif; margin-bottom: 20px; font-weight: 700;">Current Active Campaigns</h4>
+                        
+                        @if (!adminPromotionsList.Any())
+                        {
+                            <div class="text-center py-5 text-muted">
+                                <i class="bi bi-tags fs-1 d-block mb-2" style="color: #EDD9D0;"></i>
+                                <p>No active promotions registered yet. Add one from the form.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div style="display: flex; flex-direction: column; gap: 20px;">
+                                @foreach (var promo in adminPromotionsList)
+                                {
+                                    <div style="border: 1px solid #EDD9D0; border-radius: 12px; overflow: hidden; display: flex; background: #FDFAF8; box-shadow: var(--shadow-sm); min-height: 150px;">
+                                        <div style="width: 140px; background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.7) 100%), url('@promo.ImageUrl') center/cover no-repeat; padding: 20px; display: flex; flex-direction: column; justify-content: flex-end; color: white;">
+                                            <span style="font-size: 0.65rem; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 0.05em;">@promo.PromoCode</span>
+                                            @if (promo.DiscountPercent > 0)
+                                            {
+                                                <h3 style="margin: 0; font-size: 1.5rem; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">-@((int)promo.DiscountPercent)%</h3>
+                                            }
+                                        </div>
+                                        <div style="padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                                            <div>
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <h4 style="margin: 0 0 6px; font-family: 'DM Sans', sans-serif; font-size: 1.1rem; font-weight: 600; color: #3C1F10;">@promo.Title</h4>
+                                                    <span class="badge bg-light text-dark border">@promo.Subtitle</span>
+                                                </div>
+                                                <p style="font-size: 0.82rem; color: var(--charcoal-soft); margin: 0 0 12px; line-height: 1.5;">@promo.Description</p>
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #EDD9D0; padding-top: 12px; margin-top: auto;">
+                                                <span style="font-size: 0.72rem; font-weight: 600; color: var(--rose);">CTA: @promo.ButtonText</span>
+                                                <div class="d-flex gap-2">
+                                                    <button class="btn btn-sm btn-outline-primary" @onclick="() => EditPromotion(promo)">
+                                                        <i class="bi bi-pencil"></i> Edit
+                                                    </button>
+                                                    <LoadingButton Class="btn btn-sm btn-outline-danger"
+                                                                   IsLoading="@IsAdminActionLoading(DeletePromotionAction + promo.PromoId)"
+                                                                   OnClick="@(() => RunAdminAction(DeletePromotionAction + promo.PromoId, () => HandleDeletePromotion(promo.PromoId)))">
+                                                        <i class="bi bi-trash"></i> Delete
+                                                    </LoadingButton>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
             </div>
         }
 

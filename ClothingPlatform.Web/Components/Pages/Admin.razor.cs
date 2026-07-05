@@ -203,6 +203,21 @@ namespace ClothingPlatform.Web.Components.Pages
         private int? updatingRegularOrderId;
         private int? updatingGuestOrderId;
 
+        // Review / Message Pagination variables
+        private int reviewPage = 1;
+        private int reviewPageSize = 3;
+        private int reviewTotalCount;
+        private int ReviewTotalPages => (int)Math.Ceiling((double)reviewTotalCount / reviewPageSize);
+        private List<ContactMessage> PagedContactMessages = new();
+
+        // Return Requests Pagination variables
+        private int returnPage = 1;
+        private int returnPageSize = 3;
+        private int returnTotalCount;
+        private int ReturnTotalPages => (int)Math.Ceiling((double)returnTotalCount / returnPageSize);
+        private List<OrderReturn> PagedOrderReturns = new();
+        private string selectedReturnFilter = "Pending";
+
         // ── Order Receipt Modal State ──
         private Order? selectedRegularOrder;
         private GuestOrder? selectedGuestOrder;
@@ -539,15 +554,34 @@ namespace ClothingPlatform.Web.Components.Pages
                     .OrderByDescending(cm => cm.ContactMessageId)
                     .ToListAsync();
 
+                reviewTotalCount = contactMessages.Count;
+                if (reviewPage < 1) reviewPage = 1;
+                if (reviewPage > ReviewTotalPages && ReviewTotalPages > 0) reviewPage = ReviewTotalPages;
+
+                PagedContactMessages = contactMessages
+                    .Skip((reviewPage - 1) * reviewPageSize)
+                    .Take(reviewPageSize)
+                    .ToList();
+
                 // Load order returns
                 orderReturns = await db.OrderReturns
                     .Include(r => r.Order)
                         .ThenInclude(o => o.User)
                     .Include(r => r.Variant)
                         .ThenInclude(v => v.Product)
+                    .Where(r => r.Status == selectedReturnFilter)
                     .AsNoTracking()
                     .OrderByDescending(r => r.OrderReturnId)
                     .ToListAsync();
+
+                returnTotalCount = orderReturns.Count;
+                if (returnPage < 1) returnPage = 1;
+                if (returnPage > ReturnTotalPages && ReturnTotalPages > 0) returnPage = ReturnTotalPages;
+
+                PagedOrderReturns = orderReturns
+                    .Skip((returnPage - 1) * returnPageSize)
+                    .Take(returnPageSize)
+                    .ToList();
 
                 // Compute dashboard KPI stats
                 TotalRevenue = orders.Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Confirm).Sum(o => o.TotalAmount);
@@ -580,12 +614,13 @@ namespace ClothingPlatform.Web.Components.Pages
                     }
                 }
 
+                int colorIndex = 0;
                 categoryRevenues = categoryRevsMap.Select(kvp => new CategoryRevenueModel
                 {
                     CategoryName = kvp.Key,
                     Revenue = kvp.Value,
                     Percentage = totalProductRevenue > 0 ? (double)Math.Round((kvp.Value / totalProductRevenue) * 100, 1) : 0,
-                    Color = GetColorHex(kvp.Key)
+                    Color = PremiumColors[colorIndex++ % PremiumColors.Length]
                 }).ToList();
 
                 if (activeView == "stock-report")
@@ -616,6 +651,25 @@ namespace ClothingPlatform.Web.Components.Pages
             }
         }
         //pagination methods
+        private async Task ChangeReviewPage(int newPage)
+        {
+            reviewPage = newPage;
+            await LoadData();
+        }
+
+        private async Task ChangeReturnPage(int newPage)
+        {
+            returnPage = newPage;
+            await LoadData();
+        }
+
+        private async Task SetReturnFilter(string filter)
+        {
+            selectedReturnFilter = filter;
+            returnPage = 1;
+            await LoadData();
+        }
+
         private async Task OnProductPageChanged(int page)
         {
             productPage = page;
@@ -674,7 +728,8 @@ namespace ClothingPlatform.Web.Components.Pages
             "staffs" => CanManageStaff,
             "reports" => CanViewReports,
             "permissions" => Session.IsAdmin,
-            "dashboard" or "products" or "products-new" or "orders" or "create-order" or "profile" or "stock-report" or "customer-reviews" or "returns" => IsPortalOperator,
+            "customer-reviews" => Session.IsAdmin,
+            "dashboard" or "products" or "products-new" or "orders" or "create-order" or "profile" or "stock-report" or "returns" or "promotions" => IsPortalOperator,
             _ => false
         };
 
@@ -692,6 +747,7 @@ namespace ClothingPlatform.Web.Components.Pages
             "stock-report" => "stock-report",
             "customer-reviews" => "customer-reviews",
             "returns" => "returns",
+            "promotions" => "promotions",
             _ => "dashboard"
         };
 
@@ -741,6 +797,11 @@ namespace ClothingPlatform.Web.Components.Pages
             {
                 _ = LoadStockReport();
             }
+
+            if (normalizedView == "promotions")
+            {
+                _ = LoadPromotionsData();
+            }
         }
 
         // Order methods
@@ -788,6 +849,31 @@ namespace ClothingPlatform.Web.Components.Pages
                     }
 
                     dbOrder.OrderStatus = normalizedStatus;
+                    
+                    if (normalizedStatus == OrderWorkflow.Confirm)
+                    {
+                        db.CustomerNotifications.Add(new CustomerNotification
+                        {
+                            UserId = dbOrder.UserId,
+                            OrderId = dbOrder.OrderId,
+                            Title = "Order Confirmed",
+                            Message = $"Your order ORD-{dbOrder.OrderId:D4} has been confirmed. Click to view your receipt.",
+                            IsRead = false,
+                            CreatedAt = DateTime.Now
+                        });
+                    }
+                    else if (OrderWorkflow.IsCancelled(normalizedStatus))
+                    {
+                        db.CustomerNotifications.Add(new CustomerNotification
+                        {
+                            UserId = dbOrder.UserId,
+                            OrderId = dbOrder.OrderId,
+                            Title = "Order Cancellation Update",
+                            Message = $"Dear valued customer, we sincerely apologize, but your order ORD-{dbOrder.OrderId:D4} has been cancelled due to an unexpected stock issue. Click to view order details.",
+                            IsRead = false,
+                            CreatedAt = DateTime.Now
+                        });
+                    }
                     
                     await db.SaveChangesAsync();
                     successMessage = UiMessages.Admin.OrderStatusUpdated(order.OrderId, normalizedStatus);
@@ -837,6 +923,64 @@ namespace ClothingPlatform.Web.Components.Pages
             catch (Exception ex)
             {
                 errorMessage = UiMessages.Admin.OrderCancelFailed(ex.Message);
+            }
+        }
+
+        private async Task ApproveCancellation(Order order)
+        {
+            var confirmed = await ShowConfirmModalAsync(
+                title: "Approve Cancellation",
+                message: $"Are you sure you want to approve the cancellation request for Order ORD-{order.OrderId:D4}?",
+                confirmText: "Approve");
+
+            if (!confirmed)
+            {
+                return;
+            }
+
+            try
+            {
+                await using var db = await DbFactory.CreateDbContextAsync();
+                var dbOrder = await db.Orders
+                    .Include(o => o.OrderItems)
+                    .FirstOrDefaultAsync(o => o.OrderId == order.OrderId);
+
+                if (dbOrder == null)
+                {
+                    errorMessage = "Order not found.";
+                    return;
+                }
+
+                dbOrder.OrderStatus = OrderWorkflow.Cancelled;
+
+                // Restock items
+                foreach (var item in dbOrder.OrderItems)
+                {
+                    var variant = await db.ProductVariants.FirstOrDefaultAsync(v => v.VariantId == item.VariantId);
+                    if (variant != null)
+                    {
+                        variant.StockQuantity += item.Quantity;
+                    }
+                }
+
+                // Add Customer Notification
+                db.CustomerNotifications.Add(new CustomerNotification
+                {
+                    UserId = dbOrder.UserId,
+                    OrderId = dbOrder.OrderId,
+                    Title = "Order Cancellation Approved",
+                    Message = $"Your request to cancel Order ORD-{dbOrder.OrderId:D4} has been approved. The items have been restocked.",
+                    IsRead = false,
+                    CreatedAt = DateTime.Now
+                });
+
+                await db.SaveChangesAsync();
+                successMessage = $"Cancellation approved for Order ORD-{order.OrderId:D4}. Stock has been restocked.";
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Failed to approve cancellation: {ex.Message}";
             }
         }
 
@@ -1458,7 +1602,7 @@ namespace ClothingPlatform.Web.Components.Pages
             Session.Logout();
             currentUser = null;
             
-            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+            await CookieStorage.RemoveTokenAsync(JSRuntime);
             Nav.NavigateTo("/portal-login");
         }
         private async Task HandleCreateStaff()
@@ -1620,7 +1764,7 @@ namespace ClothingPlatform.Web.Components.Pages
         {
             try
             {
-                var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
+                var token = await CookieStorage.GetTokenAsync(JSRuntime);
                 using var request = new HttpRequestMessage(
                     HttpMethod.Get,
                     $"api/report/admin.csv?from={reportFrom:yyyy-MM-dd}&to={reportTo:yyyy-MM-dd}");
@@ -2274,6 +2418,23 @@ namespace ClothingPlatform.Web.Components.Pages
             StateHasChanged();
         }
 
+        private static readonly string[] PremiumColors = new[]
+        {
+            "#D4A373", // Warm Sand / Gold
+            "#880D1E", // Crimson Rose
+            "#2F3E46", // Dark Slate
+            "#A5A58D", // Sage Green
+            "#E07A5F", // Terracotta
+            "#3D5A80", // Premium Indigo Blue
+            "#9A7B56", // Mocha Brown
+            "#E0A96D", // Apricot
+            "#81B29A", // Soft Mint
+            "#F2CC8F", // Muted Mustard
+            "#9D8189", // Vintage Rose
+            "#6B705C", // Olive
+            "#5E503F"  // Espresso
+        };
+
         private static string GetColorHex(string colorName)
         {
             return colorName.ToLowerInvariant() switch
@@ -2359,9 +2520,32 @@ namespace ClothingPlatform.Web.Components.Pages
                     if (order != null)
                     {
                         order.OrderStatus = OrderWorkflow.CancelledByStaff;
+
+                        string title;
+                        string message;
+                        if (string.Equals(dbRet.ReturnOption, "Refund", StringComparison.OrdinalIgnoreCase))
+                        {
+                            title = "Return Refund Approved";
+                            message = $"Dear valued customer, your return request #{dbRet.OrderReturnId} for Order ORD-{dbRet.OrderId:D4} has been approved for a refund. To receive your refund, please contact our support team and provide your Kpay or Wavepay phone number and account name.";
+                        }
+                        else
+                        {
+                            title = "Return Exchange Approved";
+                            message = $"Dear valued customer, your return/exchange request #{dbRet.OrderReturnId} for Order ORD-{dbRet.OrderId:D4} has been approved. We will prepare your replacement item for delivery.";
+                        }
+
+                        db.CustomerNotifications.Add(new CustomerNotification
+                        {
+                            UserId = order.UserId,
+                            OrderId = order.OrderId,
+                            Title = title,
+                            Message = message,
+                            IsRead = false,
+                            CreatedAt = DateTime.Now
+                        });
                     }
 
-                    db.OrderReturns.Remove(dbRet);
+                    dbRet.Status = "Approved";
                     await db.SaveChangesAsync();
                     successMessage = "Return request approved and processed.";
                     await LoadData();
@@ -2388,9 +2572,24 @@ namespace ClothingPlatform.Web.Components.Pages
                 var dbRet = await db.OrderReturns.FirstOrDefaultAsync(r => r.OrderReturnId == ret.OrderReturnId);
                 if (dbRet != null)
                 {
-                    db.OrderReturns.Remove(dbRet);
+                    dbRet.Status = "Rejected";
+
+                    var order = await db.Orders.FirstOrDefaultAsync(o => o.OrderId == ret.OrderId);
+                    if (order != null)
+                    {
+                        db.CustomerNotifications.Add(new CustomerNotification
+                        {
+                            UserId = order.UserId,
+                            OrderId = order.OrderId,
+                            Title = "Return Request Rejected",
+                            Message = $"Dear valued customer, we regret to inform you that your return/exchange request #{dbRet.OrderReturnId} for Order ORD-{dbRet.OrderId:D4} has been rejected. Please contact our support team for more details.",
+                            IsRead = false,
+                            CreatedAt = DateTime.Now
+                        });
+                    }
+
                     await db.SaveChangesAsync();
-                    successMessage = "Return request rejected and removed.";
+                    successMessage = "Return request rejected and processed.";
                     await LoadData();
                 }
             }
@@ -2407,5 +2606,162 @@ namespace ClothingPlatform.Web.Components.Pages
         public decimal Revenue { get; set; }
         public double Percentage { get; set; }
         public string Color { get; set; } = "";
+    }
+
+    public partial class Admin
+    {
+        private List<Promotion> adminPromotionsList = new();
+        private Promotion editingPromo = new();
+        private List<int> selectedProductIdsForPromo = new();
+        private const string LoadPromotionsAction = "load-promotions";
+        private const string SavePromotionAction = "save-promotion";
+        private const string DeletePromotionAction = "delete-promotion";
+
+        private async Task LoadPromotionsData()
+        {
+            try
+            {
+                await using var db = await DbFactory.CreateDbContextAsync();
+                adminPromotionsList = await db.Promotions.AsNoTracking().OrderByDescending(p => p.PromoId).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Failed to load promotions: {ex.Message}";
+            }
+        }
+
+        private void StartNewPromotion()
+        {
+            editingPromo = new Promotion
+            {
+                GradientCss = "linear-gradient(135deg, #8B1A1A 0%, #3C1F10 100%)",
+                ButtonText = "Shop Now"
+            };
+            selectedProductIdsForPromo.Clear();
+            errorMessage = "";
+            successMessage = "";
+        }
+
+        private void EditPromotion(Promotion promo)
+        {
+            editingPromo = new Promotion
+            {
+                PromoId = promo.PromoId,
+                Title = promo.Title,
+                Subtitle = promo.Subtitle,
+                Description = promo.Description,
+                PromoCode = promo.PromoCode,
+                DiscountPercent = promo.DiscountPercent,
+                ButtonText = promo.ButtonText,
+                GradientCss = promo.GradientCss,
+                ImageUrl = promo.ImageUrl,
+                CreatedAt = promo.CreatedAt
+            };
+            selectedProductIdsForPromo = allProducts.Where(p => p.PromoId == promo.PromoId).Select(p => p.ProductId).ToList();
+            errorMessage = "";
+            successMessage = "";
+        }
+
+        private void ToggleProductForPromo(int productId, object? checkedValue)
+        {
+            var isChecked = checkedValue is bool val && val;
+            if (isChecked)
+            {
+                if (!selectedProductIdsForPromo.Contains(productId))
+                {
+                    selectedProductIdsForPromo.Add(productId);
+                }
+            }
+            else
+            {
+                selectedProductIdsForPromo.Remove(productId);
+            }
+        }
+
+        private async Task HandleSavePromotion()
+        {
+            if (string.IsNullOrWhiteSpace(editingPromo.Title) || string.IsNullOrWhiteSpace(editingPromo.PromoCode))
+            {
+                errorMessage = "Title and Promo Code are required.";
+                return;
+            }
+
+            try
+            {
+                await using var db = await DbFactory.CreateDbContextAsync();
+                
+                // Code uniqueness validation
+                var codeClean = editingPromo.PromoCode.Trim();
+                var exists = await db.Promotions.AnyAsync(p => p.PromoCode == codeClean && p.PromoId != editingPromo.PromoId);
+                if (exists)
+                {
+                    errorMessage = $"Promo code '{editingPromo.PromoCode}' is already in use.";
+                    return;
+                }
+
+                editingPromo.PromoCode = codeClean;
+
+                if (editingPromo.PromoId == 0)
+                {
+                    db.Promotions.Add(editingPromo);
+                    await db.SaveChangesAsync();
+                }
+                else
+                {
+                    db.Promotions.Update(editingPromo);
+                    await db.SaveChangesAsync();
+                }
+
+                var promoId = editingPromo.PromoId;
+
+                // Reset old products associated with this campaign
+                var oldProducts = await db.Products.Where(p => p.PromoId == promoId).ToListAsync();
+                foreach (var p in oldProducts)
+                {
+                    p.PromoId = null;
+                }
+
+                // Associate newly checked products
+                var newProducts = await db.Products.Where(p => selectedProductIdsForPromo.Contains(p.ProductId)).ToListAsync();
+                foreach (var p in newProducts)
+                {
+                    p.PromoId = promoId;
+                }
+
+                await db.SaveChangesAsync();
+
+                successMessage = "Promotion details and product links saved successfully.";
+                editingPromo = new Promotion();
+                selectedProductIdsForPromo.Clear();
+
+                await LoadData();
+                await LoadPromotionsData();
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Failed to save promotion: {ex.Message}";
+            }
+        }
+
+        private async Task HandleDeletePromotion(int promoId)
+        {
+            try
+            {
+                await using var db = await DbFactory.CreateDbContextAsync();
+                var promo = await db.Promotions.FindAsync(promoId);
+                if (promo != null)
+                {
+                    db.Promotions.Remove(promo);
+                    await db.SaveChangesAsync();
+                    successMessage = "Promotion removed successfully.";
+                    await LoadData();
+                    await LoadPromotionsData();
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Failed to delete promotion: {ex.Message}";
+            }
+        }
     }
 }

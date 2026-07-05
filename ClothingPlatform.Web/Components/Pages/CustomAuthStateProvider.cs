@@ -1,4 +1,4 @@
-﻿using Azure;
+using Azure;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
@@ -23,8 +23,15 @@ namespace ClothingPlatform.Web.Components.Pages
         {
             try
             {
-                // Retrieve token from LocalStorage via JS Interop
-                var token = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
+                // Retrieve token from cookie via JS Interop
+                var token = await ClothingPlatform.Web.Services.CookieStorage.GetTokenAsync(_jsRuntime);
+
+                // Clean up any legacy localStorage authToken to prevent confusion
+                try
+                {
+                    await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+                }
+                catch {}
 
                 if (string.IsNullOrWhiteSpace(token))
                 {
@@ -53,7 +60,14 @@ namespace ClothingPlatform.Web.Components.Pages
         // Call this for logout
         public async Task NotifyUserLogout()
         {
-            await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+            await ClothingPlatform.Web.Services.CookieStorage.RemoveTokenAsync(_jsRuntime);
+            await ClothingPlatform.Web.Services.CookieStorage.RemoveCookieAsync(_jsRuntime, "customerId");
+            try
+            {
+                await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+                await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "customerId");
+            }
+            catch {}
             var authState = Task.FromResult(new AuthenticationState(_anonymous));
             NotifyAuthenticationStateChanged(authState);
         }

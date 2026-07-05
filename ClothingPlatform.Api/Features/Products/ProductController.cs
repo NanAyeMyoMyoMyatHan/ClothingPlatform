@@ -1,4 +1,4 @@
-﻿using ClothingPlatform.Api.Filters;
+using ClothingPlatform.Api.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace ClothingPlatform.Api.Features.Product
 {
     [Route("api/[controller]")]
-    
     [ApiController]
     public class ProductController : ControllerBase
     {
@@ -31,7 +30,6 @@ namespace ClothingPlatform.Api.Features.Product
 
         // UPDATE product
         [HttpPut]
-        [Authorize(Policy = "AdminOrStaff")]
         [Permission("Products.Manage", true)]
         
         public async Task<IActionResult> Update([FromBody] UpdateProductRequest model)
@@ -63,7 +61,6 @@ namespace ClothingPlatform.Api.Features.Product
         }
 
         [HttpDelete("{productId}")]
-        [Authorize(Policy = "AdminOrStaff")]
         [Permission("Products.Manage", true)]
         
         public async Task<IActionResult> DeleteProduct(int productId)
@@ -75,7 +72,6 @@ namespace ClothingPlatform.Api.Features.Product
         }
 
         [HttpPost]
-        [Authorize(Policy = "AdminOrStaff")]
         [Permission("Products.Manage", true)]
        
         public async Task<IActionResult> SaveProduct([FromBody] ProductModel model)
@@ -115,7 +111,6 @@ namespace ClothingPlatform.Api.Features.Product
         }
 
         [HttpPost("upload-image")]
-        [Authorize(Policy = "AdminOrStaff")]
         [Permission("Products.Manage", true)]
         public async Task<IActionResult> UploadImage(IFormFile file)
         {

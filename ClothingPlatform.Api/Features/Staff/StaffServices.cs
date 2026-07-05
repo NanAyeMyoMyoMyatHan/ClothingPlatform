@@ -147,7 +147,22 @@ namespace ClothingPlatform.Api.Features.Staff
 
             await _db.SaveChangesAsync();
 
-            if (OrderWorkflow.IsCancelled(normalizedStatus))
+            if (normalizedStatus == OrderWorkflow.Confirm)
+            {
+                try
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        dbOrder.UserId,
+                        orderId,
+                        "Order Confirmed",
+                        $"Your order ORD-{orderId:D4} has been confirmed. Click to view your receipt.");
+                }
+                catch (Exception)
+                {
+                    // Ignore
+                }
+            }
+            else if (OrderWorkflow.IsCancelled(normalizedStatus))
             {
                 try
                 {

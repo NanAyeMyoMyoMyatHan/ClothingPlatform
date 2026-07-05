@@ -1,15 +1,16 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ClothingPlatform.Api.Filters;
 
 namespace ClothingPlatform.Api.Features.Permission
 {
     /// <summary>
     /// Admin-only endpoints for managing role permissions.
-    /// All routes require the "AdminOnly" JWT policy.
+    /// All routes require the "Permissions.Manage" permission.
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Policy = "AdminOnly")]
+    [Permission("Permissions.Manage")]
     public class PermissionController : ControllerBase
     {
         private readonly IPermissionService _permissionService;

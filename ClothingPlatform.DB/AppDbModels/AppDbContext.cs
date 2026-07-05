@@ -65,6 +65,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<ContactMessage> ContactMessages { get; set; }
 
+    public virtual DbSet<Promotion> Promotions { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
@@ -716,6 +718,10 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.ReturnOption)
                 .HasMaxLength(50)
                 .HasColumnName("return_option");
+            entity.Property(e => e.Status)
+                .HasMaxLength(50)
+                .HasDefaultValueSql("('Pending')")
+                .HasColumnName("status");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnName("created_at");
