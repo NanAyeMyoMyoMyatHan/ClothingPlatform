@@ -6,9 +6,10 @@ namespace ClothingPlatform.DB;
 
 public static class SchemaCompatibility
 {
-    public static Task EnsureCancelledOrderStatusSupportAsync(AppDbModels.AppDbContext db, CancellationToken cancellationToken = default)
+    public static async Task EnsureCancelledOrderStatusSupportAsync(AppDbModels.AppDbContext db, CancellationToken cancellationToken = default)
     {
-        const string sql = """
+        // 1. Core database schema checks (orders, returns, contact messages, basic promotions)
+        const string coreSql = """
             IF EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = 'CHK_OrderStatus')
             BEGIN
                 DECLARE @definition nvarchar(max) = OBJECT_DEFINITION(OBJECT_ID(N'dbo.CHK_OrderStatus'));
@@ -74,15 +75,51 @@ public static class SchemaCompatibility
                     image_url NVARCHAR(500) NULL,
                     created_at DATETIME DEFAULT GETDATE()
                 );
-
-                -- Seed original promotions
-                INSERT INTO promotions (title, subtitle, description, promo_code, discount_percent, button_text, gradient_css, image_url)
-                VALUES 
-                (N'Summer Silhouette Sale', N'LIMITED TIME OFFER', N'Embrace the warmth of Yangon in elegance. Get 20% off on all lightweight linen and silk creations.', N'SUMMER20', 20.00, N'Claim 20% Discount', N'linear-gradient(135deg, #8B1A1A 0%, #3C1F10 100%)', N'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1200&q=80'),
-                (N'Double Atelier Points', N'EXCLUSIVE ROYAL LOYALTY', N'Upgrade your status faster. Earn 2x loyalty points on all orders confirmed this weekend.', N'LOYAL2X', 0.00, N'Explore Collection', N'linear-gradient(135deg, #3C1F10 0%, #C9A96E 100%)', N'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1200&q=80'),
-                (N'Monsoon Preview Event', N'EARLY ACCESS DISPATCH', N'Get a complimentary matching designer mask and custom resizing on pre-orders.', N'MONSOON10', 10.00, N'Unlock Early Access', N'linear-gradient(135deg, #7A5C50 0%, #EDD9D0 100%)', N'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1200&q=80');
             END;
+            """;
 
+        await db.Database.ExecuteSqlRawAsync(coreSql, cancellationToken);
+
+        // 2. Ensure new columns are added to the promotions table (if they don't exist yet)
+        const string alterPromotionsSql = """
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('promotions') AND name = 'start_date')
+            BEGIN
+                ALTER TABLE promotions ADD start_date DATETIME NULL;
+                ALTER TABLE promotions ADD end_date DATETIME NULL;
+                ALTER TABLE promotions ADD usage_limit INT NOT NULL DEFAULT 0;
+                ALTER TABLE promotions ADD redeemed INT NOT NULL DEFAULT 0;
+                ALTER TABLE promotions ADD enabled BIT NOT NULL DEFAULT 1;
+                ALTER TABLE promotions ADD apply_all BIT NOT NULL DEFAULT 1;
+                ALTER TABLE promotions ADD note NVARCHAR(500) NULL;
+            END;
+            """;
+        await db.Database.ExecuteSqlRawAsync(alterPromotionsSql, cancellationToken);
+
+        // 3. Ensure seeded data exists (using dynamic SQL EXEC to prevent compiler issues on missing columns in clean schemas)
+        const string seedPromotionsSql = """
+            IF NOT EXISTS (SELECT 1 FROM promotions WHERE promo_code = 'SUMMER20')
+            BEGIN
+                EXEC('INSERT INTO promotions (title, subtitle, description, promo_code, discount_percent, button_text, gradient_css, image_url, start_date, enabled, apply_all)
+                VALUES 
+                (N''Summer Silhouette Sale'', N''LIMITED TIME OFFER'', N''Embrace the warmth of Yangon in elegance. Get 20% off on all lightweight linen and silk creations.'', N''SUMMER20'', 20.00, N''Claim 20% Discount'', N''linear-gradient(135deg, #8B1A1A 0%, #3C1F10 100%)'', N''https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1200&q=80'', ''2026-06-01'', 1, 1)');
+            END;
+            IF NOT EXISTS (SELECT 1 FROM promotions WHERE promo_code = 'LOYAL2X')
+            BEGIN
+                EXEC('INSERT INTO promotions (title, subtitle, description, promo_code, discount_percent, button_text, gradient_css, image_url, start_date, enabled, apply_all)
+                VALUES 
+                (N''Double Atelier Points'', N''EXCLUSIVE ROYAL LOYALTY'', N''Upgrade your status faster. Earn 2x loyalty points on all orders confirmed this weekend.'', N''LOYAL2X'', 0.00, N''Explore Collection'', N''linear-gradient(135deg, #3C1F10 0%, #C9A96E 100%)'', N''https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1200&q=80'', ''2026-06-01'', 1, 1)');
+            END;
+            IF NOT EXISTS (SELECT 1 FROM promotions WHERE promo_code = 'MONSOON10')
+            BEGIN
+                EXEC('INSERT INTO promotions (title, subtitle, description, promo_code, discount_percent, button_text, gradient_css, image_url, start_date, enabled, apply_all)
+                VALUES 
+                (N''Monsoon Preview Event'', N''EARLY ACCESS DISPATCH'', N''Get a complimentary matching designer mask and custom resizing on pre-orders.'', N''MONSOON10'', 10.00, N''Unlock Early Access'', N''linear-gradient(135deg, #7A5C50 0%, #EDD9D0 100%)'', N''https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1200&q=80'', ''2026-06-01'', 1, 1)');
+            END;
+            """;
+        await db.Database.ExecuteSqlRawAsync(seedPromotionsSql, cancellationToken);
+
+        // 4. Products-Promotions foreign keys
+        const string productRelationSql = """
             IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('products') AND name = 'promo_id')
             BEGIN
                 ALTER TABLE products ADD promo_id INT NULL;
@@ -94,7 +131,6 @@ public static class SchemaCompatibility
                 EXEC('UPDATE TOP(2) products SET promo_id = 3 WHERE promo_id IS NULL;');
             END;
             """;
-
-        return db.Database.ExecuteSqlRawAsync(sql, cancellationToken);
+        await db.Database.ExecuteSqlRawAsync(productRelationSql, cancellationToken);
     }
 }

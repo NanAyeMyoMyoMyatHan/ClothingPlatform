@@ -2197,152 +2197,493 @@ else
         }
         else if (activeView == "promotions")
         {
-            <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
-                <div>
-                    <h1 class="mb-1">Active Promotions</h1>
-                    <p class="text-muted mb-0">Manage boutique campaigns, coupon codes, and slideshow banners.</p>
-                </div>
-                <button type="button" class="btn-luxury-solid" @onclick="StartNewPromotion">+ New Promotion</button>
-            </div>
+            <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet" />
+            <style>
+                .promotions-view-wrapper {
+                    --bg-p: var(--bg-primary, #FDF8F6);
+                    --panel-p: var(--bg-card, #FFFFFF);
+                    --ink-p: var(--text-main, #3C1F10);
+                    --muted-p: var(--text-muted, #7A5C50);
+                    --line-p: var(--border-color, #EDD9D0);
+                    --brand-p: var(--accent-main, #8B1A1A);
+                    --brand-dark-p: var(--accent-hover, #6B0F0F);
+                    --brand-tint-p: rgba(139, 26, 26, 0.08);
+                    --ok-p: var(--success-color, #15803D);
+                    --ok-tint-p: var(--success-surface, #DCFCE7);
+                    --warn-p: var(--warning-color, #92400E);
+                    --warn-tint-p: var(--warning-surface, #FEF3C7);
+                    --bad-p: var(--danger-color, #9F1D1D);
+                    --bad-tint-p: var(--danger-surface, #FEE2E2);
+                    --draft-p: var(--text-muted, #7A5C50);
+                    --draft-tint-p: var(--border-color, #EDD9D0);
+                    --shadow-p: 0 1px 2px rgba(60,31,16,.04), 0 6px 20px rgba(60,31,16,.05);
+                }
 
-            <div class="row g-4">
-                <!-- Promotion Editor Form -->
-                <div class="col-lg-4">
-                    <div class="luxury-card" style="padding: 24px; background: #fff; border-radius: 12px; border: 1px solid #EDD9D0;">
-                        <h4 style="color: #3C1F10; font-family: 'DM Sans', sans-serif; margin-bottom: 16px; font-weight: 700;">
-                            @(editingPromo.PromoId == 0 ? "Add New Campaign" : "Edit Campaign Details")
-                        </h4>
-                        <hr style="border-color: #EDD9D0; margin-bottom: 20px;" />
+                .promotions-view-wrapper h1,
+                .promotions-view-wrapper h2,
+                .promotions-view-wrapper h3,
+                .promotions-view-wrapper h4,
+                .promotions-view-wrapper .n-p,
+                .promotions-view-wrapper .discount-p {
+                    font-family: 'Sora', sans-serif !important;
+                }
 
-                        <div class="mb-3">
-                            <label class="form-label text-muted small text-uppercase fw-bold">Promo Code <span class="text-danger">*</span></label>
-                            <input type="text" class="luxury-input" @bind="editingPromo.PromoCode" placeholder="e.g., AUTUMN15" style="text-transform: uppercase;" required />
-                        </div>
+                .promotions-view-wrapper,
+                .promotions-view-wrapper .wrap-p,
+                .promotions-view-wrapper button,
+                .promotions-view-wrapper input,
+                .promotions-view-wrapper select,
+                .promotions-view-wrapper textarea,
+                .promotions-view-wrapper span,
+                .promotions-view-wrapper div,
+                .promotions-view-wrapper label {
+                    font-family: 'Inter', sans-serif !important;
+                }
 
-                        <div class="mb-3">
-                            <label class="form-label text-muted small text-uppercase fw-bold">Title <span class="text-danger">*</span></label>
-                            <input type="text" class="luxury-input" @bind="editingPromo.Title" placeholder="e.g., Autumn Velvet Sale" required />
-                        </div>
+                .promotions-view-wrapper .code-chip-p,
+                .promotions-view-wrapper .ip-sku-p {
+                    font-family: 'IBM Plex Mono', monospace !important;
+                }
 
-                        <div class="mb-3">
-                            <label class="form-label text-muted small text-uppercase fw-bold">Subtitle</label>
-                            <input type="text" class="luxury-input" @bind="editingPromo.Subtitle" placeholder="e.g., SPECIAL SEASONAL REWARD" />
-                        </div>
+                .promotions-view-wrapper * { box-sizing: border-box; }
+                .promotions-view-wrapper .wrap-p { max-width: 1220px; margin: 0 auto; padding: 26px 22px 70px; background: var(--bg-p); border-radius: 16px; font-family: 'Inter', sans-serif; }
 
-                        <div class="mb-3">
-                            <label class="form-label text-muted small text-uppercase fw-bold">Description</label>
-                            <textarea class="luxury-input" @bind="editingPromo.Description" rows="3" placeholder="Campaign details..."></textarea>
-                        </div>
+                .promotions-view-wrapper header.top-p {
+                    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+                    flex-wrap: wrap; margin-bottom: 20px;
+                }
+                .promotions-view-wrapper .brandmark-p { display: flex; align-items: center; gap: 10px; }
+                .promotions-view-wrapper .brandmark-p .icon-p {
+                    width: 34px; height: 34px; border-radius: 9px; background: var(--brand-p);
+                    display: flex; align-items: center; justify-content: center; color: #fff;
+                    font-family: 'Sora', sans-serif; font-weight: 800; font-size: 16px;
+                }
+                .promotions-view-wrapper .brandmark-p h1 {
+                    font-family: 'Sora', sans-serif; font-size: 19px; font-weight: 800; margin: 0; letter-spacing: -.2px; color: var(--ink-p);
+                }
+                .promotions-view-wrapper .brandmark-p .tag-p { font-size: 11.5px; color: var(--muted-p); margin-top: 1px; }
 
-                        <div class="row g-2 mb-3">
-                            <div class="col-6">
-                                <label class="form-label text-muted small text-uppercase fw-bold">Discount (%)</label>
-                                <input type="number" class="luxury-input" @bind="editingPromo.DiscountPercent" min="0" max="100" />
+                .promotions-view-wrapper .btn-p {
+                    font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13.5px;
+                    padding: 10px 16px; border-radius: 9px; cursor: pointer; border: 1.5px solid transparent;
+                    transition: transform .08s ease, box-shadow .08s ease, background .12s ease;
+                    display: inline-flex; align-items: center; justify-content: center;
+                }
+                .promotions-view-wrapper .btn-p:hover { transform: translateY(-1px); }
+                .promotions-view-wrapper .btn-p:active { transform: translateY(0); }
+                .promotions-view-wrapper .btn-p.primary-p { background: var(--brand-p); color: #fff; box-shadow: 0 4px 14px rgba(139,26,26,.32); }
+                .promotions-view-wrapper .btn-p.primary-p:hover { background: var(--brand-dark-p); }
+                .promotions-view-wrapper .btn-p.ghost-p { background: var(--panel-p); color: var(--ink-p); border-color: var(--line-p); }
+                .promotions-view-wrapper .btn-p.danger-ghost-p { background: var(--panel-p); color: var(--bad-p); border-color: var(--bad-tint-p); }
+                .promotions-view-wrapper .btn-p.small-p { padding: 6px 11px; font-size: 12px; border-radius: 7px; }
+                .promotions-view-wrapper .btn-p:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+                /* stats */
+                .promotions-view-wrapper .stats-p { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+                @@media (max-width: 760px) { .promotions-view-wrapper .stats-p { grid-template-columns: repeat(2, 1fr); } }
+                .promotions-view-wrapper .stat-card-p {
+                    background: var(--panel-p); border: 1px solid var(--line-p); border-radius: 14px; padding: 16px 18px;
+                    box-shadow: var(--shadow-p);
+                }
+                .promotions-view-wrapper .stat-card-p .n-p { font-family: 'Sora', sans-serif; font-size: 26px; font-weight: 800; color: var(--ink-p); }
+                .promotions-view-wrapper .stat-card-p .l-p { font-size: 12px; color: var(--muted-p); margin-top: 2px; }
+                .promotions-view-wrapper .stat-card-p.accent-p .n-p { color: var(--brand-p); }
+
+                /* controls row */
+                .promotions-view-wrapper .controls-p {
+                    display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+                    margin-bottom: 16px;
+                }
+                .promotions-view-wrapper .filters-p { display: flex; gap: 6px; flex-wrap: wrap; }
+                .promotions-view-wrapper .chip-p {
+                    font-size: 12.5px; font-weight: 600; padding: 7px 13px; border-radius: 20px; cursor: pointer;
+                    background: var(--panel-p); border: 1px solid var(--line-p); color: var(--muted-p);
+                }
+                .promotions-view-wrapper .chip-p.active-p { background: var(--ink-p); color: #fff; border-color: var(--ink-p); }
+                .promotions-view-wrapper .search-p {
+                    padding: 9px 13px; border-radius: 9px; border: 1px solid var(--line-p); font-family: 'Inter', sans-serif;
+                    font-size: 13px; min-width: 220px; background: var(--panel-p); color: var(--ink-p);
+                }
+                .promotions-view-wrapper .search-p:focus { outline: 2px solid var(--brand-p); outline-offset: 1px; }
+
+                /* grid of coupon cards */
+                .promotions-view-wrapper .grid-p { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+                .promotions-view-wrapper .promo-card-p {
+                    position: relative; background: var(--panel-p); border-radius: 16px; box-shadow: var(--shadow-p);
+                    border: 1px solid var(--line-p); overflow: hidden;
+                }
+                .promotions-view-wrapper .promo-card-p .band-p {
+                    display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px;
+                }
+                .promotions-view-wrapper .badge-p {
+                    font-size: 10.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+                    padding: 4px 9px; border-radius: 20px;
+                }
+                .promotions-view-wrapper .badge-p.active-p { background: var(--ok-tint-p); color: var(--ok-p); }
+                .promotions-view-wrapper .badge-p.scheduled-p { background: var(--warn-tint-p); color: var(--warn-p); }
+                .promotions-view-wrapper .badge-p.expired-p { background: var(--bad-tint-p); color: var(--bad-p); }
+                .promotions-view-wrapper .badge-p.draft-p { background: var(--draft-tint-p); color: var(--draft-p); }
+
+                .promotions-view-wrapper .promo-card-p .discount-p {
+                    font-family: 'Sora', sans-serif; font-weight: 800; font-size: 28px; padding: 0 16px; letter-spacing: -.5px; color: var(--ink-p);
+                }
+                .promotions-view-wrapper .promo-card-p .name-p { padding: 0 16px; font-weight: 700; font-size: 14.5px; margin-top: 2px; color: var(--ink-p); }
+                .promotions-view-wrapper .promo-card-p .desc-p { padding: 2px 16px 0; font-size: 12.5px; color: var(--muted-p); min-height: 38px; }
+
+                .promotions-view-wrapper .perforation-p {
+                    position: relative; margin: 14px 0; border-top: 1.5px dashed var(--line-p);
+                }
+                .promotions-view-wrapper .perforation-p::before, .promotions-view-wrapper .perforation-p::after {
+                    content: ""; position: absolute; top: -8px; width: 16px; height: 16px; border-radius: 50%; background: var(--bg-p);
+                    border: 1px solid var(--line-p);
+                }
+                .promotions-view-wrapper .perforation-p::before { left: -8px; }
+                .promotions-view-wrapper .perforation-p::after { right: -8px; }
+
+                .promotions-view-wrapper .code-row-p {
+                    display: flex; align-items: center; justify-content: space-between; padding: 0 16px; gap: 8px;
+                }
+                .promotions-view-wrapper .code-chip-p {
+                    font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 13px; letter-spacing: 1px;
+                    background: var(--brand-tint-p); color: var(--brand-dark-p); padding: 6px 10px; border-radius: 7px;
+                    flex: 1; text-align: center;
+                }
+                .promotions-view-wrapper .copy-btn-p {
+                    background: none; border: 1px solid var(--line-p); border-radius: 7px; padding: 6px 9px; cursor: pointer;
+                    font-size: 12px; color: var(--muted-p);
+                }
+                .promotions-view-wrapper .copy-btn-p:hover { border-color: var(--brand-p); color: var(--brand-p); }
+
+                .promotions-view-wrapper .meta-list-p { padding: 12px 16px 6px; font-size: 12px; color: var(--muted-p); display: flex; flex-direction: column; gap: 5px; }
+                .promotions-view-wrapper .meta-list-p .row-p { display: flex; justify-content: space-between; }
+                .promotions-view-wrapper .meta-list-p b { color: var(--ink-p); font-weight: 600; }
+                .promotions-view-wrapper .usage-bar-p { height: 6px; border-radius: 4px; background: var(--line-p); overflow: hidden; margin-top: 3px; }
+                .promotions-view-wrapper .usage-bar-p > div { height: 100%; background: var(--brand-p); border-radius: 4px; }
+
+                .promotions-view-wrapper .card-actions-p {
+                    display: flex; gap: 8px; padding: 14px 16px 16px; border-top: 1px solid var(--line-p); margin-top: 10px;
+                }
+                .promotions-view-wrapper .card-actions-p .btn-p { flex: 1 !important; width: 100% !important; }
+
+                .promotions-view-wrapper .toggle-wrap-p { display: flex; align-items: center; gap: 8px; padding: 0 16px; }
+                .promotions-view-wrapper .switch-p {
+                    width: 36px; height: 20px; border-radius: 20px; background: var(--line-p); position: relative; cursor: pointer;
+                    flex: 0 0 auto; transition: background .15s ease;
+                }
+                .promotions-view-wrapper .switch-p.on-p { background: var(--ok-p); }
+                .promotions-view-wrapper .switch-p .knob-p {
+                    position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff;
+                    transition: left .15s ease; box-shadow: 0 1px 2px rgba(0,0,0,.25);
+                }
+                .promotions-view-wrapper .switch-p.on-p .knob-p { left: 18px; }
+                .promotions-view-wrapper .toggle-label-p { font-size: 11.5px; color: var(--muted-p); }
+
+                .promotions-view-wrapper .empty-state-p {
+                    grid-column: 1 / -1; text-align: center; padding: 70px 20px; color: var(--muted-p); font-size: 13.5px;
+                    background: var(--panel-p); border: 1px dashed var(--line-p); border-radius: 16px;
+                }
+                .promotions-view-wrapper .empty-state-p .big-p { font-size: 32px; margin-bottom: 10px; }
+
+                /* modal */
+                .overlay-p {
+                    position: fixed; inset: 0; background: rgba(34,27,54,.42); display: flex; align-items: center;
+                    justify-content: center; padding: 20px; z-index: 9999;
+                }
+                .modal-p {
+                    width: 100%; max-width: 480px; background: var(--panel-p); border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,.25);
+                    max-height: 90vh; overflow-y: auto; animation: pop-p .16s ease;
+                }
+                @@keyframes pop-p { from { opacity: 0; transform: scale(.97) translateY(6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+                .modal-head-p {
+                    padding: 18px 20px; border-bottom: 1px solid var(--line-p); display: flex; justify-content: space-between; align-items: center;
+                    position: sticky; top: 0; background: var(--panel-p); border-radius: 16px 16px 0 0; z-index: 10;
+                }
+                .modal-head-p h3 { font-family: 'Sora', sans-serif; font-size: 16px; margin: 0; font-weight: 800; color: var(--ink-p); }
+                .modal-head-p .close-p { background: none; border: none; font-size: 17px; color: var(--muted-p); cursor: pointer; }
+                .modal-body-p { padding: 18px 20px; }
+                .field-p { margin-bottom: 15px; }
+                .field-p label { display: block; font-size: 12px; font-weight: 600; color: var(--muted-p); margin-bottom: 6px; }
+                .field-p input, .field-p select, .field-p textarea {
+                    width: 100%; padding: 10px 11px; border-radius: 9px; border: 1px solid var(--line-p); background: var(--bg-p);
+                    font-family: 'Inter', sans-serif; font-size: 13.5px; color: var(--ink-p);
+                }
+                .field-p input:focus, .field-p select:focus, .field-p textarea:focus { outline: 2px solid var(--brand-p); outline-offset: 1px; }
+                .field-row-p { display: flex; gap: 10px; }
+                .field-row-p .field-p { flex: 1; }
+                .code-input-row-p { display: flex; gap: 8px; }
+                .code-input-row-p input { flex: 1; font-family: 'IBM Plex Mono', monospace; letter-spacing: 1px; }
+                .gen-btn-p {
+                    background: var(--brand-tint-p); color: var(--brand-dark-p); border: none; border-radius: 9px;
+                    padding: 0 12px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap;
+                }
+                .err-p { color: var(--bad-p); font-size: 12px; margin-top: -8px; margin-bottom: 12px; }
+                .modal-foot-p {
+                    padding: 16px 20px; border-top: 1px solid var(--line-p); display: flex; justify-content: flex-end; gap: 10px;
+                    position: sticky; bottom: 0; background: var(--panel-p); z-index: 10;
+                }
+                .hint-p { font-size: 11.5px; color: var(--muted-p); margin-top: -8px; margin-bottom: 14px; line-height: 1.5; }
+
+                /* scope / item picker */
+                .scope-toggle-p { display: flex; gap: 6px; background: var(--bg-p); border: 1px solid var(--line-p); border-radius: 9px; padding: 3px; }
+                .scope-opt-p {
+                    flex: 1; text-align: center; font-size: 12.5px; font-weight: 600; padding: 7px 8px; border-radius: 7px;
+                    cursor: pointer; color: var(--muted-p);
+                }
+                .scope-opt-p.active-p { background: var(--panel-p); color: var(--ink-p); box-shadow: 0 1px 3px rgba(34,27,54,.12); }
+                .item-search-p { margin-bottom: 8px; width: 100%; min-width: 0; }
+                .item-picker-list-p {
+                    max-height: 150px; overflow-y: auto; border: 1px solid var(--line-p); border-radius: 9px;
+                    background: var(--panel-p);
+                }
+                .item-pick-row-p {
+                    display: flex; align-items: center; gap: 9px; padding: 8px 10px; font-size: 12.5px; cursor: pointer;
+                    border-bottom: 1px solid var(--line-p);
+                }
+                .item-pick-row-p:last-child { border-bottom: none; }
+                .item-pick-row-p:hover { background: var(--bg-p); }
+                .item-pick-row-p input { width: 15px; height: 15px; accent-color: var(--brand-p); flex: 0 0 auto; }
+                .item-pick-row-p .ip-name-p { flex: 1; font-weight: 500; color: var(--ink-p); }
+                .item-pick-row-p .ip-sku-p { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted-p); }
+                .item-picker-empty-p { padding: 14px 10px; font-size: 12px; color: var(--muted-p); }
+            </style>
+
+            <div class="promotions-view-wrapper">
+                <div class="wrap-p">
+                    <header class="top-p">
+                        <div class="brandmark-p">
+                            <div class="icon-p">%</div>
+                            <div>
+                                <h1>Promotions</h1>
+                                <div class="tag-p">Create and manage discount campaigns</div>
                             </div>
-                            <div class="col-6">
-                                <label class="form-label text-muted small text-uppercase fw-bold">Button Label</label>
-                                <input type="text" class="luxury-input" @bind="editingPromo.ButtonText" placeholder="e.g., Shop Now" />
+                        </div>
+                        <button type="button" class="btn-p primary-p" @onclick="StartNewPromotion">+ New Promotion</button>
+                    </header>
+
+                    <div class="stats-p">
+                        <div class="stat-card-p"><div class="n-p">@adminPromotionsList.Count</div><div class="l-p">Total Promotions</div></div>
+                        <div class="stat-card-p accent-p"><div class="n-p">@adminPromotionsList.Count(p => GetPromotionStatus(p) == "active")</div><div class="l-p">Active Now</div></div>
+                        <div class="stat-card-p">
+                            <div class="n-p">
+                                @adminPromotionsList.Count(p => {
+                                    if (GetPromotionStatus(p) != "active" || !p.EndDate.HasValue) return false;
+                                    var days = (p.EndDate.Value.Date - DateTime.Today).TotalDays;
+                                    return days >= 0 && days <= 7;
+                                })
                             </div>
+                            <div class="l-p">Expiring within 7 days</div>
                         </div>
-
-                        <div class="mb-3">
-                            <label class="form-label text-muted small text-uppercase fw-bold">Lifestyle Photo URL</label>
-                            <input type="text" class="luxury-input" @bind="editingPromo.ImageUrl" placeholder="https://images.unsplash.com/..." />
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label text-muted small text-uppercase fw-bold">Gradient CSS Background (Fallback)</label>
-                            <input type="text" class="luxury-input" @bind="editingPromo.GradientCss" placeholder="linear-gradient(135deg, ...)" />
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label text-muted small text-uppercase fw-bold">Select Products for Campaign</label>
-                            <div style="max-height: 200px; overflow-y: auto; border: 1px solid #EDD9D0; border-radius: 8px; padding: 12px; background: #FDFAF8; display: flex; flex-direction: column; gap: 8px;">
-                                @foreach (var prod in allProducts)
-                                {
-                                    var pId = prod.ProductId;
-                                    var isChecked = selectedProductIdsForPromo.Contains(pId);
-                                    <div class="d-flex align-items-center" style="gap: 8px;">
-                                        <input type="checkbox" id="chk-promo-prod-@pId" 
-                                               checked="@isChecked" 
-                                               @onchange="@(e => ToggleProductForPromo(pId, e.Value))" 
-                                               style="cursor: pointer; width: 16px; height: 16px; accent-color: var(--rose);" />
-                                        <label for="chk-promo-prod-@pId" style="cursor: pointer; font-size: 0.8rem; color: #3C1F10; margin: 0; font-family: 'DM Sans', sans-serif;">
-                                            @prod.Name <span style="color: var(--text-muted); font-size: 0.72rem;">(@prod.Category?.Name)</span>
-                                        </label>
-                                    </div>
-                                }
-                            </div>
-                        </div>
-
-                        <div class="mt-4 d-grid gap-2">
-                            <LoadingButton Class="btn-luxury-solid"
-                                           IsLoading="@IsAdminActionLoading(SavePromotionAction)"
-                                           LoadingText="Saving Campaign..."
-                                           OnClick="@(() => RunAdminAction(SavePromotionAction, HandleSavePromotion))">
-                                <i class="bi bi-check-circle me-1"></i> Save Promotion
-                            </LoadingButton>
-                            @if (editingPromo.PromoId != 0)
-                            {
-                                <button type="button" class="btn-luxury" @onclick="StartNewPromotion">Cancel Edit</button>
-                            }
-                        </div>
+                        <div class="stat-card-p"><div class="n-p">@adminPromotionsList.Sum(p => p.Redeemed).ToString("N0")</div><div class="l-p">Total Redemptions</div></div>
                     </div>
-                </div>
 
-                <!-- Promotions Display List -->
-                <div class="col-lg-8">
-                    <div class="luxury-card" style="padding: 24px; background: #fff; border-radius: 12px; border: 1px solid #EDD9D0;">
-                        <h4 style="color: #3C1F10; font-family: 'DM Sans', sans-serif; margin-bottom: 20px; font-weight: 700;">Current Active Campaigns</h4>
-                        
-                        @if (!adminPromotionsList.Any())
+                    <div class="controls-p">
+                        <div class="filters-p">
+                            <div class="chip-p @(promotionStatusFilter == "all" ? "active-p" : "")" @onclick='() => { promotionStatusFilter = "all"; }'>All</div>
+                            <div class="chip-p @(promotionStatusFilter == "active" ? "active-p" : "")" @onclick='() => { promotionStatusFilter = "active"; }'>Active</div>
+                            <div class="chip-p @(promotionStatusFilter == "scheduled" ? "active-p" : "")" @onclick='() => { promotionStatusFilter = "scheduled"; }'>Scheduled</div>
+                            <div class="chip-p @(promotionStatusFilter == "expired" ? "active-p" : "")" @onclick='() => { promotionStatusFilter = "expired"; }'>Expired</div>
+                            <div class="chip-p @(promotionStatusFilter == "draft" ? "active-p" : "")" @onclick='() => { promotionStatusFilter = "draft"; }'>Draft</div>
+                        </div>
+                        <input class="search-p" placeholder="Search by name or code…" @bind="promotionSearchQuery" @bind:event="oninput">
+                    </div>
+
+                    <div class="grid-p">
+                        @if (!GetFilteredPromotions().Any())
                         {
-                            <div class="text-center py-5 text-muted">
-                                <i class="bi bi-tags fs-1 d-block mb-2" style="color: #EDD9D0;"></i>
-                                <p>No active promotions registered yet. Add one from the form.</p>
+                            <div class="empty-state-p">
+                                <div class="big-p">🏷️</div>
+                                No promotions match this view.<br>Try a different filter or create a new one.
                             </div>
                         }
                         else
                         {
-                            <div style="display: flex; flex-direction: column; gap: 20px;">
-                                @foreach (var promo in adminPromotionsList)
+                            @foreach (var promo in GetFilteredPromotions())
+                            {
+                                var status = GetPromotionStatus(promo);
+                                var appliesToLabel = promo.ApplyAll ? "All items" : "Specific items";
+                                if (!promo.ApplyAll)
                                 {
-                                    <div style="border: 1px solid #EDD9D0; border-radius: 12px; overflow: hidden; display: flex; background: #FDFAF8; box-shadow: var(--shadow-sm); min-height: 150px;">
-                                        <div style="width: 140px; background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.7) 100%), url('@promo.ImageUrl') center/cover no-repeat; padding: 20px; display: flex; flex-direction: column; justify-content: flex-end; color: white;">
-                                            <span style="font-size: 0.65rem; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 0.05em;">@promo.PromoCode</span>
-                                            @if (promo.DiscountPercent > 0)
-                                            {
-                                                <h3 style="margin: 0; font-size: 1.5rem; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">-@((int)promo.DiscountPercent)%</h3>
-                                            }
+                                    var promoProducts = allProducts.Where(p => p.PromoId == promo.PromoId).ToList();
+                                    if (promoProducts.Any())
+                                    {
+                                        if (promoProducts.Count <= 2)
+                                        {
+                                            appliesToLabel = string.Join(", ", promoProducts.Select(p => p.Name));
+                                        }
+                                        else
+                                        {
+                                            appliesToLabel = $"{promoProducts[0].Name}, {promoProducts[1].Name} +{promoProducts.Count - 2} more";
+                                        }
+                                    }
+                                }
+                                var pct = promo.UsageLimit > 0 ? (int)Math.Min(100, Math.Round((double)promo.Redeemed / promo.UsageLimit * 100)) : (int?)null;
+
+                                <div class="promo-card-p">
+                                    <div class="band-p">
+                                        <span class="badge-p @(status + "-p")">@GetStatusLabel(status)</span>
+                                        <div class="toggle-wrap-p">
+                                            <span class="toggle-label-p">@(promo.Enabled ? "On" : "Off")</span>
+                                            <div class="switch-p @(promo.Enabled ? "on-p" : "")" @onclick="() => TogglePromotionEnabled(promo)"><div class="knob-p"></div></div>
                                         </div>
-                                        <div style="padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
-                                            <div>
-                                                <div class="d-flex justify-content-between align-items-start">
-                                                    <h4 style="margin: 0 0 6px; font-family: 'DM Sans', sans-serif; font-size: 1.1rem; font-weight: 600; color: #3C1F10;">@promo.Title</h4>
-                                                    <span class="badge bg-light text-dark border">@promo.Subtitle</span>
-                                                </div>
-                                                <p style="font-size: 0.82rem; color: var(--charcoal-soft); margin: 0 0 12px; line-height: 1.5;">@promo.Description</p>
-                                            </div>
-                                            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #EDD9D0; padding-top: 12px; margin-top: auto;">
-                                                <span style="font-size: 0.72rem; font-weight: 600; color: var(--rose);">CTA: @promo.ButtonText</span>
-                                                <div class="d-flex gap-2">
-                                                    <button class="btn btn-sm btn-outline-primary" @onclick="() => EditPromotion(promo)">
-                                                        <i class="bi bi-pencil"></i> Edit
-                                                    </button>
-                                                    <LoadingButton Class="btn btn-sm btn-outline-danger"
-                                                                   IsLoading="@IsAdminActionLoading(DeletePromotionAction + promo.PromoId)"
-                                                                   OnClick="@(() => RunAdminAction(DeletePromotionAction + promo.PromoId, () => HandleDeletePromotion(promo.PromoId)))">
-                                                        <i class="bi bi-trash"></i> Delete
-                                                    </LoadingButton>
-                                                </div>
-                                            </div>
+                                    </div>
+                                    <div class="discount-p">@GetDiscountLabel(promo)</div>
+                                    <div class="name-p">@promo.Title</div>
+                                    <div class="desc-p">@(!string.IsNullOrEmpty(promo.Description) ? promo.Description : appliesToLabel)</div>
+
+                                    <div class="perforation-p"></div>
+
+                                    <div class="code-row-p">
+                                        <div class="code-chip-p">@promo.PromoCode</div>
+                                        <button type="button" class="copy-btn-p" @onclick="() => CopyToClipboard(promo.PromoCode)">
+                                            @(copiedPromoId == promo.PromoCode ? "Copied" : "Copy")
+                                        </button>
+                                    </div>
+
+                                    <div class="meta-list-p">
+                                        <div class="row-p"><span>Valid</span><b>@(promo.StartDate?.ToString("dd/MM/yyyy") ?? "—") – @(promo.EndDate?.ToString("dd/MM/yyyy") ?? "No end date")</b></div>
+                                        <div class="row-p"><span>Applies to</span><b>@appliesToLabel</b></div>
+                                        <div class="row-p"><span>Redeemed</span><b>@promo.Redeemed @(promo.UsageLimit > 0 ? $"/ {promo.UsageLimit}" : "")</b></div>
+                                        @if (pct.HasValue)
+                                        {
+                                            <div class="usage-bar-p"><div style="width:@(pct.Value)%"></div></div>
+                                        }
+                                    </div>
+
+                                    <div class="card-actions-p">
+                                        <button type="button" class="btn-p ghost-p small-p" @onclick="() => EditPromotion(promo)">Edit</button>
+                                        <LoadingButton Class="btn-p danger-ghost-p small-p"
+                                                       IsLoading="@IsAdminActionLoading(DeletePromotionAction + promo.PromoId)"
+                                                       OnClick="@(() => RunAdminAction(DeletePromotionAction + promo.PromoId, () => HandleDeletePromotion(promo.PromoId)))">
+                                            Delete
+                                        </LoadingButton>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+
+            @if (showPromoModal)
+            {
+                <div class="overlay-p">
+                    <div class="modal-p">
+                        <div class="modal-head-p">
+                            <h3>@(editingPromo.PromoId == 0 ? "New Promotion" : "Edit Promotion")</h3>
+                            <button type="button" class="close-p" @onclick="ClosePromoModal">✕</button>
+                        </div>
+                        <div class="modal-body-p">
+                            <div class="field-p">
+                                <label>Promotion Name</label>
+                                <input @bind="editingPromo.Title" placeholder="e.g. Summer Sale" />
+                            </div>
+                            <div class="field-p">
+                                <label>Discount Code</label>
+                                <div class="code-input-row-p">
+                                    <input @bind="editingPromo.PromoCode" placeholder="e.g. SUMR-2026" style="text-transform: uppercase;" />
+                                    <button type="button" class="gen-btn-p" @onclick="GenerateRandomPromoCode">Generate</button>
+                                </div>
+                            </div>
+                            <div class="field-row-p">
+                                <div class="field-p">
+                                    <label>Discount Value (%)</label>
+                                    <input type="number" min="0" max="100" @bind="editingPromo.DiscountPercent" />
+                                </div>
+                                <div class="field-p">
+                                    <label>Button Text</label>
+                                    <input @bind="editingPromo.ButtonText" placeholder="e.g. Shop Now" />
+                                </div>
+                            </div>
+                            <div class="field-row-p">
+                                <div class="field-p">
+                                    <label>Start Date</label>
+                                    <input type="date" @bind="editingPromo.StartDate" />
+                                </div>
+                                <div class="field-p">
+                                    <label>End Date (optional)</label>
+                                    <input type="date" @bind="editingPromo.EndDate" />
+                                </div>
+                            </div>
+                            <div class="field-p">
+                                <label>Usage Limit (0 = unlimited)</label>
+                                <input type="number" min="0" @bind="editingPromo.UsageLimit" />
+                            </div>
+                            <div class="field-p">
+                                <label>Applies To</label>
+                                <div class="scope-toggle-p">
+                                    <div class="scope-opt-p @(editingPromo.ApplyAll ? "active-p" : "")" @onclick="() => editingPromo.ApplyAll = true">All items</div>
+                                    <div class="scope-opt-p @(!editingPromo.ApplyAll ? "active-p" : "")" @onclick="() => editingPromo.ApplyAll = false">Specific items</div>
+                                </div>
+
+                                @if (!editingPromo.ApplyAll)
+                                {
+                                    <div style="margin-top:10px;">
+                                        <input class="search-p item-search-p" placeholder="Search items…" @bind="productPickerSearchQuery" @bind:event="oninput" />
+                                        <div class="item-picker-list-p">
+                                            @{
+                                                var filteredPickerProducts = allProducts.Where(p => 
+                                                    string.IsNullOrEmpty(productPickerSearchQuery) || 
+                                                    p.Name.Contains(productPickerSearchQuery, StringComparison.OrdinalIgnoreCase)
+                                                ).ToList();
+                                            }
+                                            @if (!filteredPickerProducts.Any())
+                                            {
+                                                <div class="item-picker-empty-p">No items match.</div>
+                                            }
+                                            else
+                                            {
+                                                @foreach (var prod in filteredPickerProducts)
+                                                {
+                                                    var pId = prod.ProductId;
+                                                    var isChecked = selectedProductIdsForPromo.Contains(pId);
+                                                    <label class="item-pick-row-p">
+                                                        <input type="checkbox" checked="@isChecked" @onchange="@(e => ToggleProductForPromo(pId, e.Value))" />
+                                                        <span class="ip-name-p">@prod.Name</span>
+                                                        <span class="ip-sku-p">SKU: @(prod.ProductVariants.FirstOrDefault()?.Sku ?? "N/A")</span>
+                                                    </label>
+                                                }
+                                            }
                                         </div>
                                     </div>
                                 }
                             </div>
-                        }
+
+                            <div class="field-p">
+                                <label>Lifestyle Photo (Upload from PC)</label>
+                                <InputFile OnChange="HandlePromotionFileSelected" class="form-control" accept=".jpg,.jpeg,.png" style="padding:6px 11px;" />
+                                @if (!string.IsNullOrEmpty(editingPromo.ImageUrl))
+                                {
+                                    <div style="margin-top: 10px; display: flex; align-items: center; gap: 12px;">
+                                        <img src="@editingPromo.ImageUrl" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line-p);" />
+                                        @if (!string.IsNullOrEmpty(promotionImageFileName))
+                                        {
+                                            <span style="font-size: 11.5px; color: var(--muted-p); word-break: break-all;">@promotionImageFileName</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="field-p">
+                                <label>Gradient CSS Background (optional)</label>
+                                <input @bind="editingPromo.GradientCss" placeholder="linear-gradient(135deg, ...)" />
+                            </div>
+
+                            <div class="field-p">
+                                <label>Internal Note (optional)</label>
+                                <textarea rows="2" @bind="editingPromo.Note" placeholder="Notes for the team..."></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-foot-p">
+                            <button type="button" class="btn-p ghost-p" @onclick="ClosePromoModal">Cancel</button>
+                            <LoadingButton Class="btn-p primary-p"
+                                           IsLoading="@IsAdminActionLoading(SavePromotionAction)"
+                                           LoadingText="Saving..."
+                                           OnClick="@(() => RunAdminAction(SavePromotionAction, HandleSavePromotion))">
+                                Save Promotion
+                            </LoadingButton>
+                        </div>
                     </div>
                 </div>
+            }
             </div>
         }
 

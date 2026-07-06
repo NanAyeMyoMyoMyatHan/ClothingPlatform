@@ -44,6 +44,28 @@ public class Promotion
     [StringLength(500)]
     public string ImageUrl { get; set; } = "";
 
+    [Column("start_date")]
+    public DateTime? StartDate { get; set; }
+
+    [Column("end_date")]
+    public DateTime? EndDate { get; set; }
+
+    [Column("usage_limit")]
+    public int UsageLimit { get; set; } = 0;
+
+    [Column("redeemed")]
+    public int Redeemed { get; set; } = 0;
+
+    [Column("enabled")]
+    public bool Enabled { get; set; } = true;
+
+    [Column("apply_all")]
+    public bool ApplyAll { get; set; } = true;
+
+    [Column("note")]
+    [StringLength(500)]
+    public string? Note { get; set; }
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.Now;
 }

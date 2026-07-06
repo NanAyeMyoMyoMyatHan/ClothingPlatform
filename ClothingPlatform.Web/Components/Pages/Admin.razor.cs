@@ -34,6 +34,9 @@ namespace ClothingPlatform.Web.Components.Pages
         [Inject]
         public IPortalSessionBootstrapper PortalSessionBootstrapper { get; set; }
 
+        [Inject]
+        public Microsoft.AspNetCore.Hosting.IWebHostEnvironment WebHostEnvironment { get; set; }
+
        
 
         // State variables
@@ -2617,6 +2620,19 @@ namespace ClothingPlatform.Web.Components.Pages
         private const string SavePromotionAction = "save-promotion";
         private const string DeletePromotionAction = "delete-promotion";
 
+        // Mockup UI support state
+        private string promotionSearchQuery = "";
+        private string promotionStatusFilter = "all";
+        private bool showPromoModal = false;
+        private string copiedPromoId = "";
+        private string productPickerSearchQuery = "";
+
+        // PC image upload state
+        private string promotionImageFileName = "";
+        private string promotionImageBase64 = "";
+        private byte[]? promotionImageBytes;
+        private string promotionImageExtension = "";
+
         private async Task LoadPromotionsData()
         {
             try
@@ -2630,16 +2646,42 @@ namespace ClothingPlatform.Web.Components.Pages
             }
         }
 
+        private async Task HandlePromotionFileSelected(InputFileChangeEventArgs e)
+        {
+            var file = e.File;
+            if (file != null)
+            {
+                promotionImageFileName = file.Name;
+                promotionImageExtension = System.IO.Path.GetExtension(file.Name);
+                
+                using var ms = new MemoryStream();
+                await file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024).CopyToAsync(ms);
+                promotionImageBytes = ms.ToArray();
+                promotionImageBase64 = Convert.ToBase64String(promotionImageBytes);
+                
+                editingPromo.ImageUrl = $"data:{file.ContentType};base64,{promotionImageBase64}";
+                StateHasChanged();
+            }
+        }
+
         private void StartNewPromotion()
         {
             editingPromo = new Promotion
             {
+                StartDate = DateTime.Today,
+                Enabled = true,
+                ApplyAll = true,
                 GradientCss = "linear-gradient(135deg, #8B1A1A 0%, #3C1F10 100%)",
                 ButtonText = "Shop Now"
             };
             selectedProductIdsForPromo.Clear();
+            promotionImageBytes = null;
+            promotionImageExtension = "";
+            promotionImageFileName = "";
+            promotionImageBase64 = "";
             errorMessage = "";
             successMessage = "";
+            showPromoModal = true;
         }
 
         private void EditPromotion(Promotion promo)
@@ -2655,11 +2697,130 @@ namespace ClothingPlatform.Web.Components.Pages
                 ButtonText = promo.ButtonText,
                 GradientCss = promo.GradientCss,
                 ImageUrl = promo.ImageUrl,
+                StartDate = promo.StartDate,
+                EndDate = promo.EndDate,
+                UsageLimit = promo.UsageLimit,
+                Redeemed = promo.Redeemed,
+                Enabled = promo.Enabled,
+                ApplyAll = promo.ApplyAll,
+                Note = promo.Note,
                 CreatedAt = promo.CreatedAt
             };
             selectedProductIdsForPromo = allProducts.Where(p => p.PromoId == promo.PromoId).Select(p => p.ProductId).ToList();
+            promotionImageBytes = null;
+            promotionImageExtension = "";
+            promotionImageFileName = "";
+            promotionImageBase64 = "";
             errorMessage = "";
             successMessage = "";
+            showPromoModal = true;
+        }
+
+        private void ClosePromoModal()
+        {
+            showPromoModal = false;
+        }
+
+        private void GenerateRandomPromoCode()
+        {
+            const string letters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+            var random = new Random();
+            var charArray = new char[8];
+            for (int i = 0; i < 8; i++)
+            {
+                charArray[i] = letters[random.Next(letters.Length)];
+            }
+            var code = new string(charArray);
+            editingPromo.PromoCode = code.Substring(0, 4) + "-" + code.Substring(4);
+        }
+
+        private async Task CopyToClipboard(string text)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+                copiedPromoId = text;
+                StateHasChanged();
+                await Task.Delay(1200);
+                if (copiedPromoId == text)
+                {
+                    copiedPromoId = "";
+                    StateHasChanged();
+                }
+            }
+            catch
+            {
+                // Fallback
+            }
+        }
+
+        private async Task TogglePromotionEnabled(Promotion promo)
+        {
+            try
+            {
+                await using var db = await DbFactory.CreateDbContextAsync();
+                var p = await db.Promotions.FindAsync(promo.PromoId);
+                if (p != null)
+                {
+                    p.Enabled = !p.Enabled;
+                    db.Promotions.Update(p);
+                    await db.SaveChangesAsync();
+                    await LoadPromotionsData();
+                    successMessage = $"Promotion '{p.Title}' has been {(p.Enabled ? "enabled" : "disabled")}.";
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Failed to toggle promotion state: {ex.Message}";
+            }
+        }
+
+        private string GetPromotionStatus(Promotion p)
+        {
+            if (!p.Enabled) return "draft";
+            var today = DateTime.Today;
+            if (p.StartDate.HasValue && today < p.StartDate.Value.Date) return "scheduled";
+            if (p.EndDate.HasValue && today > p.EndDate.Value.Date) return "expired";
+            return "active";
+        }
+
+        private string GetStatusLabel(string status)
+        {
+            return status switch
+            {
+                "active" => "Active",
+                "scheduled" => "Scheduled",
+                "expired" => "Expired",
+                "draft" => "Draft",
+                _ => "Unknown"
+            };
+        }
+
+        private string GetDiscountLabel(Promotion p)
+        {
+            if (p.DiscountPercent > 0)
+            {
+                return $"{(int)p.DiscountPercent}% OFF";
+            }
+            return "SPECIAL OFFER";
+        }
+
+        private List<Promotion> GetFilteredPromotions()
+        {
+            var query = adminPromotionsList.AsEnumerable();
+
+            if (promotionStatusFilter != "all")
+            {
+                query = query.Where(p => GetPromotionStatus(p) == promotionStatusFilter);
+            }
+
+            if (!string.IsNullOrWhiteSpace(promotionSearchQuery))
+            {
+                var q = promotionSearchQuery.Trim().ToLowerInvariant();
+                query = query.Where(p => p.Title.ToLowerInvariant().Contains(q) || p.PromoCode.ToLowerInvariant().Contains(q));
+            }
+
+            return query.ToList();
         }
 
         private void ToggleProductForPromo(int productId, object? checkedValue)
@@ -2688,9 +2849,23 @@ namespace ClothingPlatform.Web.Components.Pages
 
             try
             {
+                // If a new promotion image was uploaded from PC, save it
+                if (promotionImageBytes != null && !string.IsNullOrEmpty(promotionImageExtension))
+                {
+                    var webRootPath = WebHostEnvironment.WebRootPath
+                        ?? System.IO.Path.Combine(WebHostEnvironment.ContentRootPath, "wwwroot");
+                    var folder = System.IO.Path.Combine(webRootPath, "images", "promotions");
+                    System.IO.Directory.CreateDirectory(folder);
+
+                    var fileName = $"{Guid.NewGuid():N}{promotionImageExtension}";
+                    var physicalPath = System.IO.Path.Combine(folder, fileName);
+                    await System.IO.File.WriteAllBytesAsync(physicalPath, promotionImageBytes);
+
+                    editingPromo.ImageUrl = $"/images/promotions/{fileName}";
+                }
+
                 await using var db = await DbFactory.CreateDbContextAsync();
                 
-                // Code uniqueness validation
                 var codeClean = editingPromo.PromoCode.Trim();
                 var exists = await db.Promotions.AnyAsync(p => p.PromoCode == codeClean && p.PromoId != editingPromo.PromoId);
                 if (exists)
@@ -2721,11 +2896,14 @@ namespace ClothingPlatform.Web.Components.Pages
                     p.PromoId = null;
                 }
 
-                // Associate newly checked products
-                var newProducts = await db.Products.Where(p => selectedProductIdsForPromo.Contains(p.ProductId)).ToListAsync();
-                foreach (var p in newProducts)
+                // Associate newly checked products if ApplyAll is false
+                if (!editingPromo.ApplyAll)
                 {
-                    p.PromoId = promoId;
+                    var newProducts = await db.Products.Where(p => selectedProductIdsForPromo.Contains(p.ProductId)).ToListAsync();
+                    foreach (var p in newProducts)
+                    {
+                        p.PromoId = promoId;
+                    }
                 }
 
                 await db.SaveChangesAsync();
@@ -2733,6 +2911,11 @@ namespace ClothingPlatform.Web.Components.Pages
                 successMessage = "Promotion details and product links saved successfully.";
                 editingPromo = new Promotion();
                 selectedProductIdsForPromo.Clear();
+                promotionImageBytes = null;
+                promotionImageExtension = "";
+                promotionImageFileName = "";
+                promotionImageBase64 = "";
+                showPromoModal = false;
 
                 await LoadData();
                 await LoadPromotionsData();

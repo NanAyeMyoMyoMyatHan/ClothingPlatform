@@ -2481,6 +2481,314 @@
         background: #F7CA00;
         border-color: #F2C200;
     }
+
+    /* promotions.html integrated styles */
+    .promo-container {
+      --cream-bg: var(--rose-pale);
+      --cream-2: var(--white);
+      --burgundy: var(--rose);
+      --burgundy-2: #6B0F0F;
+      --plum: var(--charcoal);
+      --ink: var(--charcoal);
+      --gold: var(--gold);
+      --gold-light: #EDD9D0;
+      --taupe: var(--charcoal-soft);
+      --blush: #F3E3DE;
+      --sage: #E7ECDF;
+      --ivory: #F1EADB;
+      --sand: #EDE0CB;
+      --radius: 18px;
+      margin: 0 auto;
+    }
+
+    .promo-container .wrap{
+      max-width:1180px;
+      margin:0 auto;
+      padding:40px 24px 80px;
+    }
+
+    /* ---------- HERO ---------- */
+    .promo-container .hero{
+      position:relative;
+      border-radius:24px;
+      overflow:hidden;
+      padding:56px 48px 48px;
+      background:
+        radial-gradient(1200px 500px at 85% -10%, rgba(220,193,137,0.20), transparent 60%),
+        linear-gradient(120deg, var(--burgundy) 0%, var(--burgundy-2) 55%, var(--plum) 100%);
+      color:var(--cream-2);
+      isolation:isolate;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+    .promo-container .hero::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image:
+        repeating-linear-gradient(115deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 46px),
+        repeating-linear-gradient(25deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 58px);
+      mix-blend-mode:overlay;
+      pointer-events:none;
+      z-index:0;
+    }
+    .promo-container .hero-content{position:relative; z-index:1;}
+
+    .promo-container .eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      font-size:12px;
+      letter-spacing:3px;
+      text-transform:uppercase;
+      color:var(--gold-light);
+      font-weight:500;
+      margin-bottom:22px;
+    }
+    .promo-container .eyebrow::before{
+      content:"";
+      width:26px;
+      height:1px;
+      background:var(--gold-light);
+      display:inline-block;
+    }
+
+    .promo-container .hero h1{
+      font-family:'Cormorant Garamond',serif;
+      font-weight:600;
+      font-size:52px;
+      line-height:1.12;
+      margin:0 0 20px;
+      max-width:640px;
+      letter-spacing:0.2px;
+      color: var(--cream-2);
+    }
+    .promo-container .hero h1 em{
+      font-style:italic;
+      font-weight:500;
+      color:var(--gold-light);
+    }
+
+    .promo-container .hero p.lede{
+      font-size:16px;
+      line-height:1.65;
+      color:rgba(246,238,228,0.82);
+      max-width:480px;
+      margin:0 0 36px;
+      font-weight:400;
+    }
+
+    .promo-container .stats{
+      display:flex;
+      gap:0;
+      flex-wrap:wrap;
+    }
+    .promo-container .stat{
+      padding:0 32px;
+      border-left:1px solid rgba(220,193,137,0.35);
+      text-align: left;
+    }
+    .promo-container .stat:first-child{padding-left:0; border-left:none;}
+    .promo-container .stat .num{
+      font-family:'Cormorant Garamond',serif;
+      font-size:30px;
+      font-weight:600;
+      color:var(--cream-2);
+      display:block;
+    }
+    .promo-container .stat .label{
+      font-size:12px;
+      letter-spacing:1px;
+      text-transform:uppercase;
+      color:rgba(246,238,228,0.6);
+      margin-top:4px;
+    }
+
+    /* ---------- FILTERS ---------- */
+    .promo-container .filters{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin:40px 0 34px;
+    }
+    .promo-container .pill{
+      font-family:'Jost',sans-serif;
+      font-size:13.5px;
+      letter-spacing:0.3px;
+      padding:11px 22px;
+      border-radius:999px;
+      border:1px solid rgba(139,26,26,0.22);
+      background:var(--cream-2);
+      color:var(--ink);
+      cursor:pointer;
+      transition:all .2s ease;
+      font-weight:500;
+    }
+    .promo-container .pill:hover{border-color:var(--burgundy); }
+    .promo-container .pill:focus-visible{outline:2px solid var(--burgundy); outline-offset:2px;}
+    .promo-container .pill.active{
+      background:var(--burgundy);
+      border-color:var(--burgundy);
+      color:var(--cream-2);
+    }
+
+    /* ---------- DEAL OF THE MOMENT ---------- */
+    .promo-container .deal-of-moment{
+      background:var(--cream-2);
+      border:1px solid rgba(139,26,26,0.10);
+      border-radius:var(--radius);
+      padding:30px 34px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:24px;
+      flex-wrap:wrap;
+      margin-bottom:28px;
+      box-shadow:0 1px 2px rgba(42,33,28,0.04);
+      text-align: left;
+    }
+    .promo-container .dom-left{display:flex; align-items:center; gap:22px;}
+    .promo-container .seal{
+      width:64px;
+      height:64px;
+      border-radius:50%;
+      flex-shrink:0;
+      background:radial-gradient(circle at 32% 28%, #E4C67F, var(--gold) 55%, #93701F 100%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family:'Cormorant Garamond',serif;
+      font-weight:600;
+      font-size:20px;
+      color:var(--burgundy-2);
+      box-shadow:inset 0 0 0 3px rgba(255,255,255,0.35), 0 2px 6px rgba(0,0,0,0.18);
+    }
+    .promo-container .dom-tag{
+      font-size:11px;
+      letter-spacing:2px;
+      text-transform:uppercase;
+      color:var(--burgundy);
+      font-weight:600;
+      margin-bottom:6px;
+    }
+    .promo-container .dom-title{
+      font-family:'Cormorant Garamond',serif;
+      font-size:26px;
+      font-weight:600;
+      margin:0 0 6px;
+      color:var(--ink);
+    }
+    .promo-container .dom-sub{
+      font-size:13.5px;
+      color:var(--taupe);
+    }
+    .promo-container .dom-right{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .promo-container .code-box{
+      font-family:'Jost',sans-serif;
+      font-weight:600;
+      letter-spacing:1.5px;
+      padding:12px 20px;
+      border:1.5px dashed var(--gold);
+      border-radius:10px;
+      color:var(--burgundy);
+      background:var(--sand);
+      font-size:14px;
+    }
+    .promo-container .copy-btn{
+      font-family:'Jost',sans-serif;
+      font-weight:500;
+      font-size:13.5px;
+      padding:13px 22px;
+      border-radius:10px;
+      border:none;
+      background:var(--ink);
+      color:var(--cream-2);
+      cursor:pointer;
+      transition:background .2s ease, transform .15s ease;
+    }
+    .promo-container .copy-btn:hover{background:var(--burgundy);}
+    .promo-container .copy-btn:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+    .promo-container .copy-btn:active{transform:scale(0.97);}
+
+    /* ---------- DEAL GRID ---------- */
+    .promo-container .grid{
+      display:grid;
+      grid-template-columns:repeat(4, 1fr);
+      gap:20px;
+    }
+    .promo-container .card{
+      position:relative;
+      border-radius:var(--radius);
+      padding:22px;
+      min-height:190px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      overflow:hidden;
+      transition: transform 0.28s, box-shadow 0.28s;
+      cursor: pointer;
+      text-align: left;
+    }
+    .promo-container .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 20px rgba(42,33,28,0.15);
+    }
+    .promo-container .card.c1{background:var(--blush);}
+    .promo-container .card.c2{background:var(--sage);}
+    .promo-container .card.c3{background:var(--sand);}
+    .promo-container .card.c4{background:var(--ivory);}
+
+    .promo-container .card-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+    }
+    .promo-container .badge{
+      font-size:12px;
+      font-weight:600;
+      letter-spacing:0.4px;
+      padding:6px 12px;
+      border-radius:999px;
+      background:var(--ink);
+      color:var(--cream-2);
+    }
+    .promo-container .badge.end{
+      background:rgba(255,255,255,0.65);
+      color:var(--ink);
+      font-weight:500;
+    }
+    .promo-container .card-icon{
+      align-self:flex-end;
+      width:46px;
+      height:46px;
+      color:var(--burgundy);
+      opacity:0.85;
+    }
+    .promo-container .card-icon svg{width:100%; height:100%;}
+    .promo-container .card-title{
+      font-family:'Cormorant Garamond',serif;
+      font-size:19px;
+      font-weight:600;
+      color:var(--ink);
+      margin-top:14px;
+    }
+
+    @@media (max-width:980px){
+      .promo-container .grid{grid-template-columns:repeat(2,1fr);}
+      .promo-container .hero h1{font-size:40px;}
+    }
+    @@media (max-width:640px){
+      .promo-container .grid{grid-template-columns:1fr;}
+      .promo-container .hero{padding:40px 24px;}
+      .promo-container .hero h1{font-size:32px;}
+      .promo-container .stat{padding:0 18px;}
+      .promo-container .dom-right{width:100%; justify-content:space-between;}
+      .promo-container .deal-of-moment{padding:24px 20px;}
+    }
 </style>
 
 
@@ -2538,7 +2846,7 @@
         <button class="nav-tab @(activeTab == "home" ? "active" : "")" @onclick='() => Navigate("home")'>Home</button>
         <button class="nav-tab @(activeTab == "best" ? "active" : "")" @onclick='() => Navigate("best")'>Best Seller</button>
         <button class="nav-tab @(activeTab == "shop" ? "active" : "")" @onclick='() => Navigate("shop")'>The Collection</button>
-        <button class="nav-tab @(activeTab == "promotions" ? "active" : "")" @onclick='() => Navigate("promotions")'>Promotions</button>
+        <button class="nav-tab @(activeTab == "promotions" ? "active" : "")" @onclick='() => { selectedPromotionDetail = null; Navigate("promotions"); }'>Promotions</button>
         <button class="nav-tab @(activeTab == "history" ? "active" : "")" @onclick='() => Navigate("history")'>My Purchases</button>
         <button class="nav-tab @(activeTab == "return" ? "active" : "")" @onclick='() => NavigateToReturnTab()'>Return / Exchange</button>
         <button class="nav-tab @(activeTab == "profile" ? "active" : "")" @onclick='() => Navigate("profile")'>My Profile</button>
@@ -2649,29 +2957,50 @@
             @foreach (var prod in newCreation)
             {
                 var primaryImg = NormalizeImageUrl(prod.ImageDto);
+                var mockRating = 4.5 + (prod.ProductId % 6) * 0.1;
+                var mockReviewCount = 12 + (prod.ProductId * 7) % 85;
 
-                <div class="product-card best-seller" @onclick="() => OpenQuickViewss(prod)">
-
-                    <div class="card-img-wrap">
+                <div class="promo-grid-card" style="cursor: pointer;" @onclick="() => OpenQuickViewss(prod)">
+                    <div class="promo-grid-img-wrap">
                         <FallbackImage Src="@primaryImg" Alt="@prod.Name" />
-
-                        <span class="badge-best">??New Arrival</span>
-
-                        <button class="card-quick">Quick View</button>
                     </div>
 
-                    <div class="card-body">
-                        <p class="card-collection">@prod.CategoryName</p>
-                        <h3 class="card-name">@prod.Name</h3>
+                    <h3 class="promo-grid-title">@prod.Name</h3>
+                    <p style="font-size: 0.7rem; color: var(--rose); font-weight: 600; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.04em;">@prod.CategoryName</p>
 
-                        <p class="card-price">
-                            @prod.SalePrice.ToString("N0")
-                            <span class="currency">MMK</span>
-                        </p>
+                    <!-- Star Rating -->
+                    <div class="promo-grid-rating">
+                        <span class="promo-grid-stars">
+                            @for (int s = 1; s <= 5; s++)
+                            {
+                                if (s <= Math.Round(mockRating))
+                                {
+                                    <span>★</span>
+                                }
+                                else
+                                {
+                                    <span>☆</span>
+                                }
+                            }
+                        </span>
+                        <span>@mockRating.ToString("F1")</span>
+                        <span style="color: #565959;">(@mockReviewCount)</span>
                     </div>
 
+                    <!-- Pricing details -->
+                    <div class="promo-grid-price-row">
+                        <span class="promo-grid-price-discounted">@prod.SalePrice.ToString("N0") MMK</span>
+                    </div>
+
+                    <!-- Badge -->
+                    <span class="promo-grid-badge">New Arrival</span>
+
+                    <!-- Delivery -->
+                    <p class="promo-grid-delivery">
+                        FREE delivery <strong>tomorrow</strong> in Yangon.<br/>
+                        Or fastest delivery <strong>today</strong>.
+                    </p>
                 </div>
-                
             }
         </div>
         <Pagination CurrentPage="@PageNoC"
@@ -2699,29 +3028,50 @@
             {
                 @foreach (var prod in bestSeller)
                 {
-                 
                     var primaryImg = NormalizeImageUrl(prod.ImageDto);
+                    var mockRating = 4.5 + (prod.ProductId % 6) * 0.1;
+                    var mockReviewCount = 12 + (prod.ProductId * 7) % 85;
 
-                    <div class="product-card best-seller" @onclick="() => OpenQuickViews(prod)">
-
-                        <div class="card-img-wrap">
+                    <div class="promo-grid-card" style="cursor: pointer;" @onclick="() => OpenQuickViews(prod)">
+                        <div class="promo-grid-img-wrap">
                             <FallbackImage Src="@primaryImg" Alt="@prod.Name" />
-
-                            <span class="badge-best">?? Best Seller</span>
-
-                            <button class="card-quick">Quick View</button>
                         </div>
 
-                        <div class="card-body">
-                            <p class="card-collection">@prod.CategoryName</p>
-                            <h3 class="card-name">@prod.Name</h3>
+                        <h3 class="promo-grid-title">@prod.Name</h3>
+                        <p style="font-size: 0.7rem; color: var(--rose); font-weight: 600; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.04em;">@prod.CategoryName</p>
 
-                            <p class="card-price">
-                                @prod.SalePrice.ToString("N0")
-                                <span class="currency">MMK</span>
-                            </p>
+                        <!-- Star Rating -->
+                        <div class="promo-grid-rating">
+                            <span class="promo-grid-stars">
+                                @for (int s = 1; s <= 5; s++)
+                                {
+                                    if (s <= Math.Round(mockRating))
+                                    {
+                                        <span>★</span>
+                                    }
+                                    else
+                                    {
+                                        <span>☆</span>
+                                    }
+                                }
+                            </span>
+                            <span>@mockRating.ToString("F1")</span>
+                            <span style="color: #565959;">(@mockReviewCount)</span>
                         </div>
 
+                        <!-- Pricing details -->
+                        <div class="promo-grid-price-row">
+                            <span class="promo-grid-price-discounted">@prod.SalePrice.ToString("N0") MMK</span>
+                        </div>
+
+                        <!-- Badge -->
+                        <span class="promo-grid-badge" style="background:#FFF3EE; color:#C9A96E; border:1px solid #EDD9D0;">Best Seller</span>
+
+                        <!-- Delivery -->
+                        <p class="promo-grid-delivery">
+                            FREE delivery <strong>tomorrow</strong> in Yangon.<br/>
+                            Or fastest delivery <strong>today</strong>.
+                        </p>
                     </div>
                 }
             }
@@ -2749,32 +3099,53 @@
         }
         else
         {
-                @foreach (var prod in filteredProduct)
+            @foreach (var prod in filteredProduct)
             {
-                    var primaryImg = NormalizeImageUrl(prod.ImageDto);
+                var primaryImg = NormalizeImageUrl(prod.ImageDto);
+                var mockRating = 4.5 + (prod.Id % 6) * 0.1;
+                var mockReviewCount = 12 + (prod.Id * 7) % 85;
 
-                <div class="product-card best-seller" @onclick="() => OpenQuickView(prod)">
-
-                    <div class="card-img-wrap">
+                <div class="promo-grid-card" style="cursor: pointer;" @onclick="() => OpenQuickView(prod)">
+                    <div class="promo-grid-img-wrap">
                         <FallbackImage Src="@primaryImg" Alt="@prod.Name" />
-
-                        <span class="badge-best">??New Arrival</span>
-
-                        <button class="card-quick">Quick View</button>
                     </div>
 
-                    <div class="card-body">
-                        <p class="card-collection">@prod.CategoryName</p>
-                        <h3 class="card-name">@prod.Name</h3>
+                    <h3 class="promo-grid-title">@prod.Name</h3>
+                    <p style="font-size: 0.7rem; color: var(--rose); font-weight: 600; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.04em;">@prod.CategoryName</p>
 
-                        <p class="card-price">
-                            @prod.SalePrice.ToString("N0")
-                            <span class="currency">MMK</span>
-                        </p>
+                    <!-- Star Rating -->
+                    <div class="promo-grid-rating">
+                        <span class="promo-grid-stars">
+                            @for (int s = 1; s <= 5; s++)
+                            {
+                                if (s <= Math.Round(mockRating))
+                                {
+                                    <span>★</span>
+                                }
+                                else
+                                {
+                                    <span>☆</span>
+                                }
+                            }
+                        </span>
+                        <span>@mockRating.ToString("F1")</span>
+                        <span style="color: #565959;">(@mockReviewCount)</span>
                     </div>
 
+                    <!-- Pricing details -->
+                    <div class="promo-grid-price-row">
+                        <span class="promo-grid-price-discounted">@prod.SalePrice.ToString("N0") MMK</span>
+                    </div>
+
+                    <!-- Badge -->
+                    <span class="promo-grid-badge">New Arrival</span>
+
+                    <!-- Delivery -->
+                    <p class="promo-grid-delivery">
+                        FREE delivery <strong>tomorrow</strong> in Yangon.<br/>
+                        Or fastest delivery <strong>today</strong>.
+                    </p>
                 </div>
-                
             }
         }
     </div>
@@ -3594,43 +3965,115 @@
     {
         @if (selectedPromotionDetail == null)
         {
-            <div class="checkout-view" style="max-width: 1000px; margin: 0 auto; padding: 50px 20px;">
-                <h2 class="section-title mb-2">Exclusive <span>Atelier Offers</span></h2>
-                <p class="text-muted mb-5" style="font-size: 0.9rem; font-weight: 300;">Claim exclusive promo codes, special reward point campaigns, and early-bird benefits available only to Salon Members.</p>
-                
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
-                    @foreach (var promo in promotionsList)
-                    {
-                        <div class="promo-page-card" style="background: var(--white); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; transition: all 0.3s; box-shadow: var(--shadow); border-color: var(--border);">
-                            <div style="background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.5) 100%), url('@promo.ImageUrl') center/cover no-repeat; padding: 40px 30px; color: #FFF; position: relative; min-height: 140px; display: flex; flex-direction: column; justify-content: flex-end;">
-                                <span style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: var(--gold); letter-spacing: 0.15em; display: block; margin-bottom: 6px;">@promo.Subtitle</span>
-                                <h3 style="font-family: 'DM Sans', sans-serif; font-size: 1.4rem; font-weight: 400; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">@promo.Title</h3>
+            var dealOfMoment = promotionsList.FirstOrDefault(p => p.DiscountPercent > 0) ?? promotionsList.FirstOrDefault();
+            var filteredPromos = promotionsList.Where(p => {
+                if (selectedPromoFilter == "All") return true;
+                if (selectedPromoFilter == "Dresses") return p.Title.Contains("Summer", StringComparison.OrdinalIgnoreCase) || p.Description.Contains("linen", StringComparison.OrdinalIgnoreCase) || p.Title.Contains("Dresses", StringComparison.OrdinalIgnoreCase) || p.Title.Contains("Points", StringComparison.OrdinalIgnoreCase);
+                if (selectedPromoFilter == "Blouses") return p.Title.Contains("Silhouette", StringComparison.OrdinalIgnoreCase) || p.Description.Contains("silk", StringComparison.OrdinalIgnoreCase) || p.Title.Contains("Blouses", StringComparison.OrdinalIgnoreCase) || p.Title.Contains("Points", StringComparison.OrdinalIgnoreCase);
+                if (selectedPromoFilter == "Delivery") return p.Title.Contains("Delivery", StringComparison.OrdinalIgnoreCase) || p.Title.Contains("Monsoon", StringComparison.OrdinalIgnoreCase) || p.Description.Contains("dispatch", StringComparison.OrdinalIgnoreCase);
+                return false;
+            }).ToList();
+
+            <div class="promo-container">
+                <div class="wrap">
+                    <section class="hero">
+                        <div class="hero-content">
+                            <div class="eyebrow">Atelier Offers</div>
+                            <h1>Curated savings on <em>this season's</em> pieces.</h1>
+                            <p class="lede">Seasonal codes across dresses, blouses and delivery, refreshed weekly and honoured at checkout.</p>
+                            <div class="stats">
+                                <div class="stat"><span class="num">@promotionsList.Count</span><span class="label">Live Offers</span></div>
+                                <div class="stat"><span class="num">834</span><span class="label">Codes Used Today</span></div>
+                                <div class="stat"><span class="num">Weekly</span><span class="label">New Arrivals</span></div>
                             </div>
-                            <div style="padding: 24px; display: flex; flex-direction: column; flex: 1;">
-                                <p style="font-size: 0.88rem; color: var(--charcoal-soft); line-height: 1.6; margin-bottom: 20px; flex: 1;">@promo.Description</p>
-                                
-                                @if (!string.IsNullOrEmpty(promo.PromoCode))
-                                {
-                                    <div style="background: var(--rose-pale); border: 1px dashed var(--rose-light); border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; cursor: pointer;" 
-                                         @onclick="() => CopyPromoCode(promo.PromoCode)">
-                                        <div>
-                                            <span style="font-size: 0.68rem; color: var(--charcoal-soft); display: block; text-transform: uppercase; font-weight: 600;">PROMO CODE</span>
-                                            <span style="font-size: 1.05rem; font-weight: 700; color: var(--rose); letter-spacing: 0.05em;">@promo.PromoCode</span>
-                                        </div>
-                                        <span style="font-size: 0.72rem; color: var(--rose); font-weight: 500; display: flex; align-items: center; gap: 4px;">
-                                            <i class="bi bi-files"></i> COPY CODE
-                                        </span>
-                                    </div>
-                                }
-                                
-                                <div style="display: flex; gap: 12px;">
-                                    <button class="btn-primary-rose" style="flex: 1; padding: 12px 20px; font-size: 0.72rem; border-radius: 8px;" @onclick="() => SelectPromotion(promo)">
-                                        Shop Promo Creations
-                                    </button>
+                        </div>
+                    </section>
+
+                    <div class="filters" role="tablist" aria-label="Filter offers by category">
+                        <button class="pill @(selectedPromoFilter == "All" ? "active" : "")" @onclick='() => selectedPromoFilter = "All"'>All Offers</button>
+                        <button class="pill @(selectedPromoFilter == "Dresses" ? "active" : "")" @onclick='() => selectedPromoFilter = "Dresses"'>Dresses</button>
+                        <button class="pill @(selectedPromoFilter == "Blouses" ? "active" : "")" @onclick='() => selectedPromoFilter = "Blouses"'>Blouses</button>
+                        <button class="pill @(selectedPromoFilter == "Delivery" ? "active" : "")" @onclick='() => selectedPromoFilter = "Delivery"'>Delivery</button>
+                    </div>
+
+                    @if (dealOfMoment != null)
+                    {
+                        var daysLeft = dealOfMoment.EndDate.HasValue ? (dealOfMoment.EndDate.Value - DateTime.Now).Days : -1;
+                        var durationText = daysLeft > 0 ? $"Ends in {daysLeft}d" : "Ongoing";
+                        var subText = string.IsNullOrEmpty(dealOfMoment.Subtitle) ? durationText : $"{dealOfMoment.Subtitle} · {durationText}";
+                        var hasBgStyle = !string.IsNullOrEmpty(dealOfMoment.ImageUrl) || !string.IsNullOrEmpty(dealOfMoment.GradientCss);
+                        var bgStyle = !string.IsNullOrEmpty(dealOfMoment.ImageUrl) 
+                            ? $"background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('{dealOfMoment.ImageUrl}') center/cover no-repeat; color: #FFF3EE;" 
+                            : (!string.IsNullOrEmpty(dealOfMoment.GradientCss) 
+                                ? $"background: {dealOfMoment.GradientCss}; color: #FFF3EE;" 
+                                : "");
+
+                        <div class="deal-of-moment" style="cursor: pointer; @bgStyle" @onclick="() => SelectPromotion(dealOfMoment)">
+                            <div class="dom-left">
+                                <div class="seal">CB</div>
+                                <div>
+                                    <div class="dom-tag" style="@(hasBgStyle ? "color: var(--gold-light);" : "")">Deal of the Moment</div>
+                                    <h3 class="dom-title" style="@(hasBgStyle ? "color: #FFF3EE;" : "")">@(dealOfMoment.DiscountPercent > 0 ? $"{(int)dealOfMoment.DiscountPercent}% Off" : "Special Offer") — @dealOfMoment.Title</h3>
+                                    <div class="dom-sub" style="@(hasBgStyle ? "color: rgba(255,255,255,0.75);" : "")">@subText</div>
                                 </div>
+                            </div>
+                            <div class="dom-right">
+                                @if (!string.IsNullOrEmpty(dealOfMoment.PromoCode))
+                                {
+                                    <div class="code-box">@dealOfMoment.PromoCode</div>
+                                    <button class="copy-btn" @onclick="() => CopyPromoCode(dealOfMoment.PromoCode)" @onclick:stopPropagation="true">Copy Code</button>
+                                }
                             </div>
                         </div>
                     }
+
+                    <div class="grid">
+                        @for (int i = 0; i < filteredPromos.Count; i++)
+                        {
+                            var promo = filteredPromos[i];
+                            var daysLeft = promo.EndDate.HasValue ? (promo.EndDate.Value - DateTime.Now).Days : -1;
+                            var durationText = daysLeft > 0 ? $"Ends in {daysLeft}d" : "Ongoing";
+                            var cardClass = $"c{(i % 4) + 1}";
+                            var hasBgStyle = !string.IsNullOrEmpty(promo.ImageUrl) || !string.IsNullOrEmpty(promo.GradientCss);
+                            var bgStyle = !string.IsNullOrEmpty(promo.ImageUrl) 
+                                ? $"background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('{promo.ImageUrl}') center/cover no-repeat; color: #FFF3EE;" 
+                                : (!string.IsNullOrEmpty(promo.GradientCss) 
+                                    ? $"background: {promo.GradientCss}; color: #FFF3EE;" 
+                                    : "");
+
+                            <div class="card @cardClass" style="@bgStyle" @onclick="() => SelectPromotion(promo)">
+                                <div class="card-top">
+                                    <span class="badge">@(promo.DiscountPercent > 0 ? $"{(int)promo.DiscountPercent}% Off" : "Special Offer")</span>
+                                    <span class="badge end">@durationText</span>
+                                </div>
+                                <div class="card-icon" style="@(hasBgStyle ? "color: var(--gold-light); opacity: 0.95;" : "")">
+                                    @if (i % 4 == 0)
+                                    {
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+                                    }
+                                    else if (i % 4 == 1)
+                                    {
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 20V11a8 8 0 0 1 16 0v9"/><rect x="3" y="15" width="4" height="6" rx="1.5"/><rect x="17" y="15" width="4" height="6" rx="1.5"/></svg>
+                                    }
+                                    else if (i % 4 == 2)
+                                    {
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 8h11v9H2z"/><path d="M13 11h4l4 3v3h-8z"/><circle cx="6" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/></svg>
+                                    }
+                                    else
+                                    {
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="9" width="18" height="12" rx="1.5"/><path d="M3 13h18"/><path d="M12 9v12"/><path d="M8 9c-1.5 0-2.5-1-2.5-2.2S6.7 5 8 5c1.8 0 4 1.8 4 4"/><path d="M16 9c1.5 0 2.5-1 2.5-2.2S15.3 5 14 5c-1.8 0-4 1.8-4 4"/></svg>
+                                    }
+                                </div>
+                                <div class="card-title" style="@(hasBgStyle ? "color: #FFF3EE;" : "")">@promo.Title</div>
+                                @if (!string.IsNullOrEmpty(promo.PromoCode))
+                                {
+                                    <div style="font-family: monospace; font-size: 0.8rem; background: @(hasBgStyle ? "rgba(255,255,255,0.2)" : "var(--sand)"); border: 1.5px dashed @(hasBgStyle ? "rgba(255,255,255,0.6)" : "var(--gold)"); padding: 4px 10px; border-radius: 6px; width: fit-content; margin-top: 8px; font-weight: 600; letter-spacing: 1px; color: inherit; display: inline-block;">
+                                        @promo.PromoCode
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         }
@@ -3722,10 +4165,7 @@
                                 Or fastest delivery <strong>today</strong>.
                             </p>
 
-                            <!-- Amazon-style Yellow Add to Cart Button -->
-                            <button class="promo-grid-add-btn" @onclick="() => OpenQuickViewFromProduct(prod)">
-                                Add to Cart
-                            </button>
+
                         </div>
                     }
                 </div>

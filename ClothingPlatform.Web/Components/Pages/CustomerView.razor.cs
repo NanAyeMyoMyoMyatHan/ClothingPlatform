@@ -107,6 +107,7 @@ namespace ClothingPlatform.Web.Components.Pages
         private string debugError = "";
         // Shopping Bag drawer
         private bool isCartOpen = false;
+        private string selectedPromoFilter = "All";
         private List<CartItemModel> cart = new();
         private decimal CartTotal => cart.Sum(i => i.Price * i.Qty);
         private int CartCount => cart.Sum(i => i.Qty);
@@ -340,7 +341,11 @@ namespace ClothingPlatform.Web.Components.Pages
             try
             {
                 allCategories = await _db.Categories.AsNoTracking().ToListAsync();
-                promotionsList = await _db.Promotions.AsNoTracking().ToListAsync();
+                var today = DateTime.Today;
+                promotionsList = await _db.Promotions
+                    .AsNoTracking()
+                    .Where(p => p.Enabled && (!p.StartDate.HasValue || today >= p.StartDate.Value) && (!p.EndDate.HasValue || today <= p.EndDate.Value))
+                    .ToListAsync();
                 
                 allProducts = await _db.Products
                     .Include(p => p.Category)
@@ -428,18 +433,6 @@ namespace ClothingPlatform.Web.Components.Pages
             if (tab == "checkout")
             {
                 AutofillCheckoutFromProfile();
-            }
-            if (tab == "promotions")
-            {
-                if (selectedPromotionDetail == null && promotionsList != null && promotionsList.Any())
-                {
-                    selectedPromotionDetail = promotionsList.FirstOrDefault();
-                    if (selectedPromotionDetail != null && !string.IsNullOrEmpty(selectedPromotionDetail.PromoCode))
-                    {
-                        enteredPromoCode = selectedPromotionDetail.PromoCode;
-                        ApplyPromoCodeCheckoutSilent();
-                    }
-                }
             }
         }
 
