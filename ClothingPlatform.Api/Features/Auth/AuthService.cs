@@ -80,19 +80,53 @@ namespace ClothingPlatform.Api.Features.Auth
 
         private async Task EnsurePortalSeedDataAsync()
         {
+            // Clean up old PascalCase permissions if they exist
+            var oldPermissionNames = new List<string> { "Dashboard.View", "Users.Manage", "Products.Manage", "Orders.Manage", "Customers.View", "Reports.Generate", "Settings.Manage", "Permissions.Manage", "Logs.View", "Staff.Manage" };
+            var oldPerms = await _db.Permissions.Where(p => oldPermissionNames.Contains(p.PermissionName)).ToListAsync();
+            if (oldPerms.Any())
+            {
+                var oldPermIds = oldPerms.Select(p => p.PermissionId).ToList();
+                var oldRolePerms = await _db.RolePermissions.Where(rp => oldPermIds.Contains(rp.PermissionId)).ToListAsync();
+                _db.RolePermissions.RemoveRange(oldRolePerms);
+                _db.Permissions.RemoveRange(oldPerms);
+                await _db.SaveChangesAsync();
+            }
+
             var adminRole = await EnsureRoleAsync("admin", "Full administrator access");
             var staffRole = await EnsureRoleAsync("staff", "Staff operations access");
             await EnsureRoleAsync("customer", "Customer shopping account");
 
-            var reportPermission = await EnsurePermissionAsync("Reports.Generate", "Generate and export admin reports");
-            var productsPermission = await EnsurePermissionAsync("Products.Manage", "Create, update, and delete catalog records");
-            var staffPermission = await EnsurePermissionAsync("Staff.Manage", "View and manage staff accounts");
-            var customersPermission = await EnsurePermissionAsync("Customers.View", "View customer records inside the shared portal");
+            var reportPermission      = await EnsurePermissionAsync("reports.generate",     "Generate and export admin reports");
+            var productsPermission    = await EnsurePermissionAsync("products.manage",      "Create, update, and delete catalog records");
+            var staffPermission       = await EnsurePermissionAsync("staff.manage",         "View and manage staff accounts");
+            var customersPermission   = await EnsurePermissionAsync("customers.view",       "View customer records inside the shared portal");
+            var ordersCreatePermission = await EnsurePermissionAsync("orders.create",        "Can place new orders");
+            var ordersViewPermission   = await EnsurePermissionAsync("orders.view",          "Can view order history and lists");
+            var ordersUpdatePermission = await EnsurePermissionAsync("orders.update",        "Can update order details and status");
+            var ordersDeletePermission = await EnsurePermissionAsync("orders.delete",        "Can delete orders");
+            var dashboardPermission   = await EnsurePermissionAsync("dashboard.view",       "Access the staff dashboard");
+            var permsPermission       = await EnsurePermissionAsync("permissions.manage",   "Manage role permissions");
 
+
+            // Admin gets all permissions
             await EnsureRolePermissionAsync(adminRole.RoleId, reportPermission.PermissionId);
             await EnsureRolePermissionAsync(adminRole.RoleId, productsPermission.PermissionId);
             await EnsureRolePermissionAsync(adminRole.RoleId, staffPermission.PermissionId);
             await EnsureRolePermissionAsync(adminRole.RoleId, customersPermission.PermissionId);
+            await EnsureRolePermissionAsync(adminRole.RoleId, ordersCreatePermission.PermissionId);
+            await EnsureRolePermissionAsync(adminRole.RoleId, ordersViewPermission.PermissionId);
+            await EnsureRolePermissionAsync(adminRole.RoleId, ordersUpdatePermission.PermissionId);
+            await EnsureRolePermissionAsync(adminRole.RoleId, ordersDeletePermission.PermissionId);
+            await EnsureRolePermissionAsync(adminRole.RoleId, dashboardPermission.PermissionId);
+            await EnsureRolePermissionAsync(adminRole.RoleId, permsPermission.PermissionId);
+
+            // Staff gets operational permissions
+            await EnsureRolePermissionAsync(staffRole.RoleId, ordersCreatePermission.PermissionId);
+            await EnsureRolePermissionAsync(staffRole.RoleId, ordersViewPermission.PermissionId);
+            await EnsureRolePermissionAsync(staffRole.RoleId, ordersUpdatePermission.PermissionId);
+            await EnsureRolePermissionAsync(staffRole.RoleId, ordersDeletePermission.PermissionId);
+            await EnsureRolePermissionAsync(staffRole.RoleId, dashboardPermission.PermissionId);
+            await EnsureRolePermissionAsync(staffRole.RoleId, productsPermission.PermissionId);
 
             await EnsureSeedUserAsync("Admin", "User", "admin@boutique.com", "admin123", "09252522525", "Chic Boutique HQ", adminRole.RoleId);
             await EnsureSeedUserAsync("Thiri", "San", "staff@boutique.com", "staff123", "09222333444", "No. 456, Atelier Rd, Yangon", staffRole.RoleId);

@@ -36,14 +36,14 @@ namespace ClothingPlatform.Api.Features.Order
         }
 
         [HttpGet("getAllOrder")]
-        [Permission("Orders.Manage")]
+        [Permission("orders.view")]
         public async Task<ActionResult<List<OrderDashboardDto>>> GetAllOrdersAsync()
         {
             return await _orderService.GetAllOrder();
         }
 
         [HttpDelete("{orderId}")]
-        [Permission("Orders.Manage")]
+        [Permission("orders.delete")]
         public async Task<IActionResult> DeleteOrder(int orderId)
         {
             var success = await _orderService.DeleteOrderAsync(orderId);

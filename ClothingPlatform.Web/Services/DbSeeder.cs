@@ -13,6 +13,18 @@ namespace ClothingPlatform.Web.Services
             // Apply any migrations if needed (if using EF core migrations)
             // db.Database.EnsureCreated();
 
+            // Clean up old PascalCase permissions if they exist
+            var oldPermissionNames = new List<string> { "Dashboard.View", "Users.Manage", "Products.Manage", "Orders.Manage", "Customers.View", "Reports.Generate", "Settings.Manage", "Permissions.Manage", "Logs.View", "Staff.Manage" };
+            var oldPerms = db.Permissions.Where(p => oldPermissionNames.Contains(p.PermissionName)).ToList();
+            if (oldPerms.Any())
+            {
+                var oldPermIds = oldPerms.Select(p => p.PermissionId).ToList();
+                var oldRolePerms = db.RolePermissions.Where(rp => oldPermIds.Contains(rp.PermissionId)).ToList();
+                db.RolePermissions.RemoveRange(oldRolePerms);
+                db.Permissions.RemoveRange(oldPerms);
+                db.SaveChanges();
+            }
+
             // 1. Seed RBAC roles and users
             var adminRole = EnsureRole(db, "admin", "Full administrator access");
             var staffRole = EnsureRole(db, "staff", "Staff operations access");
@@ -23,26 +35,43 @@ namespace ClothingPlatform.Web.Services
             EnsureSeedUser(db, "Emily", "Watson", "emily@gmail.com", "12345678", customerRole.RoleId, "No. 789, Style Street, Yangon", "09999888777");
 
             // 1b. Seed known permissions (matching mockup)
-            var permDashboardView  = EnsurePermission(db, "Dashboard.View",  "Can view dashboard");
-            var permUsersManage    = EnsurePermission(db, "Users.Manage",    "Can create, edit, delete users");
-            var permProductsManage = EnsurePermission(db, "Products.Manage", "Can add, edit, delete products");
-            var permOrdersManage   = EnsurePermission(db, "Orders.Manage",   "Can view and manage orders");
-            var permCustomersView  = EnsurePermission(db, "Customers.View",  "Can view and manage customers");
-            var permReportsGen     = EnsurePermission(db, "Reports.Generate","Can view reports and analytics");
-            var permSettingsManage = EnsurePermission(db, "Settings.Manage", "Can access system settings");
-            var permPermissionsManage = EnsurePermission(db, "Permissions.Manage", "Can manage roles and permissions");
-            var permLogsView       = EnsurePermission(db, "Logs.View",       "Can view audit logs");
+            var permDashboardView  = EnsurePermission(db, "dashboard.view",  "Can view dashboard");
+            var permUsersManage    = EnsurePermission(db, "users.manage",    "Can create, edit, delete users");
+            var permProductsManage = EnsurePermission(db, "products.manage", "Create, edit, and delete products and catalog items");
+            var permOrdersCreate   = EnsurePermission(db, "orders.create",   "Can place new orders");
+            var permOrdersView     = EnsurePermission(db, "orders.view",     "Can view order history and lists");
+            var permOrdersUpdate   = EnsurePermission(db, "orders.update",   "Can update order details and status");
+            var permOrdersDelete   = EnsurePermission(db, "orders.delete",   "Can delete orders");
+            var permCustomersView  = EnsurePermission(db, "customers.view",  "View the customer list and customer details");
+            var permReportsGen     = EnsurePermission(db, "reports.generate","Generate and export admin reports");
+            var permSettingsManage = EnsurePermission(db, "settings.manage", "Can access system settings");
+            var permPermissionsManage = EnsurePermission(db, "permissions.manage", "Can manage roles and permissions");
+            var permLogsView       = EnsurePermission(db, "logs.view",       "Can view audit logs");
+            var permStaffManage    = EnsurePermission(db, "staff.manage",    "Create, update, and remove staff accounts");
 
             // 1c. Grant all permissions to the admin role (admin always has full access)
             EnsureRolePermission(db, adminRole.RoleId, permDashboardView.PermissionId);
             EnsureRolePermission(db, adminRole.RoleId, permUsersManage.PermissionId);
             EnsureRolePermission(db, adminRole.RoleId, permProductsManage.PermissionId);
-            EnsureRolePermission(db, adminRole.RoleId, permOrdersManage.PermissionId);
+            EnsureRolePermission(db, adminRole.RoleId, permOrdersCreate.PermissionId);
+            EnsureRolePermission(db, adminRole.RoleId, permOrdersView.PermissionId);
+            EnsureRolePermission(db, adminRole.RoleId, permOrdersUpdate.PermissionId);
+            EnsureRolePermission(db, adminRole.RoleId, permOrdersDelete.PermissionId);
             EnsureRolePermission(db, adminRole.RoleId, permCustomersView.PermissionId);
             EnsureRolePermission(db, adminRole.RoleId, permReportsGen.PermissionId);
             EnsureRolePermission(db, adminRole.RoleId, permSettingsManage.PermissionId);
             EnsureRolePermission(db, adminRole.RoleId, permPermissionsManage.PermissionId);
             EnsureRolePermission(db, adminRole.RoleId, permLogsView.PermissionId);
+            EnsureRolePermission(db, adminRole.RoleId, permStaffManage.PermissionId);
+
+            // 1d. Grant operational permissions to the staff role
+            EnsureRolePermission(db, staffRole.RoleId, permDashboardView.PermissionId);
+            EnsureRolePermission(db, staffRole.RoleId, permOrdersCreate.PermissionId);
+            EnsureRolePermission(db, staffRole.RoleId, permOrdersView.PermissionId);
+            EnsureRolePermission(db, staffRole.RoleId, permOrdersUpdate.PermissionId);
+            EnsureRolePermission(db, staffRole.RoleId, permOrdersDelete.PermissionId);
+            EnsureRolePermission(db, staffRole.RoleId, permCustomersView.PermissionId);
+            EnsureRolePermission(db, staffRole.RoleId, permProductsManage.PermissionId);
 
             // 2. Seed Categories
             if (!db.Categories.Any())

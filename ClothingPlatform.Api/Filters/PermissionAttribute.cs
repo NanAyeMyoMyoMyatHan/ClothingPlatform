@@ -1,4 +1,4 @@
-﻿using ClothingPlatform.DB.AppDbModels;
+using ClothingPlatform.DB.AppDbModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
@@ -31,7 +31,12 @@ namespace ClothingPlatform.Api.Filters
         {
             bool hasPermission = false;
 
-            if (_checkFromDb)
+            var role = context.HttpContext.User.FindFirstValue(ClaimTypes.Role);
+            if (string.Equals(role, "admin", StringComparison.OrdinalIgnoreCase))
+            {
+                hasPermission = true;
+            }
+            else if (_checkFromDb)
             {
                 var userIdString = context.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (int.TryParse(userIdString, out int userId))

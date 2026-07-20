@@ -374,37 +374,20 @@ else
                                 transform: translate(-50%, -8px) !important;
                             }
                         </style>
-                        <div class="row align-items-end">
-                            <div class="col-md-8 position-relative" style="padding-bottom: 50px;">
+                        <div class="row align-items-center">
+                            <div class="col-md-8 text-center py-4">
                                 @if (categoryRevenues.Any())
                                 {
-                                    <div style="height: 280px; display: flex; align-items: flex-end; justify-content: space-around; padding: 20px 10px 10px 10px; border-bottom: 2px solid #EDD9D0; position: relative;">
-                                        @foreach (var item in categoryRevenues)
-                                        {
-                                            double barHeight = Math.Max(item.Percentage * 2.2, 8); // Scale percentage to height
-                                            <div class="bar-container" style="display: flex; flex-direction: column; align-items: center; width: calc(100% / @categoryRevenues.Count - 8px); max-width: 45px; height: 100%; justify-content: flex-end; position: relative;">
-                                                <!-- Tooltip/Value on Hover -->
-                                                <div class="chart-tooltip" style="position: absolute; bottom: calc(@(barHeight)px + 20px); left: 50%; transform: translate(-50%, 0); background: #3C1F10; color: #fff; padding: 5px 9px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; pointer-events: none; opacity: 0; transition: opacity 0.2s, transform 0.2s; white-space: nowrap; z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
-                                                    @item.Percentage.ToString("F1")% &middot; @item.Revenue.ToString("N0") MMK
-                                                    <span style="position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%) rotate(45deg); width: 8px; height: 8px; background: #3C1F10;"></span>
-                                                </div>
-                                                
-                                                <!-- Value Label on Top of Bar -->
-                                                <div style="font-size: 0.7rem; font-weight: 700; color: #3C1F10; margin-bottom: 6px; white-space: nowrap;">
-                                                    @item.Percentage.ToString("F1")%
-                                                </div>
-
-                                                <!-- The Bar -->
-                                                <div style="width: 100%; height: @(barHeight)px; background: @item.Color; border-radius: 6px 6px 0 0; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05);"
-                                                     class="bar-hover">
-                                                </div>
-
-                                                <!-- Bottom Label -->
-                                                <div style="position: absolute; bottom: -38px; font-size: 0.68rem; font-weight: 700; color: #3C1F10; text-align: center; width: 75px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transform: rotate(-20deg); transform-origin: top center;" title="@item.CategoryName">
-                                                    @item.CategoryName
-                                                </div>
-                                            </div>
-                                        }
+                                    <div class="position-relative" style="width: 260px; height: 260px; margin: auto;">
+                                        <!-- Conic Gradient Pie/Donut Chart -->
+                                        <div style="width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(@(GetConicGradient())); box-shadow: inset 0 0 12px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.06); transition: transform 0.3s ease;"></div>
+                                        
+                                        <!-- Donut Hole -->
+                                        <div style="position: absolute; top: 15%; left: 15%; width: 70%; height: 70%; background: #FAF7F5; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 4px solid #fff;">
+                                            <span style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; color: #8F766C; font-weight: 700; margin-bottom: 2px;">Total Revenue</span>
+                                            <span style="font-size: 1.15rem; font-weight: 800; color: #3C1F10; letter-spacing: -0.5px;">@TotalRevenue.ToString("N0") MMK</span>
+                                            <span style="font-size: 0.65rem; color: #8F766C; font-weight: 600; margin-top: 2px;">@categoryRevenues.Count Categories</span>
+                                        </div>
                                     </div>
                                 }
                                 else
@@ -487,7 +470,7 @@ else
                                     ? "/images/products/default.jpg"
                                     : raw.StartsWith("http")
                                         ? raw
-                                        : $"/images/products/{raw.Replace("images/products/", "").TrimStart('/')}";
+                                        : $"https://localhost:7065/images/products/{raw.Replace("images/products/", "").TrimStart('/')}";
                                 <tr>
                                     <td>
                                         <img src="@imgSrc" alt="@prod.Name" style="width:60px;height:60px;object-fit:cover;" />
@@ -1522,32 +1505,44 @@ else
 
                                 var maxVal = Math.Max(1, categoryStockData.Max(c => Math.Max(c.TotalAdded, Math.Max(c.TotalSold, c.TotalRemaining))));
 
-                                <div class="d-flex flex-column gap-3">
+                                <div style="height: 200px; display: flex; align-items: flex-end; justify-content: space-around; padding-top: 20px; border-bottom: 2px solid #EDD9D0; margin-bottom: 45px; position: relative;">
                                     @foreach (var cat in categoryStockData)
                                     {
-                                        <div style="border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 12px;">
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span class="fw-bold" style="color: #3C1F10; font-size: 0.85rem;">@cat.CategoryName</span>
-                                                <div style="font-size: 0.72rem; color: var(--text-muted);">
-                                                    <span>Added: <strong style="color: #4A6B82;">@cat.TotalAdded</strong></span>
-                                                    <span class="mx-1" style="opacity: 0.4;">|</span>
-                                                    <span>Sold: <strong style="color: #DAA520;">@cat.TotalSold</strong></span>
-                                                    <span class="mx-1" style="opacity: 0.4;">|</span>
-                                                    <span>Remaining: <strong style="color: #2E5A44;">@cat.TotalRemaining</strong></span>
-                                                </div>
+                                        double addedHeight = (cat.TotalAdded * 100.0) / maxVal;
+                                        double soldHeight = (cat.TotalSold * 100.0) / maxVal;
+                                        double remainingHeight = (cat.TotalRemaining * 100.0) / maxVal;
+
+                                        <div style="display: flex; flex-direction: column; align-items: center; width: calc(100% / @categoryStockData.Count - 10px); position: relative; height: 100%; justify-content: flex-end;">
+                                            <!-- Columns Group -->
+                                            <div style="display: flex; align-items: flex-end; gap: 4px; height: 100%; width: 100%; justify-content: center;">
+                                                <!-- Added Column -->
+                                                <div style="width: 14px; height: @(addedHeight)%; background: #4A6B82; border-radius: 3px 3px 0 0; transition: all 0.2s;" title="Added: @cat.TotalAdded"></div>
+                                                <!-- Sold Column -->
+                                                <div style="width: 14px; height: @(soldHeight)%; background: #DAA520; border-radius: 3px 3px 0 0; transition: all 0.2s;" title="Sold: @cat.TotalSold"></div>
+                                                <!-- Remaining Column -->
+                                                <div style="width: 14px; height: @(remainingHeight)%; background: #2E5A44; border-radius: 3px 3px 0 0; transition: all 0.2s;" title="Remaining: @cat.TotalRemaining"></div>
                                             </div>
-                                            
-                                            <div style="height: 10px; background: rgba(0,0,0,0.04); border-radius: 5px; overflow: hidden; display: flex;">
-                                                @if (cat.TotalAdded > 0)
-                                                {
-                                                    double soldPercent = (cat.TotalSold * 100.0) / cat.TotalAdded;
-                                                    double remainingPercent = (cat.TotalRemaining * 100.0) / cat.TotalAdded;
-                                                    <div style="width: @(soldPercent)%; height: 100%; background: linear-gradient(90deg, #F9D066, #DAA520);" title="Sold: @cat.TotalSold (@soldPercent.ToString("N1")%)"></div>
-                                                    <div style="width: @(remainingPercent)%; height: 100%; background: linear-gradient(90deg, #488E6B, #2E5A44);" title="Remaining: @cat.TotalRemaining (@remainingPercent.ToString("N1")%)"></div>
-                                                }
+                                            <!-- X-Axis Label -->
+                                            <div style="position: absolute; bottom: -38px; font-size: 0.68rem; font-weight: 700; color: #3C1F10; text-align: center; width: 85px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transform: rotate(-15deg); transform-origin: top center;" title="@cat.CategoryName">
+                                                @cat.CategoryName
                                             </div>
                                         </div>
                                     }
+                                </div>
+                                <!-- Legend -->
+                                <div class="d-flex justify-content-center gap-3 mt-3" style="font-size: 0.75rem; font-weight: 600;">
+                                    <div class="d-flex align-items-center gap-1">
+                                        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #4A6B82;"></span>
+                                        <span style="color: #3C1F10;">Added</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #DAA520;"></span>
+                                        <span style="color: #3C1F10;">Sold</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #2E5A44;"></span>
+                                        <span style="color: #3C1F10;">Remaining</span>
+                                    </div>
                                 </div>
                             }
                             else
@@ -1570,34 +1565,46 @@ else
                                     .Take(5)
                                     .ToList();
 
-                                <div class="d-flex flex-column gap-3">
+                                var maxVariantVal = Math.Max(1, topMovingVariants.Max(v => Math.Max(v.TotalAddedStock, Math.Max(v.TotalSoldQty, v.CurrentStock))));
+
+                                <div style="height: 200px; display: flex; align-items: flex-end; justify-content: space-around; padding-top: 20px; border-bottom: 2px solid #EDD9D0; margin-bottom: 45px; position: relative;">
                                     @foreach (var variant in topMovingVariants)
                                     {
-                                        <div style="border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 12px;">
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span class="fw-bold" style="color: #3C1F10; font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65%;">
-                                                    @variant.ProductName (@variant.Size / @variant.Color)
-                                                </span>
-                                                <span class="text-muted small" style="font-size: 0.72rem; font-family: monospace;">SKU: @variant.Sku</span>
-                                            </div>
+                                        double addedHeight = (variant.TotalAddedStock * 100.0) / maxVariantVal;
+                                        double soldHeight = (variant.TotalSoldQty * 100.0) / maxVariantVal;
+                                        double remainingHeight = (variant.CurrentStock * 100.0) / maxVariantVal;
 
-                                            <div style="height: 10px; background: rgba(0,0,0,0.04); border-radius: 5px; overflow: hidden; display: flex; margin-bottom: 6px;">
-                                                @if (variant.TotalAddedStock > 0)
-                                                {
-                                                    double soldPercent = (variant.TotalSoldQty * 100.0) / variant.TotalAddedStock;
-                                                    double remainingPercent = (variant.CurrentStock * 100.0) / variant.TotalAddedStock;
-                                                    <div style="width: @(soldPercent)%; height: 100%; background: linear-gradient(90deg, #F9D066, #DAA520);" title="Sold: @variant.TotalSoldQty (@soldPercent.ToString("N1")%)"></div>
-                                                    <div style="width: @(remainingPercent)%; height: 100%; background: linear-gradient(90deg, #488E6B, #2E5A44);" title="Remaining: @variant.CurrentStock (@remainingPercent.ToString("N1")%)"></div>
-                                                }
+                                        <div style="display: flex; flex-direction: column; align-items: center; width: calc(100% / @topMovingVariants.Count - 10px); position: relative; height: 100%; justify-content: flex-end;">
+                                            <!-- Columns Group -->
+                                            <div style="display: flex; align-items: flex-end; gap: 4px; height: 100%; width: 100%; justify-content: center;">
+                                                <!-- Added Column -->
+                                                <div style="width: 14px; height: @(addedHeight)%; background: #4A6B82; border-radius: 3px 3px 0 0; transition: all 0.2s;" title="Added: @variant.TotalAddedStock"></div>
+                                                <!-- Sold Column -->
+                                                <div style="width: 14px; height: @(soldHeight)%; background: #DAA520; border-radius: 3px 3px 0 0; transition: all 0.2s;" title="Sold: @variant.TotalSoldQty"></div>
+                                                <!-- Remaining Column -->
+                                                <div style="width: 14px; height: @(remainingHeight)%; background: #2E5A44; border-radius: 3px 3px 0 0; transition: all 0.2s;" title="Remaining: @variant.CurrentStock"></div>
                                             </div>
-                                            
-                                            <div class="d-flex justify-content-between" style="font-size: 0.72rem; color: var(--text-muted);">
-                                                <span>Sold: <strong style="color: #DAA520;">@variant.TotalSoldQty</strong></span>
-                                                <span>Total Added: <strong>@variant.TotalAddedStock</strong></span>
-                                                <span>Remaining: <strong style="color: #2E5A44;">@variant.CurrentStock</strong></span>
+                                            <!-- X-Axis Label -->
+                                            <div style="position: absolute; bottom: -38px; font-size: 0.68rem; font-weight: 700; color: #3C1F10; text-align: center; width: 85px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transform: rotate(-15deg); transform-origin: top center;" title="@variant.ProductName (@variant.Size / @variant.Color)">
+                                                @variant.ProductName (@variant.Size/@variant.Color)
                                             </div>
                                         </div>
                                     }
+                                </div>
+                                <!-- Legend -->
+                                <div class="d-flex justify-content-center gap-3 mt-3" style="font-size: 0.75rem; font-weight: 600;">
+                                    <div class="d-flex align-items-center gap-1">
+                                        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #4A6B82;"></span>
+                                        <span style="color: #3C1F10;">Added</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #DAA520;"></span>
+                                        <span style="color: #3C1F10;">Sold</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #2E5A44;"></span>
+                                        <span style="color: #3C1F10;">Remaining</span>
+                                    </div>
                                 </div>
                             }
                             else
@@ -1737,7 +1744,7 @@ else
                                 }
                                 else
                                 {
-                                    @foreach (var log in stockInVouchers)
+                                    @foreach (var log in PagedVouchers)
                                     {
                                         <tr>
                                             <td style="white-space: nowrap;">@log.CreatedAt?.ToString("dd MMM yyyy, HH:mm:ss")</td>
@@ -1749,6 +1756,14 @@ else
                             </tbody>
                         </table>
                     </div>
+                    @if (VoucherTotalPages > 1)
+                    {
+                        <div class="mt-3 d-flex justify-content-center">
+                            <Pagination CurrentPage="@voucherPage"
+                                        TotalPages="@VoucherTotalPages"
+                                        CurrentPageChanged="ChangeVoucherPage" />
+                        </div>
+                    }
                 </div>
             }
         }
@@ -1936,12 +1951,21 @@ else
                                             var customerToggleId = $"toggle-customer-{perm.PermissionId}";
 
                                             // Determine bootstrap icon based on permission name
-                                            var iconClass = perm.PermissionName switch
+                                            var iconClass = perm.PermissionName.ToLowerInvariant() switch
                                             {
-                                                "Products.Manage" => "bi-cart-dash",
-                                                "Customers.View" => "bi-people",
-                                                "Staff.Manage" => "bi-person-badge",
-                                                "Reports.Generate" => "bi-bar-chart",
+                                                "products.manage" => "bi-cart-dash",
+                                                "customers.view" => "bi-people",
+                                                "staff.manage" => "bi-person-badge",
+                                                "reports.generate" => "bi-bar-chart",
+                                                "orders.create" => "bi-cart-plus",
+                                                "orders.view" => "bi-receipt",
+                                                "orders.update" => "bi-arrow-repeat",
+                                                "orders.delete" => "bi-trash",
+                                                "dashboard.view" => "bi-speedometer2",
+                                                "permissions.manage" => "bi-shield-lock",
+                                                "logs.view" => "bi-journal-text",
+                                                "settings.manage" => "bi-gear",
+                                                "users.manage" => "bi-person-gear",
                                                 _ => "bi-shield"
                                             };
 
@@ -2113,14 +2137,14 @@ else
                                 @foreach (var ret in PagedOrderReturns)
                                 {
                                     <tr>
-                                        <td><strong>#@ret.OrderReturnId</strong></td>
+                                        <td><strong>@ret.OrderReturnId</strong></td>
                                         <td class="small text-muted">@ret.CreatedAt.ToString("dd MMM yyyy")</td>
                                         <td>
                                             <div><strong>@(ret.Order?.User?.FirstName ?? "Guest") @(ret.Order?.User?.LastName ?? "")</strong></div>
                                             <span class="small text-muted">@ret.Order?.User?.Email</span>
                                         </td>
                                         <td>
-                                            <span class="badge bg-light text-dark border">Order #@ret.OrderId</span>
+                                            <span class="badge bg-light text-dark border">Order ORD-@ret.OrderId.ToString("D4")</span>
                                         </td>
                                         <td>
                                             <div><strong>@ret.Variant?.Product?.Name</strong></div>
@@ -2453,114 +2477,244 @@ else
                         <div class="brandmark-p">
                             <div class="icon-p">%</div>
                             <div>
-                                <h1>Promotions</h1>
-                                <div class="tag-p">Create and manage discount campaigns</div>
+                                <h1>Promotions & Codes</h1>
+                                <div class="tag-p">Create and manage discount campaigns and coupon codes</div>
                             </div>
                         </div>
-                        <button type="button" class="btn-p primary-p" @onclick="StartNewPromotion">+ New Promotion</button>
+                        <button type="button" class="btn-p primary-p" @onclick="StartNewPromotion">
+                            @(activePromoSubTab == "banners" ? "+ New Campaign Banner" : "+ New Promo Code")
+                        </button>
                     </header>
 
-                    <div class="stats-p">
-                        <div class="stat-card-p"><div class="n-p">@adminPromotionsList.Count</div><div class="l-p">Total Promotions</div></div>
-                        <div class="stat-card-p accent-p"><div class="n-p">@adminPromotionsList.Count(p => GetPromotionStatus(p) == "active")</div><div class="l-p">Active Now</div></div>
-                        <div class="stat-card-p">
-                            <div class="n-p">
-                                @adminPromotionsList.Count(p => {
-                                    if (GetPromotionStatus(p) != "active" || !p.EndDate.HasValue) return false;
-                                    var days = (p.EndDate.Value.Date - DateTime.Today).TotalDays;
-                                    return days >= 0 && days <= 7;
-                                })
-                            </div>
-                            <div class="l-p">Expiring within 7 days</div>
-                        </div>
-                        <div class="stat-card-p"><div class="n-p">@adminPromotionsList.Sum(p => p.Redeemed).ToString("N0")</div><div class="l-p">Total Redemptions</div></div>
+                    <div style="display: flex; gap: 12px; margin: 20px 0 25px; border-bottom: 1px solid var(--line-p); padding-bottom: 12px;">
+                        <button type="button" class="btn-p @(activePromoSubTab == "banners" ? "primary-p" : "ghost-p")" @onclick='() => { activePromoSubTab = "banners"; }' style="font-weight: 600; font-size: 13.5px; border-radius: 8px; padding: 6px 16px;">
+                            📢 Campaign Banners
+                        </button>
+                        <button type="button" class="btn-p @(activePromoSubTab == "codes" ? "primary-p" : "ghost-p")" @onclick='() => { activePromoSubTab = "codes"; }' style="font-weight: 600; font-size: 13.5px; border-radius: 8px; padding: 6px 16px;">
+                            🎟️ Promo Codes
+                        </button>
                     </div>
 
-                    <div class="controls-p">
-                        <div class="filters-p">
-                            <div class="chip-p @(promotionStatusFilter == "all" ? "active-p" : "")" @onclick='() => { promotionStatusFilter = "all"; }'>All</div>
-                            <div class="chip-p @(promotionStatusFilter == "active" ? "active-p" : "")" @onclick='() => { promotionStatusFilter = "active"; }'>Active</div>
-                            <div class="chip-p @(promotionStatusFilter == "scheduled" ? "active-p" : "")" @onclick='() => { promotionStatusFilter = "scheduled"; }'>Scheduled</div>
-                            <div class="chip-p @(promotionStatusFilter == "expired" ? "active-p" : "")" @onclick='() => { promotionStatusFilter = "expired"; }'>Expired</div>
-                            <div class="chip-p @(promotionStatusFilter == "draft" ? "active-p" : "")" @onclick='() => { promotionStatusFilter = "draft"; }'>Draft</div>
-                        </div>
-                        <input class="search-p" placeholder="Search by name or code…" @bind="promotionSearchQuery" @bind:event="oninput">
-                    </div>
-
-                    <div class="grid-p">
-                        @if (!GetFilteredPromotions().Any())
-                        {
-                            <div class="empty-state-p">
-                                <div class="big-p">🏷️</div>
-                                No promotions match this view.<br>Try a different filter or create a new one.
+                    @if (activePromoSubTab == "codes")
+                    {
+                        <div class="luxury-card p-0" style="background: white; border: 1px solid #E5E7EB; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+                            <div style="padding: 24px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #F3F4F6;">
+                                <div>
+                                    <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: #111827; font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;">Promotion codes</h3>
+                                    <p style="margin: 4px 0 0 0; font-size: 14px; color: #4B5563; font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;">Codes customers enter at checkout</p>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <button type="button" @onclick="StartNewPromotion" style="background: white; border: 1px solid #D1D5DB; color: #111827; font-weight: 500; font-size: 14px; padding: 8px 16px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: background 0.15s; font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;">
+                                        <span style="font-size: 16px; font-weight: 400; line-height: 1; margin-right: 2px;">+</span> Create code
+                                    </button>
+                                    <button type="button" style="background: none; border: none; font-size: 18px; color: #9CA3AF; cursor: pointer; padding: 4px; display: flex; align-items: center; line-height: 1;">
+                                        •••
+                                    </button>
+                                </div>
                             </div>
-                        }
-                        else
-                        {
-                            @foreach (var promo in GetFilteredPromotions())
-                            {
-                                var status = GetPromotionStatus(promo);
-                                var appliesToLabel = promo.ApplyAll ? "All items" : "Specific items";
-                                if (!promo.ApplyAll)
-                                {
-                                    var promoProducts = allProducts.Where(p => p.PromoId == promo.PromoId).ToList();
-                                    if (promoProducts.Any())
-                                    {
-                                        if (promoProducts.Count <= 2)
+
+                            <div class="table-responsive" style="margin: 0;">
+                                <table class="table" style="width: 100%; border-collapse: collapse; margin: 0; font-size: 14px;">
+                                    <thead>
+                                        <tr style="border-bottom: 1px solid #E5E7EB; background: #FAFAFA; text-align: left;">
+                                            <th style="padding: 14px 24px; font-weight: 500; color: #6B7280; font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;">Code</th>
+                                            <th style="padding: 14px 24px; font-weight: 500; color: #6B7280; font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;">Type</th>
+                                            <th style="padding: 14px 24px; font-weight: 500; color: #6B7280; font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;">Value</th>
+                                            <th style="padding: 14px 24px; font-weight: 500; color: #6B7280; font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;">Used</th>
+                                            <th style="padding: 14px 24px; font-weight: 500; color: #6B7280; font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;">Status</th>
+                                            <th style="padding: 14px 24px; font-weight: 500; color: #6B7280; font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;">Expires</th>
+                                            <th style="padding: 14px 24px; font-weight: 500; color: #6B7280; text-align: right; font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (!GetFilteredPromotions().Any())
                                         {
-                                            appliesToLabel = string.Join(", ", promoProducts.Select(p => p.Name));
+                                            <tr>
+                                                <td colspan="7" style="padding: 32px; text-align: center; color: #9CA3AF; font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;">
+                                                    No promo codes found. Click "+ Create code" to register one.
+                                                </td>
+                                            </tr>
                                         }
                                         else
                                         {
-                                            appliesToLabel = $"{promoProducts[0].Name}, {promoProducts[1].Name} +{promoProducts.Count - 2} more";
+                                            @foreach (var promo in GetFilteredPromotions())
+                                            {
+                                                var status = GetPromotionStatus(promo);
+                                                var displayType = promo.PromoType ?? "Percent";
+                                                var displayValue = displayType switch
+                                                {
+                                                    "Percent" => $"{(int)promo.DiscountValue}%",
+                                                    "Shipping" => "100%",
+                                                    "Fixed" => $"{promo.DiscountValue:N0} ks",
+                                                    _ => $"{(int)promo.DiscountPercent}%"
+                                                };
+                                                var expiresLabel = promo.EndDate.HasValue ? promo.EndDate.Value.ToString("MMM dd") : "Never";
+                                                
+                                                <tr style="border-bottom: 1px solid #F3F4F6; color: #111827; vertical-align: middle;">
+                                                    <td style="padding: 16px 24px; font-weight: 600; color: #111827; font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;">@promo.PromoCode</td>
+                                                    <td style="padding: 16px 24px; color: #374151; font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;">@displayType</td>
+                                                    <td style="padding: 16px 24px; font-weight: 600; color: #111827; font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;">@displayValue</td>
+                                                    <td style="padding: 16px 24px; color: #111827; font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;">@promo.Redeemed</td>
+                                                    <td style="padding: 16px 24px;">
+                                                        @if (status == "active")
+                                                        {
+                                                            <span style="background: #DEF7EC; color: #03543F; font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;">Active</span>
+                                                        }
+                                                        else if (status == "expired")
+                                                        {
+                                                            <span style="background: #F3F4F6; color: #374151; font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;">Expired</span>
+                                                        }
+                                                        else if (status == "scheduled")
+                                                        {
+                                                            <span style="background: #FEF3C7; color: #92400E; font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;">Scheduled</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span style="background: #E5E7EB; color: #374151; font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;">Draft</span>
+                                                        }
+                                                    </td>
+                                                    <td style="padding: 16px 24px; color: #4B5563; font-family: -apple-system, BlinkMacSystemFont, sans-serif !important;">@expiresLabel</td>
+                                                    <td style="padding: 16px 24px; text-align: right;">
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary me-2" @onclick="() => EditPromotion(promo)" style="font-family: -apple-system, BlinkMacSystemFont, sans-serif !important; font-size: 12px;">Edit</button>
+                                                        <LoadingButton Class="btn btn-sm btn-outline-danger"
+                                                                       IsLoading="@IsAdminActionLoading(DeletePromotionAction + promo.PromoId)"
+                                                                       OnClick="@(() => RunAdminAction(DeletePromotionAction + promo.PromoId, () => HandleDeletePromotion(promo.PromoId)))"
+                                                                       style="font-family: -apple-system, BlinkMacSystemFont, sans-serif !important; font-size: 12px;">
+                                                            Delete
+                                                        </LoadingButton>
+                                                    </td>
+                                                </tr>
+                                            }
                                         }
-                                    }
-                                }
-                                var pct = promo.UsageLimit > 0 ? (int)Math.Min(100, Math.Round((double)promo.Redeemed / promo.UsageLimit * 100)) : (int?)null;
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="stats-p">
+                            <div class="stat-card-p">
+                                <div class="n-p">@adminPromotionsList.Count(p => p.IsCoupon == (activePromoSubTab == "codes"))</div>
+                                <div class="l-p">Total @(activePromoSubTab == "banners" ? "Campaign Banners" : "Promo Codes")</div>
+                            </div>
+                            <div class="stat-card-p accent-p">
+                                <div class="n-p">@adminPromotionsList.Count(p => p.IsCoupon == (activePromoSubTab == "codes") && GetPromotionStatus(p) == "active")</div>
+                                <div class="l-p">Active Now</div>
+                            </div>
+                            <div class="stat-card-p">
+                                <div class="n-p">
+                                    @adminPromotionsList.Count(p => {
+                                        if (p.IsCoupon != (activePromoSubTab == "codes")) return false;
+                                        if (GetPromotionStatus(p) != "active" || !p.EndDate.HasValue) return false;
+                                        var days = (p.EndDate.Value.Date - DateTime.Today).TotalDays;
+                                        return days >= 0 && days <= 7;
+                                    })
+                                </div>
+                                <div class="l-p">Expiring within 7 days</div>
+                            </div>
+                            <div class="stat-card-p">
+                                <div class="n-p">@adminPromotionsList.Where(p => p.IsCoupon == (activePromoSubTab == "codes")).Sum(p => p.Redeemed).ToString("N0")</div>
+                                <div class="l-p">Total Redemptions</div>
+                            </div>
+                        </div>
 
-                                <div class="promo-card-p">
-                                    <div class="band-p">
-                                        <span class="badge-p @(status + "-p")">@GetStatusLabel(status)</span>
-                                        <div class="toggle-wrap-p">
-                                            <span class="toggle-label-p">@(promo.Enabled ? "On" : "Off")</span>
-                                            <div class="switch-p @(promo.Enabled ? "on-p" : "")" @onclick="() => TogglePromotionEnabled(promo)"><div class="knob-p"></div></div>
-                                        </div>
-                                    </div>
-                                    <div class="discount-p">@GetDiscountLabel(promo)</div>
-                                    <div class="name-p">@promo.Title</div>
-                                    <div class="desc-p">@(!string.IsNullOrEmpty(promo.Description) ? promo.Description : appliesToLabel)</div>
+                        <div class="controls-p">
+                            <div class="filters-p">
+                                <div class="chip-p @(promotionStatusFilter == "all" ? "active-p" : "")" @onclick='() => { promotionStatusFilter = "all"; }'>All</div>
+                                <div class="chip-p @(promotionStatusFilter == "active" ? "active-p" : "")" @onclick='() => { promotionStatusFilter = "active"; }'>Active</div>
+                                <div class="chip-p @(promotionStatusFilter == "scheduled" ? "active-p" : "")" @onclick='() => { promotionStatusFilter = "scheduled"; }'>Scheduled</div>
+                                <div class="chip-p @(promotionStatusFilter == "expired" ? "active-p" : "")" @onclick='() => { promotionStatusFilter = "expired"; }'>Expired</div>
+                                <div class="chip-p @(promotionStatusFilter == "draft" ? "active-p" : "")" @onclick='() => { promotionStatusFilter = "draft"; }'>Draft</div>
+                            </div>
+                            <input class="search-p" placeholder="Search by name or code…" @bind="promotionSearchQuery" @bind:event="oninput">
+                        </div>
 
-                                    <div class="perforation-p"></div>
-
-                                    <div class="code-row-p">
-                                        <div class="code-chip-p">@promo.PromoCode</div>
-                                        <button type="button" class="copy-btn-p" @onclick="() => CopyToClipboard(promo.PromoCode)">
-                                            @(copiedPromoId == promo.PromoCode ? "Copied" : "Copy")
-                                        </button>
-                                    </div>
-
-                                    <div class="meta-list-p">
-                                        <div class="row-p"><span>Valid</span><b>@(promo.StartDate?.ToString("dd/MM/yyyy") ?? "—") – @(promo.EndDate?.ToString("dd/MM/yyyy") ?? "No end date")</b></div>
-                                        <div class="row-p"><span>Applies to</span><b>@appliesToLabel</b></div>
-                                        <div class="row-p"><span>Redeemed</span><b>@promo.Redeemed @(promo.UsageLimit > 0 ? $"/ {promo.UsageLimit}" : "")</b></div>
-                                        @if (pct.HasValue)
-                                        {
-                                            <div class="usage-bar-p"><div style="width:@(pct.Value)%"></div></div>
-                                        }
-                                    </div>
-
-                                    <div class="card-actions-p">
-                                        <button type="button" class="btn-p ghost-p small-p" @onclick="() => EditPromotion(promo)">Edit</button>
-                                        <LoadingButton Class="btn-p danger-ghost-p small-p"
-                                                       IsLoading="@IsAdminActionLoading(DeletePromotionAction + promo.PromoId)"
-                                                       OnClick="@(() => RunAdminAction(DeletePromotionAction + promo.PromoId, () => HandleDeletePromotion(promo.PromoId)))">
-                                            Delete
-                                        </LoadingButton>
-                                    </div>
+                        <div class="grid-p">
+                            @if (!GetFilteredPromotions().Any())
+                            {
+                                <div class="empty-state-p">
+                                    <div class="big-p">🏷️</div>
+                                    No promotions match this view.<br>Try a different filter or create a new one.
                                 </div>
                             }
-                        }
-                    </div>
+                            else
+                            {
+                                @foreach (var promo in GetFilteredPromotions())
+                                {
+                                    var status = GetPromotionStatus(promo);
+                                    var appliesToLabel = promo.ApplyAll ? "All items" : "Specific items";
+                                    if (!promo.ApplyAll)
+                                    {
+                                        var promoProducts = allProducts.Where(p => p.PromoId == promo.PromoId).ToList();
+                                        if (promoProducts.Any())
+                                        {
+                                            if (promoProducts.Count <= 2)
+                                            {
+                                                appliesToLabel = string.Join(", ", promoProducts.Select(p => p.Name));
+                                            }
+                                            else
+                                            {
+                                                appliesToLabel = $"{promoProducts[0].Name}, {promoProducts[1].Name} +{promoProducts.Count - 2} more";
+                                            }
+                                        }
+                                    }
+                                    var pct = promo.UsageLimit > 0 ? (int)Math.Min(100, Math.Round((double)promo.Redeemed / promo.UsageLimit * 100)) : (int?)null;
+
+                                    <div class="promo-card-p">
+                                        <div class="band-p">
+                                            <span class="badge-p @(status + "-p")">@GetStatusLabel(status)</span>
+                                            <div class="toggle-wrap-p">
+                                                <span class="toggle-label-p">@(promo.Enabled ? "On" : "Off")</span>
+                                                <div class="switch-p @(promo.Enabled ? "on-p" : "")" @onclick="() => TogglePromotionEnabled(promo)"><div class="knob-p"></div></div>
+                                            </div>
+                                        </div>
+                                        <div class="discount-p">@GetDiscountLabel(promo)</div>
+                                        <div class="name-p">@promo.Title</div>
+                                        <div class="desc-p">@(!string.IsNullOrEmpty(promo.Description) ? promo.Description : appliesToLabel)</div>
+
+                                        @if (activePromoSubTab == "codes")
+                                        {
+                                            <div class="perforation-p"></div>
+                                            <div class="code-row-p">
+                                                <div class="code-chip-p">@promo.PromoCode</div>
+                                                <button type="button" class="copy-btn-p" @onclick="() => CopyToClipboard(promo.PromoCode)">
+                                                    @(copiedPromoId == promo.PromoCode ? "Copied" : "Copy")
+                                                </button>
+                                            </div>
+                                        }
+
+                                        <div class="meta-list-p">
+                                            <div class="row-p"><span>Valid</span><b>@(promo.StartDate?.ToString("dd/MM/yyyy") ?? "—") – @(promo.EndDate?.ToString("dd/MM/yyyy") ?? "No end date")</b></div>
+                                            <div class="row-p"><span>Applies to</span><b>@appliesToLabel</b></div>
+                                            <div class="row-p"><span>Redeemed</span><b>@promo.Redeemed @(promo.UsageLimit > 0 ? $"/ {promo.UsageLimit}" : "")</b></div>
+                                            @if (promo.UserLimit > 0)
+                                            {
+                                                <div class="row-p"><span>User Limit</span><b>Max @promo.UserLimit use@(promo.UserLimit > 1 ? "s" : "") / user</b></div>
+                                            }
+                                            @if (promo.NewMemberOnly)
+                                            {
+                                                <div class="row-p"><span style="color: var(--brand-p); font-weight: 600;">Target</span><b style="color: var(--brand-p); font-weight: 600;">New Members Only</b></div>
+                                            }
+                                            @if (pct.HasValue)
+                                            {
+                                                <div class="usage-bar-p"><div style="width:@(pct.Value)%"></div></div>
+                                            }
+                                        </div>
+
+                                        <div class="card-actions-p">
+                                            <button type="button" class="btn-p ghost-p small-p" @onclick="() => EditPromotion(promo)">Edit</button>
+                                            <LoadingButton Class="btn-p danger-ghost-p small-p"
+                                                           IsLoading="@IsAdminActionLoading(DeletePromotionAction + promo.PromoId)"
+                                                           OnClick="@(() => RunAdminAction(DeletePromotionAction + promo.PromoId, () => HandleDeletePromotion(promo.PromoId)))">
+                                                Delete
+                                            </LoadingButton>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    }
                 </div>
 
             @if (showPromoModal)
@@ -2572,100 +2726,202 @@ else
                             <button type="button" class="close-p" @onclick="ClosePromoModal">✕</button>
                         </div>
                         <div class="modal-body-p">
-                            <div class="field-p">
-                                <label>Promotion Name</label>
-                                <input @bind="editingPromo.Title" placeholder="e.g. Summer Sale" />
-                            </div>
-                            <div class="field-p">
-                                <label>Discount Code</label>
-                                <div class="code-input-row-p">
-                                    <input @bind="editingPromo.PromoCode" placeholder="e.g. SUMR-2026" style="text-transform: uppercase;" />
-                                    <button type="button" class="gen-btn-p" @onclick="GenerateRandomPromoCode">Generate</button>
-                                </div>
-                            </div>
-                            <div class="field-row-p">
+                            @if (editingPromo.IsCoupon)
+                            {
                                 <div class="field-p">
-                                    <label>Discount Value (%)</label>
-                                    <input type="number" min="0" max="100" @bind="editingPromo.DiscountPercent" />
+                                    <label>Discount Code</label>
+                                    <div class="code-input-row-p">
+                                        <input @bind="editingPromo.PromoCode" placeholder="e.g. SUMR-2026" style="text-transform: uppercase;" />
+                                        <button type="button" class="gen-btn-p" @onclick="GenerateRandomPromoCode">Generate</button>
+                                    </div>
+                                </div>
+                                <div class="field-row-p">
+                                    <div class="field-p">
+                                        <label>Promo Type</label>
+                                        <select @bind="editingPromo.PromoType">
+                                            <option value="Percent">Percent Discount (%)</option>
+                                            <option value="Fixed">Fixed Amount Discount (ks)</option>
+                                            <option value="Shipping">Free Shipping</option>
+                                        </select>
+                                    </div>
+                                    @if (editingPromo.PromoType == "Percent")
+                                    {
+                                        <div class="field-p">
+                                            <label>Discount Value (%)</label>
+                                            <input type="number" min="0" max="100" @bind="editingPromo.DiscountValue" />
+                                        </div>
+                                    }
+                                    else if (editingPromo.PromoType == "Fixed")
+                                    {
+                                        <div class="field-p">
+                                            <label>Discount Value (ks)</label>
+                                            <input type="number" min="0" @bind="editingPromo.DiscountValue" />
+                                        </div>
+                                    }
+                                    else if (editingPromo.PromoType == "Shipping")
+                                    {
+                                        <div class="field-p">
+                                            <label>Discount Value</label>
+                                            <input type="text" disabled value="100% Free Shipping" />
+                                        </div>
+                                    }
+                                </div>
+                                <div class="field-row-p">
+                                    <div class="field-p">
+                                        <label>Start Date</label>
+                                        <input type="date" @bind="editingPromo.StartDate" />
+                                    </div>
+                                    <div class="field-p">
+                                        <label>End Date (optional)</label>
+                                        <input type="date" @bind="editingPromo.EndDate" />
+                                    </div>
+                                </div>
+                                <div class="field-row-p">
+                                    <div class="field-p">
+                                        <label>Usage Limit (0 = unlimited)</label>
+                                        <input type="number" min="0" @bind="editingPromo.UsageLimit" />
+                                    </div>
+                                    <div class="field-p">
+                                        <label>User Limit (0 = unlimited)</label>
+                                        <input type="number" min="0" @bind="editingPromo.UserLimit" />
+                                    </div>
+                                </div>
+                                <div class="field-p" style="display: flex; align-items: center; gap: 8px; margin-top: -5px; margin-bottom: 15px;">
+                                    <input type="checkbox" id="newMemberOnly" @bind="editingPromo.NewMemberOnly" style="width: 16px; height: 16px; cursor: pointer;" />
+                                    <label for="newMemberOnly" style="margin: 0; cursor: pointer; font-weight: 500; font-size: 13.5px; color: var(--ink-p);">New Members Only (Valid for first order only)</label>
                                 </div>
                                 <div class="field-p">
-                                    <label>Button Text</label>
-                                    <input @bind="editingPromo.ButtonText" placeholder="e.g. Shop Now" />
-                                </div>
-                            </div>
-                            <div class="field-row-p">
-                                <div class="field-p">
-                                    <label>Start Date</label>
-                                    <input type="date" @bind="editingPromo.StartDate" />
-                                </div>
-                                <div class="field-p">
-                                    <label>End Date (optional)</label>
-                                    <input type="date" @bind="editingPromo.EndDate" />
-                                </div>
-                            </div>
-                            <div class="field-p">
-                                <label>Usage Limit (0 = unlimited)</label>
-                                <input type="number" min="0" @bind="editingPromo.UsageLimit" />
-                            </div>
-                            <div class="field-p">
-                                <label>Applies To</label>
-                                <div class="scope-toggle-p">
-                                    <div class="scope-opt-p @(editingPromo.ApplyAll ? "active-p" : "")" @onclick="() => editingPromo.ApplyAll = true">All items</div>
-                                    <div class="scope-opt-p @(!editingPromo.ApplyAll ? "active-p" : "")" @onclick="() => editingPromo.ApplyAll = false">Specific items</div>
-                                </div>
+                                    <label>Applies To</label>
+                                    <div class="scope-toggle-p">
+                                        <div class="scope-opt-p @(editingPromo.ApplyAll ? "active-p" : "")" @onclick="() => editingPromo.ApplyAll = true">All items</div>
+                                        <div class="scope-opt-p @(!editingPromo.ApplyAll ? "active-p" : "")" @onclick="() => editingPromo.ApplyAll = false">Specific items</div>
+                                    </div>
 
-                                @if (!editingPromo.ApplyAll)
-                                {
-                                    <div style="margin-top:10px;">
-                                        <input class="search-p item-search-p" placeholder="Search items…" @bind="productPickerSearchQuery" @bind:event="oninput" />
-                                        <div class="item-picker-list-p">
-                                            @{
-                                                var filteredPickerProducts = allProducts.Where(p => 
-                                                    string.IsNullOrEmpty(productPickerSearchQuery) || 
-                                                    p.Name.Contains(productPickerSearchQuery, StringComparison.OrdinalIgnoreCase)
-                                                ).ToList();
-                                            }
-                                            @if (!filteredPickerProducts.Any())
-                                            {
-                                                <div class="item-picker-empty-p">No items match.</div>
-                                            }
-                                            else
-                                            {
-                                                @foreach (var prod in filteredPickerProducts)
-                                                {
-                                                    var pId = prod.ProductId;
-                                                    var isChecked = selectedProductIdsForPromo.Contains(pId);
-                                                    <label class="item-pick-row-p">
-                                                        <input type="checkbox" checked="@isChecked" @onchange="@(e => ToggleProductForPromo(pId, e.Value))" />
-                                                        <span class="ip-name-p">@prod.Name</span>
-                                                        <span class="ip-sku-p">SKU: @(prod.ProductVariants.FirstOrDefault()?.Sku ?? "N/A")</span>
-                                                    </label>
+                                    @if (!editingPromo.ApplyAll)
+                                    {
+                                        <div style="margin-top:10px;">
+                                            <input class="search-p item-search-p" placeholder="Search items…" @bind="productPickerSearchQuery" @bind:event="oninput" />
+                                            <div class="item-picker-list-p">
+                                                @{
+                                                    var filteredPickerProducts = allProducts.Where(p => 
+                                                        string.IsNullOrEmpty(productPickerSearchQuery) || 
+                                                        p.Name.Contains(productPickerSearchQuery, StringComparison.OrdinalIgnoreCase)
+                                                    ).ToList();
                                                 }
+                                                @if (!filteredPickerProducts.Any())
+                                                {
+                                                    <div class="item-picker-empty-p">No items match.</div>
+                                                }
+                                                else
+                                                {
+                                                    @foreach (var prod in filteredPickerProducts)
+                                                    {
+                                                        var pId = prod.ProductId;
+                                                        var isChecked = selectedProductIdsForPromo.Contains(pId);
+                                                        <label class="item-pick-row-p">
+                                                            <input type="checkbox" checked="@isChecked" @onchange="@(e => ToggleProductForPromo(pId, e.Value))" />
+                                                            <span class="ip-name-p">@prod.Name</span>
+                                                            <span class="ip-sku-p">SKU: @(prod.ProductVariants.FirstOrDefault()?.Sku ?? "N/A")</span>
+                                                        </label>
+                                                    }
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="field-p">
+                                    <label>Campaign Name / Title</label>
+                                    <input @bind="editingPromo.Title" placeholder="e.g. Summer Silhouette Sale" />
+                                </div>
+                                <div class="field-row-p">
+                                    <div class="field-p">
+                                        <label>Subtitle Banner Text</label>
+                                        <input @bind="editingPromo.Subtitle" placeholder="e.g. LIMITED TIME OFFER" />
+                                    </div>
+                                    <div class="field-p">
+                                        <label>Button Action Text</label>
+                                        <input @bind="editingPromo.ButtonText" placeholder="e.g. Shop Now" />
+                                    </div>
+                                </div>
+                                <div class="field-p">
+                                    <label>Description Campaign Text</label>
+                                    <textarea rows="2" @bind="editingPromo.Description" placeholder="e.g. Get 20% off on all lightweight linen creations..."></textarea>
+                                </div>
+                                <div class="field-row-p">
+                                    <div class="field-p">
+                                        <label>Discount Value (%)</label>
+                                        <input type="number" min="0" max="100" @bind="editingPromo.DiscountPercent" />
+                                    </div>
+                                    <div class="field-p">
+                                        <label>Start Date</label>
+                                        <input type="date" @bind="editingPromo.StartDate" />
+                                    </div>
+                                    <div class="field-p">
+                                        <label>End Date (optional)</label>
+                                        <input type="date" @bind="editingPromo.EndDate" />
+                                    </div>
+                                </div>
+                                <div class="field-p">
+                                    <label>Applies To</label>
+                                    <div class="scope-toggle-p">
+                                        <div class="scope-opt-p @(editingPromo.ApplyAll ? "active-p" : "")" @onclick="() => editingPromo.ApplyAll = true">All items</div>
+                                        <div class="scope-opt-p @(!editingPromo.ApplyAll ? "active-p" : "")" @onclick="() => editingPromo.ApplyAll = false">Specific items</div>
+                                    </div>
+
+                                    @if (!editingPromo.ApplyAll)
+                                    {
+                                        <div style="margin-top:10px;">
+                                            <input class="search-p item-search-p" placeholder="Search items…" @bind="productPickerSearchQuery" @bind:event="oninput" />
+                                            <div class="item-picker-list-p">
+                                                @{
+                                                    var filteredPickerProducts = allProducts.Where(p => 
+                                                        string.IsNullOrEmpty(productPickerSearchQuery) || 
+                                                        p.Name.Contains(productPickerSearchQuery, StringComparison.OrdinalIgnoreCase)
+                                                    ).ToList();
+                                                }
+                                                @if (!filteredPickerProducts.Any())
+                                                {
+                                                    <div class="item-picker-empty-p">No items match.</div>
+                                                }
+                                                else
+                                                {
+                                                    @foreach (var prod in filteredPickerProducts)
+                                                    {
+                                                        var pId = prod.ProductId;
+                                                        var isChecked = selectedProductIdsForPromo.Contains(pId);
+                                                        <label class="item-pick-row-p">
+                                                            <input type="checkbox" checked="@isChecked" @onchange="@(e => ToggleProductForPromo(pId, e.Value))" />
+                                                            <span class="ip-name-p">@prod.Name</span>
+                                                            <span class="ip-sku-p">SKU: @(prod.ProductVariants.FirstOrDefault()?.Sku ?? "N/A")</span>
+                                                        </label>
+                                                    }
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="field-p">
+                                    <label>Lifestyle Photo (Upload from PC)</label>
+                                    <InputFile OnChange="HandlePromotionFileSelected" class="form-control" accept=".jpg,.jpeg,.png" style="padding:6px 11px;" />
+                                    @if (!string.IsNullOrEmpty(editingPromo.ImageUrl))
+                                    {
+                                        <div style="margin-top: 10px; display: flex; align-items: center; gap: 12px;">
+                                            <img src="@editingPromo.ImageUrl" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line-p);" />
+                                            @if (!string.IsNullOrEmpty(promotionImageFileName))
+                                            {
+                                                <span style="font-size: 11.5px; color: var(--muted-p); word-break: break-all;">@promotionImageFileName</span>
                                             }
                                         </div>
-                                    </div>
-                                }
-                            </div>
-
-                            <div class="field-p">
-                                <label>Lifestyle Photo (Upload from PC)</label>
-                                <InputFile OnChange="HandlePromotionFileSelected" class="form-control" accept=".jpg,.jpeg,.png" style="padding:6px 11px;" />
-                                @if (!string.IsNullOrEmpty(editingPromo.ImageUrl))
-                                {
-                                    <div style="margin-top: 10px; display: flex; align-items: center; gap: 12px;">
-                                        <img src="@editingPromo.ImageUrl" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line-p);" />
-                                        @if (!string.IsNullOrEmpty(promotionImageFileName))
-                                        {
-                                            <span style="font-size: 11.5px; color: var(--muted-p); word-break: break-all;">@promotionImageFileName</span>
-                                        }
-                                    </div>
-                                }
-                            </div>
-
-                            <div class="field-p">
-                                <label>Gradient CSS Background (optional)</label>
-                                <input @bind="editingPromo.GradientCss" placeholder="linear-gradient(135deg, ...)" />
-                            </div>
+                                    }
+                                </div>
+                                <div class="field-p">
+                                    <label>Gradient CSS Background (optional)</label>
+                                    <input @bind="editingPromo.GradientCss" placeholder="linear-gradient(135deg, ...)" />
+                                </div>
+                            }
 
                             <div class="field-p">
                                 <label>Internal Note (optional)</label>
@@ -2678,7 +2934,7 @@ else
                                            IsLoading="@IsAdminActionLoading(SavePromotionAction)"
                                            LoadingText="Saving..."
                                            OnClick="@(() => RunAdminAction(SavePromotionAction, HandleSavePromotion))">
-                                Save Promotion
+                                @(activePromoSubTab == "banners" ? "Save Campaign Banner" : "Save Promo Code")
                             </LoadingButton>
                         </div>
                     </div>

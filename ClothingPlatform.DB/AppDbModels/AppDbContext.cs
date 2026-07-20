@@ -241,6 +241,10 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("total_amount");
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.CancelReason).HasColumnName("cancel_reason");
+            entity.Property(e => e.AppliedPromo)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("applied_promo");
 
             entity.HasOne(d => d.User).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.UserId)

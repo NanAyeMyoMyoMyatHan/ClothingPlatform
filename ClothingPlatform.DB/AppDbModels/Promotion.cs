@@ -25,12 +25,18 @@ public class Promotion
     public string Description { get; set; } = "";
 
     [Column("promo_code")]
-    [Required]
     [StringLength(50)]
-    public string PromoCode { get; set; } = "";
+    public string? PromoCode { get; set; }
 
     [Column("discount_percent")]
     public decimal DiscountPercent { get; set; }
+
+    [Column("promo_type")]
+    [StringLength(50)]
+    public string PromoType { get; set; } = "Percent";
+
+    [Column("discount_value")]
+    public decimal DiscountValue { get; set; } = 0;
 
     [Column("button_text")]
     [StringLength(100)]
@@ -53,6 +59,9 @@ public class Promotion
     [Column("usage_limit")]
     public int UsageLimit { get; set; } = 0;
 
+    [Column("user_limit")]
+    public int UserLimit { get; set; } = 0;
+
     [Column("redeemed")]
     public int Redeemed { get; set; } = 0;
 
@@ -61,6 +70,12 @@ public class Promotion
 
     [Column("apply_all")]
     public bool ApplyAll { get; set; } = true;
+
+    [Column("is_coupon")]
+    public bool IsCoupon { get; set; } = false;
+
+    [Column("new_member_only")]
+    public bool NewMemberOnly { get; set; } = false;
 
     [Column("note")]
     [StringLength(500)]

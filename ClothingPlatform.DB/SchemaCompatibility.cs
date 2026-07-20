@@ -92,6 +92,13 @@ public static class SchemaCompatibility
                 ALTER TABLE promotions ADD apply_all BIT NOT NULL DEFAULT 1;
                 ALTER TABLE promotions ADD note NVARCHAR(500) NULL;
             END;
+
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('promotions') AND name = 'promo_type')
+            BEGIN
+                ALTER TABLE promotions ADD promo_type NVARCHAR(50) NOT NULL DEFAULT 'Percent';
+                ALTER TABLE promotions ADD discount_value DECIMAL(18,2) NOT NULL DEFAULT 0.00;
+                EXEC('UPDATE promotions SET promo_type = ''Percent'', discount_value = discount_percent;');
+            END;
             """;
         await db.Database.ExecuteSqlRawAsync(alterPromotionsSql, cancellationToken);
 
@@ -132,5 +139,74 @@ public static class SchemaCompatibility
             END;
             """;
         await db.Database.ExecuteSqlRawAsync(productRelationSql, cancellationToken);
+
+        // 5. Add user_limit and is_coupon to promotions table, and applied_promo to orders table
+        const string limitsSql = """
+            -- Drop UNIQUE constraint if it exists to allow multiple banners to not have a code, or have null codes
+            IF EXISTS (SELECT * FROM sys.indexes WHERE name = 'UQ__promotio__F9EC6DC7440409F3' AND object_id = OBJECT_ID('promotions'))
+            BEGIN
+                ALTER TABLE promotions DROP CONSTRAINT UQ__promotio__F9EC6DC7440409F3;
+            END;
+            -- Also drop UQ__promotio__F9EC6DC778BA31EE (alternate generated name) or any other unique constraints
+            WHILE EXISTS (SELECT * FROM sys.objects WHERE type = 'UQ' AND parent_object_id = OBJECT_ID('promotions'))
+            BEGIN
+                DECLARE @ConstraintName NVARCHAR(200);
+                SELECT TOP 1 @ConstraintName = name FROM sys.objects WHERE type = 'UQ' AND parent_object_id = OBJECT_ID('promotions');
+                IF @ConstraintName IS NOT NULL
+                BEGIN
+                    EXEC('ALTER TABLE promotions DROP CONSTRAINT ' + @ConstraintName);
+                END;
+            END;
+
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('promotions') AND name = 'user_limit')
+            BEGIN
+                ALTER TABLE promotions ADD user_limit INT NOT NULL DEFAULT 0;
+            END;
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('orders') AND name = 'applied_promo')
+            BEGIN
+                ALTER TABLE orders ADD applied_promo VARCHAR(100) NULL;
+            END;
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('promotions') AND name = 'is_coupon')
+            BEGIN
+                ALTER TABLE promotions ADD is_coupon BIT NOT NULL DEFAULT 0;
+            END;
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('promotions') AND name = 'new_member_only')
+            BEGIN
+                ALTER TABLE promotions ADD new_member_only BIT NOT NULL DEFAULT 0;
+            END;
+
+            IF NOT EXISTS (SELECT 1 FROM promotions WHERE is_coupon = 0)
+            BEGIN
+                -- Convert all existing promotions to coupons
+                EXEC('UPDATE promotions SET is_coupon = 1;');
+                
+                -- Create separate campaign banners linking to them
+                EXEC('INSERT INTO promotions (title, subtitle, description, promo_code, discount_percent, button_text, gradient_css, image_url, start_date, enabled, apply_all, is_coupon)
+                      VALUES 
+                      (N''Summer Silhouette Sale'', N''LIMITED TIME OFFER'', N''Embrace the warmth of Yangon in elegance. Get 20% off on all lightweight linen and silk creations.'', NULL, 20.00, N''Claim 20% Discount'', N''linear-gradient(135deg, #8B1A1A 0%, #3C1F10 100%)'', N''https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1200&q=80'', ''2026-06-01'', 1, 1, 0),
+                      (N''Double Atelier Points'', N''EXCLUSIVE ROYAL LOYALTY'', N''Upgrade your status faster. Earn 2x loyalty points on all orders confirmed this weekend.'', NULL, 0.00, N''Explore Collection'', N''linear-gradient(135deg, #3C1F10 0%, #C9A96E 100%)'', N''https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1200&q=80'', ''2026-06-01'', 1, 1, 0),
+                      (N''Monsoon Preview Event'', N''EARLY ACCESS DISPATCH'', N''Get a complimentary matching designer mask and custom resizing on pre-orders.'', NULL, 10.00, N''Unlock Early Access'', N''linear-gradient(135deg, #7A5C50 0%, #EDD9D0 100%)'', N''https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1200&q=80'', ''2026-06-01'', 1, 1, 0);');
+
+                -- Link products to new campaign banners instead of coupons
+                EXEC('
+                    DECLARE @SummerBannerId INT;
+                    SELECT TOP 1 @SummerBannerId = promo_id FROM promotions WHERE title = N''Summer Silhouette Sale'' AND is_coupon = 0;
+                    IF @SummerBannerId IS NOT NULL
+                    BEGIN
+                        UPDATE products SET promo_id = @SummerBannerId WHERE promo_id = 1;
+                    END;
+
+                    DECLARE @MonsoonBannerId INT;
+                    SELECT TOP 1 @MonsoonBannerId = promo_id FROM promotions WHERE title = N''Monsoon Preview Event'' AND is_coupon = 0;
+                    IF @MonsoonBannerId IS NOT NULL
+                    BEGIN
+                        UPDATE products SET promo_id = @MonsoonBannerId WHERE promo_id = 3;
+                    END;
+                ');
+            END;
+            EXEC('UPDATE promotions SET apply_all = 1 WHERE is_coupon = 1;');
+            ALTER TABLE promotions ALTER COLUMN promo_code NVARCHAR(50) NULL;
+            """;
+        await db.Database.ExecuteSqlRawAsync(limitsSql, cancellationToken);
     }
 }

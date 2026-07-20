@@ -340,7 +340,7 @@ namespace ClothingPlatform.Api.Features.Product
             // as EF Core's NavigationExpandingExpressionVisitor cannot resolve them correctly.
             var salesQuery = _db.OrderItems
                 .AsNoTracking()
-                .Where(x => x.Variant != null && x.Variant.ProductId != null);
+                .Where(x => x.Variant != null && x.Variant.ProductId != null && x.Variant.Product.PromoId == null);
 
             if (categoryId > 0)
                 salesQuery = salesQuery.Where(x => x.Variant.Product.CategoryId == categoryId);
@@ -425,6 +425,7 @@ namespace ClothingPlatform.Api.Features.Product
         {
             var query = _db.Products
                 .AsNoTracking()
+                .Where(p => p.PromoId == null)
                 .AsQueryable();
 
             // Filters FIRST
@@ -486,6 +487,7 @@ namespace ClothingPlatform.Api.Features.Product
         {
             var query = _db.Products
                 .AsNoTracking()
+                .Where(p => p.PromoId == null)
                 .AsQueryable();
 
             // Apply filters BEFORE count and pagination

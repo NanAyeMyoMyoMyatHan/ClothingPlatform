@@ -23,6 +23,8 @@ namespace ClothingPlatform.Web.Components.Pages
         public Microsoft.JSInterop.IJSRuntime JSRuntime { get; set; }
         [Inject]
         public CustomerSessionState CustomerSession { get; set; }
+        [Inject]
+        public ServerCookieService ServerCookies { get; set; }
         public AuthRequest data { get; set; } = new();
 
         protected override void OnInitialized()
@@ -135,19 +137,16 @@ namespace ClothingPlatform.Web.Components.Pages
 
                 if (response != null && !string.IsNullOrWhiteSpace(response.AccessToken))
                 {
-                    // Save token to cookie
-                    await CookieStorage.SetTokenAsync(JSRuntime, response.AccessToken);
+                    // Notify authentication state provider
+                    AuthStateProvider.NotifyUserAuthentication(response.AccessToken);
 
-                    // Clean up legacy localStorage items to prevent confusion
+                    // Clean up legacy localStorage items
                     try
                     {
                         await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "customerId");
                         await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
                     }
                     catch {}
-
-                    // Notify authentication state provider
-                    AuthStateProvider.NotifyUserAuthentication(response.AccessToken);
 
                     // Fetch user details from DB to initialize SessionState
                     await using var db = await DbFactory.CreateDbContextAsync();
@@ -160,18 +159,18 @@ namespace ClothingPlatform.Web.Components.Pages
                     if (user != null)
                     {
                         var roleName = response.Role.ToLower();
+
+                        // Set HttpOnly cookies server-side (token + userId)
+                        try
+                        {
+                            await JSRuntime.InvokeVoidAsync("authCookieHelper.setAuth", response.AccessToken, user.UserId);
+                        }
+                        catch {}
+                        ServerCookies.SetAuthCookies(response.AccessToken, user.UserId);
+
                         if (roleName == "customer")
                         {
                             CustomerSession.Login(user);
-                            // Clean up legacy localStorage items
-                            try
-                            {
-                                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "customerId");
-                                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
-                            }
-                            catch {}
-                            // Store customerId in cookie
-                            await CookieStorage.SetCookieAsync(JSRuntime, "customerId", user.UserId.ToString());
                             showToast = true;
                             StateHasChanged();
                             await Task.Delay(1500);
@@ -179,6 +178,7 @@ namespace ClothingPlatform.Web.Components.Pages
                             return;
                         }
 
+                        Session.AuthToken = response.AccessToken;
                         Session.Login(user, response.Permissions);
                         showToast = true;
                         StateHasChanged();

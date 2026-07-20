@@ -37,6 +37,9 @@ namespace ClothingPlatform.Web.Components.Pages
         [Inject]
         public Microsoft.AspNetCore.Hosting.IWebHostEnvironment WebHostEnvironment { get; set; }
 
+        [Inject]
+        public ServerCookieService ServerCookies { get; set; }
+
        
 
         // State variables
@@ -56,10 +59,10 @@ namespace ClothingPlatform.Web.Components.Pages
         private bool profileSaved = false;
 
         private bool IsPortalOperator => Session.IsAdmin || Session.IsStaff;
-        private bool CanViewCustomers => Session.HasPermission("Customers.View");
-        private bool CanManageStaff => Session.HasPermission("Staff.Manage");
-        private bool CanManageProducts => Session.HasPermission("Products.Manage");
-        private bool CanViewReports => Session.HasPermission("Reports.Generate");
+        private bool CanViewCustomers => Session.HasPermission("customers.view");
+        private bool CanManageStaff => Session.HasPermission("staff.manage");
+        private bool CanManageProducts => Session.HasPermission("products.manage");
+        private bool CanViewReports => Session.HasPermission("reports.generate");
         private bool CanAccessAdminInsights => Session.IsAdmin || CanViewReports;
         private string PortalHeadline => Session.IsAdmin ? "Atelier Admin Panel" : "Atelier Operations Portal";
         private string PortalShellLabel => Session.IsAdmin ? "Admin Control" : "Shared Operations";
@@ -114,6 +117,11 @@ namespace ClothingPlatform.Web.Components.Pages
         private bool isSubmittingRestock = false;
 
         private List<StaffActivityLog> stockInVouchers = new();
+        private int voucherPage = 1;
+        private int voucherPageSize = 10;
+        private int voucherTotalCount;
+        private int VoucherTotalPages => (int)Math.Ceiling((double)voucherTotalCount / voucherPageSize);
+        private List<StaffActivityLog> PagedVouchers = new();
         private StockReportSummaryDto? stockReport;
         private string stockReportSearch = "";
         private string stockReportCategoryFilter = "";
@@ -551,6 +559,15 @@ namespace ClothingPlatform.Web.Components.Pages
                     .OrderByDescending(l => l.LogId)
                     .ToListAsync();
 
+                // Paginate stock-in vouchers
+                voucherTotalCount = stockInVouchers.Count;
+                if (voucherPage < 1) voucherPage = 1;
+                if (voucherPage > VoucherTotalPages && VoucherTotalPages > 0) voucherPage = VoucherTotalPages;
+                PagedVouchers = stockInVouchers
+                    .Skip((voucherPage - 1) * voucherPageSize)
+                    .Take(voucherPageSize)
+                    .ToList();
+
                 // Load contact messages / reviews
                 contactMessages = await db.ContactMessages
                     .AsNoTracking()
@@ -587,7 +604,7 @@ namespace ClothingPlatform.Web.Components.Pages
                     .ToList();
 
                 // Compute dashboard KPI stats
-                TotalRevenue = orders.Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Confirm).Sum(o => o.TotalAmount);
+                TotalRevenue = orders.Where(o => !OrderWorkflow.IsCancelled(o.OrderStatus)).Sum(o => o.TotalAmount);
                 TotalOrders = orders.Count;
                 PendingOrders = orders.Count(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Pending);
                 CancelledOrders = orders.Count(o => OrderWorkflow.IsCancelled(o.OrderStatus));
@@ -663,6 +680,13 @@ namespace ClothingPlatform.Web.Components.Pages
         private async Task ChangeReturnPage(int newPage)
         {
             returnPage = newPage;
+            await LoadData();
+        }
+
+
+        private async Task ChangeVoucherPage(int newPage)
+        {
+            voucherPage = newPage;
             await LoadData();
         }
 
@@ -1604,8 +1628,12 @@ namespace ClothingPlatform.Web.Components.Pages
         {
             Session.Logout();
             currentUser = null;
-            
-            await CookieStorage.RemoveTokenAsync(JSRuntime);
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("authCookieHelper.clear");
+            }
+            catch {}
+            ServerCookies.ClearAuthCookies();
             Nav.NavigateTo("/portal-login");
         }
         private async Task HandleCreateStaff()
@@ -1767,7 +1795,7 @@ namespace ClothingPlatform.Web.Components.Pages
         {
             try
             {
-                var token = await CookieStorage.GetTokenAsync(JSRuntime);
+                var token = ServerCookies.GetAuthToken();
                 using var request = new HttpRequestMessage(
                     HttpMethod.Get,
                     $"api/report/admin.csv?from={reportFrom:yyyy-MM-dd}&to={reportTo:yyyy-MM-dd}");
@@ -2473,7 +2501,7 @@ namespace ClothingPlatform.Web.Components.Pages
         {
             var confirmed = await ShowConfirmModalAsync(
                 title: "Cancel Guest Order",
-                message: $"Are you sure you want to cancel guest order #{go.GuestOrderId}?",
+                message: $"Are you sure you want to cancel guest order GORD-{go.GuestOrderId:D4}?",
                 confirmText: "Cancel Order");
 
             if (!confirmed)
@@ -2494,7 +2522,7 @@ namespace ClothingPlatform.Web.Components.Pages
                     }
                     dbGo.OrderStatus = OrderWorkflow.CancelledByStaff;
                     await db.SaveChangesAsync();
-                    successMessage = $"Guest order #{go.GuestOrderId} cancelled successfully.";
+                    successMessage = $"guest order GORD-{go.GuestOrderId:D4} cancelled successfully.";
                     await LoadData();
                 }
                 catch (Exception ex)
@@ -2508,7 +2536,7 @@ namespace ClothingPlatform.Web.Components.Pages
         {
             var confirmed = await ShowConfirmModalAsync(
                 title: "Approve Return",
-                message: $"Are you sure you want to approve return/exchange request #{ret.OrderReturnId}?",
+                message: $"Are you sure you want to approve return/exchange request RET-{ret.OrderReturnId:D4}?",
                 confirmText: "Approve");
 
             if (!confirmed) return;
@@ -2529,12 +2557,12 @@ namespace ClothingPlatform.Web.Components.Pages
                         if (string.Equals(dbRet.ReturnOption, "Refund", StringComparison.OrdinalIgnoreCase))
                         {
                             title = "Return Refund Approved";
-                            message = $"Dear valued customer, your return request #{dbRet.OrderReturnId} for Order ORD-{dbRet.OrderId:D4} has been approved for a refund. To receive your refund, please contact our support team and provide your Kpay or Wavepay phone number and account name.";
+                            message = $"Dear valued customer, your return request RET-{dbRet.OrderReturnId:D4} for Order ORD-{dbRet.OrderId:D4} has been approved for a refund. To receive your refund, please contact our support team and provide your Kpay or Wavepay phone number and account name.";
                         }
                         else
                         {
                             title = "Return Exchange Approved";
-                            message = $"Dear valued customer, your return/exchange request #{dbRet.OrderReturnId} for Order ORD-{dbRet.OrderId:D4} has been approved. We will prepare your replacement item for delivery.";
+                            message = $"Dear valued customer, your return/exchange request RET-{dbRet.OrderReturnId:D4} for Order ORD-{dbRet.OrderId:D4} has been approved. We will prepare your replacement item for delivery.";
                         }
 
                         db.CustomerNotifications.Add(new CustomerNotification
@@ -2564,7 +2592,7 @@ namespace ClothingPlatform.Web.Components.Pages
         {
             var confirmed = await ShowConfirmModalAsync(
                 title: "Reject Return",
-                message: $"Are you sure you want to reject return/exchange request #{ret.OrderReturnId}?",
+                message: $"Are you sure you want to reject return/exchange request RET-{ret.OrderReturnId:D4}?",
                 confirmText: "Reject");
 
             if (!confirmed) return;
@@ -2585,7 +2613,7 @@ namespace ClothingPlatform.Web.Components.Pages
                             UserId = order.UserId,
                             OrderId = order.OrderId,
                             Title = "Return Request Rejected",
-                            Message = $"Dear valued customer, we regret to inform you that your return/exchange request #{dbRet.OrderReturnId} for Order ORD-{dbRet.OrderId:D4} has been rejected. Please contact our support team for more details.",
+                            Message = $"Dear valued customer, we regret to inform you that your return/exchange request RET-{dbRet.OrderReturnId:D4} for Order ORD-{dbRet.OrderId:D4} has been rejected. Please contact our support team for more details.",
                             IsRead = false,
                             CreatedAt = DateTime.Now
                         });
@@ -2615,6 +2643,7 @@ namespace ClothingPlatform.Web.Components.Pages
     {
         private List<Promotion> adminPromotionsList = new();
         private Promotion editingPromo = new();
+        private string activePromoSubTab = "banners";
         private List<int> selectedProductIdsForPromo = new();
         private const string LoadPromotionsAction = "load-promotions";
         private const string SavePromotionAction = "save-promotion";
@@ -2672,7 +2701,10 @@ namespace ClothingPlatform.Web.Components.Pages
                 Enabled = true,
                 ApplyAll = true,
                 GradientCss = "linear-gradient(135deg, #8B1A1A 0%, #3C1F10 100%)",
-                ButtonText = "Shop Now"
+                ButtonText = "Shop Now",
+                IsCoupon = activePromoSubTab == "codes",
+                PromoType = "Percent",
+                DiscountValue = 0
             };
             selectedProductIdsForPromo.Clear();
             promotionImageBytes = null;
@@ -2694,6 +2726,8 @@ namespace ClothingPlatform.Web.Components.Pages
                 Description = promo.Description,
                 PromoCode = promo.PromoCode,
                 DiscountPercent = promo.DiscountPercent,
+                PromoType = promo.PromoType ?? "Percent",
+                DiscountValue = promo.DiscountValue,
                 ButtonText = promo.ButtonText,
                 GradientCss = promo.GradientCss,
                 ImageUrl = promo.ImageUrl,
@@ -2807,7 +2841,8 @@ namespace ClothingPlatform.Web.Components.Pages
 
         private List<Promotion> GetFilteredPromotions()
         {
-            var query = adminPromotionsList.AsEnumerable();
+            var isCouponTarget = activePromoSubTab == "codes";
+            var query = adminPromotionsList.Where(p => p.IsCoupon == isCouponTarget);
 
             if (promotionStatusFilter != "all")
             {
@@ -2817,7 +2852,11 @@ namespace ClothingPlatform.Web.Components.Pages
             if (!string.IsNullOrWhiteSpace(promotionSearchQuery))
             {
                 var q = promotionSearchQuery.Trim().ToLowerInvariant();
-                query = query.Where(p => p.Title.ToLowerInvariant().Contains(q) || p.PromoCode.ToLowerInvariant().Contains(q));
+                query = query.Where(p => 
+                    p.Title.ToLowerInvariant().Contains(q) || 
+                    (p.PromoCode != null && p.PromoCode.ToLowerInvariant().Contains(q)) ||
+                    (p.Description != null && p.Description.ToLowerInvariant().Contains(q))
+                );
             }
 
             return query.ToList();
@@ -2841,10 +2880,41 @@ namespace ClothingPlatform.Web.Components.Pages
 
         private async Task HandleSavePromotion()
         {
-            if (string.IsNullOrWhiteSpace(editingPromo.Title) || string.IsNullOrWhiteSpace(editingPromo.PromoCode))
+            if (editingPromo.IsCoupon)
             {
-                errorMessage = "Title and Promo Code are required.";
-                return;
+                if (string.IsNullOrWhiteSpace(editingPromo.PromoCode))
+                {
+                    errorMessage = "Promo Code is required.";
+                    return;
+                }
+                if (string.IsNullOrWhiteSpace(editingPromo.Title))
+                {
+                    editingPromo.Title = editingPromo.PromoCode.Trim().ToUpperInvariant();
+                }
+
+                if (editingPromo.PromoType == "Percent")
+                {
+                    editingPromo.DiscountPercent = editingPromo.DiscountValue;
+                }
+                else if (editingPromo.PromoType == "Shipping")
+                {
+                    editingPromo.DiscountValue = 100;
+                    editingPromo.DiscountPercent = 100;
+                }
+                else if (editingPromo.PromoType == "Fixed")
+                {
+                    editingPromo.DiscountPercent = 0;
+                }
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(editingPromo.Title))
+                {
+                    errorMessage = "Title is required.";
+                    return;
+                }
+                editingPromo.PromoType = "Percent";
+                editingPromo.DiscountValue = editingPromo.DiscountPercent;
             }
 
             try
@@ -2866,15 +2936,21 @@ namespace ClothingPlatform.Web.Components.Pages
 
                 await using var db = await DbFactory.CreateDbContextAsync();
                 
-                var codeClean = editingPromo.PromoCode.Trim();
-                var exists = await db.Promotions.AnyAsync(p => p.PromoCode == codeClean && p.PromoId != editingPromo.PromoId);
-                if (exists)
+                if (!string.IsNullOrWhiteSpace(editingPromo.PromoCode))
                 {
-                    errorMessage = $"Promo code '{editingPromo.PromoCode}' is already in use.";
-                    return;
+                    var codeClean = editingPromo.PromoCode.Trim().ToUpperInvariant();
+                    var exists = await db.Promotions.AnyAsync(p => p.PromoCode == codeClean && p.PromoId != editingPromo.PromoId && p.IsCoupon);
+                    if (exists)
+                    {
+                        errorMessage = $"Promo code '{editingPromo.PromoCode}' is already in use.";
+                        return;
+                    }
+                    editingPromo.PromoCode = codeClean;
                 }
-
-                editingPromo.PromoCode = codeClean;
+                else
+                {
+                    editingPromo.PromoCode = null;
+                }
 
                 if (editingPromo.PromoId == 0)
                 {
@@ -2945,6 +3021,28 @@ namespace ClothingPlatform.Web.Components.Pages
             {
                 errorMessage = $"Failed to delete promotion: {ex.Message}";
             }
+        }
+
+        private string GetConicGradient()
+        {
+            if (categoryRevenues == null || !categoryRevenues.Any())
+                return "transparent";
+                
+            var sb = new System.Text.StringBuilder();
+            double currentSum = 0;
+            foreach (var item in categoryRevenues)
+            {
+                double start = currentSum;
+                double end = currentSum + item.Percentage;
+                
+                if (end > 100.0) end = 100.0;
+                
+                if (sb.Length > 0) sb.Append(", ");
+                sb.Append($"{item.Color} {start.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}% {end.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}%");
+                
+                currentSum = end;
+            }
+            return sb.ToString();
         }
     }
 }

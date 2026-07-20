@@ -41,6 +41,9 @@ namespace ClothingPlatform.Web.Components.Pages
         [Inject]
         public IWebHostEnvironment WebHostEnvironment { get; set; }
 
+        [Inject]
+        public ClothingPlatform.Web.Services.ServerCookieService ServerCookies { get; set; }
+
         // State variables
         private string activeTab = "home";
         private List<Product> allProducts = new();
@@ -57,19 +60,159 @@ namespace ClothingPlatform.Web.Components.Pages
         private ConfirmModal?confirmModal;
         private int? expandedOrderId;
         private CustomerNotificationDto? selectedNotification;
+        private bool showReceiptInDrawer = false;
         private string previousTabBeforeNoti = "home";
 
         // Promotions slide and pages state variables
         private int currentPromoSlideIndex = 0;
         private bool isPromoSliderRunning = false;
         private List<Promotion> promotionsList = new();
+        private List<Promotion> couponsList = new();
         private Promotion? selectedPromotionDetail;
 
         private string enteredPromoCode = "";
-        private string appliedPromoCode = "";
-        private decimal appliedPromoPercent = 0;
-        private decimal appliedPromoDiscount => CartTotal * (appliedPromoPercent / 100);
-        private decimal GrandTotal => CartTotal - appliedPromoDiscount;
+        private List<string> appliedPromoCodes = new();
+        private decimal appliedPromoDiscount => cart.Sum(item => item.CouponDiscountAmount);
+        private decimal CartSubtotal => cart.Sum(item => (item.Price * item.Qty) - item.DiscountAmount);
+        private decimal TotalSaved => cart.Sum(item => item.DiscountAmount) + appliedPromoDiscount;
+
+        private async Task RecalculateCartDiscountsAsync()
+        {
+            foreach (var item in cart)
+            {
+                item.DiscountAmount = 0;
+                item.DiscountPercent = 0;
+                item.CouponDiscountAmount = 0;
+            }
+
+            try
+            {
+                await using var db = await DbFactory.CreateDbContextAsync();
+                var today = DateTime.Today;
+
+                // 1. Get all active campaign banners (which are NOT coupons)
+                var activeBanners = await db.Promotions
+                    .AsNoTracking()
+                    .Where(p => p.Enabled && !p.IsCoupon && 
+                                (!p.StartDate.HasValue || today >= p.StartDate.Value) && 
+                                (!p.EndDate.HasValue || today <= p.EndDate.Value))
+                    .ToListAsync();
+
+                // 2. Get all applied coupon codes
+                var activeCoupons = new List<Promotion>();
+                if (appliedPromoCodes.Any())
+                {
+                    activeCoupons = await db.Promotions
+                        .AsNoTracking()
+                        .Where(p => p.Enabled && p.IsCoupon && 
+                                   appliedPromoCodes.Contains(p.PromoCode) && 
+                                   (!p.StartDate.HasValue || today >= p.StartDate.Value) && 
+                                   (!p.EndDate.HasValue || today <= p.EndDate.Value))
+                        .ToListAsync();
+                }
+
+                // Upfront fetch for variants and products to solve N+1 queries
+                var cartVariantIds = cart.Select(item => item.VariantId).Distinct().ToList();
+                var variants = await db.ProductVariants.AsNoTracking()
+                    .Where(v => cartVariantIds.Contains(v.VariantId))
+                    .ToListAsync();
+                var variantMap = variants.ToDictionary(v => v.VariantId);
+
+                var productIds = variants.Select(v => v.ProductId).Distinct().ToList();
+                var products = await db.Products.AsNoTracking()
+                    .Where(p => productIds.Contains(p.ProductId))
+                    .ToListAsync();
+                var productMap = products.ToDictionary(p => p.ProductId);
+
+                // 3. Apply percent discounts first
+                foreach (var item in cart)
+                {
+                    var variant = variantMap.TryGetValue(item.VariantId, out var v) ? v : null;
+                    if (variant == null) continue;
+
+                    var product = productMap.TryGetValue(variant.ProductId, out var p) ? p : null;
+                    if (product == null) continue;
+
+                    decimal campaignPct = 0;
+                    if (product.PromoId.HasValue)
+                    {
+                        var banner = activeBanners.FirstOrDefault(b => b.PromoId == product.PromoId.Value);
+                        if (banner != null)
+                        {
+                            campaignPct = banner.DiscountPercent;
+                        }
+                    }
+
+                    decimal couponPct = 0;
+                    foreach (var coupon in activeCoupons.Where(c => string.IsNullOrEmpty(c.PromoType) || c.PromoType == "Percent"))
+                    {
+                        decimal val = coupon.DiscountPercent;
+                        couponPct += val;
+                    }
+                    couponPct = Math.Min(couponPct, 100);
+
+                    item.DiscountPercent = campaignPct;
+                    item.DiscountAmount = (item.Price * item.Qty) * (item.DiscountPercent / 100);
+                    item.CouponDiscountAmount = (item.Price * item.Qty) * (couponPct / 100);
+                }
+
+                // 4. Apply fixed discount coupons
+                var fixedCoupons = activeCoupons.Where(c => c.PromoType == "Fixed").ToList();
+                foreach (var coupon in fixedCoupons)
+                {
+                    decimal totalFixed = coupon.DiscountValue;
+                    if (totalFixed <= 0) continue;
+
+                    var eligibleItems = new List<(CartItemModel Item, decimal RemainingVal)>();
+                    foreach (var item in cart)
+                    {
+                        var variant = variantMap.TryGetValue(item.VariantId, out var v) ? v : null;
+                        if (variant == null) continue;
+
+                        var product = productMap.TryGetValue(variant.ProductId, out var p) ? p : null;
+                        if (product == null) continue;
+
+                        decimal remaining = (item.Price * item.Qty) - item.DiscountAmount - item.CouponDiscountAmount;
+                        if (remaining > 0)
+                        {
+                            eligibleItems.Add((item, remaining));
+                        }
+                    }
+
+                    decimal eligibleRemainingSum = eligibleItems.Sum(x => x.RemainingVal);
+                    if (eligibleRemainingSum > 0)
+                    {
+                        decimal allocated = 0;
+                        for (int i = 0; i < eligibleItems.Count; i++)
+                        {
+                            var entry = eligibleItems[i];
+                            if (i == eligibleItems.Count - 1)
+                            {
+                                decimal finalAlloc = Math.Min(entry.RemainingVal, totalFixed - allocated);
+                                entry.Item.CouponDiscountAmount += finalAlloc;
+                            }
+                            else
+                            {
+                                decimal alloc = Math.Round((entry.RemainingVal / eligibleRemainingSum) * totalFixed, 2);
+                                decimal finalAlloc = Math.Min(entry.RemainingVal, alloc);
+                                entry.Item.CouponDiscountAmount += finalAlloc;
+                                allocated += finalAlloc;
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                foreach (var item in cart)
+                {
+                    item.DiscountAmount = 0;
+                    item.DiscountPercent = 0;
+                    item.CouponDiscountAmount = 0;
+                }
+            }
+        }
+        private decimal GrandTotal => CartSubtotal + 3000 - appliedPromoDiscount;
         private string promoCodeMessage = "";
         private bool promoCodeSuccess = false;
 
@@ -205,13 +348,14 @@ namespace ClothingPlatform.Web.Components.Pages
                 }
                 catch {}
 
-                var customerIdValue = await CookieStorage.GetCookieAsync(JSRuntime, "customerId");
-                if (int.TryParse(customerIdValue, out var customerId) && currentUser == null)
+                // Read customerId from HttpOnly cookie server-side
+                var customerId = ServerCookies.GetCustomerId();
+                if (customerId.HasValue && currentUser == null)
                 {
                     await using var db = await DbFactory.CreateDbContextAsync();
                     var dbUser = await db.Users
                         .Include(u => u.Role)
-                        .FirstOrDefaultAsync(u => u.UserId == customerId && u.Role.RoleName == "customer");
+                        .FirstOrDefaultAsync(u => u.UserId == customerId.Value && u.Role.RoleName == "customer");
                     if (dbUser != null)
                     {
                         CustomerSession.Login(dbUser);
@@ -344,7 +488,12 @@ namespace ClothingPlatform.Web.Components.Pages
                 var today = DateTime.Today;
                 promotionsList = await _db.Promotions
                     .AsNoTracking()
-                    .Where(p => p.Enabled && (!p.StartDate.HasValue || today >= p.StartDate.Value) && (!p.EndDate.HasValue || today <= p.EndDate.Value))
+                    .Where(p => p.Enabled && !p.IsCoupon && (!p.StartDate.HasValue || today >= p.StartDate.Value) && (!p.EndDate.HasValue || today <= p.EndDate.Value))
+                    .ToListAsync();
+                
+                couponsList = await _db.Promotions
+                    .AsNoTracking()
+                    .Where(p => p.Enabled && p.IsCoupon && (!p.StartDate.HasValue || today >= p.StartDate.Value) && (!p.EndDate.HasValue || today <= p.EndDate.Value))
                     .ToListAsync();
                 
                 allProducts = await _db.Products
@@ -640,6 +789,8 @@ namespace ClothingPlatform.Web.Components.Pages
                 Qty = i.Quantity,
                 ImgUrl = NormalizeImageUrl(i.ImageUrl)
             }).ToList() ?? new List<CartItemModel>();
+
+            await RecalculateCartDiscountsAsync();
         }
 
         private async Task UpdateQty(CartItemModel item, int change)
@@ -904,7 +1055,8 @@ namespace ClothingPlatform.Web.Components.Pages
                     OrderStatus = OrderWorkflow.Pending,
                     PaymentStatus = "unpaid",
                     ShippingAddress = $"{coAddress}, {coCity} (Phone: {coPhone})",
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.Now,
+                    AppliedPromo = appliedPromoCodes.Any() ? string.Join(",", appliedPromoCodes) : null
                 };
 
                 _db.Orders.Add(order);
@@ -939,11 +1091,21 @@ namespace ClothingPlatform.Web.Components.Pages
                     CreatedAt = DateTime.Now
                 });
 
+                // Increment promotion Redeemed count for all applied promo codes
+                foreach (var code in appliedPromoCodes)
+                {
+                    var appliedPromo = await _db.Promotions.FirstOrDefaultAsync(p => p.PromoCode == code);
+                    if (appliedPromo != null)
+                    {
+                        appliedPromo.Redeemed += 1;
+                    }
+                }
+
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
                 dbCommitted = true;
 
-                pointsEarnedInOrder = (int)(total / 100) * (appliedPromoCode == "LOYAL2X" ? 2 : 1);
+                pointsEarnedInOrder = (int)(total / 100) * (appliedPromoCodes.Contains("LOYAL2X") ? 2 : 1);
                 confirmedOrderId = $"ORD-{order.OrderId:D4}";
                 isSuccessOpen = true;
 
@@ -996,8 +1158,7 @@ namespace ClothingPlatform.Web.Components.Pages
                 paymentReference = "";
                 ClearSlipSelection();
 
-                appliedPromoCode = "";
-                appliedPromoPercent = 0;
+                appliedPromoCodes.Clear();
                 enteredPromoCode = "";
                 promoCodeMessage = "";
                 promoCodeSuccess = false;
@@ -1140,15 +1301,15 @@ namespace ClothingPlatform.Web.Components.Pages
             var normalizedPath = trimmedUrl.Replace('\\', '/').TrimStart('/');
             if (normalizedPath.StartsWith("images/products/", StringComparison.OrdinalIgnoreCase))
             {
-                return $"/{normalizedPath}";
+                return $"https://localhost:7065/{normalizedPath}";
             }
 
             if (trimmedUrl.StartsWith("/", StringComparison.Ordinal))
             {
-                return trimmedUrl;
+                return $"https://localhost:7065{trimmedUrl}";
             }
 
-            return $"/images/products/{normalizedPath}";
+            return $"https://localhost:7065/images/products/{normalizedPath}";
         }
         private bool showLogoutConfirm = false;
         private void GotoLogin()
@@ -1184,8 +1345,13 @@ namespace ClothingPlatform.Web.Components.Pages
             CustomerSession.Logout();
             currentUser = null;
             cart.Clear();
-            await CookieStorage.RemoveCookieAsync(JSRuntime, "customerId");
-            await CookieStorage.RemoveCookieAsync(JSRuntime, "authToken");
+            // Clear HttpOnly cookies server-side
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("authCookieHelper.clear");
+            }
+            catch {}
+            ServerCookies.ClearAuthCookies();
             try
             {
                 await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "customerId");
@@ -1215,6 +1381,28 @@ namespace ClothingPlatform.Web.Components.Pages
             StateHasChanged();
         }
 
+        private string GetTimeAgo(DateTime dt)
+        {
+            var span = DateTime.Now - dt;
+            if (span.TotalDays > 365) return $"{(int)(span.TotalDays / 365)} years ago";
+            if (span.TotalDays > 30) return $"{(int)(span.TotalDays / 30)} months ago";
+            if (span.TotalDays > 7) return $"{(int)(span.TotalDays / 7)} weeks ago";
+            if (span.TotalDays >= 1) return $"{(int)span.TotalDays} day{((int)span.TotalDays > 1 ? "s" : "")} ago";
+            if (span.TotalHours >= 1) return $"{(int)span.TotalHours} hour{((int)span.TotalHours > 1 ? "s" : "")} ago";
+            if (span.TotalMinutes >= 1) return $"{(int)span.TotalMinutes} minute{((int)span.TotalMinutes > 1 ? "s" : "")} ago";
+            return "Just now";
+        }
+
+        private async Task MarkAsRead(CustomerNotificationDto noti)
+        {
+            try
+            {
+                await httpClientServices.ExecuteAsync<object>($"api/notifications/{noti.NotificationId}/read", null, EnumHttpMethod.Post);
+            }
+            catch { }
+            StateHasChanged();
+        }
+
         private async Task HandleNotificationClick(CustomerNotificationDto noti)
         {
             if (!noti.IsRead)
@@ -1227,9 +1415,7 @@ namespace ClothingPlatform.Web.Components.Pages
                 catch { }
             }
             showNotificationsDropdown = false;
-            previousTabBeforeNoti = activeTab;
             selectedNotification = noti;
-            activeTab = "notification-detail";
             StateHasChanged();
         }
 
@@ -1244,8 +1430,14 @@ namespace ClothingPlatform.Web.Components.Pages
         {
             if (selectedNotification?.OrderId != null)
             {
-                Nav.NavigateTo($"/receipt/{selectedNotification.OrderId}");
+                showReceiptInDrawer = true;
             }
+        }
+
+        private void CloseNotificationDrawer()
+        {
+            selectedNotification = null;
+            showReceiptInDrawer = false;
         }
 
         private void ViewPurchasesFromNotification()
@@ -1381,6 +1573,9 @@ namespace ClothingPlatform.Web.Components.Pages
             public decimal Price { get; set; }
             public int Qty { get; set; }
             public string ImgUrl { get; set; } = "";
+            public decimal DiscountAmount { get; set; }
+            public decimal DiscountPercent { get; set; }
+            public decimal CouponDiscountAmount { get; set; }
         }
         // Unified modal model
         private class ModalProductDto
@@ -1420,6 +1615,10 @@ namespace ClothingPlatform.Web.Components.Pages
 
         private string returnOption = "Refund"; // "Refund" or "Exchange"
         
+        // -- Promo page computed stats --------------------------------------
+        private int TotalCodesRedeemed => promotionsList.Sum(p => p.Redeemed);
+        private int NewArrivalsCount   => allProducts.Count(p => p.CreatedAt.HasValue && p.CreatedAt.Value >= DateTime.Today.AddDays(-7));
+
         private bool HasBeenReturned(int orderId, int variantId)
         {
             return userReturns.Any(r => r.OrderId == orderId && r.VariantId == variantId && !string.Equals(r.Status, "Rejected", StringComparison.OrdinalIgnoreCase));
@@ -1700,6 +1899,24 @@ namespace ClothingPlatform.Web.Components.Pages
                     .ToListAsync();
 
                 ShowToast("Return/Exchange request submitted successfully!");
+                // Reset the return form after successful submission
+                selectedReturnOrder       = null;
+                selectedReturnItem        = null;
+                selectedReturnItemId      = 0;
+                returnReceiptBytes        = null;
+                returnReceiptPreviewUrl   = string.Empty;
+                returnReceiptFileName     = string.Empty;
+                returnReceiptExtension    = string.Empty;
+                returnReceiptContentType  = string.Empty;
+                returnReceiptError        = string.Empty;
+                retReasonColorMismatch    = false;
+                retReasonDamage           = false;
+                retReasonSizeIssue        = false;
+                retReasonExchangeRequest  = false;
+                returnCustomMessage       = string.Empty;
+                returnOption              = "Refund";
+                selectedExchangeVariant   = null;
+                showExchangePicker        = false;
                 activeTab = "history";
             }
             catch (Exception ex)
@@ -1808,24 +2025,24 @@ namespace ClothingPlatform.Web.Components.Pages
             StateHasChanged();
         }
 
-        private void ClickPromoSlide(Promotion promo)
+        private async Task ClickPromoSlide(Promotion promo)
         {
             selectedPromotionDetail = promo;
             if (!string.IsNullOrEmpty(promo.PromoCode))
             {
                 enteredPromoCode = promo.PromoCode;
-                ApplyPromoCodeCheckoutSilent();
+                await ApplyPromoCodeCheckoutSilent();
             }
             Navigate("promotions");
         }
 
-        private void SelectPromotion(Promotion promo)
+        private async Task SelectPromotion(Promotion promo)
         {
             selectedPromotionDetail = promo;
             if (!string.IsNullOrEmpty(promo.PromoCode))
             {
                 enteredPromoCode = promo.PromoCode;
-                ApplyPromoCodeCheckoutSilent();
+                await ApplyPromoCodeCheckoutSilent();
             }
             StateHasChanged();
         }
@@ -1864,6 +2081,7 @@ namespace ClothingPlatform.Web.Components.Pages
 
         private async Task CopyPromoCode(string code)
         {
+            if (string.IsNullOrEmpty(code)) return;
             try
             {
                 await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", code);
@@ -1875,29 +2093,152 @@ namespace ClothingPlatform.Web.Components.Pages
             }
         }
 
-        private void ApplyPromoAndGoToShop(Promotion promo)
+        private async Task ApplyPromoAndGoToShop(Promotion promo)
         {
             if (!string.IsNullOrEmpty(promo.PromoCode))
             {
                 enteredPromoCode = promo.PromoCode;
-                ApplyPromoCodeCheckoutSilent();
+                await ApplyPromoCodeCheckoutSilent();
             }
             Navigate("shop");
         }
 
-        private void ApplyPromoCodeCheckoutSilent()
+        private async Task ApplyPromoCodeCheckoutSilent()
         {
-            var matchingPromo = promotionsList.FirstOrDefault(p => string.Equals(p.PromoCode, enteredPromoCode, StringComparison.OrdinalIgnoreCase));
-            if (matchingPromo != null)
+            if (string.IsNullOrWhiteSpace(enteredPromoCode)) return;
+
+            try
             {
-                appliedPromoCode = matchingPromo.PromoCode;
-                appliedPromoPercent = matchingPromo.DiscountPercent;
-                promoCodeMessage = $"Promo '{appliedPromoCode}' applied successfully! ({appliedPromoPercent}% Off)";
-                promoCodeSuccess = true;
+                await using var db = await DbFactory.CreateDbContextAsync();
+                var today = DateTime.Today;
+                var matchingPromo = await db.Promotions.FirstOrDefaultAsync(p => 
+                    p.Enabled && 
+                    p.PromoCode.Trim() == enteredPromoCode.Trim() &&
+                    (!p.StartDate.HasValue || today >= p.StartDate.Value) &&
+                    (!p.EndDate.HasValue || today <= p.EndDate.Value));
+
+                if (matchingPromo != null)
+                {
+                    if (appliedPromoCodes.Contains(matchingPromo.PromoCode))
+                    {
+                        return;
+                    }
+
+                    if (matchingPromo.UsageLimit > 0 && matchingPromo.Redeemed >= matchingPromo.UsageLimit)
+                    {
+                        promoCodeMessage = "This promo code has reached its usage limit.";
+                        promoCodeSuccess = false;
+                        return;
+                    }
+
+                    if (matchingPromo.UserLimit > 0 && currentUser != null)
+                    {
+                        int userRedeemed = await db.Orders.CountAsync(o => o.UserId == currentUser.UserId && o.AppliedPromo != null && o.AppliedPromo.Contains(matchingPromo.PromoCode));
+                        if (userRedeemed >= matchingPromo.UserLimit)
+                        {
+                            promoCodeMessage = $"You have already used the promo code '{matchingPromo.PromoCode}'.";
+                            promoCodeSuccess = false;
+                            return;
+                        }
+                    }
+
+                    if (matchingPromo.NewMemberOnly && currentUser != null)
+                    {
+                        int previousOrdersCount = await db.Orders.CountAsync(o => o.UserId == currentUser.UserId && !OrderWorkflow.IsCancelled(o.OrderStatus));
+                        if (previousOrdersCount > 0)
+                        {
+                            promoCodeMessage = "This promo code is only available for new members.";
+                            promoCodeSuccess = false;
+                            return;
+                        }
+                    }
+
+                    decimal tempDiscount = 0;
+                    var promoType = matchingPromo.PromoType ?? "Percent";
+                    decimal val = matchingPromo.DiscountValue > 0 ? matchingPromo.DiscountValue : matchingPromo.DiscountPercent;
+
+                    if (promoType == "Percent")
+                    {
+                        if (matchingPromo.ApplyAll)
+                        {
+                            tempDiscount = CartTotal * (val / 100);
+                        }
+                        else
+                        {
+                            foreach (var item in cart)
+                            {
+                                var variant = await db.ProductVariants.FirstOrDefaultAsync(v => v.VariantId == item.VariantId);
+                                if (variant != null)
+                                {
+                                    var product = await db.Products.FirstOrDefaultAsync(p => p.ProductId == variant.ProductId);
+                                    if (product != null && product.PromoId == matchingPromo.PromoId)
+                                    {
+                                        tempDiscount += (item.Price * item.Qty) * (val / 100);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else if (promoType == "Fixed")
+                    {
+                        if (matchingPromo.ApplyAll)
+                        {
+                            tempDiscount = val;
+                        }
+                        else
+                        {
+                            foreach (var item in cart)
+                            {
+                                var variant = await db.ProductVariants.FirstOrDefaultAsync(v => v.VariantId == item.VariantId);
+                                if (variant != null)
+                                {
+                                    var product = await db.Products.FirstOrDefaultAsync(p => p.ProductId == variant.ProductId);
+                                    if (product != null && product.PromoId == matchingPromo.PromoId)
+                                    {
+                                        tempDiscount += (item.Price * item.Qty);
+                                    }
+                                }
+                            }
+                            tempDiscount = Math.Min(tempDiscount, val);
+                        }
+                    }
+                    else if (promoType == "Shipping")
+                    {
+                        tempDiscount = 0; // free shipping, shipping is already 0
+                    }
+
+                    if (promoType == "Percent" && val > 0 && tempDiscount == 0)
+                    {
+                        promoCodeMessage = "No eligible items in your bag for this promo code.";
+                        promoCodeSuccess = false;
+                        await RecalculateCartDiscountsAsync();
+                    }
+                    else if (promoType == "Fixed" && val > 0 && tempDiscount == 0)
+                    {
+                        promoCodeMessage = "No eligible items in your bag for this promo code.";
+                        promoCodeSuccess = false;
+                        await RecalculateCartDiscountsAsync();
+                    }
+                    else
+                    {
+                        appliedPromoCodes.Add(matchingPromo.PromoCode);
+                        string displaySuccessMsg = promoType switch
+                        {
+                            "Percent" => $"Promo '{matchingPromo.PromoCode}' applied successfully! ({val}% Off)",
+                            "Fixed" => $"Promo '{matchingPromo.PromoCode}' applied successfully! ({val:N0} ks Off)",
+                            "Shipping" => $"Promo '{matchingPromo.PromoCode}' applied successfully! (Free Shipping)",
+                            _ => $"Promo '{matchingPromo.PromoCode}' applied successfully!"
+                        };
+                        promoCodeMessage = displaySuccessMsg;
+                        promoCodeSuccess = true;
+                        await RecalculateCartDiscountsAsync();
+                    }
+                }
             }
+            catch {}
         }
 
-        private void ApplyPromoCodeCheckout()
+        private async Task ApplyPromoCodeCheckout()
         {
             if (string.IsNullOrWhiteSpace(enteredPromoCode))
             {
@@ -1906,24 +2247,119 @@ namespace ClothingPlatform.Web.Components.Pages
                 return;
             }
 
-            var matchingPromo = promotionsList.FirstOrDefault(p => string.Equals(p.PromoCode.Trim(), enteredPromoCode.Trim(), StringComparison.OrdinalIgnoreCase));
-            if (matchingPromo != null)
+            try
             {
-                appliedPromoCode = matchingPromo.PromoCode;
-                appliedPromoPercent = matchingPromo.DiscountPercent;
-                promoCodeMessage = matchingPromo.DiscountPercent > 0 
-                    ? $"Promo '{appliedPromoCode}' applied successfully! ({appliedPromoPercent}% Off)"
-                    : $"Promo '{appliedPromoCode}' applied successfully! (Double Points Active)";
-                promoCodeSuccess = true;
-                ShowToast($"Discount code '{appliedPromoCode}' applied!");
+                await using var db = await DbFactory.CreateDbContextAsync();
+                var today = DateTime.Today;
+                var matchingPromo = await db.Promotions.FirstOrDefaultAsync(p => 
+                    p.Enabled && 
+                    p.PromoCode.Trim() == enteredPromoCode.Trim() &&
+                    (!p.StartDate.HasValue || today >= p.StartDate.Value) &&
+                    (!p.EndDate.HasValue || today <= p.EndDate.Value));
+
+                if (matchingPromo != null)
+                {
+                    if (appliedPromoCodes.Contains(matchingPromo.PromoCode))
+                    {
+                        promoCodeMessage = $"Promo code '{matchingPromo.PromoCode}' is already applied.";
+                        promoCodeSuccess = false;
+                        ShowToast("Promo code already applied.");
+                        return;
+                    }
+
+                    if (matchingPromo.UsageLimit > 0 && matchingPromo.Redeemed >= matchingPromo.UsageLimit)
+                    {
+                        promoCodeMessage = "This promo code has reached its usage limit.";
+                        promoCodeSuccess = false;
+                        ShowToast("Promo code usage limit reached.");
+                        return;
+                    }
+
+                    if (matchingPromo.UserLimit > 0 && currentUser != null)
+                    {
+                        int userRedeemed = await db.Orders.CountAsync(o => o.UserId == currentUser.UserId && o.AppliedPromo != null && o.AppliedPromo.Contains(matchingPromo.PromoCode));
+                        if (userRedeemed >= matchingPromo.UserLimit)
+                        {
+                            promoCodeMessage = $"You have already used the promo code '{matchingPromo.PromoCode}'.";
+                            promoCodeSuccess = false;
+                            ShowToast("You have already used this promo code.");
+                            return;
+                        }
+                    }
+
+                    if (matchingPromo.NewMemberOnly && currentUser != null)
+                    {
+                        int previousOrdersCount = await db.Orders.CountAsync(o => o.UserId == currentUser.UserId && !OrderWorkflow.IsCancelled(o.OrderStatus));
+                        if (previousOrdersCount > 0)
+                        {
+                            promoCodeMessage = "This promo code is only available for new members.";
+                            promoCodeSuccess = false;
+                            ShowToast("This promo code is only for new members.");
+                            return;
+                        }
+                    }
+
+                    decimal tempDiscount = 0;
+                    var promoType = matchingPromo.PromoType ?? "Percent";
+                    decimal val = matchingPromo.DiscountValue > 0 ? matchingPromo.DiscountValue : matchingPromo.DiscountPercent;
+
+                    if (promoType == "Percent")
+                    {
+                        tempDiscount = CartTotal * (val / 100);
+                    }
+                    else if (promoType == "Fixed")
+                    {
+                        tempDiscount = val;
+                    }
+                    else if (promoType == "Shipping")
+                    {
+                        tempDiscount = 0;
+                    }
+
+                    if (promoType == "Percent" && val > 0 && tempDiscount == 0)
+                    {
+                        promoCodeMessage = "No eligible items in your bag for this promo code.";
+                        promoCodeSuccess = false;
+                        ShowToast("No eligible items for this promo.");
+                        await RecalculateCartDiscountsAsync();
+                    }
+                    else if (promoType == "Fixed" && val > 0 && tempDiscount == 0)
+                    {
+                        promoCodeMessage = "No eligible items in your bag for this promo code.";
+                        promoCodeSuccess = false;
+                        ShowToast("No eligible items for this promo.");
+                        await RecalculateCartDiscountsAsync();
+                    }
+                    else
+                    {
+                        appliedPromoCodes.Add(matchingPromo.PromoCode);
+                        string displaySuccessMsg = promoType switch
+                        {
+                            "Percent" => $"Promo '{matchingPromo.PromoCode}' applied successfully! ({val}% Off)",
+                            "Fixed" => $"Promo '{matchingPromo.PromoCode}' applied successfully! ({val:N0} ks Off)",
+                            "Shipping" => $"Promo '{matchingPromo.PromoCode}' applied successfully! (Free Shipping)",
+                            _ => $"Promo '{matchingPromo.PromoCode}' applied successfully!"
+                        };
+                        promoCodeMessage = displaySuccessMsg;
+                        promoCodeSuccess = true;
+                        ShowToast($"Discount code '{matchingPromo.PromoCode}' applied!");
+                        await RecalculateCartDiscountsAsync();
+                    }
+                }
+                else
+                {
+                    promoCodeMessage = "Invalid promo code.";
+                    promoCodeSuccess = false;
+                    ShowToast("Failed to apply promo code.");
+                    await RecalculateCartDiscountsAsync();
+                }
             }
-            else
+            catch (Exception ex)
             {
-                appliedPromoCode = "";
-                appliedPromoPercent = 0;
-                promoCodeMessage = "Invalid promo code.";
+                promoCodeMessage = $"Error applying promo code: {ex.Message}";
                 promoCodeSuccess = false;
                 ShowToast("Failed to apply promo code.");
+                await RecalculateCartDiscountsAsync();
             }
             StateHasChanged();
         }

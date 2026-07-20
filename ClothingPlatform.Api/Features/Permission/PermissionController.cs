@@ -10,7 +10,7 @@ namespace ClothingPlatform.Api.Features.Permission
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
-    [Permission("Permissions.Manage")]
+    [Permission("permissions.manage")]
     public class PermissionController : ControllerBase
     {
         private readonly IPermissionService _permissionService;

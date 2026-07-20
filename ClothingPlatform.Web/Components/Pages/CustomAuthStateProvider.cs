@@ -1,78 +1,67 @@
-using Azure;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
+using ClothingPlatform.Web.Services;
 using System.Security.Claims;
 using System.Text.Json;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ClothingPlatform.Web.Components.Pages
 {
     public class CustomAuthStateProvider : AuthenticationStateProvider
     {
         private readonly IJSRuntime _jsRuntime;
+        private readonly ServerCookieService _cookieService;
         private readonly ClaimsPrincipal _anonymous = new(new ClaimsIdentity());
 
-        public CustomAuthStateProvider(IJSRuntime jsRuntime)
+        public CustomAuthStateProvider(IJSRuntime jsRuntime, ServerCookieService cookieService)
         {
             _jsRuntime = jsRuntime;
+            _cookieService = cookieService;
         }
 
-        public override async Task<AuthenticationState> GetAuthenticationStateAsync()
+        public override Task<AuthenticationState> GetAuthenticationStateAsync()
         {
             try
             {
-                // Retrieve token from cookie via JS Interop
-                var token = await ClothingPlatform.Web.Services.CookieStorage.GetTokenAsync(_jsRuntime);
-
-                // Clean up any legacy localStorage authToken to prevent confusion
-                try
-                {
-                    await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
-                }
-                catch {}
+                // Read HttpOnly cookie server-side — not accessible to JS
+                var token = _cookieService.GetAuthToken();
 
                 if (string.IsNullOrWhiteSpace(token))
-                {
-                    return new AuthenticationState(_anonymous);
-                }
+                    return Task.FromResult(new AuthenticationState(_anonymous));
 
-                // Mark the user as logged in with their claims extracted from the JWT token
-                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt")));
+                return Task.FromResult(new AuthenticationState(
+                    new ClaimsPrincipal(new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt"))));
             }
             catch
             {
-                return new AuthenticationState(_anonymous);
+                return Task.FromResult(new AuthenticationState(_anonymous));
             }
         }
 
         // Call this method right after a successful API login
         public void NotifyUserAuthentication(string token)
         {
-            var authenticatedUser = new ClaimsPrincipal(new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt"));
-            var authState = Task.FromResult(new AuthenticationState(authenticatedUser));
-
-            // This triggers Blazor to refresh the UI and reveal authorized pages
-            NotifyAuthenticationStateChanged(authState);
+            var authenticatedUser = new ClaimsPrincipal(
+                new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt"));
+            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(authenticatedUser)));
         }
 
         // Call this for logout
         public async Task NotifyUserLogout()
         {
-            await ClothingPlatform.Web.Services.CookieStorage.RemoveTokenAsync(_jsRuntime);
-            await ClothingPlatform.Web.Services.CookieStorage.RemoveCookieAsync(_jsRuntime, "customerId");
+            // Clear HttpOnly cookies server-side
+            _cookieService.ClearAuthCookies();
+
+            // Clean up any legacy localStorage remnants
             try
             {
                 await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
                 await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "customerId");
             }
-            catch {}
-            var authState = Task.FromResult(new AuthenticationState(_anonymous));
-            NotifyAuthenticationStateChanged(authState);
+            catch { }
+
+            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_anonymous)));
         }
 
-        // Helper method to parse JWT payload without external libraries
         private IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
         {
             var claims = new List<Claim>();
@@ -83,14 +72,12 @@ namespace ClothingPlatform.Web.Components.Pages
             if (keyValuePairs != null)
             {
                 foreach (var kvp in keyValuePairs)
-                {
                     claims.Add(new Claim(kvp.Key, kvp.Value.ToString() ?? ""));
-                }
             }
             return claims;
         }
 
-        private byte[] ParseBase64WithoutPadding(string base64)
+        private static byte[] ParseBase64WithoutPadding(string base64)
         {
             switch (base64.Length % 4)
             {
@@ -100,4 +87,4 @@ namespace ClothingPlatform.Web.Components.Pages
             return Convert.FromBase64String(base64);
         }
     }
-}
+}

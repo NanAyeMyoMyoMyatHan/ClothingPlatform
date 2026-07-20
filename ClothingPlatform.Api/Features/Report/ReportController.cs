@@ -8,7 +8,7 @@ namespace ClothingPlatform.Api.Features.Report
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Permission("Reports.Generate")]
+    [Permission("reports.generate")]
     public class ReportController : ControllerBase
     {
         private readonly IReportService _reportService;

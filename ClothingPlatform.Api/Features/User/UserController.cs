@@ -18,7 +18,7 @@ namespace ClothingPlatform.Api.Features.User
         }
 
         [HttpGet("customers")]
-        [Permission("Customers.View", true)]
+        [Permission("customers.view", true)]
         public async Task<IActionResult> GetUsersCustomer(int page = 1, int pageSize = 10)
         {
             var result = await _userService.GetUsersCustomerAsync(page, pageSize);
@@ -26,7 +26,7 @@ namespace ClothingPlatform.Api.Features.User
         }
 
         [HttpGet("staffs")]
-        [Permission("Staff.Manage", true)]
+        [Permission("staff.manage", true)]
         public async Task<IActionResult> GetUsersStaff(int staffpage = 1, int staffpageSize = 10)
         {
             var result = await _userService.GetUsersStaffAsync(staffpage, staffpageSize);
@@ -34,7 +34,7 @@ namespace ClothingPlatform.Api.Features.User
         }
 
         [HttpGet("{id}")]
-        [Permission("Customers.View", true)]
+        [Permission("customers.view", true)]
         public IActionResult GetUserById(int id)
         {
             var result = _userService.GetUserDto(id);
@@ -47,7 +47,7 @@ namespace ClothingPlatform.Api.Features.User
         }
 
         [HttpPost]
-        [Permission("Staff.Manage", true)]
+        [Permission("staff.manage", true)]
         public IActionResult CreateUser(CreatRquestModel userDto)
         {
             _userService.CreateUser(userDto);
@@ -55,7 +55,7 @@ namespace ClothingPlatform.Api.Features.User
         }
 
         [HttpPut("{id}")]
-        [Permission("Staff.Manage", true)]
+        [Permission("staff.manage", true)]
         public IActionResult UpdateUser(int id, UpdateRequestModel model)
         {
             _userService.UpdateUser(id, model);
@@ -63,7 +63,7 @@ namespace ClothingPlatform.Api.Features.User
         }
 
         [HttpDelete("{id}")]
-        [Permission("Staff.Manage", true)]
+        [Permission("staff.manage", true)]
         public IActionResult DeleteUser(int id)
         {
             _userService.DeleteUser(id);
@@ -71,7 +71,7 @@ namespace ClothingPlatform.Api.Features.User
         }
 
         [HttpGet("dashboard")]
-        [Permission("Customers.View", true)]
+        [Permission("customers.view", true)]
         public async Task<IActionResult> Dashboard()
         {
             var result = await _userService.GetDashboardAsync();

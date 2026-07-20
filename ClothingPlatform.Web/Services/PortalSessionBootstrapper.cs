@@ -10,12 +10,14 @@ namespace ClothingPlatform.Web.Services
         private readonly IDbContextFactory<AppDbContext> _dbFactory;
         private readonly IJSRuntime _jsRuntime;
         private readonly SessionState _session;
+        private readonly ServerCookieService _cookieService;
 
-        public PortalSessionBootstrapper(IDbContextFactory<AppDbContext> dbFactory, IJSRuntime jsRuntime, SessionState session)
+        public PortalSessionBootstrapper(IDbContextFactory<AppDbContext> dbFactory, IJSRuntime jsRuntime, SessionState session, ServerCookieService cookieService)
         {
             _dbFactory = dbFactory;
             _jsRuntime = jsRuntime;
             _session = session;
+            _cookieService = cookieService;
         }
         public async Task<bool> RestorePortalSessionAsync()
         {
@@ -35,7 +37,8 @@ namespace ClothingPlatform.Web.Services
             string? token;
             try
             {
-                token = await CookieStorage.GetTokenAsync(_jsRuntime);
+                // Read HttpOnly authToken server-side
+                token = _cookieService.GetAuthToken();
             }
             catch
             {
@@ -93,19 +96,15 @@ namespace ClothingPlatform.Web.Services
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList() ?? new List<string>();
 
+            _session.AuthToken = token;
             _session.Login(user, permissions);
             return true;
         }
 
-        private async Task RemoveStoredTokenAsync()
+        private Task RemoveStoredTokenAsync()
         {
-            try
-            {
-                await CookieStorage.RemoveTokenAsync(_jsRuntime);
-            }
-            catch
-            {
-            }
+            _cookieService.ClearAuthCookies();
+            return Task.CompletedTask;
         }
 
         private static Dictionary<string, JsonElement> TryReadJwtPayload(string jwt)

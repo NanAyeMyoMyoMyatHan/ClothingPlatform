@@ -7,7 +7,7 @@ namespace ClothingPlatform.Web.Services
             public static string PreparePortalFailed(string detail) => $"Shared portal could not finish startup. {detail}";
             public static string LoadDataFailed(string detail) => $"Shared portal data could not be loaded. {detail}";
             public const string OrderStatusForwardOnly = "Admin order status can only move forward in the fulfillment flow.";
-            public static string OrderStatusUpdated(int orderId, string status) => $"Admin order #{orderId} moved to {status}.";
+            public static string OrderStatusUpdated(int orderId, string status) => $"Admin order ORD-{orderId:D4} moved to {status}.";
             public static string OrderStatusUpdateFailed(string detail) => $"Admin order status update failed. {detail}";
             public const string OrderCancelNotAllowed = "Only pending or processing orders can be cancelled.";
             public static string CancelOrderConfirm(int orderId) => $"Cancel customer order ORD-{orderId:D4}? This keeps the order in history and marks it as cancelled.";
@@ -120,9 +120,9 @@ namespace ClothingPlatform.Web.Services
             public static string DashboardLoadFailed(string detail) => $"Staff dashboard data could not be loaded. {detail}";
             public const string RegularOrderForwardOnly = "Regular order status can only advance to the next fulfillment stage.";
             public const string GuestOrderForwardOnly = "Phone order status can only advance to the next fulfillment stage.";
-            public static string RegularOrderUpdated(int orderId, string status) => $"Regular order #ORD-{orderId:D4} advanced to <strong>{status}</strong>.";
+            public static string RegularOrderUpdated(int orderId, string status) => $"Regular order ORD-{orderId:D4} advanced to <strong>{status}</strong>.";
             public static string RegularOrderUpdateFailed(string detail) => $"Regular order status update failed. {detail}";
-            public static string GuestOrderUpdated(int orderId, string status) => $"Phone order #GORD-{orderId:D4} advanced to <strong>{status}</strong>.";
+            public static string GuestOrderUpdated(int orderId, string status) => $"Phone order GORD-{orderId:D4} advanced to <strong>{status}</strong>.";
             public static string GuestOrderUpdateFailed(string detail) => $"Phone order status update failed. {detail}";
             public static string StockAdjusted(string sku) => $"Inventory stock adjusted for SKU <strong>{sku}</strong>.";
             public static string StockAdjustFailed(string detail) => $"Inventory stock adjustment failed. {detail}";

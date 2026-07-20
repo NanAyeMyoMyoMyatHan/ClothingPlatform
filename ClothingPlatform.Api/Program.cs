@@ -61,6 +61,7 @@ builder.Services.AddScoped<ICartService, CartServices>();
 builder.Services.AddScoped<IReportService, ReportServices>();
 builder.Services.AddScoped<ICustomerNotificationService, CustomerNotificationService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
+builder.Services.AddHostedService<NotificationCleanupService>();
 builder.Services.AddSignalR();
 builder.Services.AddAuthentication(options =>
 {
@@ -113,6 +114,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();

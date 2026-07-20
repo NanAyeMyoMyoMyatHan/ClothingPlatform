@@ -2169,164 +2169,75 @@
         color: #3C1F10;
     }
 
-    /* Promotion Slide/Carousel */
+    /* Promotion Slide/Carousel — Cinematic Hero Style */
     .promo-carousel-wrapper {
-        padding: 40px 40px 10px;
-        margin-top: 10px;
+        padding: 0;
+        margin-top: 0;
     }
 
     .promo-slide {
         position: relative;
-        border-radius: 16px;
-        padding: 48px 60px;
-        color: #F5ECD7;
-        overflow: hidden;
-        min-height: 280px;
+        width: 100%;
+        min-height: 300px;
         display: flex;
-        align-items: center;
-        box-shadow: 0 12px 32px rgba(60, 31, 16, 0.12);
-        transition: background 0.5s ease-in-out;
+        align-items: flex-end;
+        overflow: hidden;
+        cursor: pointer;
+        transition: opacity 0.4s ease;
     }
 
-    .promo-decor {
+    .promo-slide:hover {
+        opacity: 0.96;
+    }
+
+    .promo-overlay {
         position: absolute;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.03);
+        inset: 0;
+        background: linear-gradient(160deg, rgba(60,31,16,0.45) 0%, rgba(139,26,26,0.72) 100%);
         pointer-events: none;
     }
 
-    .promo-decor.decor-1 {
-        width: 300px;
-        height: 300px;
-        top: -100px;
-        right: -50px;
-        border: 2px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .promo-decor.decor-2 {
-        width: 180px;
-        height: 180px;
-        bottom: -50px;
-        left: 20%;
-        background: radial-gradient(circle, rgba(201, 169, 110, 0.08) 0%, transparent 70%);
-    }
-
     .promo-content {
-        max-width: 500px;
-        z-index: 10;
         position: relative;
+        z-index: 1;
+        padding: 52px 48px;
+        max-width: 640px;
         text-align: left;
     }
 
     .promo-subtitle {
-        font-size: 0.72rem;
-        letter-spacing: 0.25em;
+        font-size: 0.6rem;
+        letter-spacing: 0.35em;
         text-transform: uppercase;
-        color: var(--gold);
-        font-weight: 700;
-        margin-bottom: 12px;
+        color: rgba(245,240,232,0.7);
+        font-weight: 600;
         display: block;
+        margin-bottom: 12px;
     }
 
     .promo-title {
         font-family: 'DM Sans', sans-serif;
-        font-size: clamp(1.8rem, 4vw, 2.5rem);
+        font-size: clamp(1.6rem, 3.5vw, 2.6rem);
         font-weight: 300;
-        line-height: 1.2;
-        color: #FFFFFF;
+        line-height: 1.15;
+        color: #F5F0E8;
         margin-bottom: 14px;
-        text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        letter-spacing: 0.02em;
     }
 
     .promo-desc {
-        font-size: 0.9rem;
+        font-size: 0.88rem;
         font-weight: 300;
-        color: rgba(245, 236, 215, 0.85);
-        line-height: 1.6;
-        margin-bottom: 24px;
-    }
-
-    .promo-code-container {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px dashed rgba(255, 255, 255, 0.3);
-        padding: 8px 16px;
-        font-size: 0.82rem;
-        color: #FFFFFF;
-        border-radius: 8px;
-        cursor: pointer;
-        margin-right: 16px;
-        margin-bottom: 16px;
-        transition: background 0.2s, transform 0.2s;
-    }
-
-    .promo-code-container:hover {
-        background: rgba(255, 255, 255, 0.18);
-        transform: translateY(-1px);
-    }
-
-    .promo-cta-btn {
-        background: #FFFFFF;
-        color: var(--charcoal);
-        border: none;
-        border-radius: 8px;
-        padding: 10px 24px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        cursor: pointer;
-        transition: all 0.25s;
-        margin-bottom: 16px;
-        font-family: 'DM Sans', sans-serif;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-
-    .promo-cta-btn:hover {
-        background: var(--gold);
-        color: #FFFFFF;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 18px rgba(0,0,0,0.25);
-    }
-
-    .promo-arrow {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        color: #FFFFFF;
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        z-index: 20;
-        transition: all 0.2s;
-    }
-
-    .promo-arrow:hover {
-        background: #FFFFFF;
-        color: var(--charcoal);
-    }
-
-    .promo-arrow.prev {
-        left: 20px;
-    }
-
-    .promo-arrow.next {
-        right: 20px;
+        color: rgba(245, 236, 215, 0.8);
+        line-height: 1.85;
+        margin-bottom: 0;
+        max-width: 480px;
     }
 
     .promo-dots {
         position: absolute;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
+        bottom: 22px;
+        right: 48px;
         display: flex;
         gap: 8px;
         z-index: 20;
@@ -2336,7 +2247,7 @@
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        background: rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.35);
         cursor: pointer;
         transition: all 0.25s;
     }
@@ -2355,10 +2266,14 @@
 
     @@media (max-width: 768px) {
         .promo-slide {
-            padding: 36px 30px;
+            min-height: 220px;
         }
-        .promo-arrow {
-            display: none; /* Hide arrows on mobile, dots are fine */
+        .promo-content {
+            padding: 36px 28px;
+        }
+        .promo-dots {
+            right: 28px;
+            bottom: 16px;
         }
     }
 
@@ -2514,8 +2429,8 @@
       overflow:hidden;
       padding:56px 48px 48px;
       background:
-        radial-gradient(1200px 500px at 85% -10%, rgba(220,193,137,0.20), transparent 60%),
-        linear-gradient(120deg, var(--burgundy) 0%, var(--burgundy-2) 55%, var(--plum) 100%);
+        linear-gradient(160deg, rgba(60,20,20,0.72) 0%, rgba(139,26,26,0.82) 100%),
+        url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1400&q=80') center/cover no-repeat;
       color:var(--cream-2);
       isolation:isolate;
       margin-bottom: 24px;
@@ -2847,6 +2762,7 @@
         <button class="nav-tab @(activeTab == "best" ? "active" : "")" @onclick='() => Navigate("best")'>Best Seller</button>
         <button class="nav-tab @(activeTab == "shop" ? "active" : "")" @onclick='() => Navigate("shop")'>The Collection</button>
         <button class="nav-tab @(activeTab == "promotions" ? "active" : "")" @onclick='() => { selectedPromotionDetail = null; Navigate("promotions"); }'>Promotions</button>
+        <button class="nav-tab @(activeTab == "about" ? "active" : "")" @onclick='() => Navigate("about")'>About Us</button>
         <button class="nav-tab @(activeTab == "history" ? "active" : "")" @onclick='() => Navigate("history")'>My Purchases</button>
         <button class="nav-tab @(activeTab == "return" ? "active" : "")" @onclick='() => NavigateToReturnTab()'>Return / Exchange</button>
         <button class="nav-tab @(activeTab == "profile" ? "active" : "")" @onclick='() => Navigate("profile")'>My Profile</button>
@@ -2923,24 +2839,36 @@
         <!-- Promotion Slide Container -->
         @if (promotionsList != null && promotionsList.Any() && currentPromoSlideIndex >= 0 && currentPromoSlideIndex < promotionsList.Count)
         {
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; padding:0 2px;">
+                <div>
+                    <span style="font-size:0.6rem; letter-spacing:0.25em; text-transform:uppercase; color:var(--charcoal-soft); font-weight:600;">This Week</span>
+                    <h2 style="font-family:'DM Sans',sans-serif; font-size:1.15rem; font-weight:500; color:var(--charcoal); margin:4px 0 0; letter-spacing:0.03em;">
+                        Featured <span style="color:var(--rose);">Promotions</span>
+                    </h2>
+                </div>
+                <span style="font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--charcoal-soft); opacity:0.7;">@promotionsList.Count offer@(promotionsList.Count != 1 ? "s" : "") live</span>
+            </div>
             <div class="promo-carousel-wrapper">
-                <div class="promo-slide" 
-                     style="background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.65) 100%), url('@promotionsList[currentPromoSlideIndex].ImageUrl') center/cover no-repeat; cursor: pointer;"
+                <div class="promo-slide"
+                     style="background: url('@promotionsList[currentPromoSlideIndex].ImageUrl') center/cover no-repeat;"
                      @onclick="() => ClickPromoSlide(promotionsList[currentPromoSlideIndex])">
-                    <div class="promo-decor decor-1"></div>
-                    <div class="promo-decor decor-2"></div>
-                    
+
+                    <!-- Warm gradient overlay -->
+                    <div class="promo-overlay"></div>
+
+                    <!-- Text anchored bottom-left -->
                     <div class="promo-content">
                         <span class="promo-subtitle">@promotionsList[currentPromoSlideIndex].Subtitle</span>
                         <h2 class="promo-title">@promotionsList[currentPromoSlideIndex].Title</h2>
-                        <p class="promo-desc" style="margin-bottom: 0;">@promotionsList[currentPromoSlideIndex].Description</p>
+                        <p class="promo-desc">@promotionsList[currentPromoSlideIndex].Description</p>
                     </div>
-                    
+
+                    <!-- Slide dots — bottom right -->
                     <div class="promo-dots">
                         @for (int i = 0; i < promotionsList.Count; i++)
                         {
                             int index = i;
-                            <span class="promo-dot @(currentPromoSlideIndex == index ? "active" : "")" 
+                            <span class="promo-dot @(currentPromoSlideIndex == index ? "active" : "")"
                                   @onclick="() => SetPromoSlide(index)" @onclick:stopPropagation="true"></span>
                         }
                     </div>
@@ -2948,9 +2876,14 @@
             </div>
         }
 
-        <div class="section-head">
-            <h2 class="section-title">New <span>Creations</span></h2>
-            <span class="section-count">Featured Releases</span>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; padding:0 2px;">
+            <div>
+                <span style="font-size:0.6rem; letter-spacing:0.25em; text-transform:uppercase; color:var(--charcoal-soft); font-weight:600;">This Week</span>
+                <h2 style="font-family:'DM Sans',sans-serif; font-size:1.15rem; font-weight:500; color:var(--charcoal); margin:4px 0 0; letter-spacing:0.03em;">
+                    New <span style="color:var(--rose); font-style:italic;">Creations</span>
+                </h2>
+            </div>
+            <span style="font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--charcoal-soft); opacity:0.7;">Featured Releases</span>
         </div>
 
         <div class="products-grid">
@@ -3011,9 +2944,14 @@
 
     else if (activeTab == "best")
     {
-        <div class="section-head">
-            <h2 class="section-title">The <span>Best Collection</span></h2>
-            <span class="section-count">Here are the best seller </span>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; padding:0 2px;">
+            <div>
+                <span style="font-size:0.6rem; letter-spacing:0.25em; text-transform:uppercase; color:var(--charcoal-soft); font-weight:600;">This Week</span>
+                <h2 style="font-family:'DM Sans',sans-serif; font-size:1.15rem; font-weight:500; color:var(--charcoal); margin:4px 0 0; letter-spacing:0.03em;">
+                    The <span style="color:var(--rose); font-style:italic;">Best Collection</span>
+                </h2>
+            </div>
+            <span style="font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--charcoal-soft); opacity:0.7;">Here are the best seller</span>
         </div>
 
         <div class="products-grid">
@@ -3084,9 +3022,14 @@
     
     else if (activeTab == "shop")
     {
-    <div class="section-head">
-        <h2 class="section-title"> <span>The Collection</span></h2>
-        <span class="section-count">Here is the collection</span>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; padding:0 2px;">
+        <div>
+            <span style="font-size:0.6rem; letter-spacing:0.25em; text-transform:uppercase; color:var(--charcoal-soft); font-weight:600;">This Week</span>
+            <h2 style="font-family:'DM Sans',sans-serif; font-size:1.15rem; font-weight:500; color:var(--charcoal); margin:4px 0 0; letter-spacing:0.03em;">
+                The <span style="color:var(--rose); font-style:italic;">Collection</span>
+            </h2>
+        </div>
+        <span style="font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--charcoal-soft); opacity:0.7;">Here is the collection</span>
     </div>
 
     <div class="products-grid">
@@ -3277,15 +3220,22 @@
                                     <div>
                                         <p class="order-sum-name">@item.Name</p>
                                         <p class="order-sum-meta">@item.Size  @item.Color  Qty @item.Qty</p>
-                                        <p class="order-sum-price">@((item.Price * item.Qty).ToString("N0")) MMK</p>
+                                        <p class="order-sum-price">
+                                            @if (item.DiscountAmount > 0)
+                                            {
+                                                <span style="text-decoration: line-through; color: var(--muted); margin-right: 8px;">@((item.Price * item.Qty).ToString("N0")) MMK</span>
+                                                <span style="color: var(--charcoal); font-weight: 600;">@(((item.Price * item.Qty) - item.DiscountAmount).ToString("N0")) MMK</span>
+                                                <span class="badge" style="font-size: 0.7rem; padding: 2px 6px; background-color: #fee2e2; color: #ef4444; border-radius: 4px; font-weight: 500; margin-left: 8px;">Item sale -@item.DiscountPercent.ToString("0")%</span>
+                                            }
+                                            else
+                                            {
+                                                <span>@((item.Price * item.Qty).ToString("N0")) MMK</span>
+                                            }
+                                        </p>
                                     </div>
                                 </div>
                             }
                         }
-                        <div class="summary-total-row">
-                            <span class="summary-total-label">Subtotal</span>
-                            <span class="summary-total-val">@CartTotal.ToString("N0") MMK</span>
-                        </div>
 
                         <!-- Promo Code section -->
                         <div style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px; text-align: left;">
@@ -3306,17 +3256,33 @@
                             }
                         </div>
 
-                        @if (appliedPromoDiscount > 0)
-                        {
-                            <div class="summary-total-row" style="border-top: none; padding-top: 8px; margin-top: 0;">
-                                <span class="summary-total-label" style="color: var(--success); font-weight: 600;">Discount (@appliedPromoCode: -@appliedPromoPercent%)</span>
-                                <span class="summary-total-val" style="color: var(--success); font-weight: 600;">-@appliedPromoDiscount.ToString("N0") MMK</span>
+                        <div style="border-top: 1px solid var(--border); margin-top: 15px; padding-top: 15px;">
+                            <div class="summary-total-row">
+                                <span class="summary-total-label">Item price (after item sale)</span>
+                                <span class="summary-total-val">@CartSubtotal.ToString("N0") MMK</span>
                             </div>
-                            <div class="summary-total-row" style="border-top: 1px solid var(--rose); margin-top: 8px; padding-top: 12px;">
-                                <span class="summary-total-label" style="font-weight: 600; color: var(--charcoal);">Grand Total</span>
-                                <span class="summary-total-val" style="font-weight: 700; color: var(--rose);">@GrandTotal.ToString("N0") MMK</span>
+                            <div class="summary-total-row" style="margin-top: 8px;">
+                                <span class="summary-total-label">Shipping</span>
+                                <span class="summary-total-val">3,000 MMK</span>
                             </div>
-                        }
+                            @if (appliedPromoDiscount > 0)
+                            {
+                                <div class="summary-total-row" style="margin-top: 8px; color: var(--success);">
+                                    <span class="summary-total-label" style="color: var(--success); font-weight: 500;">Promo code discount</span>
+                                    <span class="summary-total-val" style="color: var(--success); font-weight: 600;">-@appliedPromoDiscount.ToString("N0") MMK</span>
+                                </div>
+                            }
+                            <div class="summary-total-row" style="border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px;">
+                                <span class="summary-total-label" style="font-size: 1.1rem; font-weight: 700; color: var(--charcoal);">Total</span>
+                                <span class="summary-total-val" style="font-size: 1.1rem; font-weight: 800; color: var(--rose);">@GrandTotal.ToString("N0") MMK</span>
+                            </div>
+                            @if (TotalSaved > 0)
+                            {
+                                <div style="font-size: 0.8rem; color: var(--muted); margin-top: 8px; text-align: right; font-style: italic;">
+                                    You saved @TotalSaved.ToString("N0") MMK total (item sale + promo code)
+                                </div>
+                            }
+                        </div>
 
                         <LoadingButton Class="btn-place-order"
                                        IsLoading="@isPlacingOrder"
@@ -3470,7 +3436,7 @@
                                                 </button>
                                             </div>
                                         }
-                                        else if (OrderWorkflow.Normalize(order.OrderStatus) == OrderWorkflow.Confirm && CanRequestReturn(order))
+                                        else if (OrderWorkflow.Normalize(order.OrderStatus) == OrderWorkflow.Confirm && CanRequestReturn(order) && !userReturns.Any(r => r.OrderId == order.OrderId && !string.Equals(r.Status, "Rejected", StringComparison.OrdinalIgnoreCase)))
                                         {
                                             <div style="margin-bottom: 24px; display: flex; justify-content: flex-end;">
                                                 <button class="btn-primary-rose" @onclick="() => InitiateReturn(order)" @onclick:stopPropagation="true" style="padding: 10px 24px; font-size: 0.72rem;">
@@ -3983,8 +3949,27 @@
                             <p class="lede">Seasonal codes across dresses, blouses and delivery, refreshed weekly and honoured at checkout.</p>
                             <div class="stats">
                                 <div class="stat"><span class="num">@promotionsList.Count</span><span class="label">Live Offers</span></div>
-                                <div class="stat"><span class="num">834</span><span class="label">Codes Used Today</span></div>
-                                <div class="stat"><span class="num">Weekly</span><span class="label">New Arrivals</span></div>
+                                <div class="stat"><span class="num">@TotalCodesRedeemed</span><span class="label">Codes Redeemed</span></div>
+                                <div class="stat"><span class="num">@NewArrivalsCount</span><span class="label">New This Week</span></div>
+                            </div>
+                            <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.15); display: flex; flex-direction: column; gap: 8px;">
+                                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: rgba(255,255,255,0.7);">Available Promo Codes</div>
+                                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                                    @foreach (var p in couponsList.Where(p => !string.IsNullOrEmpty(p.PromoCode)))
+                                    {
+                                        var displayLabel = p.PromoType switch
+                                        {
+                                            "Percent" => $"{(int)p.DiscountValue}% Off",
+                                            "Fixed" => $"{p.DiscountValue:N0} ks Off",
+                                            "Shipping" => "Free Shipping",
+                                            _ => p.DiscountPercent > 0 ? $"{(int)p.DiscountPercent}% Off" : "Double Points"
+                                        };
+                                        <div style="font-family: monospace; font-size: 0.85rem; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.5); padding: 6px 12px; border-radius: 6px; font-weight: 700; color: #ffffff; cursor: pointer; transition: all 0.2s;" 
+                                             @onclick="() => CopyPromoCode(p.PromoCode)" @onclick:stopPropagation="true" title="Click to copy code">
+                                            @p.PromoCode (@displayLabel)
+                                        </div>
+                                    }
+                                </div>
                             </div>
                         </div>
                     </section>
@@ -4065,12 +4050,6 @@
                                     }
                                 </div>
                                 <div class="card-title" style="@(hasBgStyle ? "color: #FFF3EE;" : "")">@promo.Title</div>
-                                @if (!string.IsNullOrEmpty(promo.PromoCode))
-                                {
-                                    <div style="font-family: monospace; font-size: 0.8rem; background: @(hasBgStyle ? "rgba(255,255,255,0.2)" : "var(--sand)"); border: 1.5px dashed @(hasBgStyle ? "rgba(255,255,255,0.6)" : "var(--gold)"); padding: 4px 10px; border-radius: 6px; width: fit-content; margin-top: 8px; font-weight: 600; letter-spacing: 1px; color: inherit; display: inline-block;">
-                                        @promo.PromoCode
-                                    </div>
-                                }
                             </div>
                         }
                     </div>
@@ -4146,17 +4125,16 @@
                             </div>
 
                             <!-- Badges -->
-                            @if (selectedPromotionDetail.PromoCode == "SUMMER20")
+                            @if (selectedPromotionDetail != null)
                             {
-                                <span class="promo-grid-badge">Savings: 20% OFF applied</span>
-                            }
-                            else if (selectedPromotionDetail.PromoCode == "LOYAL2X")
-                            {
-                                <span class="promo-grid-badge" style="background:#FFF3EE; color:#C9A96E; border:1px solid #EDD9D0;">Promo: Double Points Active</span>
-                            }
-                            else if (selectedPromotionDetail.PromoCode == "MONSOON10")
-                            {
-                                <span class="promo-grid-badge">Savings: Buy 2, save 5%</span>
+                                @if (selectedPromotionDetail.DiscountPercent > 0)
+                                {
+                                    <span class="promo-grid-badge">Savings: @(selectedPromotionDetail.DiscountPercent.ToString("0.##"))% OFF applied</span>
+                                }
+                                else if (selectedPromotionDetail.PromoCode == "LOYAL2X")
+                                {
+                                    <span class="promo-grid-badge" style="background:#FFF3EE; color:#C9A96E; border:1px solid #EDD9D0;">Promo: Double Points Active</span>
+                                }
                             }
 
                             <!-- Delivery -->
@@ -4171,6 +4149,219 @@
                 </div>
             </div>
         }
+    }
+
+    
+    else if (activeTab == "about")
+    {
+        <!-- Hero Banner -->
+        <section style="
+            position: relative;
+            background: url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1400&q=80') center/cover no-repeat;
+            min-height: 420px;
+            display: flex;
+            align-items: flex-end;
+            overflow: hidden;">
+            <div style="position:absolute; inset:0; background: linear-gradient(160deg, rgba(60,31,16,0.55) 0%, rgba(139,26,26,0.75) 100%);"></div>
+            <div style="position:relative; z-index:1; padding: 60px 48px; max-width: 680px;">
+                <span style="font-size:0.6rem; letter-spacing:0.35em; text-transform:uppercase; color:rgba(245,240,232,0.7); font-weight:600; display:block; margin-bottom:12px;">Est. 2018 · Yangon, Myanmar</span>
+                <h1 style="font-family:'DM Sans',sans-serif; font-size:clamp(2rem,4vw,3.2rem); font-weight:300; color:#F5F0E8; line-height:1.15; margin:0 0 16px; letter-spacing:0.02em;">
+                    Crafted with <em style="font-style:italic; color:#C9A96E;">intention</em>,<br/>worn with grace.
+                </h1>
+                <p style="font-size:0.95rem; color:rgba(245,240,232,0.8); line-height:1.85; max-width:520px; margin:0;">
+                    Chic Boutique is an independent atelier rooted in Yangon's Golden Valley, dedicated to creating timeless garments for the modern woman.
+                </p>
+            </div>
+        </section>
+
+        <!-- Our Story -->
+        <section style="max-width:1100px; margin:0 auto; padding:72px 40px 0;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:64px; align-items:center;">
+                <div>
+                    <span style="font-size:0.6rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--rose); font-weight:600;">Our Story</span>
+                    <h2 style="font-family:'DM Sans',sans-serif; font-size:2rem; font-weight:400; color:var(--charcoal); margin:12px 0 24px; line-height:1.2;">
+                        From a small studio to a <em style="color:var(--rose); font-style:italic;">curated atelier</em>
+                    </h2>
+                    <p style="font-size:0.9rem; color:var(--charcoal-soft); line-height:1.9; margin-bottom:16px;">
+                        Founded in 2018 by a group of passionate fashion graduates, Chic Boutique began as a made-to-order studio tucked in a quiet corner of Bahan Township. Our founders believed that luxury should be accessible — not defined by price tags, but by the quality of craft and the intention behind every stitch.
+                    </p>
+                    <p style="font-size:0.9rem; color:var(--charcoal-soft); line-height:1.9; margin-bottom:24px;">
+                        Today, we curate a refined selection of ready-to-wear pieces, seasonal collections, and bespoke orders — each piece designed to carry a woman gracefully from morning appointments to evening soirées.
+                    </p>
+                    <div style="display:flex; gap:40px; margin-top:8px;">
+                        <div>
+                            <span style="font-size:1.8rem; font-weight:600; color:var(--rose); letter-spacing:-0.02em;">7+</span>
+                            <p style="font-size:0.72rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--charcoal-soft); margin:4px 0 0;">Years of Craft</p>
+                        </div>
+                        <div>
+                            <span style="font-size:1.8rem; font-weight:600; color:var(--rose); letter-spacing:-0.02em;">2,000+</span>
+                            <p style="font-size:0.72rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--charcoal-soft); margin:4px 0 0;">Happy Clients</p>
+                        </div>
+                        <div>
+                            <span style="font-size:1.8rem; font-weight:600; color:var(--rose); letter-spacing:-0.02em;">100%</span>
+                            <p style="font-size:0.72rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--charcoal-soft); margin:4px 0 0;">Locally Sourced</p>
+                        </div>
+                    </div>
+                </div>
+                <div style="position:relative;">
+                    <div style="border-radius:16px; overflow:hidden; aspect-ratio:4/5;">
+                        <img src="https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=700&q=80" alt="Atelier Workshop" style="width:100%; height:100%; object-fit:cover; display:block;"/>
+                    </div>
+                    <div style="position:absolute; bottom:-24px; left:-24px; background:var(--white); border:1px solid var(--rose-light); border-radius:12px; padding:18px 22px; box-shadow:0 8px 32px rgba(139,26,26,.1);">
+                        <p style="font-size:0.65rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--rose); font-weight:600; margin:0 0 4px;">Our Promise</p>
+                        <p style="font-size:0.82rem; color:var(--charcoal); margin:0; font-weight:500;">Ethical · Elegant · Enduring</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Timeline -->
+        <section style="max-width:1100px; margin:0 auto; padding:80px 40px;">
+            <div style="text-align:center; margin-bottom:48px;">
+                <span style="font-size:0.6rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--rose); font-weight:600;">Milestones</span>
+                <h2 style="font-family:'DM Sans',sans-serif; font-size:1.8rem; font-weight:400; color:var(--charcoal); margin:12px 0 0;">Our Journey</h2>
+            </div>
+            <div style="position:relative; display:flex; flex-direction:column; gap:0;">
+                <!-- timeline line -->
+                <div style="position:absolute; left:50%; top:0; bottom:0; width:1px; background:var(--rose-light); transform:translateX(-50%);"></div>
+
+                @{
+                    var milestones = new[]
+                    {
+                        ("2018", "The Beginning", "Chic Boutique opens its doors in Golden Valley as a made-to-order studio with a team of three.", true),
+                        ("2020", "First Collection Launch", "Debuted our first ready-to-wear seasonal line — \"Monsoon Atelier\" — which sold out within two weeks.", false),
+                        ("2022", "Online Platform", "Launched our digital atelier, bringing curated fashion to women across Myanmar with free Yangon delivery.", true),
+                        ("2024", "Loyalty Boutique Program", "Introduced our signature loyalty rewards system, celebrating our most devoted clients.", false),
+                        ("2026", "Today & Beyond", "Expanding our bespoke offerings and seasonal collaborations with local fabric artisans.", true),
+                    };
+                }
+
+                @foreach (var (year, title, desc, isLeft) in milestones)
+                {
+                    <div style="display:grid; grid-template-columns:1fr 48px 1fr; gap:0; margin-bottom:32px; align-items:center;">
+                        @if (isLeft)
+                        {
+                            <div style="text-align:right; padding-right:32px;">
+                                <span style="font-size:0.65rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--rose); font-weight:600;">@year</span>
+                                <h4 style="font-size:0.95rem; font-weight:600; color:var(--charcoal); margin:6px 0 4px;">@title</h4>
+                                <p style="font-size:0.82rem; color:var(--charcoal-soft); line-height:1.7; margin:0;">@desc</p>
+                            </div>
+                            <div style="display:flex; justify-content:center;">
+                                <div style="width:14px; height:14px; border-radius:50%; background:var(--rose); border:3px solid var(--rose-light); flex-shrink:0;"></div>
+                            </div>
+                            <div></div>
+                        }
+                        else
+                        {
+                            <div></div>
+                            <div style="display:flex; justify-content:center;">
+                                <div style="width:14px; height:14px; border-radius:50%; background:var(--rose); border:3px solid var(--rose-light); flex-shrink:0;"></div>
+                            </div>
+                            <div style="padding-left:32px;">
+                                <span style="font-size:0.65rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--rose); font-weight:600;">@year</span>
+                                <h4 style="font-size:0.95rem; font-weight:600; color:var(--charcoal); margin:6px 0 4px;">@title</h4>
+                                <p style="font-size:0.82rem; color:var(--charcoal-soft); line-height:1.7; margin:0;">@desc</p>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+
+        <!-- Values Grid -->
+        <section style="background:#FDF8F6; border-top:1px solid var(--rose-light); border-bottom:1px solid var(--rose-light); padding:70px 40px;">
+            <div style="max-width:1100px; margin:0 auto;">
+                <div style="text-align:center; margin-bottom:48px;">
+                    <span style="font-size:0.6rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--rose); font-weight:600;">What We Stand For</span>
+                    <h2 style="font-family:'DM Sans',sans-serif; font-size:1.8rem; font-weight:400; color:var(--charcoal); margin:12px 0 0;">Our Core Values</h2>
+                </div>
+                <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:28px;">
+                    @{
+                        var values = new[]
+                        {
+                            ("bi-gem", "Timeless Quality", "Every piece is crafted from carefully sourced fabrics and finished by hand. We believe clothing should outlast seasons."),
+                            ("bi-heart", "Women-Centered", "Designed by women, for women. Every silhouette, every cut is made with the real female form in mind."),
+                            ("bi-leaf", "Sustainable Craft", "We source locally, minimise waste, and work with artisan weavers across Myanmar to sustain traditional textile arts."),
+                            ("bi-palette", "Refined Aesthetics", "We pursue beauty that transcends trends — subtle, deliberate, and distinctly Chic Boutique."),
+                            ("bi-people", "Community First", "From our team to our clients, relationships are at the heart of everything we do at the atelier."),
+                            ("bi-star", "Exceptional Service", "From first stitch to final delivery, we treat every client as a VIP guest of the atelier."),
+                        };
+                    }
+                    @foreach (var (icon, name, description) in values)
+                    {
+                        <div style="background:var(--white); border:1px solid var(--rose-light); border-radius:14px; padding:28px 24px; transition:box-shadow 0.2s;">
+                            <div style="width:46px; height:46px; border-radius:12px; background:linear-gradient(135deg,#FFF3EE,#FDF8F6); border:1px solid var(--rose-light); display:flex; align-items:center; justify-content:center; margin-bottom:16px;">
+                                <i class="bi @icon" style="font-size:1.2rem; color:var(--rose);"></i>
+                            </div>
+                            <h4 style="font-size:0.92rem; font-weight:600; color:var(--charcoal); margin:0 0 10px;">@name</h4>
+                            <p style="font-size:0.82rem; color:var(--charcoal-soft); line-height:1.75; margin:0;">@description</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+
+        <!-- Team / Atelier -->
+        <section style="max-width:1100px; margin:0 auto; padding:72px 40px;">
+            <div style="text-align:center; margin-bottom:48px;">
+                <span style="font-size:0.6rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--rose); font-weight:600;">The Atelier Team</span>
+                <h2 style="font-family:'DM Sans',sans-serif; font-size:1.8rem; font-weight:400; color:var(--charcoal); margin:12px 0 8px;">The Hands Behind the Label</h2>
+                <p style="font-size:0.88rem; color:var(--charcoal-soft); max-width:480px; margin:0 auto; line-height:1.8;">A small, passionate team of designers, tailors, and curators who pour their hearts into every garment we create.</p>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:24px;">
+                @{
+                    var team = new[]
+                    {
+                        ("https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&q=80", "Aye Mya Thida", "Creative Director", "Trained in Bangkok and Yangon, Thida brings a singular vision to every seasonal collection."),
+                        ("https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80", "Su Wai Phyo", "Head Seamstress", "With 15 years of haute couture experience, Su Wai ensures every seam is a statement of precision."),
+                        ("https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&q=80", "Khin Myat Noe", "Fabric Curator", "Khin travels across Myanmar to source the finest silks, linens, and handwoven textiles."),
+                        ("https://images.unsplash.com/photo-1548142813-c348350df52b?w=400&q=80", "Zin Mar Aung", "Client Relations", "Zin Mar is the warm voice behind every fitting appointment and the face of our atelier hospitality."),
+                    };
+                }
+                @foreach (var (photo, memberName, role, bio) in team)
+                {
+                    <div style="text-align:center;">
+                        <div style="width:100%; aspect-ratio:3/4; border-radius:14px; overflow:hidden; margin-bottom:16px; border:1px solid var(--rose-light);">
+                            <img src="@photo" alt="@memberName" style="width:100%; height:100%; object-fit:cover; object-position:top; display:block;"/>
+                        </div>
+                        <h4 style="font-size:0.92rem; font-weight:600; color:var(--charcoal); margin:0 0 4px;">@memberName</h4>
+                        <p style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--rose); font-weight:600; margin:0 0 10px;">@role</p>
+                        <p style="font-size:0.78rem; color:var(--charcoal-soft); line-height:1.7; margin:0;">@bio</p>
+                    </div>
+                }
+            </div>
+        </section>
+
+        <!-- Visit Us CTA -->
+        <section style="
+            background: linear-gradient(135deg, #3C1F10 0%, #6B0F0F 100%);
+            padding: 70px 40px;
+            text-align: center;">
+            <div style="max-width:600px; margin:0 auto;">
+                <i class="bi bi-geo-alt-fill" style="font-size:2rem; color:#C9A96E; margin-bottom:20px; display:block;"></i>
+                <h2 style="font-family:'DM Sans',sans-serif; font-size:1.8rem; font-weight:400; color:#F5F0E8; margin:0 0 16px; letter-spacing:0.02em;">Visit the Atelier</h2>
+                <p style="font-size:0.88rem; color:rgba(245,240,232,0.75); line-height:1.85; margin:0 0 32px;">
+                    We welcome you to our boutique in the heart of Golden Valley, Yangon. Come for a fitting, browse our latest collection, or simply enjoy a cup of tea with our team.
+                </p>
+                <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-bottom:32px;">
+                    <div style="background:rgba(245,240,232,0.08); border:1px solid rgba(245,240,232,0.15); border-radius:10px; padding:16px 24px; text-align:center;">
+                        <p style="font-size:0.6rem; letter-spacing:0.2em; text-transform:uppercase; color:#C9A96E; margin:0 0 4px; font-weight:600;">Address</p>
+                        <p style="font-size:0.85rem; color:#F5F0E8; margin:0;">Golden Valley, Bahan Township,<br/>Yangon, Myanmar</p>
+                    </div>
+                    <div style="background:rgba(245,240,232,0.08); border:1px solid rgba(245,240,232,0.15); border-radius:10px; padding:16px 24px; text-align:center;">
+                        <p style="font-size:0.6rem; letter-spacing:0.2em; text-transform:uppercase; color:#C9A96E; margin:0 0 4px; font-weight:600;">Hours</p>
+                        <p style="font-size:0.85rem; color:#F5F0E8; margin:0;">Mon – Sat: 10am – 7pm<br/>Sunday: 11am – 5pm</p>
+                    </div>
+                    <div style="background:rgba(245,240,232,0.08); border:1px solid rgba(245,240,232,0.15); border-radius:10px; padding:16px 24px; text-align:center;">
+                        <p style="font-size:0.6rem; letter-spacing:0.2em; text-transform:uppercase; color:#C9A96E; margin:0 0 4px; font-weight:600;">Contact</p>
+                        <p style="font-size:0.85rem; color:#F5F0E8; margin:0;">09 252 522 525<br/>hello@theboutique.mm</p>
+                    </div>
+                </div>
+                <button @onclick='() => Navigate("home")' style="background:linear-gradient(135deg,#C9A96E,#B8924A); color:#3C1F10; border:none; border-radius:8px; padding:14px 36px; font-size:0.78rem; letter-spacing:0.2em; text-transform:uppercase; font-weight:700; cursor:pointer; transition:opacity 0.2s;">
+                    Explore the Collection
+                </button>
+            </div>
+        </section>
     }
 </main>
 
@@ -4281,7 +4472,7 @@
                     <a href="https://www.instagram.com/y_for_youth_?igsh=MzF4M2U0ZWxveTRi" style="width:34px; height:34px; border-radius:50%; border:1px solid rgba(245,240,232,0.2); display:flex; align-items:center; justify-content:center; color:#F5F0E8; text-decoration:none;">
                         <i class="bi bi-instagram" style="font-size:0.9rem;"></i>
                     </a>
-                    <a href="#" style="width:34px; height:34px; border-radius:50%; border:1px solid rgba(245,240,232,0.2); display:flex; align-items:center; justify-content:center; color:#F5F0E8; text-decoration:none;">
+                    <a href="https://www.tiktok.com/@@y_for_youth_" target="_blank" rel="noopener noreferrer" style="width:34px; height:34px; border-radius:50%; border:1px solid rgba(245,240,232,0.2); display:flex; align-items:center; justify-content:center; color:#F5F0E8; text-decoration:none;">
                         <i class="bi bi-tiktok" style="font-size:0.9rem;"></i>
                     </a>
                 </div>
@@ -4414,39 +4605,205 @@
 </div>
 
 <!-- --------------- NOTIFICATION DRAWER --------------- -->
+<!-- --------------- NOTIFICATION DRAWER --------------- -->
 <div class="noti-backdrop @(showNotificationsDropdown ? "open" : "")" @onclick="ToggleNotificationsDropdown"></div>
-<div class="noti-drawer @(showNotificationsDropdown ? "open" : "")">
-    <div class="noti-header">
-        <span class="noti-title">Notifications</span>
-        <button class="noti-close" @onclick="ToggleNotificationsDropdown"><i class="bi bi-x-lg"></i></button>
+<div class="noti-drawer @(showNotificationsDropdown ? "open" : "")" style="background: white; color: #111827; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <div class="noti-header" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid #f3f4f6;">
+        <span class="noti-title" style="font-size: 16px; font-weight: 600;">Notifications</span>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <button style="background: none; border: none; font-size: 16px; color: #4b5563; cursor: pointer; padding: 4px; display: flex; align-items: center;" title="Notification Settings">
+                <i class="bi bi-gear"></i>
+            </button>
+            <button class="noti-close" @onclick="ToggleNotificationsDropdown" style="background: none; border: none; font-size: 16px; color: #4b5563; cursor: pointer; padding: 4px; display: flex; align-items: center;"><i class="bi bi-x-lg"></i></button>
+        </div>
     </div>
-    <div class="noti-body">
+    <div class="noti-body" style="padding: 0; overflow-y: auto; max-height: calc(100vh - 120px);">
         @if (!notifications.Any())
         {
-            <div class="noti-empty">
+            <div class="noti-empty" style="text-align: center; padding: 40px 20px;">
                 <i class="bi bi-bell-slash" style="font-size:3rem; color:var(--rose-light);"></i>
-                <p class="mt-3">No notifications yet.</p>
+                <p class="mt-3" style="color: #6b7280;">No notifications yet.</p>
             </div>
         }
         else
         {
-            @foreach (var noti in notifications)
+            var unreadNotis = notifications.Where(n => !n.IsRead).ToList();
+            var readNotis = notifications.Where(n => n.IsRead).ToList();
+
+            @if (unreadNotis.Any())
             {
-                <div class="noti-drawer-item @(noti.IsRead ? "" : "unread")" @onclick="() => HandleNotificationClick(noti)">
-                    <div class="noti-drawer-title">
-                        @noti.Title
+                <div style="font-size: 12px; font-weight: 700; padding: 12px 16px 6px 16px; color: #111827; background: #FAFAFA; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f3f4f6;">Important</div>
+                @foreach (var noti in unreadNotis)
+                {
+                    var currentNoti = noti;
+                    <div style="display: flex; align-items: flex-start; padding: 14px 16px; border-bottom: 1px solid #f3f4f6; cursor: pointer; transition: background 0.15s; position: relative; background: #F9FAFB;" 
+                         class="noti-item-hover"
+                         @onclick="() => HandleNotificationClick(currentNoti)">
+                        
+                        <!-- Unread blue dot -->
+                        <div style="width: 8px; height: 8px; background: #0088cc; border-radius: 50%; position: absolute; left: 6px; top: 50%; transform: translateY(-50%);"></div>
+
+                        <!-- Avatar icon -->
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background: #FDF4F2; display: flex; align-items: center; justify-content: center; color: var(--rose); margin-left: 6px; margin-right: 12px; flex-shrink: 0; font-size: 16px;">
+                            @if (currentNoti.Title.Contains("Order", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <i class="bi bi-bag-check"></i>
+                            }
+                            else if (currentNoti.Title.Contains("Promo", StringComparison.OrdinalIgnoreCase) || currentNoti.Title.Contains("Discount", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <i class="bi bi-tag"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-bell"></i>
+                            }
+                        </div>
+
+                        <!-- Content -->
+                        <div style="flex-grow: 1; min-width: 0; padding-right: 8px;">
+                            <div style="font-size: 13px; line-height: 1.4; color: #111827; margin-bottom: 4px;">
+                                <span style="font-weight: 600;">@currentNoti.Title</span>: @currentNoti.Message
+                            </div>
+                            <div style="font-size: 11px; color: #6b7280;">@GetTimeAgo(currentNoti.CreatedAt)</div>
+                        </div>
+
+                        <!-- Right Image Thumbnail -->
+                        <div style="width: 40px; height: 40px; border-radius: 6px; background: #fff; border: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; margin-right: 8px;">
+                            @if (currentNoti.OrderId.HasValue)
+                            {
+                                <i class="bi bi-receipt" style="font-size: 18px; color: #9ca3af;"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-bell-fill" style="font-size: 18px; color: #9ca3af;"></i>
+                            }
+                        </div>
+
+                        <div style="font-size: 16px; color: #9ca3af; padding-top: 2px; align-self: flex-start;" 
+                             @onclick="async () => { await MarkAsRead(currentNoti); noti.IsRead = true; }"
+                             @onclick:stopPropagation="true"
+                             title="Mark as read">
+                            <i class="bi bi-check-circle-fill" style="font-size: 15px; color: #10b981;"></i>
+                        </div>
                     </div>
-                    <div class="noti-drawer-message">@noti.Message</div>
-                    <div class="noti-drawer-time">@noti.CreatedAt.ToString("M/d/yyyy h:mm tt")</div>
-                </div>
+                }
+            }
+
+            @if (readNotis.Any())
+            {
+                <div style="font-size: 12px; font-weight: 700; padding: 12px 16px 6px 16px; color: #4b5563; background: #FAFAFA; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f3f4f6; border-top: 1px solid #f3f4f6;">More notifications</div>
+                @foreach (var noti in readNotis)
+                {
+                    var currentNoti = noti;
+                    <div style="display: flex; align-items: flex-start; padding: 14px 16px; border-bottom: 1px solid #f3f4f6; cursor: pointer; transition: background 0.15s; position: relative;" 
+                         class="noti-item-hover"
+                         @onclick="() => HandleNotificationClick(currentNoti)">
+                        
+                        <!-- Avatar icon -->
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background: #F3F4F6; display: flex; align-items: center; justify-content: center; color: #6b7280; margin-left: 6px; margin-right: 12px; flex-shrink: 0; font-size: 16px;">
+                            @if (currentNoti.Title.Contains("Order", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <i class="bi bi-bag-check"></i>
+                            }
+                            else if (currentNoti.Title.Contains("Promo", StringComparison.OrdinalIgnoreCase) || currentNoti.Title.Contains("Discount", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <i class="bi bi-tag"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-bell"></i>
+                            }
+                        </div>
+
+                        <!-- Content -->
+                        <div style="flex-grow: 1; min-width: 0; padding-right: 8px;">
+                            <div style="font-size: 13px; line-height: 1.4; color: #374151; margin-bottom: 4px;">
+                                <span style="font-weight: 500;">@currentNoti.Title</span>: @currentNoti.Message
+                            </div>
+                            <div style="font-size: 11px; color: #9ca3af;">@GetTimeAgo(currentNoti.CreatedAt)</div>
+                        </div>
+
+                        <!-- Right Image Thumbnail -->
+                        <div style="width: 40px; height: 40px; border-radius: 6px; background: #fff; border: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; margin-right: 8px;">
+                            @if (currentNoti.OrderId.HasValue)
+                            {
+                                <i class="bi bi-receipt" style="font-size: 18px; color: #9ca3af;"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-bell-fill" style="font-size: 18px; color: #9ca3af;"></i>
+                            }
+                        </div>
+
+                        <!-- Options dot -->
+                        <div style="font-size: 14px; color: #9ca3af; padding-top: 2px; align-self: flex-start;">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </div>
+                    </div>
+                }
             }
         }
     </div>
     @if (notifications.Any(n => !n.IsRead))
     {
-        <div class="noti-drawer-footer">
-            <button class="noti-drawer-mark-btn" @onclick="MarkAllNotificationsAsRead">Mark all read</button>
+        <div class="noti-drawer-footer" style="padding: 12px 16px; border-top: 1px solid #f3f4f6; display: flex; justify-content: flex-end; background: #fff;">
+            <button class="noti-drawer-mark-btn" @onclick="MarkAllNotificationsAsRead" style="background: none; border: none; color: var(--rose); font-weight: 600; font-size: 13px; cursor: pointer;">Mark all read</button>
         </div>
+    }
+</div>
+
+<!-- --------------- NOTIFICATION DETAIL DRAWER (Like Bag Drawer) --------------- -->
+<div class="cart-backdrop mt-3 @(selectedNotification != null ? "open" : "")" @onclick="CloseNotificationDrawer" style="z-index: 1050;"></div>
+<div class="cart-drawer @(selectedNotification != null ? "open" : "")" style="background: #FFF; box-shadow: -4px 0 12px rgba(0,0,0,0.15); z-index: 1060; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    <div class="cart-header" style="display: flex; justify-content: space-between; align-items: center; padding: 18px 20px; border-bottom: 1px solid #F3F4F6;">
+        <span class="cart-title" style="font-size: 16px; font-weight: 600; color: #111827;">@(showReceiptInDrawer ? "Order Receipt" : "Notification Detail")</span>
+        <button class="cart-close" @onclick="CloseNotificationDrawer" style="background: none; border: none; font-size: 18px; color: #4B5563; cursor: pointer;"><i class="bi bi-x-lg"></i></button>
+    </div>
+    @if (selectedNotification != null)
+    {
+        @if (showReceiptInDrawer && selectedNotification.OrderId.HasValue)
+        {
+            <div class="cart-body" style="padding: 16px; overflow-y: auto; display: flex; flex-direction: column;">
+                <Receipt OrderId="selectedNotification.OrderId.Value" />
+            </div>
+            <div class="cart-footer" style="padding: 20px; border-top: 1px solid #F3F4F6; display: flex; flex-direction: column; gap: 12px; background: #fff;">
+                <button class="qty-btn" @onclick="() => showReceiptInDrawer = false" style="width: 100%; height: 46px; background: white; border: 1px solid #D1D5DB; color: #374151; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;">Back to Notification</button>
+            </div>
+        }
+        else
+        {
+            <div class="cart-body" style="padding: 24px; overflow-y: auto; display: flex; flex-direction: column;">
+                <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 24px;">
+                    <div style="width: 56px; height: 56px; border-radius: 50%; background: #FDF4F2; display: flex; align-items: center; justify-content: center; color: var(--rose); margin-bottom: 16px; font-size: 24px;">
+                        @if (selectedNotification.Title.Contains("Order", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <i class="bi bi-bag-check"></i>
+                        }
+                        else if (selectedNotification.Title.Contains("Promo", StringComparison.OrdinalIgnoreCase) || selectedNotification.Title.Contains("Discount", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <i class="bi bi-tag"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-bell"></i>
+                        }
+                    </div>
+                    <h3 style="font-size: 1.1rem; font-weight: 600; color: #111827; margin: 0 0 6px 0;">@selectedNotification.Title</h3>
+                    <span style="font-size: 12px; color: #6B7280;">@selectedNotification.CreatedAt.ToString("MMMM dd, yyyy h:mm tt")</span>
+                </div>
+                
+                <div style="border-top: 1px solid #F3F4F6; border-bottom: 1px solid #F3F4F6; padding: 20px 0; margin-bottom: 24px; flex-grow: 1;">
+                    <p style="font-size: 14px; line-height: 1.6; color: #374151; margin: 0; white-space: pre-line;">@selectedNotification.Message</p>
+                </div>
+            </div>
+            <div class="cart-footer" style="padding: 20px; border-top: 1px solid #F3F4F6; display: flex; flex-direction: column; gap: 12px; background: #fff;">
+                @if (selectedNotification.OrderId.HasValue)
+                {
+                    <button class="btn-checkout" @onclick="ViewReceiptFromNotification" style="width: 100%; height: 48px; background: var(--rose); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; transition: background 0.15s;">View Order Receipt</button>
+                }
+                <button class="qty-btn" @onclick="CloseNotificationDrawer" style="width: 100%; height: 46px; background: white; border: 1px solid #D1D5DB; color: #374151; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;">Dismiss</button>
+            </div>
+        }
     }
 </div>
 
@@ -4528,7 +4885,7 @@
             ?IF ORDER CONFIRM, YOU EARNED @pointsEarnedInOrder.ToString("N0") LOYALTY POINTS!
         </span>
     </p>
-    <p class="success-order-id">ORDER #@confirmedOrderId</p>
+    <p class="success-order-id">ORDER @confirmedOrderId</p>
     <LoadingButton Class="btn-continue"
                    IsLoading="@isContinuingAfterOrder"
                    LoadingText="Loading..."

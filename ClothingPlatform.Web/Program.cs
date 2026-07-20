@@ -15,6 +15,8 @@ builder.Services.AddRazorComponents()
 builder.Services.AddScoped<SessionState>();
 builder.Services.AddScoped<CustomerSessionState>();
 builder.Services.AddScoped<IPortalSessionBootstrapper, PortalSessionBootstrapper>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ServerCookieService>();
 
 string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -66,4 +68,25 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+app.MapPost("/api/cookies/set-auth", (SetAuthCookieRequest request, ServerCookieService cookieService) =>
+{
+    cookieService.SetAuthCookies(request.Token, request.UserId);
+    return Results.Ok();
+});
+
+app.MapPost("/api/cookies/set-customer", (SetCustomerCookieRequest request, ServerCookieService cookieService) =>
+{
+    cookieService.SetCustomerIdCookie(request.UserId);
+    return Results.Ok();
+});
+
+app.MapPost("/api/cookies/clear", (ServerCookieService cookieService) =>
+{
+    cookieService.ClearAuthCookies();
+    return Results.Ok();
+});
+
 app.Run();
+
+public record SetAuthCookieRequest(string Token, int UserId);
+public record SetCustomerCookieRequest(int UserId);

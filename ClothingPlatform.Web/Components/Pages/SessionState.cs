@@ -1,4 +1,4 @@
-﻿using ClothingPlatform.DB.AppDbModels;
+using ClothingPlatform.DB.AppDbModels;
 
 public class SessionState
 {
@@ -29,10 +29,13 @@ public class SessionState
         NotifyStateChanged();
     }
 
+    public string? AuthToken { get; set; }
+
     public void Logout()
     {
         CurrentUser = null;
         Permissions = new List<string>();
+        AuthToken = null;
         NotifyStateChanged();
     }
 

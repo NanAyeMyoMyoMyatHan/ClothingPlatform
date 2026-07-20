@@ -1,8 +1,12 @@
 using Microsoft.JSInterop;
-using System.Threading.Tasks;
 
 namespace ClothingPlatform.Web.Services
 {
+    /// <summary>
+    /// LEGACY UTILITY — read-only JS cookie helper for non-sensitive cookies.
+    /// Auth cookies (authToken, customerId) are now managed exclusively by
+    /// <see cref="ServerCookieService"/> which sets the HttpOnly flag server-side.
+    /// </summary>
     public static class CookieStorage
     {
         public static async Task<string?> GetCookieAsync(IJSRuntime jsRuntime, string name)
@@ -25,35 +29,5 @@ namespace ClothingPlatform.Web.Services
                 return null;
             }
         }
-
-        public static async Task SetCookieAsync(IJSRuntime jsRuntime, string name, string value)
-        {
-            try
-            {
-                var js = $"document.cookie = '{name}={value}; path=/; max-age=31536000; SameSite=Lax';";
-                await jsRuntime.InvokeVoidAsync("eval", js);
-            }
-            catch
-            {
-            }
-        }
-
-        public static async Task RemoveCookieAsync(IJSRuntime jsRuntime, string name)
-        {
-            try
-            {
-                var js = $"document.cookie = '{name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax';";
-                await jsRuntime.InvokeVoidAsync("eval", js);
-            }
-            catch
-            {
-            }
-        }
-
-        public static Task<string?> GetTokenAsync(IJSRuntime jsRuntime) => GetCookieAsync(jsRuntime, "authToken");
-
-        public static Task SetTokenAsync(IJSRuntime jsRuntime, string token) => SetCookieAsync(jsRuntime, "authToken", token);
-
-        public static Task RemoveTokenAsync(IJSRuntime jsRuntime) => RemoveCookieAsync(jsRuntime, "authToken");
     }
 }

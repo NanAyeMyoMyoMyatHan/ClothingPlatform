@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Components.Sections
+@using Microsoft.AspNetCore.Components.Sections
 <!DOCTYPE html>
 <html lang="en">
 
@@ -78,6 +78,29 @@
 <body>
     <Routes @rendermode="InteractiveServer" />
     <script src="_framework/blazor.web.js"></script>
+    <script>
+        window.authCookieHelper = {
+            setAuth: async function(token, userId) {
+                await fetch('/api/cookies/set-auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: token, userId: userId })
+                });
+            },
+            setCustomer: async function(userId) {
+                await fetch('/api/cookies/set-customer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: userId })
+                });
+            },
+            clear: async function() {
+                await fetch('/api/cookies/clear', {
+                    method: 'POST'
+                });
+            }
+        };
+    </script>
 </body>
 
 </html>

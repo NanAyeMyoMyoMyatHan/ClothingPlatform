@@ -19,7 +19,7 @@ namespace ClothingPlatform.Api.Features.Staff
         }
 
         [HttpGet("dashboard/{staffId}")]
-        [Permission("Dashboard.View")]
+        [Permission("dashboard.view")]
         public async Task<IActionResult> GetDashboardData(int staffId, [FromQuery] DateTime reportDate)
         {
             var data = await _staffService.GetDashboardDataAsync(staffId, reportDate);
@@ -27,7 +27,7 @@ namespace ClothingPlatform.Api.Features.Staff
         }
 
         [HttpPost("order/{orderId}/status")]
-        [Permission("Orders.Manage")]
+        [Permission("orders.update")]
         public async Task<IActionResult> UpdateOrderStatus(int orderId, [FromQuery] int staffId, [FromQuery] string newStatus)
         {
             var success = await _staffService.UpdateOrderStatusAsync(orderId, staffId, newStatus);
@@ -36,7 +36,7 @@ namespace ClothingPlatform.Api.Features.Staff
         }
 
         [HttpPost("guestorder/{guestOrderId}/status")]
-        [Permission("Orders.Manage")]
+        [Permission("orders.update")]
         public async Task<IActionResult> UpdateGuestOrderStatus(int guestOrderId, [FromQuery] int staffId, [FromQuery] string newStatus)
         {
             var success = await _staffService.UpdateGuestOrderStatusAsync(guestOrderId, staffId, newStatus);
@@ -45,7 +45,7 @@ namespace ClothingPlatform.Api.Features.Staff
         }
 
         [HttpPost("stock/adjust")]
-        [Permission("Products.Manage")]
+        [Permission("products.manage")]
         public async Task<IActionResult> AdjustStock([FromQuery] int variantId, [FromQuery] int adjustment, [FromQuery] int staffId)
         {
             var success = await _staffService.AdjustStockAsync(variantId, adjustment, staffId);
@@ -54,7 +54,7 @@ namespace ClothingPlatform.Api.Features.Staff
         }
 
         [HttpPost("stock/restock")]
-        [Permission("Products.Manage")]
+        [Permission("products.manage")]
         public async Task<IActionResult> RestockVariant([FromQuery] int variantId, [FromQuery] int quantity, [FromQuery] decimal purchasePrice, [FromQuery] string notes, [FromQuery] int staffId)
         {
             var success = await _staffService.RestockVariantAsync(variantId, quantity, purchasePrice, notes, staffId);
@@ -63,7 +63,7 @@ namespace ClothingPlatform.Api.Features.Staff
         }
 
         [HttpPost("phoneorder")]
-        [Permission("Orders.Manage")]
+        [Permission("orders.create")]
         public async Task<IActionResult> SubmitPhoneOrder([FromBody] GuestOrderRequestDto request, [FromQuery] int staffId)
         {
             var success = await _staffService.SubmitPhoneOrderAsync(request, staffId);
@@ -72,7 +72,7 @@ namespace ClothingPlatform.Api.Features.Staff
         }
 
         [HttpPost("profile/{staffId}")]
-        [Permission("Dashboard.View")]
+        [Permission("dashboard.view")]
         public async Task<IActionResult> UpdateProfile(int staffId, [FromQuery] string firstName, [FromQuery] string lastName, [FromQuery] string email, [FromQuery] string? password = null)
         {
             var success = await _staffService.UpdateProfileAsync(staffId, firstName, lastName, email, password);

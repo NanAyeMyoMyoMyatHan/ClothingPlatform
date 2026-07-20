@@ -12,6 +12,7 @@ namespace ClothingPlatform.Web.Services
         private readonly NavigationManager _nav;
         private readonly IPortalSessionBootstrapper _portalSessionBootstrapper;
         private readonly IJSRuntime _jsRuntime;
+        private readonly ServerCookieService _cookieService;
 
         private readonly List<ToastItem> _activeToasts = new();
         private DateTime _selectedReportDate = DateTime.Today;
@@ -27,13 +28,15 @@ namespace ClothingPlatform.Web.Services
             SessionState session,
             NavigationManager nav,
             IPortalSessionBootstrapper portalSessionBootstrapper,
-            IJSRuntime jsRuntime)
+            IJSRuntime jsRuntime,
+            ServerCookieService cookieService)
         {
             _httpServices = httpServices;
             _session = session;
             _nav = nav;
             _portalSessionBootstrapper = portalSessionBootstrapper;
             _jsRuntime = jsRuntime;
+            _cookieService = cookieService;
         }
 
         public event Action? StateChanged;
@@ -813,11 +816,12 @@ namespace ClothingPlatform.Web.Services
             }
         }
 
-        public async Task Logout()
+        public Task Logout()
         {
             _session.Logout();
-            await CookieStorage.RemoveTokenAsync(_jsRuntime);
+            _cookieService.ClearAuthCookies();
             _nav.NavigateTo("/portal-login", replace: true);
+            return Task.CompletedTask;
         }
 
         public void TriggerToast(string message, bool isError = false)

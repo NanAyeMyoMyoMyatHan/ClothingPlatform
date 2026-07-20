@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace ClothingPlatform.DB.AppDbModels;
@@ -20,6 +20,7 @@ public partial class Order
     public DateTime? CreatedAt { get; set; }
 
     public string? CancelReason { get; set; }
+    public string? AppliedPromo { get; set; }
 
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 

@@ -9,11 +9,15 @@ namespace ClothingPlatform.Web.Services
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IJSRuntime _jsRuntime;
+        private readonly ServerCookieService _cookieService;
+        private readonly SessionState _session;
 
-        public HttpClientServices(IHttpClientFactory httpClientFactory, IJSRuntime jsRuntime)
+        public HttpClientServices(IHttpClientFactory httpClientFactory, IJSRuntime jsRuntime, ServerCookieService cookieService, SessionState session)
         {
             _httpClientFactory = httpClientFactory;
             _jsRuntime = jsRuntime;
+            _cookieService = cookieService;
+            _session = session;
         }
 
         public async Task<T?> ExecuteAsync<T>(string url, object? obj = null, EnumHttpMethod method = EnumHttpMethod.Get)
@@ -54,11 +58,15 @@ namespace ClothingPlatform.Web.Services
             throw new Exception($" Http request failed ({response.StatusCode}). API Error: {errorContent}");
         }
 
-        private async Task AttachBearerTokenAsync(HttpClient client)
+        private Task AttachBearerTokenAsync(HttpClient client)
         {
             try
             {
-                var token = await CookieStorage.GetTokenAsync(_jsRuntime);
+                var token = _cookieService.GetAuthToken();
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    token = _session.AuthToken;
+                }
                 client.DefaultRequestHeaders.Authorization = string.IsNullOrWhiteSpace(token)
                     ? null
                     : new AuthenticationHeaderValue("Bearer", token);
@@ -67,6 +75,7 @@ namespace ClothingPlatform.Web.Services
             {
                 client.DefaultRequestHeaders.Authorization = null;
             }
+            return Task.CompletedTask;
         }
     }
 

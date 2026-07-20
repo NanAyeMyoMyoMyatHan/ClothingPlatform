@@ -4,6 +4,7 @@
 @inject CustomerSessionState CustomerSession
 @inject NavigationManager Nav
 @inject IJSRuntime JSRuntime
+@inject ClothingPlatform.Web.Services.ServerCookieService ServerCookies
 
 <PageTitle>Chic Boutique - Customer Login</PageTitle>
 
@@ -204,8 +205,13 @@
         }
         catch {}
 
-        // Store customerId in cookie
-        await CookieStorage.SetCookieAsync(JSRuntime, "customerId", result.UserId.ToString());
+        // Store customerId server-side with HttpOnly flag
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("authCookieHelper.setCustomer", result.UserId);
+        }
+        catch {}
+        ServerCookies.SetCustomerIdCookie(result.UserId);
         Nav.NavigateTo("/customer");
     }
 
