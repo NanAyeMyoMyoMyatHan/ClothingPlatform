@@ -136,6 +136,15 @@ namespace ClothingPlatform.Api.Features.Staff
             if (!OrderWorkflow.CanMoveTo(dbOrder.OrderStatus, normalizedStatus)) return false;
 
             dbOrder.OrderStatus = normalizedStatus;
+            if (normalizedStatus == OrderWorkflow.Confirm)
+            {
+                dbOrder.PaymentStatus = "paid";
+                var payments = await _db.Payments.Where(p => p.OrderId == orderId).ToListAsync();
+                foreach (var payment in payments)
+                {
+                    payment.PaymentStatus = "paid";
+                }
+            }
             _db.StaffFulfillmentLogs.Add(new StaffFulfillmentLog
             {
                 OrderId = orderId,

@@ -3482,6 +3482,28 @@
                                                 }
                                             }
                                         </div>
+
+                                        <div style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px;">
+                                            @{
+                                                var subTotal = order.OrderItems.Sum(item => item.PriceAtPurchase * item.Quantity);
+                                                var discount = subTotal - order.TotalAmount;
+                                            }
+                                            @if (discount > 0)
+                                            {
+                                                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--charcoal-soft); margin-bottom: 6px;">
+                                                    <span>Subtotal</span>
+                                                    <span>@subTotal.ToString("N0") MMK</span>
+                                                </div>
+                                                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #b91c1c; margin-bottom: 6px;">
+                                                    <span>Discount @(!string.IsNullOrEmpty(order.AppliedPromo) ? $"({order.AppliedPromo})" : "")</span>
+                                                    <span>- @discount.ToString("N0") MMK</span>
+                                                </div>
+                                            }
+                                            <div style="display: flex; justify-content: space-between; font-size: 0.95rem; font-weight: 600; color: var(--charcoal); margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border);">
+                                                <span>Total Amount</span>
+                                                <span style="color: var(--rose);">@order.TotalAmount.ToString("N0") MMK</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -3532,17 +3554,20 @@
                 @if (CanRequestReturn(selectedReturnOrder))
                 {
                     <!-- Select Item to Return -->
-                    <div class="form-group mb-4" style="text-align: left;">
-                        <label class="form-label-custom">Select Item to Return / Exchange</label>
-                        <select class="form-control-custom" style="border-radius: 8px; font-family: 'DM Sans', sans-serif;" value="@selectedReturnItemId" @onchange="OnReturnItemChanged">
-                            @foreach (var item in selectedReturnOrder.OrderItems.Where(oi => !HasBeenReturned(selectedReturnOrder.OrderId, oi.VariantId)))
-                            {
-                                <option value="@item.OrderItemId">
-                                    @(item.Variant?.Product?.Name ?? "Product") (Size: @(item.Variant?.Size ?? "-"), Color: @(item.Variant?.Color ?? "-"), Qty: @item.Quantity)
-                                </option>
-                            }
-                        </select>
-                    </div>
+                    @if (selectedReturnOrder.OrderItems != null && selectedReturnOrder.OrderItems.Any(oi => !HasBeenReturned(selectedReturnOrder.OrderId, oi.VariantId)))
+                    {
+                        <div class="form-group mb-4" style="text-align: left;">
+                            <label class="form-label-custom">Select Item to Return / Exchange</label>
+                            <select class="form-control-custom" style="border-radius: 8px; font-family: 'DM Sans', sans-serif;" value="@selectedReturnItemId" @onchange="OnReturnItemChanged">
+                                @foreach (var item in selectedReturnOrder.OrderItems.Where(oi => !HasBeenReturned(selectedReturnOrder.OrderId, oi.VariantId)))
+                                {
+                                    <option value="@item.OrderItemId">
+                                        @(item.Variant?.Product?.Name ?? "Product") (Size: @(item.Variant?.Size ?? "-"), Color: @(item.Variant?.Color ?? "-"), Qty: @item.Quantity)
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                    }
 
                     <!-- Show Item Preview -->
                     @if (selectedReturnItem != null)

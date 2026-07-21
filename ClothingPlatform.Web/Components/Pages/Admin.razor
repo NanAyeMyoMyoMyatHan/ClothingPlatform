@@ -3255,6 +3255,31 @@ else
                         </tbody>
                     </table>
 
+                    @if (selectedRegularOrder.OrderItems.Sum(item => item.PriceAtPurchase * item.Quantity) - selectedRegularOrder.TotalAmount > 0)
+                    {
+                        var subTotal = selectedRegularOrder.OrderItems.Sum(item => item.PriceAtPurchase * item.Quantity);
+                        var discount = subTotal - selectedRegularOrder.TotalAmount;
+
+                        <div class="receipt-total-row" style="font-size: 0.95rem; color: var(--charcoal-soft); border-top: none; padding-top: 8px; padding-bottom: 4px;">
+                            <span class="receipt-total-label" style="font-weight: 500;">Subtotal</span>
+                            <span class="receipt-total-val" style="font-weight: 500;">@subTotal.ToString("N0") MMK</span>
+                        </div>
+                        @if (!string.IsNullOrEmpty(selectedRegularOrder.AppliedPromo))
+                        {
+                            <div class="receipt-total-row" style="font-size: 0.95rem; color: #b91c1c; border-top: none; padding-top: 4px; padding-bottom: 4px;">
+                                <span class="receipt-total-label" style="font-weight: 500;">Discount (@selectedRegularOrder.AppliedPromo)</span>
+                                <span class="receipt-total-val" style="font-weight: 500;">- @discount.ToString("N0") MMK</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="receipt-total-row" style="font-size: 0.95rem; color: #b91c1c; border-top: none; padding-top: 4px; padding-bottom: 4px;">
+                                <span class="receipt-total-label" style="font-weight: 500;">Discount</span>
+                                <span class="receipt-total-val" style="font-weight: 500;">- @discount.ToString("N0") MMK</span>
+                            </div>
+                        }
+                    }
+
                     <div class="receipt-total-row">
                         <span class="receipt-total-label">Total Amount</span>
                         <span class="receipt-total-val">@selectedRegularOrder.TotalAmount.ToString("N0") MMK</span>
@@ -3335,6 +3360,21 @@ else
                             }
                         </tbody>
                     </table>
+
+                    @if (selectedGuestOrder.GuestOrderItems.Sum(item => item.PriceAtPurchase * item.Quantity) - selectedGuestOrder.TotalAmount > 0)
+                    {
+                        var subTotalGuest = selectedGuestOrder.GuestOrderItems.Sum(item => item.PriceAtPurchase * item.Quantity);
+                        var discountGuest = subTotalGuest - selectedGuestOrder.TotalAmount;
+
+                        <div class="receipt-total-row" style="font-size: 0.95rem; color: var(--charcoal-soft); border-top: none; padding-top: 8px; padding-bottom: 4px;">
+                            <span class="receipt-total-label" style="font-weight: 500;">Subtotal</span>
+                            <span class="receipt-total-val" style="font-weight: 500;">@subTotalGuest.ToString("N0") MMK</span>
+                        </div>
+                        <div class="receipt-total-row" style="font-size: 0.95rem; color: #b91c1c; border-top: none; padding-top: 4px; padding-bottom: 4px;">
+                            <span class="receipt-total-label" style="font-weight: 500;">Discount</span>
+                            <span class="receipt-total-val" style="font-weight: 500;">- @discountGuest.ToString("N0") MMK</span>
+                        </div>
+                    }
 
                     <div class="receipt-total-row">
                         <span class="receipt-total-label">Total Amount</span>
