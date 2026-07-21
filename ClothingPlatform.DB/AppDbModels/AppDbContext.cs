@@ -71,7 +71,7 @@ public partial class AppDbContext : DbContext
     {
         if (!optionsBuilder.IsConfigured)
         {
-            optionsBuilder.UseSqlServer("Server=.;Database=ClothingPlatformDB;User Id=sa;Password=sasa@123;TrustServerCertificate=True;");
+            optionsBuilder.UseNpgsql("Host=localhost;Database=ClothingPlatformDB;Username=postgres;Password=postgres");
         }
     }
 

@@ -1,0 +1,44 @@
+# Build Stage
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy solution and project files
+COPY ClothingPlatform.slnx ./
+COPY ClothingPlatform.DB/ClothingPlatform.DB.csproj ClothingPlatform.DB/
+COPY ClothingPlatform.Api/ClothingPlatform.Api.csproj ClothingPlatform.Api/
+COPY ClothingPlatform.Web/ClothingPlatform.Web.csproj ClothingPlatform.Web/
+
+# Restore dependencies
+RUN dotnet restore ClothingPlatform.slnx
+
+# Copy everything else and build
+COPY . .
+RUN dotnet publish ClothingPlatform.Api/ClothingPlatform.Api.csproj -c Release -o /app/publish/api
+RUN dotnet publish ClothingPlatform.Web/ClothingPlatform.Web.csproj -c Release -o /app/publish/web
+
+# Final Stage
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+WORKDIR /app
+
+# Install Nginx
+RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
+
+# Copy configurations and published apps
+COPY nginx.conf /app/nginx.conf
+COPY entrypoint.sh /app/entrypoint.sh
+COPY --from=build /app/publish/api /app/api
+COPY --from=build /app/publish/web /app/web
+
+# Ensure scripts are executable and configure permissions for non-root users (Hugging Face port 7860/user 1000)
+RUN chmod +x /app/entrypoint.sh && \
+    chmod -R 777 /var/log/nginx /var/lib/nginx /run
+
+# Environment variables for deployment
+ENV ConnectionStrings__DefaultConnection=""
+ENV ApiUrl="http://localhost:5000/"
+ENV ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
+
+# Hugging Face runs on port 7860
+EXPOSE 7860
+
+ENTRYPOINT ["/app/entrypoint.sh"]

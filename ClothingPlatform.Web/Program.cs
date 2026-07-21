@@ -22,23 +22,26 @@ string connectionString = builder.Configuration.GetConnectionString("DefaultConn
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseSqlServer(connectionString);
+    options.UseNpgsql(connectionString);
 });
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
 {
-    options.UseSqlServer(connectionString);
+    options.UseNpgsql(connectionString);
 }, ServiceLifetime.Scoped);
+
+string apiUrl = builder.Configuration["ApiUrl"] ?? "https://localhost:7065/";
+
 builder.Services.AddHttpClient("admin", client =>
 {
-    client.BaseAddress = new Uri("https://localhost:7065/");
+    client.BaseAddress = new Uri(apiUrl);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 builder.Services.AddScoped<HttpClientServices>();
 
 builder.Services.AddScoped(sp => new HttpClient
 {
-    BaseAddress = new Uri("https://localhost:7065/")
+    BaseAddress = new Uri(apiUrl)
 });
 builder.Services.AddScoped<CustomAuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
