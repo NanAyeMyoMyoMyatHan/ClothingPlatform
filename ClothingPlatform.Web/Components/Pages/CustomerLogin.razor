@@ -1,0 +1,223 @@
+@page "/customer-login"
+@using ClothingPlatform.Api.Models.Auth
+@inject HttpClientServices HttpServices
+@inject CustomerSessionState CustomerSession
+@inject NavigationManager Nav
+@inject IJSRuntime JSRuntime
+@inject ClothingPlatform.Web.Services.ServerCookieService ServerCookies
+
+<PageTitle>Chic Boutique - Customer Login</PageTitle>
+
+<div class="customer-auth-page">
+    <section class="customer-auth-panel">
+        <div class="auth-brand">Chic Boutique</div>
+        <div class="auth-tabs">
+            <button class="@(mode == "login" ? "active" : "")" @onclick='() => SetMode("login")'>Sign In</button>
+            <button class="@(mode == "register" ? "active" : "")" @onclick='() => SetMode("register")'>Create Account</button>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(message))
+        {
+            <div class="auth-message @(isError ? "error" : "success")">@message</div>
+        }
+
+        @if (mode == "login")
+        {
+            <label>Email</label>
+            <input type="email" @bind="loginEmail" />
+            <label>Password</label>
+            <input type="password" @bind="loginPassword" />
+            <LoadingButton Class="auth-primary"
+                           IsLoading="@isCustomerLoginSubmitting"
+                           LoadingText="Signing In..."
+                           OnClick="HandleLogin">
+                Sign In
+            </LoadingButton>
+        }
+        else
+        {
+            <div class="auth-name-grid">
+                <div>
+                    <label>First Name</label>
+                    <input type="text" @bind="firstName" />
+                </div>
+                <div>
+                    <label>Last Name</label>
+                    <input type="text" @bind="lastName" />
+                </div>
+            </div>
+            <label>Email</label>
+            <input type="email" @bind="registerEmail" />
+            <label>Phone Number</label>
+            <input type="tel" @bind="phoneNumber" />
+            <label>Address</label>
+            <input type="text" @bind="address" />
+            <label>Password</label>
+            <input type="password" @bind="registerPassword" />
+            <LoadingButton Class="auth-primary"
+                           IsLoading="@isCustomerRegisterSubmitting"
+                           LoadingText="Creating..."
+                           OnClick="HandleRegister">
+                Create Account
+            </LoadingButton>
+        }
+    </section>
+</div>
+
+@code {
+    private string mode = "login";
+    private string message = "";
+    private bool isError;
+    private bool isCustomerLoginSubmitting;
+    private bool isCustomerRegisterSubmitting;
+
+    private string loginEmail = "";
+    private string loginPassword = "";
+
+    private string firstName = "";
+    private string lastName = "";
+    private string registerEmail = "";
+    private string phoneNumber = "";
+    private string address = "";
+    private string registerPassword = "";
+
+    private void SetMode(string value)
+    {
+        mode = value;
+        message = "";
+    }
+
+    private async Task HandleLogin()
+    {
+        if (isCustomerLoginSubmitting)
+        {
+            return;
+        }
+
+        message = "";
+        if (string.IsNullOrWhiteSpace(loginEmail) || string.IsNullOrWhiteSpace(loginPassword))
+        {
+            ShowMessage(UiMessages.CustomerAuth.LoginRequired, true);
+            return;
+        }
+
+        isCustomerLoginSubmitting = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await HttpServices.ExecuteAsync<CustomerAuthResponse>(
+                "api/customer-auth/login",
+                new CustomerLoginRequest { Email = loginEmail, Password = loginPassword },
+                EnumHttpMethod.Post);
+
+            if (result == null)
+            {
+                ShowMessage(UiMessages.CustomerAuth.InvalidCredentials, true);
+                return;
+            }
+
+            await CompleteLogin(result);
+        }
+        catch (Exception ex)
+        {
+            ShowMessage(UiMessages.CustomerAuth.LoginFailed(ex.Message), true);
+        }
+        finally
+        {
+            isCustomerLoginSubmitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleRegister()
+    {
+        if (isCustomerRegisterSubmitting)
+        {
+            return;
+        }
+
+        message = "";
+        if (string.IsNullOrWhiteSpace(firstName) ||
+            string.IsNullOrWhiteSpace(lastName) ||
+            string.IsNullOrWhiteSpace(registerEmail) ||
+            string.IsNullOrWhiteSpace(address) ||
+            string.IsNullOrWhiteSpace(registerPassword))
+        {
+            ShowMessage(UiMessages.CustomerAuth.RegisterRequiredFields, true);
+            return;
+        }
+
+        isCustomerRegisterSubmitting = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await HttpServices.ExecuteAsync<CustomerAuthResponse>(
+                "api/customer-auth/register",
+                new CustomerRegisterRequest
+                {
+                    FirstName = firstName,
+                    LastName = lastName,
+                    Email = registerEmail,
+                    PhoneNumber = phoneNumber,
+                    Address = address,
+                    Password = registerPassword
+                },
+                EnumHttpMethod.Post);
+
+            if (result != null)
+            {
+                await CompleteLogin(result);
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowMessage(UiMessages.CustomerAuth.RegisterFailed(ex.Message), true);
+        }
+        finally
+        {
+            isCustomerRegisterSubmitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CompleteLogin(CustomerAuthResponse result)
+    {
+        CustomerSession.Login(new User
+        {
+            UserId = result.UserId,
+            RoleId = result.RoleId,
+            FirstName = result.FirstName,
+            LastName = result.LastName,
+            Email = result.Email,
+            PhoneNumber = result.PhoneNumber,
+            Address = result.Address,
+            Role = new Role { RoleId = result.RoleId, RoleName = result.Role },
+            PasswordHash = string.Empty
+        });
+
+        // Clean up legacy localStorage items
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "customerId");
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+        }
+        catch {}
+
+        // Store customerId server-side with HttpOnly flag
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("authCookieHelper.setCustomer", result.UserId);
+        }
+        catch {}
+        ServerCookies.SetCustomerIdCookie(result.UserId);
+        Nav.NavigateTo("/customer");
+    }
+
+    private void ShowMessage(string value, bool error)
+    {
+        message = value;
+        isError = error;
+    }
+}

@@ -1,0 +1,43 @@
+<img src="@currentSrc" alt="@Alt" class="@CssClass" @onerror="UseFallback" @attributes="AdditionalAttributes" />
+
+@code {
+    private const string FallbackSrc = "/images/products/no-image.svg";
+
+    private string currentSrc = FallbackSrc;
+    private string? lastResolvedSrc;
+
+    [Parameter]
+    public string? Src { get; set; }
+
+    [Parameter]
+    public string Alt { get; set; } = "";
+
+    [Parameter]
+    public string? CssClass { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        var nextSrc = ResolveSrc(Src);
+        if (!string.Equals(lastResolvedSrc, nextSrc, StringComparison.Ordinal))
+        {
+            lastResolvedSrc = nextSrc;
+            currentSrc = nextSrc;
+        }
+    }
+
+    private static string ResolveSrc(string? src)
+    {
+        return string.IsNullOrWhiteSpace(src) ? FallbackSrc : src.Trim();
+    }
+
+    private void UseFallback()
+    {
+        if (!string.Equals(currentSrc, FallbackSrc, StringComparison.OrdinalIgnoreCase))
+        {
+            currentSrc = FallbackSrc;
+        }
+    }
+}

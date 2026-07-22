@@ -1,0 +1,20 @@
+# Exclude runtime-uploaded image directories (uploaded via API at runtime)
+ClothingPlatform.Api/wwwroot/images/products/
+ClothingPlatform.Api/wwwroot/images/payment-slips/
+ClothingPlatform.Api/wwwroot/images/returns/
+ClothingPlatform.Web/wwwroot/images/payment-slips/
+ClothingPlatform.Web/wwwroot/images/returns/
+
+# Exclude legacy SQL scripts (database hosted on Supabase)
+script.sql
+script_postgres.sql
+ClothingPlatform.DB/Scripts/
+ClothingPlatformProject.BlazorFroent/
+
+# Exclude build artifacts
+**/bin/
+**/obj/
+
+# Exclude IDE/dev files
+.vs/
+*.user

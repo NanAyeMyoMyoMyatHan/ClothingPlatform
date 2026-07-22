@@ -1,0 +1,81 @@
+﻿<div style="display: flex; justify-content: center; margin-bottom: 1.5rem;">
+    
+<div class="pag">
+
+    @if (CurrentPage == 1)
+    {
+        <button class="pag-btn arrow disabled" disabled>&#8249;</button>  @* ‹ *@
+    }
+    else
+    {
+        
+        <button class="pag-btn arrow" @onclick="() => OnPageClick(CurrentPage - 1)">&#8249;</button>
+    }
+
+    @if (CurrentPage > 3 && CurrentPage < TotalPages - 2)
+    {
+        <button class="pag-btn" @onclick="() => OnPageClick(1)">1</button>
+        <span class="pag-sep">···</span>
+
+        @for (int i = CurrentPage - 2; i <= CurrentPage + 2; i++)
+        {
+            var p = i;
+            <button class="pag-btn @(CurrentPage == p ? "active" : "")"
+                    @onclick="() => OnPageClick(p)">
+                @p
+            </button>
+        }
+
+        <span class="pag-sep">···</span>
+        <button class="pag-btn" @onclick="() => OnPageClick(TotalPages)">@TotalPages</button>
+    }
+    else
+    {
+        @for (int i = 1; i <= Math.Min(4, TotalPages); i++)
+        {
+            var p = i;
+            <button class="pag-btn @(CurrentPage == p ? "active" : "")"
+                    @onclick="() => OnPageClick(p)">
+                @p
+            </button>
+        }
+
+        @if (TotalPages > 4)
+        {
+            <span class="pag-sep">···</span>
+
+            @for (int i = Math.Max(5, TotalPages - 3); i <= TotalPages; i++)
+            {
+                var p = i;
+                <button class="pag-btn @(CurrentPage == p ? "active" : "")"
+                        @onclick="() => OnPageClick(p)">
+                    @p
+                </button>
+            }
+        }
+    }
+
+    @if (CurrentPage == TotalPages || TotalPages == 0)
+    {
+        <button class="pag-btn arrow disabled" disabled>&#8250;</button>  @* › *@
+    }
+    else
+    {
+        @* Next button *@
+        
+        <button class="pag-btn arrow" @onclick="() => OnPageClick(CurrentPage + 1)">&#8250;</button>
+    }
+
+</div>
+</div>
+@code {
+    [Parameter] public int CurrentPage { get; set; } = 1;
+    [Parameter] public int TotalPages { get; set; } = 1;
+    [Parameter] public EventCallback<int> CurrentPageChanged { get; set; }
+
+    private async Task OnPageClick(int page)
+    {
+        if (page < 1 || page > TotalPages || page == CurrentPage) return;
+        await CurrentPageChanged.InvokeAsync(page);
+    }
+}

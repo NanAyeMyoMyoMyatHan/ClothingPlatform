@@ -1,0 +1,40 @@
+@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+
+<PageTitle>The Boutique - Redirecting</PageTitle>
+
+<div class="portal-loading">
+    <div class="portal-loading-card">
+        <div class="portal-loading-mark">TB</div>
+        <div>
+            <h1>Redirecting</h1>
+            <p>Opening the shared portal.</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        var path = Navigation.ToBaseRelativePath(Navigation.Uri)
+            .Split('?', '#')[0]
+            .Trim('/')
+            .ToLowerInvariant();
+
+        var target = path switch
+        {
+            "staff/order-management" => "/dashboard?view=orders",
+            "staff/create-order" => "/dashboard?view=create-order",
+            "staff/stock-control" => "/dashboard?view=products",
+            "staff/profile" => "/dashboard?view=profile",
+            _ => "/dashboard"
+        };
+
+        Navigation.NavigateTo(target, replace: true);
+    }
+}

@@ -1,0 +1,27 @@
+Please update the project according to the following requirements:
+
+1. Global UI & Typography
+- Apply a single, unified font family consistently across the entire project (Admin UI, Staff Panel, and Customer UI).
+
+2. Authentication & Role-Based Access Control (RBAC)
+- Admin and Staff must share a single login page. Implement role-based permissions to restrict access and visibility.
+- The Customer interface and authentication must remain completely separate.
+
+3. Customer UI/UX Enhancements
+- On the product details page, add selection options for Size Chart and Color.
+- Add a product quantity modifier (+ / - buttons) below the details so customers can adjust the amount before adding it to the bag.
+- Place the "Add to Bag" button on the side of the UI so it is easily accessible even when buying multiple items. 
+- Ensure that the "Add to Bag" cart items persist. If a customer logs out and logs back in, their items must still be in the cart.
+
+4. Order Management & Workflow
+- Update the order status pipeline to exactly: Pending -> Processing -> Confirm.
+- Completely remove the "Delivery" status from the system.
+- If an Admin deletes a customer's order, trigger an immediate alert/notification on that customer's UI.
+
+5. Admin & Staff Panels
+- In the Admin UI, combine the "Staff List" and "Create Staff" sections into a single "Staff Menu".
+- Inside this unified staff dashboard, change the creation button/action text to "Add New Staff".
+- Implement a dedicated Report generation feature accessible only by the Admin.
+
+6. Payment Integration
+- Integrate and ensure full functionality for KBZPay (Kpay) and WaveMoney (WavePay) as payment types.
