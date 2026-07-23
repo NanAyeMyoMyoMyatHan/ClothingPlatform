@@ -13,8 +13,11 @@ RUN dotnet restore ClothingPlatform.slnx
 
 # Copy everything else and build
 COPY . .
-RUN dotnet publish ClothingPlatform.Api/ClothingPlatform.Api.csproj -c Release -o /app/publish/api
-RUN dotnet publish ClothingPlatform.Web/ClothingPlatform.Web.csproj -c Release -o /app/publish/web
+WORKDIR /src/ClothingPlatform.Api
+RUN dotnet publish ClothingPlatform.Api.csproj -c Release -o /app/publish/api --no-restore
+
+WORKDIR /src/ClothingPlatform.Web
+RUN dotnet publish ClothingPlatform.Web.csproj -c Release -o /app/publish/web --no-restore
 
 # Final Stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
