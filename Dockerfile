@@ -1,5 +1,5 @@
 # Build Stage
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
 # Copy solution and project files
@@ -20,7 +20,7 @@ WORKDIR /src/ClothingPlatform.Web
 RUN dotnet publish ClothingPlatform.Web.csproj -c Release -o /app/publish/web --no-restore
 
 # Final Stage
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 
 # Install Nginx
@@ -32,7 +32,7 @@ COPY entrypoint.sh /app/entrypoint.sh
 COPY --from=build /app/publish/api /app/api
 COPY --from=build /app/publish/web /app/web
 
-# Ensure scripts are executable and configure permissions for non-root users (Hugging Face port 7860/user 1000)
+# Ensure scripts are executable and configure permissions for non-root users
 RUN chmod +x /app/entrypoint.sh && \
     chmod -R 777 /var/log/nginx /var/lib/nginx /run
 
@@ -41,7 +41,7 @@ ENV ConnectionStrings__DefaultConnection=""
 ENV ApiUrl="http://localhost:5000/"
 ENV ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
 
-# Hugging Face runs on port 7860
-EXPOSE 7860
+# Back4App: exposed port must match the "Port" field set in the deployment form
+EXPOSE 8000
 
 ENTRYPOINT ["/app/entrypoint.sh"]
