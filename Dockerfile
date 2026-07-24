@@ -41,7 +41,7 @@ ENV ConnectionStrings_DefaultConnection=""
 ENV ApiUrl="http://localhost:5000/"
 ENV ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
 
-# Hugging Face/Back4App runs on port 7860
-EXPOSE 7860
+# Back4App runs on port 8080
+EXPOSE 8080
 
 ENTRYPOINT ["/app/entrypoint.sh"]
