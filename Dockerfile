@@ -32,8 +32,9 @@ COPY entrypoint.sh /app/entrypoint.sh
 COPY --from=build /app/publish/api /app/api
 COPY --from=build /app/publish/web /app/web
 
-# Ensure scripts are executable and configure permissions for non-root users (Hugging Face port 7860/user 1000)
-RUN chmod +x /app/entrypoint.sh && \
+# Strip Windows CRLF line endings so bash can execute the scripts on Linux
+RUN sed -i 's/\r$//' /app/entrypoint.sh /app/nginx.conf && \
+    chmod +x /app/entrypoint.sh && \
     chmod -R 777 /var/log/nginx /var/lib/nginx /run
 
 # Environment variables for deployment
