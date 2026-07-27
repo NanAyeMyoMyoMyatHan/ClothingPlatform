@@ -18,7 +18,13 @@ builder.Services.AddScoped<IPortalSessionBootstrapper, PortalSessionBootstrapper
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ServerCookieService>();
 
-string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+string connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") 
+    ?? Environment.GetEnvironmentVariable("ConnectionStrings_DefaultConnection")
+    ?? Environment.GetEnvironmentVariable("DATABASE_URL")
+    ?? Environment.GetEnvironmentVariable("POSTGRES_URL")
+    ?? builder.Configuration.GetConnectionString("DefaultConnection");
+
+connectionString = ParseConnectionString(connectionString);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -97,6 +103,32 @@ app.MapPost("/api/cookies/clear", (ServerCookieService cookieService) =>
 });
 
 app.Run();
+
+static string ParseConnectionString(string connectionString)
+{
+    if (string.IsNullOrEmpty(connectionString))
+        return connectionString;
+
+    if (connectionString.StartsWith("postgres://") || connectionString.StartsWith("postgresql://"))
+    {
+        try
+        {
+            var uri = new Uri(connectionString);
+            var userInfo = uri.UserInfo.Split(':');
+            var username = userInfo[0];
+            var password = userInfo.Length > 1 ? userInfo[1] : "";
+            var host = uri.Host;
+            var port = uri.Port > 0 ? uri.Port : 5432;
+            var database = uri.AbsolutePath.TrimStart('/');
+            return $"Host={host};Port={port};Database={database};Username={username};Password={password};SslMode=Require;Trust Server Certificate=true;";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error parsing database URI: {ex.Message}");
+        }
+    }
+    return connectionString;
+}
 
 public record SetAuthCookieRequest(string Token, int UserId);
 public record SetCustomerCookieRequest(int UserId);
