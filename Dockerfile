@@ -3,13 +3,14 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 # Copy project files
+COPY NuGet.Config ./
 COPY ClothingPlatform.DB/ClothingPlatform.DB.csproj ClothingPlatform.DB/
 COPY ClothingPlatform.Api/ClothingPlatform.Api.csproj ClothingPlatform.Api/
 COPY ClothingPlatform.Web/ClothingPlatform.Web.csproj ClothingPlatform.Web/
 
 # Restore dependencies
-RUN dotnet restore ClothingPlatform.Api/ClothingPlatform.Api.csproj
-RUN dotnet restore ClothingPlatform.Web/ClothingPlatform.Web.csproj
+RUN dotnet restore ClothingPlatform.Api/ClothingPlatform.Api.csproj --no-cache
+RUN dotnet restore ClothingPlatform.Web/ClothingPlatform.Web.csproj --no-cache
 
 # Copy everything else and build
 COPY . .
@@ -20,7 +21,7 @@ WORKDIR /src/ClothingPlatform.Web
 RUN dotnet publish ClothingPlatform.Web.csproj -c Release -o /app/publish/web --no-restore
 
 # Final Stage
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 
 # Install Nginx
