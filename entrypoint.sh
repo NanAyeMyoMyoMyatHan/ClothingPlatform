@@ -15,11 +15,11 @@ echo "=== nginx config OK ==="
 
 # Start the API service
 echo "=== Starting API on port 5000 ==="
-dotnet /app/api/ClothingPlatform.Api.dll --urls "http://localhost:5000" &
+dotnet /app/api/ClothingPlatform.Api.dll --urls "http://127.0.0.1:5000" &
 
 # Start the Web service
 echo "=== Starting Web on port 5001 ==="
-dotnet /app/web/ClothingPlatform.Web.dll --urls "http://localhost:5001" &
+dotnet /app/web/ClothingPlatform.Web.dll --urls "http://127.0.0.1:5001" &
 
 # Start Nginx in the foreground
 echo "=== Starting nginx on port 8080 ==="

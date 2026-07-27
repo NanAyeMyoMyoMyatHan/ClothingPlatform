@@ -102,8 +102,15 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await SchemaCompatibility.EnsureCancelledOrderStatusSupportAsync(db);
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await SchemaCompatibility.EnsureCancelledOrderStatusSupportAsync(db);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Database initialization warning (API): {ex.Message}");
+    }
 }
 
 // Configure the HTTP request pipeline.
