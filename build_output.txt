@@ -1,0 +1,629 @@
+﻿docker : #0 building with "desktop-linux" instance using docker driver
+At line:1 char:1
++ docker build --no-cache -t clothing-platform . 2>&1 | Out-File -FileP ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (#0 building wit...g docker driver:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.72kB 0.0s done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for mcr.microsoft.com/dotnet/aspnet:8.0
+#2 ...
+
+#3 [internal] load metadata for mcr.microsoft.com/dotnet/sdk:8.0
+#3 DONE 0.5s
+
+#2 [internal] load metadata for mcr.microsoft.com/dotnet/aspnet:8.0
+#2 DONE 0.5s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 83B done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 DONE 0.0s
+
+#6 [build  1/13] FROM 
+mcr.microsoft.com/dotnet/sdk:8.0@sha256:3c0edbfe1549dd93fb789dc96299a40df865ad7bffefcaf38e8c05940686d641
+#6 resolve mcr.microsoft.com/dotnet/sdk:8.0@sha256:3c0edbfe1549dd93fb789dc96299a40df865ad7bffefcaf38e8c05940686d641 
+0.1s done
+#6 DONE 0.1s
+
+#7 [build  2/13] WORKDIR /src
+#7 CACHED
+
+#8 [final 1/8] FROM 
+mcr.microsoft.com/dotnet/aspnet:8.0@sha256:8f6a307ae32fb393a4b4bcde0a81f0ce3f0a715de0e5575df71f3030448f2dde
+#8 resolve mcr.microsoft.com/dotnet/aspnet:8.0@sha256:8f6a307ae32fb393a4b4bcde0a81f0ce3f0a715de0e5575df71f3030448f2dde 
+0.1s done
+#8 DONE 0.1s
+
+#9 [final 2/8] WORKDIR /app
+#9 CACHED
+
+#5 [internal] load build context
+#5 transferring context: 27.72kB 0.0s done
+#5 DONE 0.1s
+
+#10 [build  3/13] COPY NuGet.Config ./
+#10 DONE 0.1s
+
+#11 [final 3/8] RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
+#11 ...
+
+#12 [build  4/13] COPY ClothingPlatform.DB/ClothingPlatform.DB.csproj ClothingPlatform.DB/
+#12 DONE 0.1s
+
+#13 [build  5/13] COPY ClothingPlatform.Api/ClothingPlatform.Api.csproj ClothingPlatform.Api/
+#13 DONE 0.1s
+
+#11 [final 3/8] RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
+#11 ...
+
+#14 [build  6/13] COPY ClothingPlatform.Web/ClothingPlatform.Web.csproj ClothingPlatform.Web/
+#14 DONE 0.1s
+
+#15 [build  7/13] RUN dotnet restore ClothingPlatform.Api/ClothingPlatform.Api.csproj --no-cache
+#15 1.581   Determining projects to restore...
+#15 ...
+
+#11 [final 3/8] RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
+#11 0.974 Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+#11 1.052 Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+#11 1.158 Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]
+#11 1.211 Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]
+#11 1.901 Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]
+#11 1.987 Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [320 kB]
+#11 3.036 Fetched 9359 kB in 3s (3458 kB/s)
+#11 3.036 Reading package lists...
+#11 3.649 Reading package lists...
+#11 4.824 Building dependency tree...
+#11 5.116 Reading state information...
+#11 5.618 The following additional packages will be installed:
+#11 5.624   iproute2 krb5-locales libatm1 libbpf1 libbsd0 libcap2-bin libelf1
+#11 5.624   libgssapi-krb5-2 libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0 libmnl0
+#11 5.627   libpam-cap libtirpc-common libtirpc3 libxtables12 nginx-common
+#11 5.629 Suggested packages:
+#11 5.629   iproute2-doc python3:any krb5-doc krb5-user fcgiwrap nginx-doc ssl-cert
+#11 5.973 The following NEW packages will be installed:
+#11 5.973   iproute2 krb5-locales libatm1 libbpf1 libbsd0 libcap2-bin libelf1
+#11 5.975   libgssapi-krb5-2 libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0 libmnl0
+#11 5.985   libpam-cap libtirpc-common libtirpc3 libxtables12 nginx nginx-common
+#11 6.350 0 upgraded, 19 newly installed, 0 to remove and 0 not upgraded.
+#11 6.350 Need to get 3040 kB of archives.
+#11 6.350 After this operation, 9946 kB of additional disk space will be used.
+#11 6.350 Get:1 http://deb.debian.org/debian bookworm/main amd64 libelf1 amd64 0.188-2.1 [174 kB]
+#11 6.487 Get:2 http://deb.debian.org/debian bookworm/main amd64 libbpf1 amd64 1:1.1.2-0+deb12u1 [145 kB]
+#11 6.540 Get:3 http://deb.debian.org/debian bookworm/main amd64 libbsd0 amd64 0.11.7-2 [117 kB]
+#11 6.574 Get:4 http://deb.debian.org/debian bookworm/main amd64 libmnl0 amd64 1.0.4-3 [12.5 kB]
+#11 6.574 Get:5 http://deb.debian.org/debian bookworm/main amd64 libkrb5support0 amd64 1.20.1-2+deb12u5 [33.2 kB]
+#11 6.586 Get:6 http://deb.debian.org/debian bookworm/main amd64 libk5crypto3 amd64 1.20.1-2+deb12u5 [79.7 kB]
+#11 6.649 Get:7 http://deb.debian.org/debian bookworm/main amd64 libkeyutils1 amd64 1.6.3-2 [8808 B]
+#11 6.662 Get:8 http://deb.debian.org/debian bookworm/main amd64 libkrb5-3 amd64 1.20.1-2+deb12u5 [332 kB]
+#11 6.816 Get:9 http://deb.debian.org/debian bookworm/main amd64 libgssapi-krb5-2 amd64 1.20.1-2+deb12u5 [135 kB]
+#11 6.843 Get:10 http://deb.debian.org/debian bookworm/main amd64 libtirpc-common all 1.3.3+ds-1 [14.0 kB]
+#11 6.843 Get:11 http://deb.debian.org/debian bookworm/main amd64 libtirpc3 amd64 1.3.3+ds-1 [85.2 kB]
+#11 6.862 Get:12 http://deb.debian.org/debian bookworm/main amd64 libxtables12 amd64 1.8.9-2 [30.8 kB]
+#11 6.867 Get:13 http://deb.debian.org/debian bookworm/main amd64 libcap2-bin amd64 1:2.66-4+deb12u3+b1 [35.2 kB]
+#11 6.873 Get:14 http://deb.debian.org/debian bookworm/main amd64 iproute2 amd64 6.1.0-3 [1046 kB]
+#11 7.070 Get:15 http://deb.debian.org/debian bookworm/main amd64 krb5-locales all 1.20.1-2+deb12u5 [63.5 kB]
+#11 7.080 Get:16 http://deb.debian.org/debian bookworm/main amd64 libatm1 amd64 1:2.5.1-4+b2 [68.3 kB]
+#11 7.088 Get:17 http://deb.debian.org/debian bookworm/main amd64 libpam-cap amd64 1:2.66-4+deb12u3+b1 [15.1 kB]
+#11 7.088 Get:18 http://deb.debian.org/debian bookworm/main amd64 nginx-common all 1.22.1-9+deb12u9 [115 kB]
+#11 7.106 Get:19 http://deb.debian.org/debian bookworm/main amd64 nginx amd64 1.22.1-9+deb12u9 [530 kB]
+#11 7.606 debconf: delaying package configuration, since apt-utils is not installed
+#11 7.676 Fetched 3040 kB in 1s (2413 kB/s)
+#11 7.748 Selecting previously unselected package libelf1:amd64.
+#11 7.748 (Reading database ... 
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 6601 files and directories currently installed.)
+#11 7.783 Preparing to unpack .../00-libelf1_0.188-2.1_amd64.deb ...
+#11 7.809 Unpacking libelf1:amd64 (0.188-2.1) ...
+#11 7.966 Selecting previously unselected package libbpf1:amd64.
+#11 7.976 Preparing to unpack .../01-libbpf1_1%3a1.1.2-0+deb12u1_amd64.deb ...
+#11 7.995 Unpacking libbpf1:amd64 (1:1.1.2-0+deb12u1) ...
+#11 8.129 Selecting previously unselected package libbsd0:amd64.
+#11 8.131 Preparing to unpack .../02-libbsd0_0.11.7-2_amd64.deb ...
+#11 8.143 Unpacking libbsd0:amd64 (0.11.7-2) ...
+#11 8.245 Selecting previously unselected package libmnl0:amd64.
+#11 8.246 Preparing to unpack .../03-libmnl0_1.0.4-3_amd64.deb ...
+#11 8.262 Unpacking libmnl0:amd64 (1.0.4-3) ...
+#11 8.353 Selecting previously unselected package libkrb5support0:amd64.
+#11 8.354 Preparing to unpack .../04-libkrb5support0_1.20.1-2+deb12u5_amd64.deb ...
+#11 8.367 Unpacking libkrb5support0:amd64 (1.20.1-2+deb12u5) ...
+#11 8.478 Selecting previously unselected package libk5crypto3:amd64.
+#11 8.480 Preparing to unpack .../05-libk5crypto3_1.20.1-2+deb12u5_amd64.deb ...
+#11 8.490 Unpacking libk5crypto3:amd64 (1.20.1-2+deb12u5) ...
+#11 8.588 Selecting previously unselected package libkeyutils1:amd64.
+#11 8.589 Preparing to unpack .../06-libkeyutils1_1.6.3-2_amd64.deb ...
+#11 8.602 Unpacking libkeyutils1:amd64 (1.6.3-2) ...
+#11 8.752 Selecting previously unselected package libkrb5-3:amd64.
+#11 8.753 Preparing to unpack .../07-libkrb5-3_1.20.1-2+deb12u5_amd64.deb ...
+#11 8.769 Unpacking libkrb5-3:amd64 (1.20.1-2+deb12u5) ...
+#11 8.937 Selecting previously unselected package libgssapi-krb5-2:amd64.
+#11 8.938 Preparing to unpack .../08-libgssapi-krb5-2_1.20.1-2+deb12u5_amd64.deb ...
+#11 8.949 Unpacking libgssapi-krb5-2:amd64 (1.20.1-2+deb12u5) ...
+#11 9.033 Selecting previously unselected package libtirpc-common.
+#11 9.034 Preparing to unpack .../09-libtirpc-common_1.3.3+ds-1_all.deb ...
+#11 9.046 Unpacking libtirpc-common (1.3.3+ds-1) ...
+#11 9.180 Selecting previously unselected package libtirpc3:amd64.
+#11 9.180 Preparing to unpack .../10-libtirpc3_1.3.3+ds-1_amd64.deb ...
+#11 9.189 Unpacking libtirpc3:amd64 (1.3.3+ds-1) ...
+#11 9.276 Selecting previously unselected package libxtables12:amd64.
+#11 9.278 Preparing to unpack .../11-libxtables12_1.8.9-2_amd64.deb ...
+#11 9.289 Unpacking libxtables12:amd64 (1.8.9-2) ...
+#11 9.359 Selecting previously unselected package libcap2-bin.
+#11 9.360 Preparing to unpack .../12-libcap2-bin_1%3a2.66-4+deb12u3+b1_amd64.deb ...
+#11 9.371 Unpacking libcap2-bin (1:2.66-4+deb12u3+b1) ...
+#11 9.470 Selecting previously unselected package iproute2.
+#11 9.471 Preparing to unpack .../13-iproute2_6.1.0-3_amd64.deb ...
+#11 9.482 Unpacking iproute2 (6.1.0-3) ...
+#11 9.669 Selecting previously unselected package krb5-locales.
+#11 9.670 Preparing to unpack .../14-krb5-locales_1.20.1-2+deb12u5_all.deb ...
+#11 9.686 Unpacking krb5-locales (1.20.1-2+deb12u5) ...
+#11 9.767 Selecting previously unselected package libatm1:amd64.
+#11 9.768 Preparing to unpack .../15-libatm1_1%3a2.5.1-4+b2_amd64.deb ...
+#11 9.799 Unpacking libatm1:amd64 (1:2.5.1-4+b2) ...
+#11 9.875 Selecting previously unselected package libpam-cap:amd64.
+#11 9.876 Preparing to unpack .../16-libpam-cap_1%3a2.66-4+deb12u3+b1_amd64.deb ...
+#11 9.887 Unpacking libpam-cap:amd64 (1:2.66-4+deb12u3+b1) ...
+#11 10.01 Selecting previously unselected package nginx-common.
+#11 10.01 Preparing to unpack .../17-nginx-common_1.22.1-9+deb12u9_all.deb ...
+#11 10.03 Unpacking nginx-common (1.22.1-9+deb12u9) ...
+#11 10.12 Selecting previously unselected package nginx.
+#11 10.12 Preparing to unpack .../18-nginx_1.22.1-9+deb12u9_amd64.deb ...
+#11 10.13 Unpacking nginx (1.22.1-9+deb12u9) ...
+#11 10.28 Setting up libkeyutils1:amd64 (1.6.3-2) ...
+#11 10.32 Setting up libtirpc-common (1.3.3+ds-1) ...
+#11 10.36 Setting up nginx-common (1.22.1-9+deb12u9) ...
+#11 10.70 debconf: unable to initialize frontend: Dialog
+#11 10.70 debconf: (TERM is not set, so the dialog frontend is not usable.)
+#11 10.70 debconf: falling back to frontend: Readline
+#11 10.70 debconf: unable to initialize frontend: Readline
+#11 10.70 debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC 
+contains: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.36.0 /usr/local/share/perl/5.36.0 
+/usr/lib/x86_64-linux-gnu/perl5/5.36 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base 
+/usr/lib/x86_64-linux-gnu/perl/5.36 /usr/share/perl/5.36 /usr/local/lib/site_perl) at 
+/usr/share/perl5/Debconf/FrontEnd/Readline.pm line 7.)
+#11 10.70 debconf: falling back to frontend: Teletype
+#11 11.36 Setting up krb5-locales (1.20.1-2+deb12u5) ...
+#11 11.66 Setting up libatm1:amd64 (1:2.5.1-4+b2) ...
+#11 12.17 Setting up libkrb5support0:amd64 (1.20.1-2+deb12u5) ...
+#11 12.45 Setting up libcap2-bin (1:2.66-4+deb12u3+b1) ...
+#11 12.66 Setting up libmnl0:amd64 (1.0.4-3) ...
+#11 12.88 Setting up libk5crypto3:amd64 (1.20.1-2+deb12u5) ...
+#11 13.09 Setting up libxtables12:amd64 (1.8.9-2) ...
+#11 13.32 Setting up libkrb5-3:amd64 (1.20.1-2+deb12u5) ...
+#11 13.55 Setting up libbsd0:amd64 (0.11.7-2) ...
+#11 13.70 Setting up libelf1:amd64 (0.188-2.1) ...
+#11 13.73 Setting up libpam-cap:amd64 (1:2.66-4+deb12u3+b1) ...
+#11 13.96 debconf: unable to initialize frontend: Dialog
+#11 13.96 debconf: (TERM is not set, so the dialog frontend is not usable.)
+#11 13.96 debconf: falling back to frontend: Readline
+#11 13.96 debconf: unable to initialize frontend: Readline
+#11 13.96 debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC 
+contains: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.36.0 /usr/local/share/perl/5.36.0 
+/usr/lib/x86_64-linux-gnu/perl5/5.36 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base 
+/usr/lib/x86_64-linux-gnu/perl/5.36 /usr/share/perl/5.36 /usr/local/lib/site_perl) at 
+/usr/share/perl5/Debconf/FrontEnd/Readline.pm line 7.)
+#11 13.96 debconf: falling back to frontend: Teletype
+#11 14.25 Setting up libbpf1:amd64 (1:1.1.2-0+deb12u1) ...
+#11 14.47 Setting up libgssapi-krb5-2:amd64 (1.20.1-2+deb12u5) ...
+#11 14.56 Setting up libtirpc3:amd64 (1.3.3+ds-1) ...
+#11 14.65 Setting up iproute2 (6.1.0-3) ...
+#11 15.07 debconf: unable to initialize frontend: Dialog
+#11 15.07 debconf: (TERM is not set, so the dialog frontend is not usable.)
+#11 15.07 debconf: falling back to frontend: Readline
+#11 15.07 debconf: unable to initialize frontend: Readline
+#11 15.07 debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC 
+contains: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.36.0 /usr/local/share/perl/5.36.0 
+/usr/lib/x86_64-linux-gnu/perl5/5.36 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base 
+/usr/lib/x86_64-linux-gnu/perl/5.36 /usr/share/perl/5.36 /usr/local/lib/site_perl) at 
+/usr/share/perl5/Debconf/FrontEnd/Readline.pm line 7.)
+#11 15.07 debconf: falling back to frontend: Teletype
+#11 15.14 Setting up nginx (1.22.1-9+deb12u9) ...
+#11 15.18 invoke-rc.d: could not determine current runlevel
+#11 15.18 invoke-rc.d: policy-rc.d denied execution of start.
+#11 15.20 Processing triggers for libc-bin (2.36-9+deb12u14) ...
+#11 DONE 15.5s
+
+#15 [build  7/13] RUN dotnet restore ClothingPlatform.Api/ClothingPlatform.Api.csproj --no-cache
+#15 ...
+
+#16 [final 4/8] COPY nginx.conf /app/nginx.conf
+#16 DONE 0.1s
+
+#17 [final 5/8] COPY entrypoint.sh /app/entrypoint.sh
+#17 DONE 0.2s
+
+#15 [build  7/13] RUN dotnet restore ClothingPlatform.Api/ClothingPlatform.Api.csproj --no-cache
+#15 15.44   Restored /src/ClothingPlatform.Api/ClothingPlatform.Api.csproj (in 13.16 sec).
+#15 15.44   Restored /src/ClothingPlatform.DB/ClothingPlatform.DB.csproj (in 13.16 sec).
+#15 DONE 15.7s
+
+#18 [build  8/13] RUN dotnet restore ClothingPlatform.Web/ClothingPlatform.Web.csproj --no-cache
+#18 2.580   Determining projects to restore...
+#18 5.592   Restored /src/ClothingPlatform.Api/ClothingPlatform.Api.csproj (in 625 ms).
+#18 5.592   Restored /src/ClothingPlatform.DB/ClothingPlatform.DB.csproj (in 625 ms).
+#18 7.882   Restored /src/ClothingPlatform.Web/ClothingPlatform.Web.csproj (in 2.95 sec).
+#18 DONE 8.0s
+
+#19 [build  9/13] COPY . .
+#19 DONE 0.2s
+
+#20 [build 10/13] WORKDIR /src/ClothingPlatform.Api
+#20 DONE 0.1s
+
+#21 [build 11/13] RUN dotnet publish ClothingPlatform.Api.csproj -c Release -o /app/publish/api --no-restore
+#21 6.642   ClothingPlatform.DB -> /src/ClothingPlatform.DB/bin/Release/net8.0/ClothingPlatform.DB.dll
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserModel.cs(43,23): warning CS8618: Non-nullable property 
+'First_Name' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or 
+declaring the property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserModel.cs(44,23): warning CS8618: Non-nullable property 'Last_Name' 
+must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the 
+property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserModel.cs(45,23): warning CS8618: Non-nullable property 'Email' 
+must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the 
+property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserModel.cs(46,23): warning CS8618: Non-nullable property 'Address' 
+must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the 
+property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserModel.cs(47,23): warning CS8618: Non-nullable property 'Role' must 
+contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property 
+as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserModel.cs(34,23): warning CS8618: Non-nullable property 
+'First_Name' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or 
+declaring the property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserModel.cs(35,23): warning CS8618: Non-nullable property 'Last_Name' 
+must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the 
+property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserModel.cs(36,23): warning CS8618: Non-nullable property 'Email' 
+must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the 
+property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserModel.cs(37,23): warning CS8618: Non-nullable property 'Address' 
+must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the 
+property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserModel.cs(38,23): warning CS8618: Non-nullable property 'Role' must 
+contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property 
+as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserModel.cs(6,23): warning CS8618: Non-nullable property 'First_Name' 
+must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the 
+property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserModel.cs(7,23): warning CS8618: Non-nullable property 'Last_Name' 
+must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the 
+property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserModel.cs(8,23): warning CS8618: Non-nullable property 'Email' must 
+contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property 
+as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserModel.cs(9,23): warning CS8618: Non-nullable property 'Address' 
+must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the 
+property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserModel.cs(10,23): warning CS8618: Non-nullable property 'PhoneNo' 
+must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the 
+property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserModel.cs(11,23): warning CS8618: Non-nullable property 'Password' 
+must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the 
+property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserModel.cs(12,23): warning CS8618: Non-nullable property 'Role' must 
+contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property 
+as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserDto.cs(6,23): warning CS8618: Non-nullable property 'First_Name' 
+must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the 
+property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserDto.cs(7,23): warning CS8618: Non-nullable property 'Last_Name' 
+must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the 
+property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserDto.cs(8,23): warning CS8618: Non-nullable property 'Email' must 
+contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property 
+as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserDto.cs(9,23): warning CS8618: Non-nullable property 'Address' must 
+contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property 
+as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserDto.cs(10,23): warning CS8618: Non-nullable property 'PhoneNo' 
+must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the 
+property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/User/UserDto.cs(11,23): warning CS8618: Non-nullable property 'Role' must 
+contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property 
+as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/Category/CategoryResponseModel.cs(6,23): warning CS8618: Non-nullable 
+property 'Message' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or 
+declaring the property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/Category/CategoryDto.cs(18,23): warning CS8618: Non-nullable property 
+'Name' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring 
+the property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/Category/CategoryDto.cs(19,23): warning CS8618: Non-nullable property 
+'slugs' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring 
+the property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/Category/CategoryDto.cs(12,23): warning CS8618: Non-nullable property 
+'Name' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring 
+the property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/Category/CategoryDto.cs(13,23): warning CS8618: Non-nullable property 
+'slugs' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring 
+the property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/Category/CategoryDto.cs(6,23): warning CS8618: Non-nullable property 'Name' 
+must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the 
+property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/Category/CategoryDto.cs(7,23): warning CS8618: Non-nullable property 
+'slugs' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring 
+the property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/Auth/LoginDto.cs(15,23): warning CS8618: Non-nullable property 
+'AccessToken' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or 
+declaring the property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/Auth/LoginDto.cs(16,23): warning CS8618: Non-nullable property 'Role' must 
+contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property 
+as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/Auth/LoginDto.cs(18,23): warning CS8618: Non-nullable property 'Content' 
+must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the 
+property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/Auth/LoginDto.cs(7,23): warning CS8618: Non-nullable property 'Email' must 
+contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property 
+as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/Auth/LoginDto.cs(8,23): warning CS8618: Non-nullable property 'Password' 
+must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the 
+property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/Order/OrderModel.cs(98,23): warning CS8618: Non-nullable property 
+'CustomerName' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or 
+declaring the property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/Order/OrderModel.cs(102,23): warning CS8618: Non-nullable property 
+'OrderStatus' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or 
+declaring the property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/Order/OrderModel.cs(104,23): warning CS8618: Non-nullable property 
+'PaymentMethod' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or 
+declaring the property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/Order/OrderModel.cs(49,23): warning CS8618: Non-nullable property 
+'OrderStatus' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or 
+declaring the property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Models/Order/OrderModel.cs(15,23): warning CS8618: Non-nullable property 
+'ShippingAddress' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or 
+declaring the property as nullable. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Features/Staff/StaffServices.cs(55,41): warning CS8625: Cannot convert null 
+literal to non-nullable reference type. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Features/Staff/StaffServices.cs(61,41): warning CS8625: Cannot convert null 
+literal to non-nullable reference type. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Features/Staff/StaffServices.cs(68,38): warning CS8625: Cannot convert null 
+literal to non-nullable reference type. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Features/Staff/StaffServices.cs(71,55): warning CS8625: Cannot convert null 
+literal to non-nullable reference type. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Features/Staff/StaffServices.cs(73,72): warning CS8625: Cannot convert null 
+literal to non-nullable reference type. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Features/Staff/StaffServices.cs(87,47): warning CS8625: Cannot convert null 
+literal to non-nullable reference type. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Features/Staff/StaffServices.cs(90,64): warning CS8625: Cannot convert null 
+literal to non-nullable reference type. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Features/Staff/StaffServices.cs(92,76): warning CS8625: Cannot convert null 
+literal to non-nullable reference type. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Features/Staff/StaffServices.cs(101,38): warning CS8625: Cannot convert null 
+literal to non-nullable reference type. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Features/Staff/StaffServices.cs(104,55): warning CS8625: Cannot convert null 
+literal to non-nullable reference type. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Features/Staff/StaffServices.cs(124,38): warning CS8604: Possible null reference 
+argument for parameter 'source' in 'IEnumerable<GuestOrder> Enumerable.Where<GuestOrder>(IEnumerable<GuestOrder> 
+source, Func<GuestOrder, bool> predicate)'. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Features/Order/OrderServices.cs(130,41): warning CS8601: Possible null reference 
+assignment. [/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.56 /src/ClothingPlatform.Api/Features/Products/ProductServices.cs(343,50): warning CS0472: The result of the 
+expression is always 'true' since a value of type 'int' is never equal to 'null' of type 'int?' 
+[/src/ClothingPlatform.Api/ClothingPlatform.Api.csproj]
+#21 10.82   ClothingPlatform.Api -> /src/ClothingPlatform.Api/bin/Release/net8.0/ClothingPlatform.Api.dll
+#21 11.00   ClothingPlatform.Api -> /app/publish/api/
+#21 DONE 11.6s
+
+#22 [build 12/13] WORKDIR /src/ClothingPlatform.Web
+#22 DONE 0.7s
+
+#23 [build 13/13] RUN dotnet publish ClothingPlatform.Web.csproj -c Release -o /app/publish/web --no-restore
+#23 2.635   ClothingPlatform.DB -> /src/ClothingPlatform.DB/bin/Release/net8.0/ClothingPlatform.DB.dll
+#23 3.198   ClothingPlatform.Api -> /src/ClothingPlatform.Api/bin/Release/net8.0/ClothingPlatform.Api.dll
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(108,63): warning CS8604: Possible null 
+reference argument for parameter 'item' in 'bool List<string>.Contains(string item)'. 
+[/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Receipt.razor(435,63): warning CS8604: Possible null reference 
+argument for parameter 'item' in 'bool List<string>.Contains(string item)'. 
+[/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Login.razor.cs(13,48): warning CS8618: Non-nullable property 
+'DbFactory' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or 
+declaring the property as nullable. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Login.razor.cs(15,29): warning CS8618: Non-nullable property 
+'Session' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring 
+the property as nullable. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Login.razor.cs(17,34): warning CS8618: Non-nullable property 
+'Nav' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the 
+property as nullable. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Login.razor.cs(19,35): warning CS8618: Non-nullable property 
+'HttpServices' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or 
+declaring the property as nullable. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Login.razor.cs(21,40): warning CS8618: Non-nullable property 
+'AuthStateProvider' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or 
+declaring the property as nullable. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Login.razor.cs(23,47): warning CS8618: Non-nullable property 
+'JSRuntime' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or 
+declaring the property as nullable. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Login.razor.cs(25,37): warning CS8618: Non-nullable property 
+'CustomerSession' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or 
+declaring the property as nullable. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Login.razor.cs(27,36): warning CS8618: Non-nullable property 
+'ServerCookies' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or 
+declaring the property as nullable. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Admin.razor.cs(835,28): warning CS1998: This async method lacks 
+'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 
+'await Task.Run(...)' to do CPU-bound work on a background thread. 
+[/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(591,13): warning CS4014: Because this call 
+is not awaited, execution of the current method continues before the call is completed. Consider applying the 'await' 
+operator to the result of the call. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(611,31): warning CS8601: Possible null 
+reference assignment. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(648,32): warning CS8601: Possible null 
+reference assignment. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(650,31): warning CS8601: Possible null 
+reference assignment. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(715,43): warning CS8602: Dereference of a 
+possibly null reference. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(994,39): warning CS8602: Dereference of a 
+possibly null reference. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Admin.razor.cs(1292,22): warning CS8602: Dereference of a 
+possibly null reference. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Admin.razor.cs(1301,38): warning CS8629: Nullable value type may 
+be null. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(1829,36): warning CS8602: Dereference of a 
+possibly null reference. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(2116,21): warning CS8602: Dereference of a 
+possibly null reference. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(2122,52): warning CS8604: Possible null 
+reference argument for parameter 'item' in 'bool List<string>.Contains(string item)'. 
+[/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(2256,21): warning CS8602: Dereference of a 
+possibly null reference. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(2262,52): warning CS8604: Possible null 
+reference argument for parameter 'item' in 'bool List<string>.Contains(string item)'. 
+[/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor(3554,39): warning CS8604: Possible null 
+reference argument for parameter 'order' in 'bool CustomerView.CanRequestReturn(Order order)'. 
+[/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor(3706,41): warning CS8604: Possible null 
+reference argument for parameter 'source' in 'IEnumerable<OrderItem> 
+Enumerable.Where<OrderItem>(IEnumerable<OrderItem> source, Func<OrderItem, bool> predicate)'. 
+[/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor(3993,76): warning CS8604: Possible null 
+reference argument for parameter 'code' in 'Task CustomerView.CopyPromoCode(string code)'. 
+[/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor(4105,43): warning CS8602: Dereference of a 
+possibly null reference. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(27,29): warning CS8618: Non-nullable 
+property '_db' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or 
+declaring the property as nullable. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(30,48): warning CS8618: Non-nullable 
+property 'DbFactory' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier 
+or declaring the property as nullable. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(33,34): warning CS8618: Non-nullable 
+property 'Nav' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or 
+declaring the property as nullable. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(36,37): warning CS8618: Non-nullable 
+property 'CustomerSession' must contain a non-null value when exiting constructor. Consider adding the 'required' 
+modifier or declaring the property as nullable. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(39,35): warning CS8618: Non-nullable 
+property 'httpClientServices' must contain a non-null value when exiting constructor. Consider adding the 'required' 
+modifier or declaring the property as nullable. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(42,36): warning CS8618: Non-nullable 
+property 'WebHostEnvironment' must contain a non-null value when exiting constructor. Consider adding the 'required' 
+modifier or declaring the property as nullable. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(45,66): warning CS8618: Non-nullable 
+property 'ServerCookies' must contain a non-null value when exiting constructor. Consider adding the 'required' 
+modifier or declaring the property as nullable. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Admin.razor(882,179): warning CS4014: Because this call is not 
+awaited, execution of the current method continues before the call is completed. Consider applying the 'await' 
+operator to the result of the call. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Admin.razor(885,166): warning CS4014: Because this call is not 
+awaited, execution of the current method continues before the call is completed. Consider applying the 'await' 
+operator to the result of the call. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Admin.razor(888,170): warning CS4014: Because this call is not 
+awaited, execution of the current method continues before the call is completed. Consider applying the 'await' 
+operator to the result of the call. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Admin.razor(2681,122): warning CS8604: Possible null reference 
+argument for parameter 'text' in 'Task Admin.CopyToClipboard(string text)'. 
+[/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Admin.razor.cs(26,48): warning CS8618: Non-nullable property 
+'DbFactory' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or 
+declaring the property as nullable. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Admin.razor.cs(29,34): warning CS8618: Non-nullable property 
+'Nav' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the 
+property as nullable. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Admin.razor.cs(32,29): warning CS8618: Non-nullable property 
+'Session' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring 
+the property as nullable. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Admin.razor.cs(35,43): warning CS8618: Non-nullable property 
+'PortalSessionBootstrapper' must contain a non-null value when exiting constructor. Consider adding the 'required' 
+modifier or declaring the property as nullable. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Admin.razor.cs(38,65): warning CS8618: Non-nullable property 
+'WebHostEnvironment' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier 
+or declaring the property as nullable. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Admin.razor.cs(41,36): warning CS8618: Non-nullable property 
+'ServerCookies' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or 
+declaring the property as nullable. [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Admin.razor.cs(214,22): warning CS0649: Field 
+'Admin.updatingRegularOrderId' is never assigned to, and will always have its default value 
+[/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(599,32): warning CS0169: The field 
+'CustomerView.selectedProducts' is never used [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(243,29): warning CS0169: The field 
+'CustomerView.selectedProductDto' is never used [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Admin.razor.cs(103,25): warning CS0169: The field 
+'Admin.storeDailyRevenue' is never used [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Admin.razor.cs(104,21): warning CS0169: The field 
+'Admin.storeDailySalesCount' is never used [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(602,33): warning CS0169: The field 
+'CustomerView.selectedProductss' is never used [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(242,26): warning CS0169: The field 
+'CustomerView.selectedProduct' is never used [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Admin.razor.cs(95,24): warning CS0414: The field 
+'Admin.newProductName' is assigned but its value is never used [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(1503,24): warning CS0414: The field 
+'CustomerView.cancelModalErrorMessage' is assigned but its value is never used 
+[/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(249,22): warning CS0414: The field 
+'CustomerView.isLoggedIn' is assigned but its value is never used 
+[/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(539,24): warning CS0414: The field 
+'CustomerView._searchQuery' is assigned but its value is never used 
+[/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/CustomerView.razor.cs(300,24): warning CS0414: The field 
+'CustomerView.profPhone' is assigned but its value is never used 
+[/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Admin.razor.cs(96,24): warning CS0414: The field 
+'Admin.newProductDesc' is assigned but its value is never used [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Admin.razor.cs(82,22): warning CS0414: The field 
+'Admin.showDeleteAlert' is assigned but its value is never used [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Admin.razor.cs(92,21): warning CS0414: The field 'Admin.quantity' 
+is assigned but its value is never used [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.26 /src/ClothingPlatform.Web/Components/Pages/Admin.razor.cs(153,22): warning CS0414: The field 
+'Admin.isCreatingStaff' is assigned but its value is never used [/src/ClothingPlatform.Web/ClothingPlatform.Web.csproj]
+#23 15.67   ClothingPlatform.Web -> /src/ClothingPlatform.Web/bin/Release/net8.0/ClothingPlatform.Web.dll
+#23 15.99   ClothingPlatform.Web -> /app/publish/web/
+#23 DONE 16.1s
+
+#24 [final 6/8] COPY --from=build /app/publish/api /app/api
+#24 DONE 0.2s
+
+#25 [final 7/8] COPY --from=build /app/publish/web /app/web
+#25 DONE 0.2s
+
+#26 [final 8/8] RUN chmod +x /app/entrypoint.sh &&     chmod -R 777 /var/log/nginx /var/lib/nginx /run
+#26 DONE 0.3s
+
+#27 exporting to image
+#27 exporting layers
+#27 exporting layers 1.8s done
+#27 exporting manifest sha256:a2b805d60389c063d6069c9be277aa7e01ca38034b01a4f02278b27e3f8885ab 0.0s done
+#27 exporting config sha256:32578b46e9dbbb4630209e5cca8c388772e777c2deb7374e6c7b09ccdbc3f77c 0.0s done
+#27 exporting attestation manifest sha256:d1194bc83b5af15f956ff57ebbf643c636708de1e4143e17eed4a6dd0eb1ca04
+#27 exporting attestation manifest sha256:d1194bc83b5af15f956ff57ebbf643c636708de1e4143e17eed4a6dd0eb1ca04 0.1s done
+#27 exporting manifest list sha256:a199e4a19d484d8b072e31be943e8bec5333e124a4784e3cf4d7515b53dad4b8 0.0s done
+#27 naming to docker.io/library/clothing-platform:latest
+#27 naming to docker.io/library/clothing-platform:latest done
+#27 unpacking to docker.io/library/clothing-platform:latest
+#27 unpacking to docker.io/library/clothing-platform:latest 0.8s done
+#27 DONE 3.0s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/sf3pyf3jto2ohgv60akb6vfl2

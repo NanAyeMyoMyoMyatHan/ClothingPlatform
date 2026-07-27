@@ -91,12 +91,7 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
 });
 
-string connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") 
-    ?? Environment.GetEnvironmentVariable("ConnectionStrings_DefaultConnection")
-    ?? Environment.GetEnvironmentVariable("DATABASE_URL")
-    ?? Environment.GetEnvironmentVariable("POSTGRES_URL")
-    ?? builder.Configuration.GetConnectionString("DefaultConnection");
-
+string connectionString = GetConnectionString(builder.Configuration);
 connectionString = ParseConnectionString(connectionString);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -136,6 +131,21 @@ app.MapControllers();
 app.MapHub<CustomerNotificationHub>("/hubs/customer-notifications");
 
 app.Run();
+
+static string GetConnectionString(IConfiguration configuration)
+{
+    var candidates = new[]
+    {
+        Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection"),
+        Environment.GetEnvironmentVariable("ConnectionStrings_DefaultConnection"),
+        Environment.GetEnvironmentVariable("DATABASE_URL"),
+        Environment.GetEnvironmentVariable("POSTGRES_URL"),
+        configuration.GetConnectionString("DefaultConnection")
+    };
+    foreach (var cs in candidates)
+        if (!string.IsNullOrWhiteSpace(cs)) return cs;
+    return string.Empty;
+}
 
 static string ParseConnectionString(string connectionString)
 {

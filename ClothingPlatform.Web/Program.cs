@@ -18,12 +18,7 @@ builder.Services.AddScoped<IPortalSessionBootstrapper, PortalSessionBootstrapper
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ServerCookieService>();
 
-string connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") 
-    ?? Environment.GetEnvironmentVariable("ConnectionStrings_DefaultConnection")
-    ?? Environment.GetEnvironmentVariable("DATABASE_URL")
-    ?? Environment.GetEnvironmentVariable("POSTGRES_URL")
-    ?? builder.Configuration.GetConnectionString("DefaultConnection");
-
+string connectionString = GetConnectionString(builder.Configuration);
 connectionString = ParseConnectionString(connectionString);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -103,6 +98,21 @@ app.MapPost("/api/cookies/clear", (ServerCookieService cookieService) =>
 });
 
 app.Run();
+
+static string GetConnectionString(IConfiguration configuration)
+{
+    var candidates = new[]
+    {
+        Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection"),
+        Environment.GetEnvironmentVariable("ConnectionStrings_DefaultConnection"),
+        Environment.GetEnvironmentVariable("DATABASE_URL"),
+        Environment.GetEnvironmentVariable("POSTGRES_URL"),
+        configuration.GetConnectionString("DefaultConnection")
+    };
+    foreach (var cs in candidates)
+        if (!string.IsNullOrWhiteSpace(cs)) return cs;
+    return string.Empty;
+}
 
 static string ParseConnectionString(string connectionString)
 {
