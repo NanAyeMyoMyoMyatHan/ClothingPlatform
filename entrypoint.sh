@@ -3,23 +3,37 @@
 # Railway provides PORT dynamically; fall back to 8080 for local/other platforms
 PORT="${PORT:-8080}"
 
-# Priority 1: Explicit connection string (e.g. Supabase) — single underscore to double underscore
+# Helper: converts a postgresql:// URI to Npgsql key-value format
+uri_to_npgsql() {
+    local URI="$1"
+    local TEMP="${URI#postgresql://}"
+    TEMP="${TEMP#postgres://}"
+    local USER="${TEMP%%:*}"
+    TEMP="${TEMP#*:}"
+    local PASS="${TEMP%%@*}"
+    TEMP="${TEMP#*@}"
+    local HOST="${TEMP%%:*}"
+    TEMP="${TEMP#*:}"
+    local PORT="${TEMP%%/*}"
+    local DB="${TEMP#*/}"
+    # Remove any query params (e.g. ?pgbouncer=true)
+    DB="${DB%%\?*}"
+    echo "Host=${HOST};Port=${PORT};Database=${DB};Username=${USER};Password=${PASS}"
+}
+
+# Priority 1: Explicit connection string (e.g. Supabase)
 if [ -n "${ConnectionStrings_DefaultConnection}" ]; then
-    export ConnectionStrings__DefaultConnection="${ConnectionStrings_DefaultConnection}"
+    CS="${ConnectionStrings_DefaultConnection}"
+    # If it's a URI, convert it to Npgsql key-value format
+    if [[ "${CS}" == postgresql://* ]] || [[ "${CS}" == postgres://* ]]; then
+        CS=$(uri_to_npgsql "${CS}")
+        echo "=== Converted Supabase URI to Npgsql format ==="
+    fi
+    export ConnectionStrings__DefaultConnection="${CS}"
     echo "=== Database connection configured from ConnectionStrings_DefaultConnection ==="
 # Priority 2: Convert Railway's DATABASE_URL (postgresql://user:pass@host:port/db)
-# into Npgsql key-value format
 elif [ -n "${DATABASE_URL}" ]; then
-    DB_TEMP="${DATABASE_URL#postgresql://}"
-    DB_USER="${DB_TEMP%%:*}"
-    DB_TEMP="${DB_TEMP#*:}"
-    DB_PASS="${DB_TEMP%%@*}"
-    DB_TEMP="${DB_TEMP#*@}"
-    DB_HOST="${DB_TEMP%%:*}"
-    DB_TEMP="${DB_TEMP#*:}"
-    DB_PORT="${DB_TEMP%%/*}"
-    DB_NAME="${DB_TEMP#*/}"
-    export ConnectionStrings__DefaultConnection="Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASS}"
+    export ConnectionStrings__DefaultConnection=$(uri_to_npgsql "${DATABASE_URL}")
     echo "=== Database connection configured from DATABASE_URL ==="
 fi
 
