@@ -1292,24 +1292,26 @@ namespace ClothingPlatform.Web.Components.Pages
             if (string.IsNullOrWhiteSpace(imageUrl)) return ProductImageFallbackUrl;
 
             var trimmedUrl = imageUrl.Trim();
+            // External URLs and data URIs — return as-is
             if (trimmedUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase) ||
                 trimmedUrl.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
             {
                 return trimmedUrl;
             }
 
-            var normalizedPath = trimmedUrl.Replace('\\', '/').TrimStart('/');
-            if (normalizedPath.StartsWith("images/products/", StringComparison.OrdinalIgnoreCase))
-            {
-                return $"https://localhost:7065/{normalizedPath}";
-            }
-
+            // Already a rooted relative path
             if (trimmedUrl.StartsWith("/", StringComparison.Ordinal))
             {
-                return $"https://localhost:7065{trimmedUrl}";
+                return trimmedUrl;
             }
 
-            return $"https://localhost:7065/images/products/{normalizedPath}";
+            var normalizedPath = trimmedUrl.Replace('\\', '/').TrimStart('/');
+            if (normalizedPath.StartsWith("images/", StringComparison.OrdinalIgnoreCase))
+            {
+                return $"/{normalizedPath}";
+            }
+
+            return $"/images/products/{normalizedPath}";
         }
         private bool showLogoutConfirm = false;
         private void GotoLogin()
