@@ -42,7 +42,8 @@ ENV ConnectionStrings_DefaultConnection=""
 ENV ApiUrl="http://localhost:5000/"
 ENV ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
 
-# Back4App runs on port 8080
+# Railway injects $PORT at runtime; entrypoint.sh reads it dynamically
+# Fallback default is 8080 for local testing
 EXPOSE 8080
 
 ENTRYPOINT ["/app/entrypoint.sh"]
