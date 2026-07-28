@@ -24,12 +24,13 @@ RUN dotnet publish ClothingPlatform.Web.csproj -c Release -o /app/publish/web --
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 
-# Install Nginx
-RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
+# Install Nginx and PostgreSQL client (for running migrations)
+RUN apt-get update && apt-get install -y nginx postgresql-client && rm -rf /var/lib/apt/lists/*
 
-# Copy configurations and published apps
+# Copy configurations, published apps, and migration SQL
 COPY nginx.conf /app/nginx.conf
 COPY entrypoint.sh /app/entrypoint.sh
+COPY script_postgres.sql /app/migration.sql
 COPY --from=build /app/publish/api /app/api
 COPY --from=build /app/publish/web /app/web
 
