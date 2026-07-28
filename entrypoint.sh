@@ -3,9 +3,13 @@
 # Railway provides PORT dynamically; fall back to 8080 for local/other platforms
 PORT="${PORT:-8080}"
 
-# Convert Railway's DATABASE_URL (postgresql://user:pass@host:port/db)
-# into Npgsql key-value format and set it for ASP.NET Core
-if [ -n "${DATABASE_URL}" ]; then
+# Priority 1: Explicit connection string (e.g. Supabase) — single underscore to double underscore
+if [ -n "${ConnectionStrings_DefaultConnection}" ]; then
+    export ConnectionStrings__DefaultConnection="${ConnectionStrings_DefaultConnection}"
+    echo "=== Database connection configured from ConnectionStrings_DefaultConnection ==="
+# Priority 2: Convert Railway's DATABASE_URL (postgresql://user:pass@host:port/db)
+# into Npgsql key-value format
+elif [ -n "${DATABASE_URL}" ]; then
     DB_TEMP="${DATABASE_URL#postgresql://}"
     DB_USER="${DB_TEMP%%:*}"
     DB_TEMP="${DB_TEMP#*:}"
@@ -17,9 +21,6 @@ if [ -n "${DATABASE_URL}" ]; then
     DB_NAME="${DB_TEMP#*/}"
     export ConnectionStrings__DefaultConnection="Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASS}"
     echo "=== Database connection configured from DATABASE_URL ==="
-# Fallback: map single-underscore env var to ASP.NET Core double-underscore format
-elif [ -n "${ConnectionStrings_DefaultConnection}" ]; then
-    export ConnectionStrings__DefaultConnection="${ConnectionStrings_DefaultConnection}"
 fi
 
 # Create nginx required temp directories
