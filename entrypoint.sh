@@ -18,7 +18,7 @@ uri_to_npgsql() {
     local DB="${TEMP#*/}"
     # Remove any query params (e.g. ?pgbouncer=true)
     DB="${DB%%\?*}"
-    echo "Host=${HOST};Port=${PORT};Database=${DB};Username=${USER};Password=${PASS}"
+    echo "Host=${HOST};Port=${PORT};Database=${DB};Username=${USER};Password=${PASS};SSL Mode=Require;Trust Server Certificate=true"
 }
 
 # Priority 1: Explicit connection string (e.g. Supabase)
