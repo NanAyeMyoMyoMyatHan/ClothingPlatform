@@ -3,8 +3,22 @@
 # Railway provides PORT dynamically; fall back to 8080 for local/other platforms
 PORT="${PORT:-8080}"
 
-# Map single-underscore env var to ASP.NET Core double-underscore format
-if [ -n "${ConnectionStrings_DefaultConnection}" ]; then
+# Convert Railway's DATABASE_URL (postgresql://user:pass@host:port/db)
+# into Npgsql key-value format and set it for ASP.NET Core
+if [ -n "${DATABASE_URL}" ]; then
+    DB_TEMP="${DATABASE_URL#postgresql://}"
+    DB_USER="${DB_TEMP%%:*}"
+    DB_TEMP="${DB_TEMP#*:}"
+    DB_PASS="${DB_TEMP%%@*}"
+    DB_TEMP="${DB_TEMP#*@}"
+    DB_HOST="${DB_TEMP%%:*}"
+    DB_TEMP="${DB_TEMP#*:}"
+    DB_PORT="${DB_TEMP%%/*}"
+    DB_NAME="${DB_TEMP#*/}"
+    export ConnectionStrings__DefaultConnection="Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASS}"
+    echo "=== Database connection configured from DATABASE_URL ==="
+# Fallback: map single-underscore env var to ASP.NET Core double-underscore format
+elif [ -n "${ConnectionStrings_DefaultConnection}" ]; then
     export ConnectionStrings__DefaultConnection="${ConnectionStrings_DefaultConnection}"
 fi
 
