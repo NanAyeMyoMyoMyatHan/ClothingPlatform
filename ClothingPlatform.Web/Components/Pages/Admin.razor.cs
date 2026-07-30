@@ -1713,7 +1713,7 @@ namespace ClothingPlatform.Web.Components.Pages
                     RoleId = staffRole.RoleId,
                     PhoneNumber = staffForm.Phone?.Trim() ?? string.Empty,
                     Address = staffForm.Address?.Trim() ?? string.Empty,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 await db.Users.AddAsync(newStaff);
