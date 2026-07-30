@@ -20,8 +20,7 @@ namespace ClothingPlatform.Api.Features.Product
 
         public async Task<int> InsertStepByStepAsync(ProductModel model)
         {
-            using var context = new AppDbContext();
-            using var transaction = await context.Database.BeginTransactionAsync();
+            using var transaction = await _db.Database.BeginTransactionAsync();
 
             try
             {
@@ -31,8 +30,8 @@ namespace ClothingPlatform.Api.Features.Product
                     Description = model.Description,
                     CategoryId = model.CategoryId
                 };
-                context.Products.Add(newProduct);
-                await context.SaveChangesAsync();
+                _db.Products.Add(newProduct);
+                await _db.SaveChangesAsync();
 
                 int newProductId = newProduct.ProductId;
                 string imageUrl = "stdCoat.jpg";
@@ -60,7 +59,7 @@ namespace ClothingPlatform.Api.Features.Product
                     imageUrl = fileName;
                 }
 
-                context.ProductImages.Add(new ProductImage
+                _db.ProductImages.Add(new ProductImage
                 {
                     ProductId = newProductId,
                     ImageUrl = imageUrl,
@@ -80,16 +79,16 @@ namespace ClothingPlatform.Api.Features.Product
                         Sku = $"{model.Name.Replace(" ", "").ToUpper()}-{v.Size.Replace(" ", "").ToUpper()}-{v.Color.Replace(" ", "").ToUpper()}-{Random.Shared.Next(1000, 9999)}"
                     }).ToList();
 
-                    context.ProductVariants.AddRange(newVariants);
+                    _db.ProductVariants.AddRange(newVariants);
                 }
 
-                await context.SaveChangesAsync();
+                await _db.SaveChangesAsync();
 
                 // Log initial stock as Stock-In Voucher entries so they appear in Stock-In Voucher History
                 if (model.StaffId > 0 && model.VariantsDto != null)
                 {
                     // Reload the saved variants to get their generated IDs and SKUs
-                    var savedVariants = await context.ProductVariants
+                    var savedVariants = await _db.ProductVariants
                         .Where(v => v.ProductId == newProductId && v.StockQuantity > 0)
                         .ToListAsync();
 
@@ -98,7 +97,7 @@ namespace ClothingPlatform.Api.Features.Product
 
                     foreach (var variant in savedVariants)
                     {
-                        context.StaffActivityLogs.Add(new StaffActivityLog
+                        _db.StaffActivityLogs.Add(new StaffActivityLog
                         {
                             StaffId = operationalStaffId,
                             TargetTable = "product_variants",
@@ -108,7 +107,7 @@ namespace ClothingPlatform.Api.Features.Product
                             CreatedAt = DateTime.Now
                         });
                     }
-                    await context.SaveChangesAsync();
+                    await _db.SaveChangesAsync();
                 }
 
                 await transaction.CommitAsync();
