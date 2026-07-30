@@ -489,6 +489,7 @@ namespace ClothingPlatform.Web.Components.Pages
                     regularQuery = regularQuery.Where(o => OrderMatchesSearch(o, search));
                 }
                 var filteredOrderRows = regularQuery.ToList();
+                filteredOrders = orders;
 
                 // Apply guest orders filter & search
                 var guestQuery = allGuestOrders.AsEnumerable();
