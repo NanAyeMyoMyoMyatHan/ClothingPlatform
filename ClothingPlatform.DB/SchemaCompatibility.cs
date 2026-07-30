@@ -36,6 +36,25 @@ public static class SchemaCompatibility
                 IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'guest_orders' AND column_name = 'paymentstatus') THEN
                     ALTER TABLE guest_orders RENAME COLUMN paymentstatus TO payment_status;
                 END IF;
+
+                -- Automatically synchronize primary key sequences with MAX(id) across all tables
+                PERFORM setval('users_user_id_seq', COALESCE((SELECT MAX(user_id) FROM users), 1));
+                PERFORM setval('roles_role_id_seq', COALESCE((SELECT MAX(role_id) FROM roles), 1));
+                PERFORM setval('products_product_id_seq', COALESCE((SELECT MAX(product_id) FROM products), 1));
+                PERFORM setval('product_variants_variant_id_seq', COALESCE((SELECT MAX(variant_id) FROM product_variants), 1));
+                PERFORM setval('product_images_image_id_seq', COALESCE((SELECT MAX(image_id) FROM product_images), 1));
+                PERFORM setval('categories_category_id_seq', COALESCE((SELECT MAX(category_id) FROM categories), 1));
+                PERFORM setval('orders_order_id_seq', COALESCE((SELECT MAX(order_id) FROM orders), 1));
+                PERFORM setval('order_items_order_item_id_seq', COALESCE((SELECT MAX(order_item_id) FROM order_items), 1));
+                PERFORM setval('guest_orders_guest_order_id_seq', COALESCE((SELECT MAX(guest_order_id) FROM guest_orders), 1));
+                PERFORM setval('guest_order_items_guest_order_item_id_seq', COALESCE((SELECT MAX(guest_order_item_id) FROM guest_order_items), 1));
+                PERFORM setval('promotions_promo_id_seq', COALESCE((SELECT MAX(promo_id) FROM promotions), 1));
+                PERFORM setval('cart_items_cart_id_seq', COALESCE((SELECT MAX(cart_id) FROM cart_items), 1));
+                PERFORM setval('payments_payment_id_seq', COALESCE((SELECT MAX(payment_id) FROM payments), 1));
+                PERFORM setval('order_returns_order_return_id_seq', COALESCE((SELECT MAX(order_return_id) FROM order_returns), 1));
+                PERFORM setval('contact_messages_contact_message_id_seq', COALESCE((SELECT MAX(contact_message_id) FROM contact_messages), 1));
+                PERFORM setval('staff_activity_logs_log_id_seq', COALESCE((SELECT MAX(log_id) FROM staff_activity_logs), 1));
+                PERFORM setval('customer_notifications_notification_id_seq', COALESCE((SELECT MAX(notification_id) FROM customer_notifications), 1));
             END $$;
 
             -- order_returns table
