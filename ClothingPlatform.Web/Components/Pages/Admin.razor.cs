@@ -379,20 +379,25 @@ namespace ClothingPlatform.Web.Components.Pages
                  
 
 
-                // Load orders with users and payments
-                var response = await HttpClientServices.ExecuteAsync
-                    <List< OrderDashboardDto >> ("api/order/getAllOrder", null, EnumHttpMethod.Get);
-                if(response != null)
+                // Load orders via API safely
+                try
                 {
-                    orders = response;
+                    var response = await HttpClientServices.ExecuteAsync<List<OrderDashboardDto>>("api/order/getAllOrder", null, EnumHttpMethod.Get);
+                    if (response != null)
+                    {
+                        orders = response;
+                    }
                 }
+                catch (Exception apiEx)
+                {
+                    Console.WriteLine($"[Admin LoadData] API orders load warning: {apiEx.Message}");
+                }
+                
                 // Filter orders
                 ApplyOrderFilter();
 
                 // Load products with images and variants
                 productTotalCount = await db.Products.CountAsync();
-
-               
 
                 // အကယ်၍ Page နံပါတ်က ရှိသမျှ စာမျက်နှာထက် ကျော်နေရင် နောက်ဆုံးစာမျက်နှာကို ပြန်ညွှန်းပါ
                 if (productPage > ProductTotalPages && ProductTotalPages > 0)
@@ -406,21 +411,28 @@ namespace ClothingPlatform.Web.Components.Pages
                     .Include(p => p.ProductImages)
                     .Include(p => p.ProductVariants)
                     .OrderByDescending(p => p.ProductId)
-                    .Skip((productPage - 1) * productPageSize) // 👈 အပေါ်က စစ်ပြီးသားမို့ ဘယ်တော့မှ မမှားတော့ပါ
+                    .Skip((productPage - 1) * productPageSize)
                     .Take(productPageSize)
                     .AsNoTracking()
                     .ToListAsync();
                 
                 if (CanViewCustomers)
                 {
-                    var result = await HttpClientServices.ExecuteAsync<PagedResult<UserModel>>(
-                        $"api/user/customers?page={customerPage}&pageSize={customerPageSize}",
-                        null,
-                        EnumHttpMethod.Get);
+                    try
+                    {
+                        var result = await HttpClientServices.ExecuteAsync<PagedResult<UserModel>>(
+                            $"api/user/customers?page={customerPage}&pageSize={customerPageSize}",
+                            null,
+                            EnumHttpMethod.Get);
 
-                    PageCustomer = result?.Items ?? new();
-                    customerTotalCount = result?.TotalCount ?? 0;
-                    customerTotalPage = (int)Math.Ceiling((double)customerTotalCount / customerPageSize);
+                        PageCustomer = result?.Items ?? new();
+                        customerTotalCount = result?.TotalCount ?? 0;
+                        customerTotalPage = (int)Math.Ceiling((double)customerTotalCount / customerPageSize);
+                    }
+                    catch (Exception apiEx)
+                    {
+                        Console.WriteLine($"[Admin LoadData] API customers load warning: {apiEx.Message}");
+                    }
                 }
                 else
                 {
@@ -431,15 +443,22 @@ namespace ClothingPlatform.Web.Components.Pages
 
                 if (CanManageStaff)
                 {
-                    var staff = await HttpClientServices.ExecuteAsync<PagedResult<UserModel>>(
-                        $"api/user/staffs?staffpage={staffPage}&staffpageSize={staffPageSize}",
-                        null,
-                        EnumHttpMethod.Get);
+                    try
+                    {
+                        var staff = await HttpClientServices.ExecuteAsync<PagedResult<UserModel>>(
+                            $"api/user/staffs?staffpage={staffPage}&staffpageSize={staffPageSize}",
+                            null,
+                            EnumHttpMethod.Get);
 
-                    PageStaff = staff?.Items ?? new();
-                    recentStaff = PageStaff.Take(5).ToList();
-                    staffTotalCount = staff?.TotalCount ?? 0;
-                    staffTotalPage = (int)Math.Ceiling((double)staffTotalCount / staffPageSize);
+                        PageStaff = staff?.Items ?? new();
+                        recentStaff = PageStaff.Take(5).ToList();
+                        staffTotalCount = staff?.TotalCount ?? 0;
+                        staffTotalPage = (int)Math.Ceiling((double)staffTotalCount / staffPageSize);
+                    }
+                    catch (Exception apiEx)
+                    {
+                        Console.WriteLine($"[Admin LoadData] API staff load warning: {apiEx.Message}");
+                    }
                 }
                 else
                 {
