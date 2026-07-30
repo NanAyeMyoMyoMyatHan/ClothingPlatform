@@ -66,9 +66,16 @@ namespace ClothingPlatform.Api.Features.Staff
         [Permission("orders.create")]
         public async Task<IActionResult> SubmitPhoneOrder([FromBody] GuestOrderRequestDto request, [FromQuery] int staffId)
         {
-            var success = await _staffService.SubmitPhoneOrderAsync(request, staffId);
-            if (!success) return BadRequest("Phone order submission failed (e.g. out of stock or invalid items).");
-            return Ok();
+            try
+            {
+                var success = await _staffService.SubmitPhoneOrderAsync(request, staffId);
+                if (!success) return BadRequest("Phone order submission failed (e.g. out of stock or invalid items).");
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Phone order error: {ex.InnerException?.Message ?? ex.Message}");
+            }
         }
 
         [HttpPost("profile/{staffId}")]

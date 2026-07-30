@@ -279,7 +279,8 @@ namespace ClothingPlatform.Api.Features.Staff
             foreach (var kv in demandByVariant)
             {
                 var dbVariant = inventoryVariants.FirstOrDefault(v => v.VariantId == kv.Key);
-                if (dbVariant == null || kv.Value > dbVariant.StockQuantity) return false;
+                if (dbVariant == null) throw new Exception($"Item SKU/Variant #{kv.Key} not found in inventory.");
+                if (kv.Value > dbVariant.StockQuantity) throw new Exception($"Insufficient stock for '{dbVariant.Product?.Name ?? "Item"}' (SKU: {dbVariant.Sku}). Available: {dbVariant.StockQuantity}, Requested: {kv.Value}.");
             }
 
             decimal orderTotal = 0;
@@ -358,10 +359,10 @@ namespace ClothingPlatform.Api.Features.Staff
                 await transaction.CommitAsync();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return false;
+                throw new Exception($"Failed to save order to database: {ex.InnerException?.Message ?? ex.Message}");
             }
         }
 
