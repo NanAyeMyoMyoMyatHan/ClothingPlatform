@@ -467,10 +467,10 @@ else
                                 .FirstOrDefault(i => i.IsPrimary == true)?.ImageUrl?.Trim() ?? "";
 
                                 var imgSrc = string.IsNullOrWhiteSpace(raw)
-                                    ? "/images/products/default.jpg"
-                                    : raw.StartsWith("http")
+                                    ? "/images/products/no-image.svg"
+                                    : raw.StartsWith("http") || raw.StartsWith("data:")
                                         ? raw
-                                        : $"https://localhost:7065/images/products/{raw.Replace("images/products/", "").TrimStart('/')}";
+                                        : $"/images/products/{raw.Replace("images/products/", "").TrimStart('/')}";
                                 <tr>
                                     <td>
                                         <img src="@imgSrc" alt="@prod.Name" style="width:60px;height:60px;object-fit:cover;" />
