@@ -312,6 +312,19 @@ namespace ClothingPlatform.Api.Features.Staff
                 _db.GuestOrders.Add(guestOrder);
                 await _db.SaveChangesAsync();
 
+                foreach (var line in request.OrderLines)
+                {
+                    var variant = inventoryVariants.FirstOrDefault(v => v.VariantId == line.VariantId);
+                    if (variant == null) continue;
+                    _db.GuestOrderItems.Add(new GuestOrderItem
+                    {
+                        GuestOrderId = guestOrder.GuestOrderId,
+                        VariantId = line.VariantId,
+                        Quantity = line.Quantity,
+                        PriceAtPurchase = variant.SalePrice ?? 0m
+                    });
+                }
+
                 // Log the creation so it shows up in Sales Report
                 _db.StaffActivityLogs.Add(new StaffActivityLog
                 {
