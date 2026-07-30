@@ -1875,6 +1875,34 @@ namespace ClothingPlatform.Web.Components.Pages
             return $"/images/payment-slips/{normalizedPath}";
         }
 
+        private static string? NormalizeReceiptImageUrl(string? imageUrl)
+        {
+            if (string.IsNullOrWhiteSpace(imageUrl))
+            {
+                return null;
+            }
+
+            var trimmedUrl = imageUrl.Trim();
+            if (trimmedUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase) ||
+                trimmedUrl.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            {
+                return trimmedUrl;
+            }
+
+            var normalizedPath = trimmedUrl.Replace('\\', '/').TrimStart('/');
+            if (normalizedPath.StartsWith("images/returns/", StringComparison.OrdinalIgnoreCase))
+            {
+                return $"/{normalizedPath}";
+            }
+
+            if (trimmedUrl.StartsWith("/", StringComparison.Ordinal))
+            {
+                return trimmedUrl;
+            }
+
+            return $"/images/returns/{normalizedPath}";
+        }
+
         private static string StatusBadgeClass(string? status) => OrderWorkflow.IsCancelled(status) ? "badge-cancelled text-danger" : OrderWorkflow.Normalize(status) switch
         {
             OrderWorkflow.Confirm => "badge-confirm text-success",
