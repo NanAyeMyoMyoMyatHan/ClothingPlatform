@@ -160,13 +160,12 @@ namespace ClothingPlatform.Api.Features.Product
 
         public async Task<bool> UpdateProductAsync(UpdateProductRequest request)
         {
-            using var context = new AppDbContext();
-            using var transaction = await context.Database.BeginTransactionAsync();
+            using var transaction = await _db.Database.BeginTransactionAsync();
 
             try
             {
                 // ၁။ ပြင်မယ့် Product ရှိ၊ မရှိ ID ဖြင့် အရင်ရှာမယ် (ဒီနေရာမှာ model.ProductId ပါလာရပါမယ်)
-                var existingProduct = await context.Products.FindAsync(request.Id);
+                var existingProduct = await _db.Products.FindAsync(request.Id);
                 if (existingProduct == null)
                 {
                     throw new Exception($"Product with ID {request.Id} not found.");
@@ -197,7 +196,7 @@ namespace ClothingPlatform.Api.Features.Product
 
                     try { File.SetLastWriteTime(filePath, DateTime.Now.AddSeconds(-5)); } catch { }
 
-                    var existingImage = context.ProductImages.FirstOrDefault(i => i.ProductId == request.Id && i.IsPrimary == true);
+                    var existingImage = _db.ProductImages.FirstOrDefault(i => i.ProductId == request.Id && i.IsPrimary == true);
 
                     if (existingImage != null)
                     {
@@ -205,7 +204,7 @@ namespace ClothingPlatform.Api.Features.Product
                     }
                     else
                     {
-                        context.ProductImages.Add(new ProductImage
+                        _db.ProductImages.Add(new ProductImage
                         {
                             ProductId = request.Id,
                             ImageUrl = fileName,
@@ -214,7 +213,7 @@ namespace ClothingPlatform.Api.Features.Product
                     }
                 }
 
-                var oldVariants = context.ProductVariants
+                var oldVariants = _db.ProductVariants
                     .Where(v => v.ProductId == request.Id)
                     .OrderBy(v => v.VariantId)
                     .ToList();
@@ -248,13 +247,13 @@ namespace ClothingPlatform.Api.Features.Product
 
                 foreach (var existingVariant in oldVariants.Where(v => !consumedVariantIds.Contains(v.VariantId)))
                 {
-                    if (await VariantHasReferencesAsync(context, existingVariant.VariantId))
+                    if (await VariantHasReferencesAsync(_db, existingVariant.VariantId))
                     {
                         existingVariant.StockQuantity = 0;
                     }
                     else
                     {
-                        context.ProductVariants.Remove(existingVariant);
+                        _db.ProductVariants.Remove(existingVariant);
                     }
                 }
 
@@ -281,10 +280,10 @@ namespace ClothingPlatform.Api.Features.Product
 
                 if (newVariants.Any())
                 {
-                    context.ProductVariants.AddRange(newVariants);
+                    _db.ProductVariants.AddRange(newVariants);
                 }
 
-                await context.SaveChangesAsync();
+                await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 return true; // အောင်မြင်ရင် true ပြန်မယ်
@@ -296,12 +295,12 @@ namespace ClothingPlatform.Api.Features.Product
             }
         }
 
-        private async Task<bool> VariantHasReferencesAsync(AppDbContext context, int variantId)
+        private async Task<bool> VariantHasReferencesAsync(AppDbContext db, int variantId)
         {
-            return await context.OrderItems.AnyAsync(oi => oi.VariantId == variantId)
-                || await context.GuestOrderItems.AnyAsync(gi => gi.VariantId == variantId)
-                || await context.CartItems.AnyAsync(ci => ci.VariantId == variantId)
-                || await context.StaffSalesLogs.AnyAsync(sl => sl.VariantId == variantId);
+            return await db.OrderItems.AnyAsync(oi => oi.VariantId == variantId)
+                || await db.GuestOrderItems.AnyAsync(gi => gi.VariantId == variantId)
+                || await db.CartItems.AnyAsync(ci => ci.VariantId == variantId)
+                || await db.StaffSalesLogs.AnyAsync(sl => sl.VariantId == variantId);
         }
 
         public async Task<bool> DeleteProductAsync(int productId)
