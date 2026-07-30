@@ -1726,7 +1726,8 @@ namespace ClothingPlatform.Web.Components.Pages
             }
             catch (Exception ex)
             {
-                errorMessage = UiMessages.Admin.StaffCreateFailed(ex.Message);
+                var msg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                errorMessage = UiMessages.Admin.StaffCreateFailed(msg);
                 Console.WriteLine(ex);
             }
             finally
