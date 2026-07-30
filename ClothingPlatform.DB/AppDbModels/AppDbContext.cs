@@ -170,10 +170,12 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("order_status");
             entity.Property(e => e.PaymentMethod)
                 .HasMaxLength(50)
-                .HasDefaultValue("COD");
+                .HasDefaultValue("COD")
+                .HasColumnName("paymentmethod");
             entity.Property(e => e.PaymentStatus)
                 .HasMaxLength(50)
-                .HasDefaultValue("Unpaid");
+                .HasDefaultValue("Unpaid")
+                .HasColumnName("paymentstatus");
             entity.Property(e => e.PhoneNumber)
                 .HasMaxLength(20)
                 .HasColumnName("phone_number");

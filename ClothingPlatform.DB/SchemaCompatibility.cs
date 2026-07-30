@@ -29,6 +29,12 @@ public static class SchemaCompatibility
                             CHECK (order_status IN ('Pending','Processing','Confirm','Cancelled','CancelledByCustomer','CancelledByStaff'));
                     EXCEPTION WHEN duplicate_object THEN NULL;
                     END;
+                -- Ensure guest_orders columns match Entity Framework mapping
+                IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'guest_orders' AND column_name = 'paymentmethod') THEN
+                    ALTER TABLE guest_orders RENAME COLUMN paymentmethod TO "PaymentMethod";
+                END IF;
+                IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'guest_orders' AND column_name = 'paymentstatus') THEN
+                    ALTER TABLE guest_orders RENAME COLUMN paymentstatus TO "PaymentStatus";
                 END IF;
             END $$;
 
