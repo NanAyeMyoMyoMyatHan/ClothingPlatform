@@ -250,6 +250,9 @@ namespace ClothingPlatform.Web.Services
                 }
                 db.SaveChanges();
             }
+
+            // 4. Seed active promotions and coupons
+            EnsureSeedPromotions(db);
         }
 
         private static Role EnsureRole(AppDbContext db, string roleName, string description)
@@ -340,6 +343,117 @@ namespace ClothingPlatform.Web.Services
                 CreatedAt = DateTime.Now
             });
             db.SaveChanges();
+        }
+
+        private static void EnsureSeedPromotions(AppDbContext db)
+        {
+            if (!db.Promotions.Any())
+            {
+                var today = DateTime.Today;
+                var samplePromos = new List<Promotion>
+                {
+                    // Active Coupon Codes
+                    new Promotion
+                    {
+                        Title = "Welcome Special Offer",
+                        Subtitle = "15% Off Your First Purchase",
+                        Description = "Enjoy 15% off across all atelier items.",
+                        PromoCode = "WELCOME15",
+                        DiscountPercent = 15,
+                        PromoType = "Percent",
+                        DiscountValue = 15,
+                        IsCoupon = true,
+                        Enabled = true,
+                        StartDate = today.AddDays(-30),
+                        EndDate = today.AddYears(2),
+                        CreatedAt = DateTime.Now
+                    },
+                    new Promotion
+                    {
+                        Title = "Atelier Signature Discount",
+                        Subtitle = "10% Off Entire Catalog",
+                        Description = "Special 10% discount on all purchases.",
+                        PromoCode = "ATELIER10",
+                        DiscountPercent = 10,
+                        PromoType = "Percent",
+                        DiscountValue = 10,
+                        IsCoupon = true,
+                        Enabled = true,
+                        StartDate = today.AddDays(-30),
+                        EndDate = today.AddYears(2),
+                        CreatedAt = DateTime.Now
+                    },
+                    new Promotion
+                    {
+                        Title = "Fixed Discount Voucher",
+                        Subtitle = "5,000 MMK Off",
+                        Description = "Save 5,000 MMK on qualifying orders.",
+                        PromoCode = "SPRING5000",
+                        DiscountPercent = 0,
+                        PromoType = "Fixed",
+                        DiscountValue = 5000,
+                        IsCoupon = true,
+                        Enabled = true,
+                        StartDate = today.AddDays(-30),
+                        EndDate = today.AddYears(2),
+                        CreatedAt = DateTime.Now
+                    },
+                    // Expired Promo Code (Will be automatically filtered out from customer view)
+                    new Promotion
+                    {
+                        Title = "Expired Seasonal Coupon",
+                        Subtitle = "Expired Code",
+                        Description = "Expired seasonal promotion.",
+                        PromoCode = "EXPIRED20",
+                        DiscountPercent = 20,
+                        PromoType = "Percent",
+                        DiscountValue = 20,
+                        IsCoupon = true,
+                        Enabled = true,
+                        StartDate = today.AddYears(-1),
+                        EndDate = today.AddDays(-1),
+                        CreatedAt = DateTime.Now.AddYears(-1)
+                    },
+                    // Active Campaign Offers
+                    new Promotion
+                    {
+                        Title = "Summer Elegance Collection",
+                        Subtitle = "Up to 20% Off Selected Dresses",
+                        Description = "Refreshing linen and silk dresses crafted for seasonal elegance.",
+                        PromoCode = "",
+                        DiscountPercent = 20,
+                        PromoType = "Percent",
+                        DiscountValue = 20,
+                        IsCoupon = false,
+                        Enabled = true,
+                        GradientCss = "linear-gradient(135deg, #3C1F10 0%, #C9A96E 100%)",
+                        ImageUrl = "https://images.unsplash.com/photo-1594938298603-c8148c4b4a43?w=1200&q=80",
+                        StartDate = today.AddDays(-10),
+                        EndDate = today.AddYears(1),
+                        CreatedAt = DateTime.Now
+                    },
+                    new Promotion
+                    {
+                        Title = "Blouses & Tops Atelier Event",
+                        Subtitle = "Special Atelier Pricing",
+                        Description = "15% off our finest hand-sewn organza and satin blouses.",
+                        PromoCode = "",
+                        DiscountPercent = 15,
+                        PromoType = "Percent",
+                        DiscountValue = 15,
+                        IsCoupon = false,
+                        Enabled = true,
+                        GradientCss = "linear-gradient(135deg, #4A154B 0%, #6B1D5C 100%)",
+                        ImageUrl = "https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?w=1200&q=80",
+                        StartDate = today.AddDays(-10),
+                        EndDate = today.AddYears(1),
+                        CreatedAt = DateTime.Now
+                    }
+                };
+
+                db.Promotions.AddRange(samplePromos);
+                db.SaveChanges();
+            }
         }
     }
 }
