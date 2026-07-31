@@ -2786,6 +2786,7 @@ namespace ClothingPlatform.Web.Components.Pages
                 Redeemed = promo.Redeemed,
                 Enabled = promo.Enabled,
                 ApplyAll = promo.ApplyAll,
+                IsCoupon = promo.IsCoupon,
                 Note = promo.Note,
                 CreatedAt = promo.CreatedAt
             };
@@ -3034,6 +3035,7 @@ namespace ClothingPlatform.Web.Components.Pages
                 await db.SaveChangesAsync();
 
                 successMessage = "Promotion details and product links saved successfully.";
+                activePromoSubTab = editingPromo.IsCoupon ? "codes" : "banners";
                 editingPromo = new Promotion();
                 selectedProductIdsForPromo.Clear();
                 promotionImageBytes = null;
