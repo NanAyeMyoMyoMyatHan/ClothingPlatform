@@ -524,11 +524,11 @@ namespace ClothingPlatform.Web.Components.Pages
                         .Where(r => orderIds.Contains(r.OrderId))
                         .ToListAsync();
 
-                    // Calculate loyalty points for confirmed orders.
+                    // Calculate loyalty points for all valid non-cancelled orders (1 pt per 1,000 MMK).
                     var totalSpent = userOrders
-                        .Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Confirm)
+                        .Where(o => !OrderWorkflow.IsCancelled(o.OrderStatus))
                         .Sum(o => o.TotalAmount);
-                    loyaltyPoints = (int)(totalSpent / 5000);
+                    loyaltyPoints = (int)(totalSpent / 1000);
                 }
             }
             catch (Exception ex)
@@ -1105,7 +1105,7 @@ namespace ClothingPlatform.Web.Components.Pages
                 await transaction.CommitAsync();
                 dbCommitted = true;
 
-                pointsEarnedInOrder = (int)(total / 100) * (appliedPromoCodes.Contains("LOYAL2X") ? 2 : 1);
+                pointsEarnedInOrder = (int)(total / 1000) * (appliedPromoCodes.Contains("LOYAL2X") ? 2 : 1);
                 confirmedOrderId = $"ORD-{order.OrderId:D4}";
                 isSuccessOpen = true;
 
