@@ -2783,6 +2783,8 @@ namespace ClothingPlatform.Web.Components.Pages
                 StartDate = promo.StartDate,
                 EndDate = promo.EndDate,
                 UsageLimit = promo.UsageLimit,
+                UserLimit = promo.UserLimit,
+                NewMemberOnly = promo.NewMemberOnly,
                 Redeemed = promo.Redeemed,
                 Enabled = promo.Enabled,
                 ApplyAll = promo.ApplyAll,
