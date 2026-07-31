@@ -3538,18 +3538,21 @@
                     <button class="btn btn-cancel" style="background: var(--off-white); border: 1px solid var(--border); color: var(--charcoal); padding: 8px 16px; font-family: 'DM Sans', sans-serif; font-size: 0.72rem; cursor: pointer; text-transform: uppercase;" @onclick='() => Navigate("history")'>Back to History</button>
                 </div>
 
-                <!-- Select Order Dropdown -->
-                <div class="form-group mb-4" style="text-align: left;">
-                    <label class="form-label-custom">Select Order to Return / Exchange</label>
-                    <select class="form-control-custom" style="border-radius: 8px; font-family: 'DM Sans', sans-serif;" @onchange="OnReturnOrderChanged">
-                        @foreach (var order in userOrders.Where(o => CanSelectForReturn(o)))
-                        {
-                            <option value="@order.OrderId" selected="@(selectedReturnOrder?.OrderId == order.OrderId)">
-                                Order ORD-@order.OrderId.ToString("D4") (Date: @(order.CreatedAt?.ToString("dd MMM yyyy") ?? "N/A"))
-                            </option>
-                        }
-                    </select>
-                </div>
+                <!-- Select Order Dropdown (only show if multiple orders are eligible for return/view) -->
+                @if (userOrders.Count(o => CanSelectForReturn(o)) > 1)
+                {
+                    <div class="form-group mb-4" style="text-align: left;">
+                        <label class="form-label-custom">Select Order to Return / Exchange</label>
+                        <select class="form-control-custom" style="border-radius: 8px; font-family: 'DM Sans', sans-serif;" @onchange="OnReturnOrderChanged">
+                            @foreach (var order in userOrders.Where(o => CanSelectForReturn(o)))
+                            {
+                                <option value="@order.OrderId" selected="@(selectedReturnOrder?.OrderId == order.OrderId)">
+                                    Order ORD-@order.OrderId.ToString("D4") (Date: @(order.CreatedAt?.ToString("dd MMM yyyy") ?? "N/A"))
+                                </option>
+                            }
+                        </select>
+                    </div>
+                }
 
                 @if (CanRequestReturn(selectedReturnOrder))
                 {
