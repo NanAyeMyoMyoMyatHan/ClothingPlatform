@@ -1208,7 +1208,22 @@ namespace ClothingPlatform.Web.Components.Pages
                     var fileContent = new ByteArrayContent(fileBytes);
                     fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
                     content.Add(fileContent, "file", imageFileName);
+                }
 
+                if (!string.IsNullOrEmpty(imageBase64) && !string.IsNullOrEmpty(imageFileName))
+                {
+                    try
+                    {
+                        var webRootPath = WebHostEnvironment.WebRootPath
+                            ?? System.IO.Path.Combine(WebHostEnvironment.ContentRootPath, "wwwroot");
+                        var folder = System.IO.Path.Combine(webRootPath, "images", "products");
+                        System.IO.Directory.CreateDirectory(folder);
+
+                        var bytes = Convert.FromBase64String(imageBase64);
+                        var filePath = System.IO.Path.Combine(folder, imageFileName);
+                        await System.IO.File.WriteAllBytesAsync(filePath, bytes);
+                    }
+                    catch { }
                 }
 
                 var product = new ProductModel
