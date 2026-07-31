@@ -1306,7 +1306,9 @@ namespace ClothingPlatform.Web.Components.Pages
             }
 
             var normalizedPath = trimmedUrl.Replace('\\', '/').TrimStart('/');
-            if (normalizedPath.StartsWith("images/", StringComparison.OrdinalIgnoreCase))
+            if (normalizedPath.StartsWith("images/", StringComparison.OrdinalIgnoreCase) ||
+                normalizedPath.StartsWith("returns/", StringComparison.OrdinalIgnoreCase) ||
+                normalizedPath.StartsWith("payment-slips/", StringComparison.OrdinalIgnoreCase))
             {
                 return $"/{normalizedPath}";
             }

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ClothingPlatform.DB\ClothingPlatform.DB.csproj" />
-    <ProjectReference Include="..\ClothingPlatform.Api\ClothingPlatform.Api.csproj" />
+    <ProjectReference Include="..\ClothingPlatform.Api\ClothingPlatform.Api.csproj" ExcludeAssets="contentFiles" />
   </ItemGroup>
 
   <ItemGroup>

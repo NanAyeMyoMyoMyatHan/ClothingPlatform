@@ -3736,8 +3736,9 @@
                                         }
                                         @if (!string.IsNullOrEmpty(retObj?.ReceiptImageUrl))
                                         {
-                                            <a href="@retObj.ReceiptImageUrl" target="_blank" title="View Uploaded Receipt" style="display: block;">
-                                                <img src="@retObj.ReceiptImageUrl" alt="Receipt Preview" style="width: 38px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); cursor: zoom-in;" />
+                                            var receiptUrl = NormalizeImageUrl(retObj.ReceiptImageUrl);
+                                            <a href="@receiptUrl" target="_blank" title="View Uploaded Receipt" style="display: block;">
+                                                <FallbackImage Src="@receiptUrl" Alt="Receipt Preview" style="width: 38px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); cursor: zoom-in;" />
                                             </a>
                                         }
                                         <span class="badge" style="background: rgba(212,178,167,0.15); color: var(--rose); border: 1px solid rgba(212,178,167,0.3); padding: 4px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase;">

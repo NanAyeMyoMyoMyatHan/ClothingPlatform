@@ -80,7 +80,7 @@
                     <div class="item-row-container" style="margin-bottom: 8px;">
                         <div class="item-row" style="display: flex; justify-content: space-between; margin-bottom: 2px;">
                             <span class="item-desc" style="flex: 1; padding-right: 10px;">
-                                @item.Quantity - @(item.Variant?.Product?.Name ?? "Item") ✅ - @(item.Variant?.Size ?? "N/A"), @(item.Variant?.Color ?? "N/A")
+                                @item.Quantity - @(item.Variant?.Product?.Name ?? "Item") - @(item.Variant?.Size ?? "N/A"), @(item.Variant?.Color ?? "N/A")
                             </span>
                             <span class="item-price text-right" style="min-width: 80px; text-align: right;">@((item.PriceAtPurchase * item.Quantity).ToString("N0"))</span>
                         </div>
@@ -169,31 +169,36 @@
     }
 
     .btn-back, .btn-print {
-        padding: 8px 16px;
-        border-radius: 6px;
+        padding: 9px 18px;
+        border-radius: 8px;
         border: 1px solid #EDD9D0;
         background: #fff;
         color: #555;
         font-size: 0.9rem;
+        font-weight: 600;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.2s ease;
         font-family: sans-serif;
     }
 
-    .btn-back:hover, .btn-print:hover {
+    .btn-back:hover {
         background: #FDF9F7;
         border-color: #D4B2A7;
     }
 
     .btn-print {
-        background: #D4B2A7;
-        color: #fff;
-        border-color: #D4B2A7;
+        background: #801919;
+        color: #ffffff;
+        border: 1px solid #801919;
+        font-weight: 600;
+        box-shadow: 0 2px 6px rgba(128, 25, 25, 0.3);
     }
 
     .btn-print:hover {
-        background: #c39d91;
-        border-color: #c39d91;
+        background: #661414;
+        border-color: #661414;
+        color: #ffffff;
+        box-shadow: 0 4px 10px rgba(102, 20, 20, 0.4);
     }
 
     .receipt-loading, .receipt-error {
