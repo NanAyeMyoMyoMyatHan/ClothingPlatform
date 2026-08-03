@@ -466,14 +466,25 @@ else
                                 var raw = prod.ProductImages?
                                 .FirstOrDefault(i => i.IsPrimary == true)?.ImageUrl?.Trim() ?? "";
 
-                                var imgSrc = string.IsNullOrWhiteSpace(raw)
-                                    ? "/images/products/no-image.svg"
-                                    : raw.StartsWith("http") || raw.StartsWith("data:")
-                                        ? raw
-                                        : $"/images/products/{raw.Replace("images/products/", "").TrimStart('/')}";
+                                // Images are saved by the API - load from API server base URL
+                                string imgSrc;
+                                if (string.IsNullOrWhiteSpace(raw))
+                                {
+                                    imgSrc = "/images/products/no-image.svg";
+                                }
+                                else if (raw.StartsWith("http") || raw.StartsWith("data:"))
+                                {
+                                    imgSrc = raw;
+                                }
+                                else
+                                {
+                                    var fileName = raw.Replace("images/products/", "").TrimStart('/');
+                                    var apiBase = Http.BaseAddress?.ToString().TrimEnd('/') ?? "";
+                                    imgSrc = $"{apiBase}/images/products/{fileName}";
+                                }
                                 <tr>
                                     <td>
-                                        <img src="@imgSrc" alt="@prod.Name" style="width:60px;height:60px;object-fit:cover;" />
+                                        <img src="@imgSrc" alt="@prod.Name" style="width:60px;height:60px;object-fit:cover;border-radius:6px;" onerror="this.src='/images/products/no-image.svg'" />
                                     </td>
                                     <td>
                                         <strong>@prod.Name</strong>
@@ -517,7 +528,7 @@ else
         {
             <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
                 <div>
-                    <h1 class="mb-1">@(editingProduct == null ? "Add Atelier Product" : "Edit Product")</h1>
+                    <h1 class="mb-1">@(editingProduct == null ? "Add Product" : "Edit Product")</h1>
                     <p class="text-muted mb-0">Fill in the product details and publish them to the catalog.</p>
                 </div>
 
@@ -2480,23 +2491,16 @@ else
                         <div class="brandmark-p">
                             <div class="icon-p">%</div>
                             <div>
-                                <h1>Promotions & Codes</h1>
-                                <div class="tag-p">Create and manage discount campaigns and coupon codes</div>
+                                <h1>Promotions</h1>
+                                <div class="tag-p">Create and manage discount campaigns</div>
                             </div>
                         </div>
                         <button type="button" class="btn-p primary-p" @onclick="StartNewPromotion">
-                            @(activePromoSubTab == "banners" ? "+ New Campaign Banner" : "+ New Promo Code")
+                            + New Campaign Banner
                         </button>
                     </header>
 
-                    <div style="display: flex; gap: 12px; margin: 20px 0 25px; border-bottom: 1px solid var(--line-p); padding-bottom: 12px;">
-                        <button type="button" class="btn-p @(activePromoSubTab == "banners" ? "primary-p" : "ghost-p")" @onclick='() => { activePromoSubTab = "banners"; }' style="font-weight: 600; font-size: 13.5px; border-radius: 8px; padding: 6px 16px;">
-                            📢 Campaign Banners
-                        </button>
-                        <button type="button" class="btn-p @(activePromoSubTab == "codes" ? "primary-p" : "ghost-p")" @onclick='() => { activePromoSubTab = "codes"; }' style="font-weight: 600; font-size: 13.5px; border-radius: 8px; padding: 6px 16px;">
-                            🎟️ Promo Codes
-                        </button>
-                    </div>
+
 
                     @if (activePromoSubTab == "codes")
                     {

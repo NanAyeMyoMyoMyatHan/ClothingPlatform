@@ -31,7 +31,7 @@ namespace ClothingPlatform.Web.Services
             var customerRole = EnsureRole(db, "customer", "Customer shopping account");
 
             EnsureSeedUser(db, "Admin", "User", "admin@boutique.com", "admin123", adminRole.RoleId, "No. 123, Luxury Ave, Yangon", "09252522525");
-            EnsureSeedUser(db, "Thiri", "San", "staff@boutique.com", "staff123", staffRole.RoleId, "No. 456, Atelier Rd, Yangon", "09222333444");
+            EnsureSeedUser(db, "Thiri", "San", "staff@boutique.com", "staff123", staffRole.RoleId, "No. 456, Boutique Rd, Yangon", "09222333444");
             EnsureSeedUser(db, "Emily", "Watson", "emily@gmail.com", "12345678", customerRole.RoleId, "No. 789, Style Street, Yangon", "09999888777");
 
             // 1b. Seed known permissions (matching mockup)
@@ -357,7 +357,7 @@ namespace ClothingPlatform.Web.Services
                     {
                         Title = "Welcome Special Offer",
                         Subtitle = "15% Off Your First Purchase",
-                        Description = "Enjoy 15% off across all atelier items.",
+                        Description = "Enjoy 15% off across all items.",
                         PromoCode = "WELCOME15",
                         DiscountPercent = 15,
                         PromoType = "Percent",
@@ -370,10 +370,10 @@ namespace ClothingPlatform.Web.Services
                     },
                     new Promotion
                     {
-                        Title = "Atelier Signature Discount",
+                        Title = "Signature Discount",
                         Subtitle = "10% Off Entire Catalog",
                         Description = "Special 10% discount on all purchases.",
-                        PromoCode = "ATELIER10",
+                        PromoCode = "BOUTIQUE10",
                         DiscountPercent = 10,
                         PromoType = "Percent",
                         DiscountValue = 10,
@@ -434,8 +434,8 @@ namespace ClothingPlatform.Web.Services
                     },
                     new Promotion
                     {
-                        Title = "Blouses & Tops Atelier Event",
-                        Subtitle = "Special Atelier Pricing",
+                        Title = "Blouses & Tops Event",
+                        Subtitle = "Special Pricing",
                         Description = "15% off our finest hand-sewn organza and satin blouses.",
                         PromoCode = "",
                         DiscountPercent = 15,

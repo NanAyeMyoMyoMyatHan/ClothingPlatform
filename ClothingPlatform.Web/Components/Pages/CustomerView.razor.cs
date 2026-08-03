@@ -212,7 +212,7 @@ namespace ClothingPlatform.Web.Components.Pages
                 }
             }
         }
-        private decimal GrandTotal => CartSubtotal + 3000 - appliedPromoDiscount;
+        private decimal GrandTotal => CartSubtotal - appliedPromoDiscount;
         private string promoCodeMessage = "";
         private bool promoCodeSuccess = false;
 
@@ -524,11 +524,11 @@ namespace ClothingPlatform.Web.Components.Pages
                         .Where(r => orderIds.Contains(r.OrderId))
                         .ToListAsync();
 
-                    // Calculate loyalty points for all valid non-cancelled orders (1 pt per 1,000 MMK).
+                    // Calculate loyalty points for all valid non-cancelled orders (1 pt per 5,000 MMK).
                     var totalSpent = userOrders
                         .Where(o => !OrderWorkflow.IsCancelled(o.OrderStatus))
                         .Sum(o => o.TotalAmount);
-                    loyaltyPoints = (int)(totalSpent / 1000);
+                    loyaltyPoints = (int)(totalSpent / 5000);
                 }
             }
             catch (Exception ex)
@@ -1188,6 +1188,19 @@ namespace ClothingPlatform.Web.Components.Pages
                 return;
             }
 
+            if (!System.Text.RegularExpressions.Regex.IsMatch(profEmail.Trim(), @"^[^\s@]+@[^\s@]+\.[^\s@]+$"))
+            {
+                ShowToast("Email not format");
+                return;
+            }
+
+            var cleanPhone = (coPhone ?? "").Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "").Trim();
+            if (string.IsNullOrWhiteSpace(coPhone) || !System.Text.RegularExpressions.Regex.IsMatch(cleanPhone, @"^(?:\+?95|0)?9\d{6,9}$"))
+            {
+                ShowToast("Phone number not format");
+                return;
+            }
+
             isSavingCustomerProfile = true;
             StateHasChanged();
 
@@ -1306,9 +1319,69 @@ namespace ClothingPlatform.Web.Components.Pages
             }
 
             var normalizedPath = trimmedUrl.Replace('\\', '/').TrimStart('/');
-            if (normalizedPath.StartsWith("images/", StringComparison.OrdinalIgnoreCase) ||
-                normalizedPath.StartsWith("returns/", StringComparison.OrdinalIgnoreCase) ||
-                normalizedPath.StartsWith("payment-slips/", StringComparison.OrdinalIgnoreCase))
+
+            // Handle prepended GUIDs with underscore
+            if (normalizedPath.Contains('_'))
+            {
+                var parts = normalizedPath.Split('_');
+                normalizedPath = parts[parts.Length - 1];
+            }
+
+            // Map missing/placeholder images to existing image files
+            if (normalizedPath.Equals("studentCoat.jpg", StringComparison.OrdinalIgnoreCase) ||
+                normalizedPath.Equals("stdcoat.jpg", StringComparison.OrdinalIgnoreCase) ||
+                normalizedPath.Equals("stdCoat.jpg", StringComparison.OrdinalIgnoreCase) ||
+                normalizedPath.Equals("student_coat.jpg", StringComparison.OrdinalIgnoreCase))
+            {
+                normalizedPath = "a319361f914a09d15f304ca2bbee840b.jpg";
+            }
+            else if (normalizedPath.Equals("longdress.jpg", StringComparison.OrdinalIgnoreCase) ||
+                     normalizedPath.Equals("longwhite.jpg", StringComparison.OrdinalIgnoreCase))
+            {
+                normalizedPath = "b4168b965378b8d90bc98fbb0417f6a2.jpg";
+            }
+            else if (normalizedPath.Equals("skirt.jpg", StringComparison.OrdinalIgnoreCase) ||
+                     normalizedPath.Equals("skirt-grey.jpg", StringComparison.OrdinalIgnoreCase))
+            {
+                normalizedPath = "3cdc2e5c3c9bfab3640ae0abfeb42e88.jpg";
+            }
+
+            // Fallback for any other filename not in the folder
+            var existingImages = new System.Collections.Generic.HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
+            {
+                "3cdc2e5c3c9bfab3640ae0abfeb42e88.jpg",
+                "44e4253aceb0e5079e6fe753244deb7d.jpg",
+                "4b72ab172f51664ac3488193987c2f87.jpg",
+                "4e97c18046d1c23bbbb46e410861e61c.jpg",
+                "58da3f2145e7367ede62a0249e2c923f.jpg",
+                "5b782d7174468af6527887bcfcb75b4b.jpg",
+                "7d657eac6e2c8cf120f89fb58a8cea78.jpg",
+                "8b4dd9a8387a2d826f88dbc0118f099c.jpg",
+                "8c95fd6864722649e61b7a665aa452e8.jpg",
+                "958aab6839cb72ee299e8ab557fa79e7.jpg",
+                "9aa17fc21dcaa271c3b9c0b1e0abb3b9.jpg",
+                "a319361f914a09d15f304ca2bbee840b.jpg",
+                "aa8c4e8b0e0d6c18936125c792995942.jpg",
+                "b4168b965378b8d90bc98fbb0417f6a2.jpg",
+                "c8683b67b9308d06ff92f222c32f1ee1.jpg",
+                "cb011d26038d97180e9a99f198a0610c.jpg",
+                "d0b28012fe0f75e56c2da0131ae529f2.jpg",
+                "d20725f2a9c4531ab6550aa3f0fffe66.jpg"
+            };
+
+            if (!existingImages.Contains(normalizedPath) && 
+                !normalizedPath.StartsWith("images/", System.StringComparison.OrdinalIgnoreCase) &&
+                !normalizedPath.StartsWith("returns/", System.StringComparison.OrdinalIgnoreCase) &&
+                !normalizedPath.StartsWith("payment-slips/", System.StringComparison.OrdinalIgnoreCase))
+            {
+                int hash = System.Math.Abs(normalizedPath.GetHashCode());
+                var list = new System.Collections.Generic.List<string>(existingImages);
+                normalizedPath = list[hash % list.Count];
+            }
+
+            if (normalizedPath.StartsWith("images/", System.StringComparison.OrdinalIgnoreCase) ||
+                normalizedPath.StartsWith("returns/", System.StringComparison.OrdinalIgnoreCase) ||
+                normalizedPath.StartsWith("payment-slips/", System.StringComparison.OrdinalIgnoreCase))
             {
                 return $"/{normalizedPath}";
             }

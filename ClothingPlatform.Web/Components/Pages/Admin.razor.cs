@@ -64,7 +64,7 @@ namespace ClothingPlatform.Web.Components.Pages
         private bool CanManageProducts => Session.HasPermission("products.manage");
         private bool CanViewReports => Session.HasPermission("reports.generate");
         private bool CanAccessAdminInsights => Session.IsAdmin || CanViewReports;
-        private string PortalHeadline => Session.IsAdmin ? "Atelier Admin Panel" : "Atelier Operations Portal";
+        private string PortalHeadline => Session.IsAdmin ? "Admin Panel" : "Operations Portal";
         private string PortalShellLabel => Session.IsAdmin ? "Admin Control" : "Shared Operations";
         private string ProductsNavLabel => CanManageProducts ? "Products" : "Inventory";
         private bool IsProductsView => activeView == "products" || activeView == "products-new";
@@ -1571,9 +1571,16 @@ namespace ClothingPlatform.Web.Components.Pages
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(profileEmail) || !profileEmail.Contains('@'))
+            if (string.IsNullOrWhiteSpace(profileEmail) || !System.Text.RegularExpressions.Regex.IsMatch(profileEmail.Trim(), @"^[^\s@]+@[^\s@]+\.[^\s@]+$"))
             {
-                errorMessage = UiMessages.Admin.ProfileEmailRequired;
+                errorMessage = "Email not format";
+                return;
+            }
+
+            var cleanPhone = (profilePhone ?? "").Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "").Trim();
+            if (string.IsNullOrWhiteSpace(profilePhone) || !System.Text.RegularExpressions.Regex.IsMatch(cleanPhone, @"^(?:\+?95|0)?9\d{6,9}$"))
+            {
+                errorMessage = "Phone number not format";
                 return;
             }
 
@@ -1689,9 +1696,16 @@ namespace ClothingPlatform.Web.Components.Pages
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(staffForm.Email))
+            if (string.IsNullOrWhiteSpace(staffForm.Email) || !System.Text.RegularExpressions.Regex.IsMatch(staffForm.Email.Trim(), @"^[^\s@]+@[^\s@]+\.[^\s@]+$"))
             {
-                errorMessage = UiMessages.Admin.StaffEmailRequired;
+                errorMessage = "Email not format";
+                return;
+            }
+
+            var cleanPhone2 = (staffForm.Phone ?? "").Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "").Trim();
+            if (string.IsNullOrWhiteSpace(staffForm.Phone) || !System.Text.RegularExpressions.Regex.IsMatch(cleanPhone2, @"^(?:\+?95|0)?9\d{6,9}$"))
+            {
+                errorMessage = "Phone number not format";
                 return;
             }
 

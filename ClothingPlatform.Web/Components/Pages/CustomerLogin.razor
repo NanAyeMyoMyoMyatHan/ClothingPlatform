@@ -113,7 +113,7 @@
 
             if (result == null)
             {
-                ShowMessage(UiMessages.CustomerAuth.InvalidCredentials, true);
+                ShowMessage("Incorrect email and password", true);
                 return;
             }
 
@@ -121,7 +121,7 @@
         }
         catch (Exception ex)
         {
-            ShowMessage(UiMessages.CustomerAuth.LoginFailed(ex.Message), true);
+            ShowMessage("Incorrect email and password", true);
         }
         finally
         {
@@ -145,6 +145,19 @@
             string.IsNullOrWhiteSpace(registerPassword))
         {
             ShowMessage(UiMessages.CustomerAuth.RegisterRequiredFields, true);
+            return;
+        }
+
+        if (!System.Text.RegularExpressions.Regex.IsMatch(registerEmail.Trim(), @"^[^\s@]+@[^\s@]+\.[^\s@]+$"))
+        {
+            ShowMessage("Email not format", true);
+            return;
+        }
+
+        var cleanPhone = (phoneNumber ?? "").Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "").Trim();
+        if (string.IsNullOrWhiteSpace(phoneNumber) || !System.Text.RegularExpressions.Regex.IsMatch(cleanPhone, @"^(?:\+?95|0)?9\d{6,9}$"))
+        {
+            ShowMessage("Phone number not format", true);
             return;
         }
 

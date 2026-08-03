@@ -129,7 +129,7 @@ namespace ClothingPlatform.Api.Features.Auth
             await EnsureRolePermissionAsync(staffRole.RoleId, productsPermission.PermissionId);
 
             await EnsureSeedUserAsync("Admin", "User", "admin@boutique.com", "admin123", "09252522525", "Chic Boutique HQ", adminRole.RoleId);
-            await EnsureSeedUserAsync("Thiri", "San", "staff@boutique.com", "staff123", "09222333444", "No. 456, Atelier Rd, Yangon", staffRole.RoleId);
+            await EnsureSeedUserAsync("Thiri", "San", "staff@boutique.com", "staff123", "09222333444", "No. 456, Boutique Rd, Yangon", staffRole.RoleId);
 
             await _db.SaveChangesAsync();
         }

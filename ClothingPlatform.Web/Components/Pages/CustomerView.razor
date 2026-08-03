@@ -7,7 +7,7 @@
 
 @inject AuthenticationStateProvider AuthenStateProvider
 
-<PageTitle>Chic Boutique  Luxury Atelier</PageTitle>
+<PageTitle>Chic Boutique - Luxury Shop</PageTitle>
 
 <style>
     :root {
@@ -2712,7 +2712,7 @@
     <div class="header-top">
         <a class="logo" @onclick='() => Navigate("home")'>
             CHIC <span>BOUTIQUE</span>
-            <span class="logo-tagline">Atelier Coterie</span>
+            <span class="logo-tagline">Boutique Store</span>
         </a>
 
         <div class="header-actions">
@@ -2721,7 +2721,7 @@
                 <input type="text"
                        value="@searchQuery"
                        @oninput="OnSearchInput"
-                       placeholder="Search creations..."
+                       placeholder="Search clothes..."
                        class="border-0 small"
                        style="outline:none; width:150px; font-size:0.8rem;" />
                 <i class="bi bi-search text-muted" @onclick='() => Navigate("shop")' style="cursor:pointer;"></i>
@@ -2829,9 +2829,9 @@
                 z-index: 1;
                 padding: 20px;">
 
-                <span class="hero-eyebrow">Summer Coterie 2026</span>
+                <span class="hero-eyebrow">Summer Collection 2026</span>
                 <h1 class="hero-title">Timeless grace crafted for <em>modern silhouettes</em></h1>
-                <p class="hero-sub">Discover lightweight fabrics and soft pastel gradients curated carefully for high-society Yangon events.</p>
+                <p class="hero-sub">Discover lightweight fabrics and soft pastel gradients designed carefully for high-society Yangon events.</p>
                 <button class="btn-primary-rose" @onclick='() => Navigate("shop")'>Explore Catalog</button>
             </div>
         </section>
@@ -2880,7 +2880,7 @@
             <div>
                 <span style="font-size:0.6rem; letter-spacing:0.25em; text-transform:uppercase; color:var(--charcoal-soft); font-weight:600;">This Week</span>
                 <h2 style="font-family:'DM Sans',sans-serif; font-size:1.15rem; font-weight:500; color:var(--charcoal); margin:4px 0 0; letter-spacing:0.03em;">
-                    New <span style="color:var(--rose); font-style:italic;">Creations</span>
+                    New <span style="color:var(--rose); font-style:italic;">Arrivals</span>
                 </h2>
             </div>
             <span style="font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--charcoal-soft); opacity:0.7;">Featured Releases</span>
@@ -2930,8 +2930,7 @@
 
                     <!-- Delivery -->
                     <p class="promo-grid-delivery">
-                        FREE delivery <strong>tomorrow</strong> in Yangon.<br/>
-                        Or fastest delivery <strong>today</strong>.
+                        Free delivery tomorrow in Yangon.
                     </p>
                 </div>
             }
@@ -3007,8 +3006,7 @@
 
                         <!-- Delivery -->
                         <p class="promo-grid-delivery">
-                            FREE delivery <strong>tomorrow</strong> in Yangon.<br/>
-                            Or fastest delivery <strong>today</strong>.
+                            Free delivery tomorrow in Yangon.
                         </p>
                     </div>
                 }
@@ -3085,8 +3083,7 @@
 
                     <!-- Delivery -->
                     <p class="promo-grid-delivery">
-                        FREE delivery <strong>tomorrow</strong> in Yangon.<br/>
-                        Or fastest delivery <strong>today</strong>.
+                        Free delivery tomorrow in Yangon.
                     </p>
                 </div>
             }
@@ -3131,7 +3128,7 @@
                     <input type="radio" checked="@(selectedPayment == "kpay")" readonly />
                     <div>
                         <p class="payment-option-name">KBZPay (KPay) QR Code Transfer</p>
-                        <p class="payment-option-sub">Transfer to 09252522525 (The Boutique Atelier)</p>
+                        <p class="payment-option-sub">Transfer to 09252522525 (The Boutique Shop)</p>
                     </div>
                 </div>
 
@@ -3139,7 +3136,7 @@
                     <input type="radio" checked="@(selectedPayment == "wave_money")" readonly />
                     <div>
                         <p class="payment-option-name">WaveMoney (WavePay) QR Transfer</p>
-                        <p class="payment-option-sub">Transfer to 09252522525 (Atelier Boutique Corp.)</p>
+                        <p class="payment-option-sub">Transfer to 09252522525 (Boutique Corp.)</p>
                     </div>
                 </div>
 
@@ -3155,7 +3152,7 @@
                 {
                     <div class="qr-block">
                         <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=KBZPayTransferRecv_09252522525" alt="KBZPay QR" />
-                        <p class="qr-instruction">Scan this QR Code in KBZPay to transfer. Account Name: <span class="qr-account">Chic Boutique Atelier</span></p>
+                        <p class="qr-instruction">Scan this QR Code in KBZPay to transfer. Account Name: <span class="qr-account">Chic Boutique Shop</span></p>
                     </div>
                 }
 
@@ -3163,7 +3160,7 @@
                 {
                     <div class="qr-block">
                         <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=WavePayTransferRecv_09252522525" alt="WavePay QR" />
-                        <p class="qr-instruction">Scan this QR Code in WaveMoney to transfer. Account Name: <span class="qr-account">Atelier Boutique Corp.</span></p>
+                        <p class="qr-instruction">Scan this QR Code in WaveMoney to transfer. Account Name: <span class="qr-account">Boutique Corp.</span></p>
                     </div>
                 }
 
@@ -3209,7 +3206,7 @@
                     <div class="order-summary-panel">
                         @if (!cart.Any())
                         {
-                            <p class="text-muted text-center py-4 small">No creations in bag.</p>
+                            <p class="text-muted text-center py-4 small">No items in bag.</p>
                         }
                         else
                         {
@@ -3237,6 +3234,7 @@
                             }
                         }
 
+                        @*
                         <!-- Promo Code section -->
                         <div style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px; text-align: left;">
                             <label class="form-label-custom">Promo / Coupon Code</label>
@@ -3255,16 +3253,15 @@
                                 </p>
                             }
                         </div>
+                        *@
 
                         <div style="border-top: 1px solid var(--border); margin-top: 15px; padding-top: 15px;">
                             <div class="summary-total-row">
                                 <span class="summary-total-label">Item price (after item sale)</span>
                                 <span class="summary-total-val">@CartSubtotal.ToString("N0") MMK</span>
                             </div>
-                            <div class="summary-total-row" style="margin-top: 8px;">
-                                <span class="summary-total-label">Shipping</span>
-                                <span class="summary-total-val">3,000 MMK</span>
-                            </div>
+
+                            @*
                             @if (appliedPromoDiscount > 0)
                             {
                                 <div class="summary-total-row" style="margin-top: 8px; color: var(--success);">
@@ -3272,6 +3269,7 @@
                                     <span class="summary-total-val" style="color: var(--success); font-weight: 600;">-@appliedPromoDiscount.ToString("N0") MMK</span>
                                 </div>
                             }
+                            *@
                             <div class="summary-total-row" style="border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px;">
                                 <span class="summary-total-label" style="font-size: 1.1rem; font-weight: 700; color: var(--charcoal);">Total</span>
                                 <span class="summary-total-val" style="font-size: 1.1rem; font-weight: 800; color: var(--rose);">@GrandTotal.ToString("N0") MMK</span>
@@ -3279,7 +3277,7 @@
                             @if (TotalSaved > 0)
                             {
                                 <div style="font-size: 0.8rem; color: var(--muted); margin-top: 8px; text-align: right; font-style: italic;">
-                                    You saved @TotalSaved.ToString("N0") MMK total (item sale + promo code)
+                                    You saved @TotalSaved.ToString("N0") MMK total (item sale)
                                 </div>
                             }
                         </div>
@@ -3288,7 +3286,7 @@
                                        IsLoading="@isPlacingOrder"
                                        LoadingText="Confirming..."
                                        OnClick="PlaceOrder">
-                            Confirm Atelier Purchase
+                            Confirm Purchase
                         </LoadingButton>
                     </div>
                 </div>
@@ -3308,7 +3306,7 @@
         <div id="history-list">
             @if (!userOrders.Any())
             {
-                <p class="text-muted text-center py-5">No purchase history logged for this account. Discover creations in the catalog!</p>
+                <p class="text-muted text-center py-5">No purchase history logged for this account. Discover items in the catalog!</p>
             }
             else
             {
@@ -3407,23 +3405,28 @@
                                                 <h5 class="order-hover-section-title">Payment Details</h5>
                                                 @{
                                                     var payment = order.Payments?.FirstOrDefault();
-                                                    if (payment != null)
+                                                    var isConfirmed = OrderWorkflow.Normalize(order.OrderStatus) == OrderWorkflow.Confirm;
+                                                    var pMethod = payment?.PaymentMethod?.ToLowerInvariant() ?? "cod";
+                                                    var pStatus = payment?.PaymentStatus?.ToLowerInvariant() ?? "pending";
+                                                    var isPaid = isConfirmed || pStatus == "paid" || pStatus == "completed";
+                                                }
+                                                <p style="font-size: 0.82rem; color: var(--charcoal); margin: 0 0 6px; line-height: 1.4;">
+                                                    <strong>Method:</strong> @(pMethod == "cod" ? "Cash on Delivery" : pMethod.ToUpperInvariant())
+                                                </p>
+                                                <p style="font-size: 0.82rem; color: var(--charcoal); margin: 0 0 6px; line-height: 1.4;">
+                                                    <strong>Transaction ID:</strong> @(payment?.TransactionId ?? "COD")
+                                                </p>
+                                                <p style="font-size: 0.82rem; color: var(--charcoal); margin: 0 0 6px; line-height: 1.4;">
+                                                    <strong>Status:</strong> 
+                                                    @if (isPaid)
                                                     {
-                                                        <p style="font-size: 0.82rem; color: var(--charcoal); margin: 0 0 6px; line-height: 1.4;">
-                                                            <strong>Method:</strong> @(payment.PaymentMethod == "cod" ? "Cash on Delivery" : payment.PaymentMethod.ToUpperInvariant())
-                                                        </p>
-                                                        <p style="font-size: 0.82rem; color: var(--charcoal); margin: 0 0 6px; line-height: 1.4;">
-                                                            <strong>Transaction ID:</strong> @(payment.TransactionId ?? "N/A")
-                                                        </p>
-                                                        <p style="font-size: 0.82rem; color: var(--charcoal); margin: 0 0 6px; line-height: 1.4;">
-                                                            <strong>Status:</strong> <span style="text-transform: capitalize;">@payment.PaymentStatus</span>
-                                                        </p>
+                                                        <span style="color: #16a34a; font-weight: 700;">Paid</span>
                                                     }
                                                     else
                                                     {
-                                                        <p style="font-size: 0.82rem; color: var(--charcoal-soft); margin: 0;">No payment information available.</p>
+                                                        <span style="color: #d97706; font-weight: 600;">Pending (Pay on Delivery)</span>
                                                     }
-                                                }
+                                                </p>
                                             </div>
                                         </div>
 
@@ -3446,7 +3449,7 @@
                                         }
 
                                         <!-- Items List -->
-                                        <h5 class="order-hover-section-title">Creations Ordered</h5>
+                                        <h5 class="order-hover-section-title">Items Ordered</h5>
                                         <div class="history-items" style="padding: 0;">
                                             @foreach (var item in order.OrderItems)
                                             {
@@ -3524,7 +3527,7 @@
         {
             <div class="alert alert-warning text-center py-5" style="background: var(--rose-pale); border: 1px solid var(--rose-light); color: var(--charcoal); border-radius: 12px;">
                 <i class="bi bi-exclamation-triangle" style="font-size: 2rem; display: block; margin-bottom: 12px; color: var(--rose);"></i>
-                You do not have any delivered orders eligible for return or exchange yet. Discover creations in the catalog!
+                You do not have any delivered orders eligible for return or exchange yet. Discover items in the catalog!
             </div>
         }
         else
@@ -3715,7 +3718,7 @@
                 {
                     <div style="margin-top: 30px; border-top: 1px solid var(--border); padding-top: 24px; text-align: left;">
                         <h4 style="font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--charcoal); margin-bottom: 12px;">
-                            <i class="bi bi-clock-history" style="color: var(--rose); margin-right: 6px;"></i> Already Returned Creations in this Order
+                            <i class="bi bi-clock-history" style="color: var(--rose); margin-right: 6px;"></i> Already Returned Items in this Order
                         </h4>
                         <div style="display: flex; flex-direction: column; gap: 12px;">
                             @foreach (var item in returnedItems)
@@ -3780,20 +3783,67 @@
                             <img src="@profileAvatar" alt="Avatar" />
                         </div>
 
+                        @{
+                            string tierName = "Normal Member (Bronze)";
+                            string tierBg = "#8C6D58";
+                            int currentTierBase = 0;
+                            int nextTierTarget = 50;
+                            string nextTierName = "Silver Member";
+
+                            if (loyaltyPoints >= 2000)
+                            {
+                                tierName = "Ruby VIP Member";
+                                tierBg = "#9B2C2C";
+                                currentTierBase = 2000;
+                                nextTierTarget = 2000;
+                                nextTierName = "Ruby VIP Member";
+                            }
+                            else if (loyaltyPoints >= 1000)
+                            {
+                                tierName = "Diamond Member";
+                                tierBg = "#2B6CB0";
+                                currentTierBase = 1000;
+                                nextTierTarget = 2000;
+                                nextTierName = "Ruby VIP Member";
+                            }
+                            else if (loyaltyPoints >= 500)
+                            {
+                                tierName = "Platinum Member";
+                                tierBg = "#4A5568";
+                                currentTierBase = 500;
+                                nextTierTarget = 1000;
+                                nextTierName = "Diamond Member";
+                            }
+                            else if (loyaltyPoints >= 200)
+                            {
+                                tierName = "Gold Member";
+                                tierBg = "#D4AF37";
+                                currentTierBase = 200;
+                                nextTierTarget = 500;
+                                nextTierName = "Platinum Member";
+                            }
+                            else if (loyaltyPoints >= 50)
+                            {
+                                tierName = "Silver Member";
+                                tierBg = "#7F8C8D";
+                                currentTierBase = 50;
+                                nextTierTarget = 200;
+                                nextTierName = "Gold Member";
+                            }
+
+                            int ptsNeeded = nextTierTarget - loyaltyPoints;
+                            double progressPercent = 100.0;
+                            if (nextTierTarget > currentTierBase)
+                            {
+                                progressPercent = (double)(loyaltyPoints - currentTierBase) / (nextTierTarget - currentTierBase) * 100.0;
+                                if (progressPercent < 0) progressPercent = 0;
+                                if (progressPercent > 100) progressPercent = 100;
+                            }
+                        }
+
                         <h3 class="profile-name-display">@currentUser?.FirstName @currentUser?.LastName</h3>
 
-                        @if (loyaltyPoints >= 1500)
-                        {
-                            <span class="profile-tier-badge" style="background:#D4AF37;">Royal Circle (Gold)</span>
-                        }
-                        else if (loyaltyPoints >= 500)
-                        {
-                            <span class="profile-tier-badge" style="background:#C0C0C0;">Atelier Elite (Silver)</span>
-                        }
-                        else
-                        {
-                            <span class="profile-tier-badge">Salon Member (Bronze)</span>
-                        }
+                        <span class="profile-tier-badge" style="background:@tierBg; color: #ffffff; padding: 4px 14px; border-radius: 20px; font-weight: 600; font-size: 0.85rem; display: inline-block; margin-bottom: 8px;">@tierName</span>
 
                         <p class="profile-joined">Joined On: @(currentUser?.CreatedAt?.ToString("MMM yyyy") ?? "June 2026")</p>
 
@@ -3803,42 +3853,39 @@
                                 <span class="points-value">@loyaltyPoints.ToString("N0") pts</span>
                             </div>
 
-                            @{
-                                int nextTierTarget = 1500;
-                                int ptsNeeded = nextTierTarget - loyaltyPoints;
-                                double progressPercent = (double)loyaltyPoints / nextTierTarget * 100;
-                                if (progressPercent > 100) progressPercent = 100;
-                            }
-
                             <div class="points-progress-bar">
                                 <div class="points-progress-fill" style="width: @(progressPercent)%;"></div>
                             </div>
                             <div class="points-footer">
                                 @if (ptsNeeded > 0)
                                 {
-                                    <span>@ptsNeeded.ToString("N0") pts to Gold Member</span>
+                                    <span>@ptsNeeded.ToString("N0") pts to @nextTierName</span>
                                 }
                                 else
                                 {
-                                    <span>Maximum Membership Tier Achieved</span>
+                                    <span>Highest Tier Achieved (Ruby VIP)</span>
                                 }
-                                <span>Target: @nextTierTarget pts</span>
+                                <span>Target: @nextTierTarget.ToString("N0") pts</span>
                             </div>
                         </div>
 
                         <div class="alert bg-light border text-start p-3 small" style="line-height: 1.6;">
-                            <strong>? Membership Privileges:</strong>
+                            <strong style="color: #3C1F10;">Loyalty Tiers (1 Pt = 5,000 MMK):</strong>
                             <ul class="ps-3 mt-1 m-0">
-                                <li>Earn 1 Point for every 5000 MMK spent.</li>
-                                <li>Silver members get 5% off items automatically.</li>
-                                <li>Gold members unlock free shipping & early access.</li>
+                                <li><strong>Earn Points:</strong> 1 Point for every 5,000 MMK spent.</li>
+                                <li><strong>Normal (&lt; 50 pts):</strong> 0% discount.</li>
+                                <li><strong>Silver (50 - 199 pts):</strong> 5% discount.</li>
+                                <li><strong>Gold (200 - 499 pts):</strong> 10% discount.</li>
+                                <li><strong>Platinum (500 - 999 pts):</strong> 12% discount.</li>
+                                <li><strong>Diamond (1,000 - 1,999 pts):</strong> 15% discount.</li>
+                                <li><strong>Ruby VIP (2,000+ pts):</strong> 20% discount.</li>
                             </ul>
                         </div>
                     </div>
 
                     <!-- Edit Profile Form -->
                     <div class="profile-card text-start">
-                        <h3 class="checkout-section-title">Atelier Member Details</h3>
+                        <h3 class="checkout-section-title">Member Details</h3>
 
                         <div class="row">
                             <div class="col-md-6 form-group">
@@ -3889,7 +3936,7 @@
             <div class="noti-detail-container">
                 <div class="noti-detail-header">
                     <button class="btn-back" @onclick="GoBackFromNotification">
-                        <i class="bi bi-arrow-left-short"></i> Back to Atelier
+                        <i class="bi bi-arrow-left-short"></i> Back to Boutique
                     </button>
                 </div>
 
@@ -3948,7 +3995,7 @@
                         else
                         {
                             <button class="btn-secondary-action" @onclick="GoBackFromNotification">
-                                Return to Atelier
+                                Return to Boutique
                             </button>
                         }
                     </div>
@@ -3973,14 +4020,15 @@
                 <div class="wrap">
                     <section class="hero">
                         <div class="hero-content">
-                            <div class="eyebrow">Atelier Offers</div>
-                            <h1>Curated savings on <em>this season's</em> pieces.</h1>
-                            <p class="lede">Seasonal codes across dresses, blouses and delivery, refreshed weekly and honoured at checkout.</p>
+                            <div class="eyebrow">Boutique Offers</div>
+                            <h1>Special savings on <em>this season's</em> pieces.</h1>
+                            <p class="lede">Special seasonal discounts across dresses, blouses and delivery, updated weekly.</p>
                             <div class="stats">
                                 <div class="stat"><span class="num">@promotionsList.Count</span><span class="label">Live Offers</span></div>
-                                <div class="stat"><span class="num">@TotalCodesRedeemed</span><span class="label">Codes Redeemed</span></div>
+                                @* <div class="stat"><span class="num">@TotalCodesRedeemed</span><span class="label">Codes Redeemed</span></div> *@
                                 <div class="stat"><span class="num">@NewArrivalsCount</span><span class="label">New This Week</span></div>
                             </div>
+                            @*
                             <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.15); display: flex; flex-direction: column; gap: 8px;">
                                 <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: rgba(255,255,255,0.7);">Available Promo Codes</div>
                                 <div style="display: flex; gap: 12px; flex-wrap: wrap;">
@@ -3990,7 +4038,7 @@
                                         {
                                             "Percent" => $"{(int)p.DiscountValue}% Off",
                                             "Fixed" => $"{p.DiscountValue:N0} ks Off",
-                                            "Shipping" => "Free Shipping",
+                                            "Shipping" => "Special Offer",
                                             _ => p.DiscountPercent > 0 ? $"{(int)p.DiscountPercent}% Off" : "Double Points"
                                         };
                                         <div style="font-family: monospace; font-size: 0.85rem; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.5); padding: 6px 12px; border-radius: 6px; font-weight: 700; color: #ffffff; cursor: pointer; transition: all 0.2s;" 
@@ -4000,6 +4048,7 @@
                                     }
                                 </div>
                             </div>
+                            *@
                         </div>
                     </section>
 
@@ -4032,11 +4081,13 @@
                                 </div>
                             </div>
                             <div class="dom-right">
+                                @*
                                 @if (!string.IsNullOrEmpty(dealOfMoment.PromoCode))
                                 {
                                     <div class="code-box">@dealOfMoment.PromoCode</div>
                                     <button class="copy-btn" @onclick="() => CopyPromoCode(dealOfMoment.PromoCode)" @onclick:stopPropagation="true">Copy Code</button>
                                 }
+                                *@
                             </div>
                         </div>
                     }
@@ -4094,7 +4145,7 @@
                             <i class="bi bi-arrow-left"></i> Back to All Offers
                         </button>
                         <h2 class="section-title mt-3 mb-1" style="font-size: 1.75rem;">@selectedPromotionDetail.Title</h2>
-                        <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--rose); letter-spacing: 0.05em;">Active Coupon: @selectedPromotionDetail.PromoCode (@selectedPromotionDetail.Subtitle)</span>
+                        <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--rose); letter-spacing: 0.05em;">@selectedPromotionDetail.Subtitle</span>
                     </div>
                     <div style="background: var(--rose-pale); border: 1px solid var(--rose-light); border-radius: 8px; padding: 12px 20px; text-align: right; max-width: 320px;">
                         <p style="font-size: 0.75rem; color: var(--charcoal-soft); margin: 0; line-height: 1.4;">@selectedPromotionDetail.Description</p>
@@ -4168,8 +4219,7 @@
 
                             <!-- Delivery -->
                             <p class="promo-grid-delivery">
-                                FREE delivery <strong>tomorrow</strong> in Yangon.<br/>
-                                Or fastest delivery <strong>today</strong>.
+                                Free delivery tomorrow in Yangon.
                             </p>
 
 
@@ -4198,7 +4248,7 @@
                     Crafted with <em style="font-style:italic; color:#C9A96E;">intention</em>,<br/>worn with grace.
                 </h1>
                 <p style="font-size:0.95rem; color:rgba(245,240,232,0.8); line-height:1.85; max-width:520px; margin:0;">
-                    Chic Boutique is an independent atelier rooted in Yangon's Golden Valley, dedicated to creating timeless garments for the modern woman.
+                    Chic Boutique is an independent boutique rooted in Yangon's Golden Valley, dedicated to creating timeless garments for the modern woman.
                 </p>
             </div>
         </section>
@@ -4209,7 +4259,7 @@
                 <div>
                     <span style="font-size:0.6rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--rose); font-weight:600;">Our Story</span>
                     <h2 style="font-family:'DM Sans',sans-serif; font-size:2rem; font-weight:400; color:var(--charcoal); margin:12px 0 24px; line-height:1.2;">
-                        From a small studio to a <em style="color:var(--rose); font-style:italic;">curated atelier</em>
+                        From a small studio to a <em style="color:var(--rose); font-style:italic;">boutique</em>
                     </h2>
                     <p style="font-size:0.9rem; color:var(--charcoal-soft); line-height:1.9; margin-bottom:16px;">
                         Founded in 2018 by a group of passionate fashion graduates, Chic Boutique began as a made-to-order studio tucked in a quiet corner of Bahan Township. Our founders believed that luxury should be accessible — not defined by price tags, but by the quality of craft and the intention behind every stitch.
@@ -4234,7 +4284,7 @@
                 </div>
                 <div style="position:relative;">
                     <div style="border-radius:16px; overflow:hidden; aspect-ratio:4/5;">
-                        <img src="https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=700&q=80" alt="Atelier Workshop" style="width:100%; height:100%; object-fit:cover; display:block;"/>
+                        <img src="https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=700&q=80" alt="Boutique Workshop" style="width:100%; height:100%; object-fit:cover; display:block;"/>
                     </div>
                     <div style="position:absolute; bottom:-24px; left:-24px; background:var(--white); border:1px solid var(--rose-light); border-radius:12px; padding:18px 22px; box-shadow:0 8px 32px rgba(139,26,26,.1);">
                         <p style="font-size:0.65rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--rose); font-weight:600; margin:0 0 4px;">Our Promise</p>
@@ -4258,8 +4308,8 @@
                     var milestones = new[]
                     {
                         ("2018", "The Beginning", "Chic Boutique opens its doors in Golden Valley as a made-to-order studio with a team of three.", true),
-                        ("2020", "First Collection Launch", "Debuted our first ready-to-wear seasonal line — \"Monsoon Atelier\" — which sold out within two weeks.", false),
-                        ("2022", "Online Platform", "Launched our digital atelier, bringing curated fashion to women across Myanmar with free Yangon delivery.", true),
+                        ("2020", "First Collection Launch", "Debuted our first ready-to-wear seasonal line — \"Monsoon Collection\" — which sold out within two weeks.", false),
+                        ("2022", "Online Platform", "Launched our digital boutique, bringing fashion to women across Myanmar with free Yangon delivery.", true),
                         ("2024", "Loyalty Boutique Program", "Introduced our signature loyalty rewards system, celebrating our most devoted clients.", false),
                         ("2026", "Today & Beyond", "Expanding our bespoke offerings and seasonal collaborations with local fabric artisans.", true),
                     };
@@ -4312,8 +4362,8 @@
                             ("bi-heart", "Women-Centered", "Designed by women, for women. Every silhouette, every cut is made with the real female form in mind."),
                             ("bi-recycle", "Sustainable Craft", "We source locally, minimise waste, and work with artisan weavers across Myanmar to sustain traditional textile arts."),
                             ("bi-palette", "Refined Aesthetics", "We pursue beauty that transcends trends — subtle, deliberate, and distinctly Chic Boutique."),
-                            ("bi-people", "Community First", "From our team to our clients, relationships are at the heart of everything we do at the atelier."),
-                            ("bi-star", "Exceptional Service", "From first stitch to final delivery, we treat every client as a VIP guest of the atelier."),
+                            ("bi-people", "Community First", "From our team to our clients, relationships are at the heart of everything we do at the boutique."),
+                            ("bi-star", "Exceptional Service", "From first stitch to final delivery, we treat every client as a VIP guest of the boutique."),
                         };
                     }
                     @foreach (var (icon, name, description) in values)
@@ -4330,10 +4380,10 @@
             </div>
         </section>
 
-        <!-- Team / Atelier -->
+        <!-- Team / Boutique -->
         <section style="max-width:1100px; margin:0 auto; padding:72px 40px;">
             <div style="text-align:center; margin-bottom:48px;">
-                <span style="font-size:0.6rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--rose); font-weight:600;">The Atelier Team</span>
+                <span style="font-size:0.6rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--rose); font-weight:600;">The Boutique Team</span>
                 <h2 style="font-family:'DM Sans',sans-serif; font-size:1.8rem; font-weight:400; color:var(--charcoal); margin:12px 0 8px;">The Hands Behind the Label</h2>
                 <p style="font-size:0.88rem; color:var(--charcoal-soft); max-width:480px; margin:0 auto; line-height:1.8;">A small, passionate team of designers, tailors, and curators who pour their hearts into every garment we create.</p>
             </div>
@@ -4344,7 +4394,7 @@
                         ("https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&q=80", "Aye Mya Thida", "Creative Director", "Trained in Bangkok and Yangon, Thida brings a singular vision to every seasonal collection."),
                         ("https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80", "Su Wai Phyo", "Head Seamstress", "With 15 years of haute couture experience, Su Wai ensures every seam is a statement of precision."),
                         ("https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&q=80", "Khin Myat Noe", "Fabric Curator", "Khin travels across Myanmar to source the finest silks, linens, and handwoven textiles."),
-                        ("https://images.unsplash.com/photo-1548142813-c348350df52b?w=400&q=80", "Zin Mar Aung", "Client Relations", "Zin Mar is the warm voice behind every fitting appointment and the face of our atelier hospitality."),
+                        ("https://images.unsplash.com/photo-1548142813-c348350df52b?w=400&q=80", "Zin Mar Aung", "Client Relations", "Zin Mar is the warm voice behind every fitting appointment and the face of our boutique hospitality."),
                     };
                 }
                 @foreach (var (photo, memberName, role, bio) in team)
@@ -4368,7 +4418,7 @@
             text-align: center;">
             <div style="max-width:600px; margin:0 auto;">
                 <i class="bi bi-geo-alt-fill" style="font-size:2rem; color:#C9A96E; margin-bottom:20px; display:block;"></i>
-                <h2 style="font-family:'DM Sans',sans-serif; font-size:1.8rem; font-weight:400; color:#F5F0E8; margin:0 0 16px; letter-spacing:0.02em;">Visit the Atelier</h2>
+                <h2 style="font-family:'DM Sans',sans-serif; font-size:1.8rem; font-weight:400; color:#F5F0E8; margin:0 0 16px; letter-spacing:0.02em;">Visit the Boutique</h2>
                 <p style="font-size:0.88rem; color:rgba(245,240,232,0.75); line-height:1.85; margin:0 0 32px;">
                     We welcome you to our boutique in the heart of Golden Valley, Yangon. Come for a fitting, browse our latest collection, or simply enjoy a cup of tea with our team.
                 </p>
@@ -4409,7 +4459,7 @@
                 Contact <em style="color:#8B1A1A; font-style:italic;">Chic Boutique</em>
             </h2>
             <p style="font-size:0.88rem; color:#7A5C50; line-height:1.8; margin-bottom:32px;">
-                We would love to hear from you. Whether you have questions about our collections, sizing, or custom orders  our atelier team is here to assist.
+                We would love to hear from you. Whether you have questions about our collections, sizing, or custom orders  our boutique team is here to assist.
             </p>
 
             <div style="display:flex; flex-direction:column; gap:20px;">
@@ -4418,8 +4468,8 @@
                         <i class="bi bi-geo-alt" style="color:#8B1A1A; font-size:1rem;"></i>
                     </div>
                     <div>
-                        <p style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:#7A5C50; font-weight:600; margin:0;">Location</p>
-                        <p style="font-size:0.88rem; color:#3C1F10; margin:0;">Golden Valley, Bahan Township, Yangon</p>
+                        <p style="font-size:0.9rem; text-transform:uppercase; color:#3C1F10; font-weight:700; margin:0;">Location</p>
+                        <p style="font-size:0.88rem; color:#7A5C50; font-weight:400; margin:0;">Golden Valley, Bahan Township, Yangon</p>
                     </div>
                 </div>
 
@@ -4428,8 +4478,8 @@
                         <i class="bi bi-telephone" style="color:#8B1A1A; font-size:1rem;"></i>
                     </div>
                     <div>
-                        <p style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:#7A5C50; font-weight:600; margin:0;">Phone</p>
-                        <p style="font-size:0.88rem; color:#3C1F10; margin:0;">09 252 522 525</p>
+                        <p style="font-size:0.9rem; text-transform:uppercase; color:#3C1F10; font-weight:700; margin:0;">Phone</p>
+                        <p style="font-size:0.88rem; color:#7A5C50; font-weight:400; margin:0;">09 252 522 525</p>
                     </div>
                 </div>
 
@@ -4438,8 +4488,8 @@
                         <i class="bi bi-envelope" style="color:#8B1A1A; font-size:1rem;"></i>
                     </div>
                     <div>
-                        <p style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:#7A5C50; font-weight:600; margin:0;">Email</p>
-                        <p style="font-size:0.88rem; color:#3C1F10; margin:0;">hello@theboutique.com.mm</p>
+                        <p style="font-size:0.9rem; text-transform:uppercase; color:#3C1F10; font-weight:700; margin:0;">Email</p>
+                        <p style="font-size:0.88rem; color:#7A5C50; font-weight:400; margin:0;">hello@theboutique.com.mm</p>
                     </div>
                 </div>
 
@@ -4448,8 +4498,8 @@
                         <i class="bi bi-clock" style="color:#8B1A1A; font-size:1rem;"></i>
                     </div>
                     <div>
-                        <p style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:#7A5C50; font-weight:600; margin:0;">Hours</p>
-                        <p style="font-size:0.88rem; color:#3C1F10; margin:0;">Mon  Sat: 10:00 AM  7:00 PM</p>
+                        <p style="font-size:0.9rem; text-transform:uppercase; color:#3C1F10; font-weight:700; margin:0;">Hours</p>
+                        <p style="font-size:0.88rem; color:#7A5C50; font-weight:400; margin:0;">Mon  Sat: 10:00 AM  7:00 PM</p>
                     </div>
                 </div>
             </div>
@@ -4490,7 +4540,7 @@
             <!-- Brand -->
             <div>
                 <h3 style="font-family: 'DM Sans', sans-serif; font-size:1.6rem; font-weight:400; letter-spacing:0.15em; color:#F5F0E8; margin-bottom:8px;">CHIC BOUTIQUE</h3>
-                <p style="font-size:0.62rem; letter-spacing:0.3em; text-transform:uppercase; color:#C8837A; margin-bottom:16px;">Atelier Coterie</p>
+                <p style="font-size:0.62rem; letter-spacing:0.3em; text-transform:uppercase; color:#C8837A; margin-bottom:16px;">Boutique Store</p>
                 <p style="font-size:0.82rem; color:rgba(245,240,232,0.65); line-height:1.8; max-width:260px;">
                     Curating timeless garments for the modern woman. Crafted with care, worn with grace.
                 </p>
@@ -4549,7 +4599,7 @@
         <!-- Bottom Row -->
         <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
             <p style="font-size:0.72rem; color:rgba(245,240,232,0.4); margin:0; letter-spacing:0.05em;">
-                 2026 The Boutique Atelier Coterie. All rights reserved.
+                 2026 The Boutique. All rights reserved.
             </p>
             <p style="font-size:0.72rem; color:rgba(245,240,232,0.4); margin:0; letter-spacing:0.05em;">
                 Crafted with <span style="color:#C8837A;">??</span> in Yangon, Myanmar
@@ -4890,7 +4940,7 @@
             <span class="cart-subtotal-label">Subtotal</span>
             <span class="cart-subtotal-val">@CartTotal.ToString("N0") MMK</span>
         </div>
-        <p class="cart-note">Fulfillment and shipping calculated at checkout.</p>
+        <p class="cart-note">Delivery details will be confirmed after checkout.</p>
         <button class="btn-checkout" @onclick="GoCheckout">Proceed to Checkout</button>
     </div>
 </div>
@@ -4903,7 +4953,7 @@
         Thank you for your purchase. We have received your order.
         @if (selectedPayment == "cod")
         {
-            <span>Our shipping coordinator will call you shortly to confirm delivery details.</span>
+            <span>Our team will call you shortly to confirm your delivery details.</span>
         }
         else
         {

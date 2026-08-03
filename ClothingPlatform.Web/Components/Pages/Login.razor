@@ -2,7 +2,7 @@
 @page "/login"
 @page "/portal-login"
 
-<PageTitle>Chic Boutique — Atelier Access</PageTitle>
+<PageTitle>Chic Boutique ï¿½ Account Access</PageTitle>
 <style>
     :root {
         --bg-start: #FDF8F6;
@@ -524,7 +524,7 @@
                     </div>
                 }
                 <div class="form-subheading">Welcome back</div>
-                <h1 class="form-heading">Sign in to<br><em>your atelier</em></h1>
+                <h1 class="form-heading">Sign in to<br><em>your account</em></h1>
                 <div class="divider"></div>
                 <div class="mb-field">
                     <label class="form-label">Email address</label>
@@ -537,7 +537,7 @@
                 <div class="mb-field">
                     <label class="form-label">Password</label>
                     <div class="pw-wrapper">
-                        <input type="@(showLoginPw ? "text" : "password")" class="form-control @(pwInvalid ? "is-invalid" : "")" @bind="loginPassword" @bind:event="oninput" placeholder="••••••••" />
+                        <input type="@(showLoginPw ? "text" : "password")" class="form-control @(pwInvalid ? "is-invalid" : "")" @bind="loginPassword" @bind:event="oninput" placeholder="ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" />
                         <button type="button" class="pw-toggle" @onclick="() => showLoginPw = !showLoginPw" tabindex="-1">
                             <i class="bi @(showLoginPw ? "bi-eye-slash" : "bi-eye")"></i>
                         </button>
@@ -577,7 +577,7 @@
                         <span>@signupErrorMessage</span>
                     </div>
                 }
-                <div class="form-subheading">Join the atelier</div>
+                <div class="form-subheading">Join the member</div>
                 <h1 class="form-heading">Create your<br><em>membership</em></h1>
                 <div class="divider"></div>
                 <!-- Name Row -->
@@ -628,7 +628,7 @@
                     <input type="tel" class="form-control @(regPhoneInvalid ? "is-invalid" : "")" @bind="regPhone" @bind:event="oninput" placeholder="09xxxxxxxxx" />
                     @if (regPhoneInvalid)
                     {
-                        <div class="invalid-feedback">Phone number is required.</div>
+                        <div class="invalid-feedback d-block">@regPhoneErrorMsg</div>
                     }
                 </div>
                 <div class="mb-field">
@@ -668,7 +668,7 @@
             </div>
         }
     </div><!-- /auth-card -->
-    <div class="card-footer-note">Secure · Encrypted · Private</div>
+    <div class="card-footer-note">Secure ï¿½ Encrypted ï¿½ Private</div>
 </div><!-- /wrapper -->
 
 

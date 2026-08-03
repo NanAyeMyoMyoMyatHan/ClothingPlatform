@@ -68,6 +68,7 @@ namespace ClothingPlatform.Web.Components.Pages
         private bool regEmailInvalid = false;
         private string regEmailErrorMsg = "";
         private bool regPhoneInvalid = false;
+        private string regPhoneErrorMsg = "";
         private bool regAddressInvalid = false;
         private string regAddressErrorMsg = "";
         private bool regPwInvalid = false;
@@ -96,6 +97,12 @@ namespace ClothingPlatform.Web.Components.Pages
         private bool IsValidEmail(string email)
         {
             return System.Text.RegularExpressions.Regex.IsMatch(email.Trim(), @"^[^\s@]+@[^\s@]+\.[^\s@]+$");
+        }
+        private bool IsValidPhone(string phone)
+        {
+            if (string.IsNullOrWhiteSpace(phone)) return false;
+            var cleanPhone = phone.Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "").Trim();
+            return System.Text.RegularExpressions.Regex.IsMatch(cleanPhone, @"^(?:\+?95|0)?9\d{6,9}$");
         }
         private async Task HandleLogin()
         {
@@ -201,12 +208,12 @@ namespace ClothingPlatform.Web.Components.Pages
                 }
                 else
                 {
-                    loginErrorMessage = UiMessages.PortalLogin.InvalidCredentials;
+                    loginErrorMessage = "Incorrect email and password";
                 }
             }
             catch (Exception ex)
             {
-                loginErrorMessage = UiMessages.PortalLogin.LoginFailed(ex.Message);
+                loginErrorMessage = "Incorrect email and password";
             }
             finally
             {
@@ -239,7 +246,7 @@ namespace ClothingPlatform.Web.Components.Pages
             else if (!IsValidEmail(regEmail))
             {
                 regEmailInvalid = true;
-                regEmailErrorMsg = UiMessages.PortalLogin.RegisterEmailInvalid;
+                regEmailErrorMsg = "Email not format";
                 isValid = false;
             }
             else if (await db.Users.AnyAsync(u => u.Email.ToLower() == regEmail.Trim().ToLower()))
@@ -251,6 +258,13 @@ namespace ClothingPlatform.Web.Components.Pages
             if (string.IsNullOrWhiteSpace(regPhone))
             {
                 regPhoneInvalid = true;
+                regPhoneErrorMsg = "Phone number is required.";
+                isValid = false;
+            }
+            else if (!IsValidPhone(regPhone))
+            {
+                regPhoneInvalid = true;
+                regPhoneErrorMsg = "Phone number not format";
                 isValid = false;
             }
             if (string.IsNullOrWhiteSpace(regAddress))
