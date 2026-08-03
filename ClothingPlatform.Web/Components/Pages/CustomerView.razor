@@ -3299,23 +3299,37 @@
                                 <span class="summary-total-val">@CartSubtotal.ToString("N0") MMK</span>
                             </div>
 
-                            @*
                             @if (appliedPromoDiscount > 0)
                             {
-                                <div class="summary-total-row" style="margin-top: 8px; color: var(--success);">
-                                    <span class="summary-total-label" style="color: var(--success); font-weight: 500;">Promo code discount</span>
-                                    <span class="summary-total-val" style="color: var(--success); font-weight: 600;">-@appliedPromoDiscount.ToString("N0") MMK</span>
+                                var memberPct = GetCustomerLoyaltyDiscountPercent();
+                                var tierTitle = memberPct switch {
+                                    5 => "Silver Member",
+                                    10 => "Gold Member",
+                                    12 => "Platinum Member",
+                                    15 => "Diamond Member",
+                                    20 => "Ruby VIP Member",
+                                    _ => "Member"
+                                };
+
+                                <div class="summary-total-row" style="margin-top: 10px; color: #166534; background: #F0FDF4; padding: 10px 12px; border-radius: 8px; border: 1px solid #BBF7D0; align-items: center;">
+                                    <div style="flex: 1; text-align: left;">
+                                        <span class="summary-total-label" style="color: #166534; font-weight: 600; display: block; font-size: 0.95rem;">@tierTitle Discount (@((int)memberPct)%)</span>
+                                        <span style="font-size: 0.78rem; color: #15803D; display: block; margin-top: 2px;">Since you are a @tierTitle, you get @((int)memberPct)% off your purchase!</span>
+                                    </div>
+                                    <span class="summary-total-val" style="color: #166534; font-weight: 700; font-size: 1.05rem; white-space: nowrap;">-@appliedPromoDiscount.ToString("N0") MMK</span>
                                 </div>
                             }
-                            *@
+
                             <div class="summary-total-row" style="border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px;">
                                 <span class="summary-total-label" style="font-size: 1.1rem; font-weight: 700; color: var(--charcoal);">Total</span>
                                 <span class="summary-total-val" style="font-size: 1.1rem; font-weight: 800; color: var(--rose);">@GrandTotal.ToString("N0") MMK</span>
                             </div>
                             @if (TotalSaved > 0)
                             {
-                                <div style="font-size: 0.8rem; color: var(--muted); margin-top: 8px; text-align: right; font-style: italic;">
-                                    You saved @TotalSaved.ToString("N0") MMK total (item sale)
+                                var memberPct = GetCustomerLoyaltyDiscountPercent();
+                                var saveText = memberPct > 0 ? $"You saved {TotalSaved.ToString("N0")} MMK total ({(int)memberPct}% member discount)" : $"You saved {TotalSaved.ToString("N0")} MMK total";
+                                <div style="font-size: 0.82rem; color: #15803D; margin-top: 8px; text-align: right; font-style: italic; font-weight: 500;">
+                                    @saveText
                                 </div>
                             }
                         </div>
