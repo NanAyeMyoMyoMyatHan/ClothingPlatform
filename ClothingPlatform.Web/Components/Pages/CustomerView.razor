@@ -3189,16 +3189,16 @@
                 @if (selectedPayment == "kpay")
                 {
                     <div class="qr-block" style="text-align: center; margin: 16px 0; padding: 16px; background: #fff; border-radius: 12px; border: 1px solid var(--border, #EDD9D0);">
-                        <img class="qr-img" src="images/kpay-qr.jpg" alt="KBZPay Scan QR" style="max-width: 220px; width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);" />
+                        <img class="qr-img" src="images/kpay-qr.png" alt="Payment Scan QR" style="max-width: 220px; width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);" />
                         <p class="qr-instruction" style="margin-top: 10px; font-size: 0.85rem; color: #4B5563;">Scan this QR Code in KBZPay to transfer. Account Name: <span class="qr-account" style="font-weight: 600; color: var(--rose, #8B1A1A);">Chic Boutique Shop</span></p>
                     </div>
                 }
 
                 @if (selectedPayment == "wave_money")
                 {
-                    <div class="qr-block">
-                        <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=WavePayTransferRecv_09252522525" alt="WavePay QR" />
-                        <p class="qr-instruction">Scan this QR Code in WaveMoney to transfer. Account Name: <span class="qr-account">Boutique Corp.</span></p>
+                    <div class="qr-block" style="text-align: center; margin: 16px 0; padding: 16px; background: #fff; border-radius: 12px; border: 1px solid var(--border, #EDD9D0);">
+                        <img class="qr-img" src="images/kpay-qr.png" alt="Payment Scan QR" style="max-width: 220px; width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);" />
+                        <p class="qr-instruction" style="margin-top: 10px; font-size: 0.85rem; color: #4B5563;">Scan this QR Code in WaveMoney to transfer. Account Name: <span class="qr-account" style="font-weight: 600; color: var(--rose, #8B1A1A);">Boutique Corp.</span></p>
                     </div>
                 }
 
