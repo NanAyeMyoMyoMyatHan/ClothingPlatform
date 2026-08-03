@@ -383,9 +383,9 @@ namespace ClothingPlatform.Api.Features.Product
                     ProductId = p!.ProductId,
                     Name = p.Name,
                     TotalSold = salesLookup.TryGetValue(p.ProductId, out var ts) ? ts : 0,
-                    SalePrice = p.ProductVariants.Any()
-                        ? p.ProductVariants.Min(v => v.SalePrice ?? 0m)
-                        : 0m,
+                    SalePrice = p.ProductVariants.Any(v => (v.SalePrice ?? 0m) > 0m)
+                        ? p.ProductVariants.Where(v => (v.SalePrice ?? 0m) > 0m).Min(v => v.SalePrice ?? 0m)
+                        : 45000m,
                     CategoryName = p.Category?.Name ?? "General",
                     Description = p.Description ?? string.Empty,
                     ImageDto = p.ProductImages
@@ -445,9 +445,9 @@ namespace ClothingPlatform.Api.Features.Product
                 {
                     ProductId = p.ProductId,
                     Name = p.Name,
-                    SalePrice = p.ProductVariants.Any()
-                        ? p.ProductVariants.Min(v => v.SalePrice ?? 0m)
-                        : 0m,
+                    SalePrice = p.ProductVariants.Any(v => (v.SalePrice ?? 0m) > 0m)
+                        ? p.ProductVariants.Where(v => (v.SalePrice ?? 0m) > 0m).Min(v => v.SalePrice ?? 0m)
+                        : 45000m,
                     Description = p.Description ?? string.Empty,
                     CategoryName = p.Category != null ? p.Category.Name : "General",
                     ImageDto = p.ProductImages
@@ -506,9 +506,9 @@ namespace ClothingPlatform.Api.Features.Product
                 {
                     Id = p.ProductId,
                     Name = p.Name,
-                    SalePrice = p.ProductVariants.Any()
-                        ? p.ProductVariants.Min(v => v.SalePrice ?? 0m)
-                        : 0m,
+                    SalePrice = p.ProductVariants.Any(v => (v.SalePrice ?? 0m) > 0m)
+                        ? p.ProductVariants.Where(v => (v.SalePrice ?? 0m) > 0m).Min(v => v.SalePrice ?? 0m)
+                        : 45000m,
                     Description = p.Description ?? string.Empty,
                     CategoryName = p.Category != null
                         ? p.Category.Name

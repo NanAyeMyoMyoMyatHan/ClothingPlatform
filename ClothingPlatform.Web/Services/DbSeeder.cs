@@ -251,6 +251,72 @@ namespace ClothingPlatform.Web.Services
                 db.SaveChanges();
             }
 
+            // 3b. Ensure all existing products in DB have valid variants, prices, and images
+            var existingProds = db.Products
+                .Include(p => p.ProductVariants)
+                .Include(p => p.ProductImages)
+                .ToList();
+
+            int repairSku = 9000;
+            bool dbChanged = false;
+
+            foreach (var p in existingProds)
+            {
+                // Auto-fix missing primary images
+                if (!p.ProductImages.Any() || p.ProductImages.All(i => string.IsNullOrWhiteSpace(i.ImageUrl)))
+                {
+                    db.ProductImages.Add(new ProductImage
+                    {
+                        ProductId = p.ProductId,
+                        ImageUrl = "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80",
+                        IsPrimary = true
+                    });
+                    dbChanged = true;
+                }
+
+                // Auto-fix missing variants or zero prices
+                var validVariants = p.ProductVariants.Where(v => (v.SalePrice ?? 0m) > 0m).ToList();
+                if (!p.ProductVariants.Any() || !validVariants.Any())
+                {
+                    decimal assignedPrice = 45000m + (Math.Abs(p.Name.GetHashCode()) % 12) * 5000m;
+                    var sizes = new[] { "S", "M", "L", "XL" };
+                    var colors = new[] { "Black", "White" };
+
+                    foreach (var sz in sizes)
+                    {
+                        foreach (var col in colors)
+                        {
+                            repairSku++;
+                            db.ProductVariants.Add(new ProductVariant
+                            {
+                                ProductId = p.ProductId,
+                                Size = sz,
+                                Color = col,
+                                Sku = $"{p.Name.Substring(0, Math.Min(3, p.Name.Length)).ToUpper()}-{sz}-{col}-{repairSku}",
+                                StockQuantity = 20,
+                                SalePrice = assignedPrice,
+                                PurchasePrice = Math.Round(assignedPrice * 0.65m, 2)
+                            });
+                        }
+                    }
+                    dbChanged = true;
+                }
+                else
+                {
+                    foreach (var v in p.ProductVariants.Where(v => (v.SalePrice ?? 0m) <= 0m))
+                    {
+                        v.SalePrice = 50000m;
+                        v.PurchasePrice = 35000m;
+                        dbChanged = true;
+                    }
+                }
+            }
+
+            if (dbChanged)
+            {
+                db.SaveChanges();
+            }
+
             // 4. Seed active promotions and coupons
             EnsureSeedPromotions(db);
         }
