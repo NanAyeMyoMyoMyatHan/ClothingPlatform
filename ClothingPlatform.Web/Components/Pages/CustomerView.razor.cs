@@ -79,12 +79,12 @@ namespace ClothingPlatform.Web.Components.Pages
         private decimal GetCustomerLoyaltyDiscountPercent()
         {
             if (currentUser == null) return 0m;
-            if (loyaltyPoints >= 2000) return 20m;     // Ruby VIP
-            if (loyaltyPoints >= 1000) return 18m;     // Diamond
-            if (loyaltyPoints >= 500)  return 15m;     // Platinum
-            if (loyaltyPoints >= 200)  return 12m;     // Gold
-            if (loyaltyPoints >= 50)   return 10m;     // Silver Member (10% discount)
-            return 0m;                                 // Normal (< 50 pts)
+            if (loyaltyPoints >= 2000) return 20m;     // Ruby VIP (20%)
+            if (loyaltyPoints >= 1000) return 15m;     // Diamond (15%)
+            if (loyaltyPoints >= 500)  return 12m;     // Platinum (12%)
+            if (loyaltyPoints >= 200)  return 10m;     // Gold (10%)
+            if (loyaltyPoints >= 50)   return 5m;      // Silver Member (5%)
+            return 0m;                                 // Normal (< 50 pts, 0%)
         }
 
         private async Task RecalculateCartDiscountsAsync()
