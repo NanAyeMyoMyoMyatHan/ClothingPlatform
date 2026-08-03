@@ -76,6 +76,17 @@ namespace ClothingPlatform.Web.Components.Pages
         private decimal CartSubtotal => cart.Sum(item => (item.Price * item.Qty) - item.DiscountAmount);
         private decimal TotalSaved => cart.Sum(item => item.DiscountAmount) + appliedPromoDiscount;
 
+        private decimal GetCustomerLoyaltyDiscountPercent()
+        {
+            if (currentUser == null) return 0m;
+            if (loyaltyPoints >= 2000) return 20m;     // Ruby VIP
+            if (loyaltyPoints >= 1000) return 18m;     // Diamond
+            if (loyaltyPoints >= 500)  return 15m;     // Platinum
+            if (loyaltyPoints >= 200)  return 12m;     // Gold
+            if (loyaltyPoints >= 50)   return 10m;     // Silver Member (10% discount)
+            return 0m;                                 // Normal (< 50 pts)
+        }
+
         private async Task RecalculateCartDiscountsAsync()
         {
             foreach (var item in cart)
@@ -124,7 +135,9 @@ namespace ClothingPlatform.Web.Components.Pages
                     .ToListAsync();
                 var productMap = products.ToDictionary(p => p.ProductId);
 
-                // 3. Apply percent discounts first
+                // 3. Apply percent discounts (campaign + coupons + member tier discount)
+                decimal loyaltyPct = GetCustomerLoyaltyDiscountPercent();
+
                 foreach (var item in cart)
                 {
                     var variant = variantMap.TryGetValue(item.VariantId, out var v) ? v : null;
@@ -149,11 +162,12 @@ namespace ClothingPlatform.Web.Components.Pages
                         decimal val = coupon.DiscountPercent;
                         couponPct += val;
                     }
-                    couponPct = Math.Min(couponPct, 100);
+                    
+                    decimal totalAddPct = Math.Min(couponPct + loyaltyPct, 100);
 
                     item.DiscountPercent = campaignPct;
                     item.DiscountAmount = (item.Price * item.Qty) * (item.DiscountPercent / 100);
-                    item.CouponDiscountAmount = (item.Price * item.Qty) * (couponPct / 100);
+                    item.CouponDiscountAmount = (item.Price * item.Qty) * (totalAddPct / 100);
                 }
 
                 // 4. Apply fixed discount coupons
@@ -530,6 +544,7 @@ namespace ClothingPlatform.Web.Components.Pages
                         .Where(o => !OrderWorkflow.IsCancelled(o.OrderStatus))
                         .Sum(o => o.TotalAmount);
                     loyaltyPoints = (int)(totalSpent / 5000);
+                    await RecalculateCartDiscountsAsync();
                 }
             }
             catch (Exception ex)
