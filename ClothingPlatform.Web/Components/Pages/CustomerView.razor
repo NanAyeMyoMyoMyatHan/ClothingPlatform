@@ -3324,14 +3324,6 @@
                                 <span class="summary-total-label" style="font-size: 1.1rem; font-weight: 700; color: var(--charcoal);">Total</span>
                                 <span class="summary-total-val" style="font-size: 1.1rem; font-weight: 800; color: var(--rose);">@GrandTotal.ToString("N0") MMK</span>
                             </div>
-                            @if (TotalSaved > 0)
-                            {
-                                var memberPct = GetCustomerLoyaltyDiscountPercent();
-                                var saveText = memberPct > 0 ? $"You saved {TotalSaved.ToString("N0")} MMK total ({(int)memberPct}% member discount)" : $"You saved {TotalSaved.ToString("N0")} MMK total";
-                                <div style="font-size: 0.82rem; color: #15803D; margin-top: 8px; text-align: right; font-style: italic; font-weight: 500;">
-                                    @saveText
-                                </div>
-                            }
                         </div>
 
                         <LoadingButton Class="btn-place-order"

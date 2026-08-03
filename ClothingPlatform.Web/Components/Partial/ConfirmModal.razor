@@ -1,4 +1,4 @@
-﻿
+
 <style>
 .confirm-overlay {
 position: fixed;
@@ -99,16 +99,24 @@ to { transform: scale(1); opacity: 1; }
 {
     <div class="confirm-overlay" @onclick="Cancel">
         <div class="confirm-box" @onclick:stopPropagation="true">
-            <div class="confirm-icon">
+            <div class="confirm-icon" style="@(ConfirmText == "Delete" ? "background: #fef2f2; color: #e11d48;" : "background: #F0FDF4; color: #166534;")">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 9v4m0 4h.01M10.29 3.86l-8.18 14.18A2 2 0 0 0 4 21h16a2 2 0 0 0 1.89-2.96L13.71 3.86a2 2 0 0 0-3.42 0z" stroke-linecap="round" stroke-linejoin="round"/>
+                    @if (ConfirmText == "Delete")
+                    {
+                        <path d="M12 9v4m0 4h.01M10.29 3.86l-8.18 14.18A2 2 0 0 0 4 21h16a2 2 0 0 0 1.89-2.96L13.71 3.86a2 2 0 0 0-3.42 0z" stroke-linecap="round" stroke-linejoin="round"/>
+                    }
+                    else
+                    {
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="m9 12 2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+                    }
                 </svg>
             </div>
             <h3 class="confirm-title">@Title</h3>
             <p class="confirm-message">@Message</p>
             <div class="confirm-actions">
                 <button class="btn btn-cancel" @onclick="Cancel">@CancelText</button>
-                <button class="btn btn-confirm" @onclick="Confirm">@ConfirmText</button>
+                <button class="btn btn-confirm" style="@(ConfirmText == "Delete" ? "background: #e11d48;" : "background: #8B1A1A;")" @onclick="Confirm">@ConfirmText</button>
             </div>
         </div>
     </div>
