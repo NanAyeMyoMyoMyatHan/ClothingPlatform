@@ -2730,6 +2730,18 @@
         indicator.style.left = (btnRect.left - barRect.left + bar.scrollLeft) + 'px';
         indicator.style.width = btnRect.width + 'px';
     };
+
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('nav-tab')) {
+            setTimeout(window.moveNavIndicator, 10);
+            setTimeout(window.moveNavIndicator, 100);
+            setTimeout(window.moveNavIndicator, 300);
+        }
+    });
+
+    window.addEventListener('resize', function() {
+        if (window.moveNavIndicator) window.moveNavIndicator();
+    });
 </script>
 
 <!-- --------------- HEADER --------------- -->

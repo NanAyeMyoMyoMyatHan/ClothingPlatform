@@ -584,6 +584,11 @@ namespace ClothingPlatform.Web.Components.Pages
             {
                 AutofillCheckoutFromProfile();
             }
+            TriggerNavIndicatorUpdate();
+        }
+
+        private void TriggerNavIndicatorUpdate()
+        {
             _ = InvokeAsync(async () =>
             {
                 await Task.Delay(50);
@@ -1777,6 +1782,7 @@ namespace ClothingPlatform.Web.Components.Pages
             
             activeTab = "return";
             StateHasChanged();
+            TriggerNavIndicatorUpdate();
         }
 
         private void NavigateToReturnTab()
@@ -1793,6 +1799,7 @@ namespace ClothingPlatform.Web.Components.Pages
             }
             activeTab = "return";
             StateHasChanged();
+            TriggerNavIndicatorUpdate();
         }
 
         private void OnReturnOrderChanged(ChangeEventArgs e)
