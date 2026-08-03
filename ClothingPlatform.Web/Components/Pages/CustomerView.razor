@@ -335,6 +335,7 @@
         border-top: 1px solid var(--border);
         overflow-x: auto;
         scrollbar-width: none;
+        position: relative;
     }
 
         .nav-tabs-bar::-webkit-scrollbar {
@@ -353,8 +354,9 @@
         cursor: pointer;
         white-space: nowrap;
         border-bottom: 2px solid transparent;
-        transition: color 0.2s, border-color 0.2s;
+        transition: color 0.25s;
         text-transform: uppercase;
+        position: relative;
     }
 
         .nav-tab:hover {
@@ -363,8 +365,18 @@
 
         .nav-tab.active {
             color: var(--rose);
-            border-bottom-color: var(--rose);
         }
+
+    /* Sliding indicator bar */
+    .nav-indicator {
+        position: absolute;
+        bottom: 0;
+        height: 2px;
+        background: var(--rose);
+        border-radius: 2px 2px 0 0;
+        transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1), width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        pointer-events: none;
+    }
 
     /* Views */
     .view-wrapper {
@@ -2706,6 +2718,19 @@
     }
 </style>
 
+<script>
+    window.moveNavIndicator = function () {
+        var bar = document.getElementById('navTabsBar');
+        var indicator = document.getElementById('navIndicator');
+        if (!bar || !indicator) return;
+        var active = bar.querySelector('.nav-tab.active');
+        if (!active) { indicator.style.width = '0'; return; }
+        var barRect = bar.getBoundingClientRect();
+        var btnRect = active.getBoundingClientRect();
+        indicator.style.left = (btnRect.left - barRect.left + bar.scrollLeft) + 'px';
+        indicator.style.width = btnRect.width + 'px';
+    };
+</script>
 
 <!-- --------------- HEADER --------------- -->
 <header id="site-header">
@@ -2757,7 +2782,8 @@
         </div>
     </div>
 
-    <nav class="nav-tabs-bar" style="overflow-x: auto; display: flex; white-space: nowrap; -webkit-overflow-scrolling: touch;">
+    <nav id="navTabsBar" class="nav-tabs-bar" style="overflow-x: auto; display: flex; white-space: nowrap; -webkit-overflow-scrolling: touch;">
+        <div id="navIndicator" class="nav-indicator" style="left:0;width:0;"></div>
         <button class="nav-tab @(activeTab == "home" ? "active" : "")" @onclick='() => Navigate("home")'>Home</button>
         <button class="nav-tab @(activeTab == "best" ? "active" : "")" @onclick='() => Navigate("best")'>Best Seller</button>
         <button class="nav-tab @(activeTab == "shop" ? "active" : "")" @onclick='() => Navigate("shop")'>The Collection</button>

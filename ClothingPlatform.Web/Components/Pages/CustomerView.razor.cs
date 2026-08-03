@@ -379,6 +379,7 @@ namespace ClothingPlatform.Web.Components.Pages
                 debugError = ex.ToString();
                 StateHasChanged();
             }
+            try { await JSRuntime.InvokeVoidAsync("moveNavIndicator"); } catch { }
         }
 
         private void LoadProfileFields()
@@ -583,7 +584,13 @@ namespace ClothingPlatform.Web.Components.Pages
             {
                 AutofillCheckoutFromProfile();
             }
+            _ = InvokeAsync(async () =>
+            {
+                await Task.Delay(50);
+                try { await JSRuntime.InvokeVoidAsync("moveNavIndicator"); } catch { }
+            });
         }
+
 
         private void SelectCategory(int categoryId)
         {
