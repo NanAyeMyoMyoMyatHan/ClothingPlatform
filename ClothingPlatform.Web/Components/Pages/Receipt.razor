@@ -59,7 +59,7 @@
                 </div>
                 <div class="meta-row">
                     <span class="meta-label">Address:</span>
-                    <span class="meta-value">@order.ShippingAddress</span>
+                    <span class="meta-value">@cleanAddress</span>
                 </div>
             </div>
 
@@ -75,8 +75,6 @@
             <div class="receipt-items">
                 @foreach (var item in order.OrderItems)
                 {
-                    var itemDiscount = itemDiscounts.ContainsKey(item.OrderItemId) ? itemDiscounts[item.OrderItemId] : 0;
-                    
                     <div class="item-row-container" style="margin-bottom: 8px;">
                         <div class="item-row" style="display: flex; justify-content: space-between; margin-bottom: 2px;">
                             <span class="item-desc" style="flex: 1; padding-right: 10px;">
@@ -84,14 +82,6 @@
                             </span>
                             <span class="item-price text-right" style="min-width: 80px; text-align: right;">@((item.PriceAtPurchase * item.Quantity).ToString("N0"))</span>
                         </div>
-                        @if (itemDiscount > 0)
-                        {
-                            <div class="item-row discount-line" style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #4B5563; padding-left: 24px; margin-top: 2px;">
-                                <span class="item-desc" style="flex: 1;">DISCOUNT</span>
-                                <span style="min-width: 60px; text-align: center; color: #9CA3AF;">----</span>
-                                <span class="item-price text-right" style="min-width: 80px; text-align: right; color: #DC2626;">-@(itemDiscount.ToString("N0"))</span>
-                            </div>
-                        }
                     </div>
                 }
             </div>
@@ -107,7 +97,7 @@
                 @if (discount > 0)
                 {
                     <div class="summary-row">
-                        <span>Discount @(!string.IsNullOrEmpty(order.AppliedPromo) ? $"({order.AppliedPromo})" : ""):</span>
+                        <span>Discount:</span>
                         <span class="text-right">-@discount.ToString("N0")</span>
                     </div>
                 }
@@ -115,7 +105,6 @@
                     <span>Tax:</span>
                     <span class="text-right">0</span>
                 </div>
-
             </div>
 
             <div class="divider-dashed"></div>
@@ -371,10 +360,10 @@
     private string cashierName = "Administrator";
     private string customerName = "";
     private string customerPhone = "";
+    private string cleanAddress = "";
     private int totalQty = 0;
     private decimal subtotal = 0;
     private decimal discount = 0;
-    private Dictionary<int, decimal> itemDiscounts = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -410,133 +399,16 @@
                 customerName = $"{order.User?.FirstName} {order.User?.LastName}";
                 customerPhone = order.User?.PhoneNumber ?? "N/A";
                 totalQty = order.OrderItems.Sum(oi => oi.Quantity);
-                
+
+                // Clean address: remove redundant "(Phone: xxx)" if duplicated
+                var rawAddress = order.ShippingAddress ?? "";
+                var phoneTag = $"(Phone: {customerPhone})";
+                cleanAddress = rawAddress.Replace(phoneTag, "").Trim().TrimEnd(',').Trim();
+
                 subtotal = order.OrderItems.Sum(oi => oi.PriceAtPurchase * oi.Quantity);
-                discount = Math.Max(0, subtotal + 3000 - order.TotalAmount);
+                discount = Math.Max(0, subtotal - order.TotalAmount);
 
-                // Dynamically allocate promo/coupon discounts to each line item for display
-                var appliedPromoCodes = !string.IsNullOrEmpty(order.AppliedPromo) 
-                    ? order.AppliedPromo.Split(',').Select(p => p.Trim()).ToList() 
-                    : new List<string>();
-
-                var today = order.CreatedAt ?? DateTime.Today;
-
-                var activeBanners = await db.Promotions
-                    .AsNoTracking()
-                    .Where(p => p.Enabled && !p.IsCoupon && 
-                                (!p.StartDate.HasValue || today >= p.StartDate.Value) && 
-                                (!p.EndDate.HasValue || today <= p.EndDate.Value))
-                    .ToListAsync();
-
-                var activeCoupons = new List<Promotion>();
-                if (appliedPromoCodes.Any())
-                {
-                    activeCoupons = await db.Promotions
-                        .AsNoTracking()
-                        .Where(p => p.Enabled && p.IsCoupon && 
-                                   appliedPromoCodes.Contains(p.PromoCode) && 
-                                   (!p.StartDate.HasValue || today >= p.StartDate.Value) && 
-                                   (!p.EndDate.HasValue || today <= p.EndDate.Value))
-                        .ToListAsync();
-                }
-
-                var itemDiscountsTemp = new Dictionary<int, decimal>();
-                foreach (var item in order.OrderItems)
-                {
-                    var variant = item.Variant;
-                    if (variant == null) continue;
-
-                    var product = variant.Product;
-                    if (product == null) continue;
-
-                    decimal campaignPct = 0;
-                    if (product.PromoId.HasValue)
-                    {
-                        var banner = activeBanners.FirstOrDefault(b => b.PromoId == product.PromoId.Value);
-                        if (banner != null)
-                        {
-                            campaignPct = banner.DiscountPercent;
-                        }
-                    }
-
-                    decimal couponPct = 0;
-                    foreach (var coupon in activeCoupons.Where(c => string.IsNullOrEmpty(c.PromoType) || c.PromoType == "Percent"))
-                    {
-                        decimal val = coupon.DiscountValue > 0 ? coupon.DiscountValue : coupon.DiscountPercent;
-                        if (coupon.ApplyAll)
-                        {
-                            couponPct += val;
-                        }
-                        else
-                        {
-                            if (product.PromoId == coupon.PromoId)
-                            {
-                                couponPct += val;
-                            }
-                        }
-                    }
-
-                    decimal pct = campaignPct + couponPct;
-                    decimal basePrice = item.PriceAtPurchase; 
-                    decimal itemDiscountAmount = (basePrice * item.Quantity) * (pct / 100);
-                    itemDiscountsTemp[item.OrderItemId] = itemDiscountAmount;
-                }
-
-                var fixedCoupons = activeCoupons.Where(c => c.PromoType == "Fixed").ToList();
-                foreach (var coupon in fixedCoupons)
-                {
-                    decimal totalFixed = coupon.DiscountValue;
-                    if (totalFixed <= 0) continue;
-
-                    var eligibleItems = new List<(OrderItem Item, decimal RemainingVal)>();
-                    foreach (var item in order.OrderItems)
-                    {
-                        var variant = item.Variant;
-                        if (variant == null) continue;
-
-                        var product = variant.Product;
-                        if (product == null) continue;
-
-                        if (coupon.ApplyAll || product.PromoId == coupon.PromoId)
-                        {
-                            decimal currentDisc = itemDiscountsTemp.ContainsKey(item.OrderItemId) ? itemDiscountsTemp[item.OrderItemId] : 0;
-                            decimal remaining = (item.PriceAtPurchase * item.Quantity) - currentDisc;
-                            if (remaining > 0)
-                            {
-                                eligibleItems.Add((item, remaining));
-                            }
-                        }
-                    }
-
-                    decimal eligibleRemainingSum = eligibleItems.Sum(x => x.RemainingVal);
-                    if (eligibleRemainingSum > 0)
-                    {
-                        decimal allocated = 0;
-                        for (int i = 0; i < eligibleItems.Count; i++)
-                        {
-                            var entry = eligibleItems[i];
-                            if (!itemDiscountsTemp.ContainsKey(entry.Item.OrderItemId))
-                            {
-                                itemDiscountsTemp[entry.Item.OrderItemId] = 0;
-                            }
-
-                            if (i == eligibleItems.Count - 1)
-                            {
-                                decimal finalAlloc = Math.Min(entry.RemainingVal, totalFixed - allocated);
-                                itemDiscountsTemp[entry.Item.OrderItemId] += finalAlloc;
-                            }
-                            else
-                            {
-                                decimal alloc = Math.Round((entry.RemainingVal / eligibleRemainingSum) * totalFixed, 2);
-                                decimal finalAlloc = Math.Min(entry.RemainingVal, alloc);
-                                itemDiscountsTemp[entry.Item.OrderItemId] += finalAlloc;
-                                allocated += finalAlloc;
-                            }
-                        }
-                    }
-                }
-
-                itemDiscounts = itemDiscountsTemp;
+                // Discount is the difference between subtotal and order total (order-level only)
             }
         }
         catch (Exception ex)
