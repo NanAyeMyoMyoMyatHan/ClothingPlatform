@@ -102,7 +102,7 @@ namespace ClothingPlatform.Web.Components.Pages
         {
             if (string.IsNullOrWhiteSpace(phone)) return false;
             var cleanPhone = phone.Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "").Trim();
-            return System.Text.RegularExpressions.Regex.IsMatch(cleanPhone, @"^(?:\+?95|0)?9\d{6,9}$");
+            return System.Text.RegularExpressions.Regex.IsMatch(cleanPhone, @"^(?:09\d{9}|\+959\d{9}|959\d{9})$");
         }
         private async Task HandleLogin()
         {
@@ -264,7 +264,7 @@ namespace ClothingPlatform.Web.Components.Pages
             else if (!IsValidPhone(regPhone))
             {
                 regPhoneInvalid = true;
-                regPhoneErrorMsg = "Phone number not format";
+                regPhoneErrorMsg = "Phone number must start with 09 or +959 (11 digits)";
                 isValid = false;
             }
             if (string.IsNullOrWhiteSpace(regAddress))

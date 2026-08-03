@@ -1012,6 +1012,13 @@ namespace ClothingPlatform.Web.Components.Pages
                     return;
                 }
 
+                var cleanCoPhone = (coPhone ?? "").Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "").Trim();
+                if (!System.Text.RegularExpressions.Regex.IsMatch(cleanCoPhone, @"^(?:09\d{9}|\+959\d{9}|959\d{9})$"))
+                {
+                    ShowToast("Phone number must start with 09 or +959 (11 digits)");
+                    return;
+                }
+
                 if (string.IsNullOrEmpty(selectedPayment))
                 {
                     ShowToast(UiMessages.CustomerShop.PaymentMethodRequired);
@@ -1207,9 +1214,9 @@ namespace ClothingPlatform.Web.Components.Pages
             }
 
             var cleanPhone = (coPhone ?? "").Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "").Trim();
-            if (string.IsNullOrWhiteSpace(coPhone) || !System.Text.RegularExpressions.Regex.IsMatch(cleanPhone, @"^(?:\+?95|0)?9\d{6,9}$"))
+            if (string.IsNullOrWhiteSpace(coPhone) || !System.Text.RegularExpressions.Regex.IsMatch(cleanPhone, @"^(?:09\d{9}|\+959\d{9}|959\d{9})$"))
             {
-                ShowToast("Phone number not format");
+                ShowToast("Phone number must start with 09 or +959 (11 digits)");
                 return;
             }
 

@@ -155,9 +155,9 @@
         }
 
         var cleanPhone = (phoneNumber ?? "").Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "").Trim();
-        if (string.IsNullOrWhiteSpace(phoneNumber) || !System.Text.RegularExpressions.Regex.IsMatch(cleanPhone, @"^(?:\+?95|0)?9\d{6,9}$"))
+        if (string.IsNullOrWhiteSpace(phoneNumber) || !System.Text.RegularExpressions.Regex.IsMatch(cleanPhone, @"^(?:09\d{9}|\+959\d{9}|959\d{9})$"))
         {
-            ShowMessage("Phone number not format", true);
+            ShowMessage("Phone number must start with 09 or +959 (11 digits)", true);
             return;
         }
 

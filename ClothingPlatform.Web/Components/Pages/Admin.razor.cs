@@ -1578,9 +1578,9 @@ namespace ClothingPlatform.Web.Components.Pages
             }
 
             var cleanPhone = (profilePhone ?? "").Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "").Trim();
-            if (string.IsNullOrWhiteSpace(profilePhone) || !System.Text.RegularExpressions.Regex.IsMatch(cleanPhone, @"^(?:\+?95|0)?9\d{6,9}$"))
+            if (string.IsNullOrWhiteSpace(profilePhone) || !System.Text.RegularExpressions.Regex.IsMatch(cleanPhone, @"^(?:09\d{9}|\+959\d{9}|959\d{9})$"))
             {
-                errorMessage = "Phone number not format";
+                errorMessage = "Phone number must start with 09 or +959 (11 digits)";
                 return;
             }
 
@@ -1703,9 +1703,9 @@ namespace ClothingPlatform.Web.Components.Pages
             }
 
             var cleanPhone2 = (staffForm.Phone ?? "").Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "").Trim();
-            if (string.IsNullOrWhiteSpace(staffForm.Phone) || !System.Text.RegularExpressions.Regex.IsMatch(cleanPhone2, @"^(?:\+?95|0)?9\d{6,9}$"))
+            if (string.IsNullOrWhiteSpace(staffForm.Phone) || !System.Text.RegularExpressions.Regex.IsMatch(cleanPhone2, @"^(?:09\d{9}|\+959\d{9}|959\d{9})$"))
             {
-                errorMessage = "Phone number not format";
+                errorMessage = "Phone number must start with 09 or +959 (11 digits)";
                 return;
             }
 
