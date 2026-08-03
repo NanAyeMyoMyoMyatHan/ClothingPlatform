@@ -85,8 +85,10 @@
                         </div>
                         @if (itemDiscountAmount > 0)
                         {
+                            var itemSub = item.PriceAtPurchase * item.Quantity;
+                            var itemPct = itemSub > 0 ? (itemDiscountAmount / itemSub) * 100m : 0m;
                             <div class="item-row discount-line" style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #4B5563; padding-left: 24px; margin-top: 2px;">
-                                <span class="item-desc" style="flex: 1;">DISCOUNT</span>
+                                <span class="item-desc" style="flex: 1;">DISCOUNT (@(itemPct.ToString("0.##"))%)</span>
                                 <span style="min-width: 60px; text-align: center; color: #9CA3AF;">----</span>
                                 <span class="item-price text-right" style="min-width: 80px; text-align: right; color: #DC2626;">-@(itemDiscountAmount.ToString("N0"))</span>
                             </div>
@@ -121,14 +123,6 @@
                     <span>Paid(CASH)</span>
                     <span class="text-right">(@order.TotalAmount.ToString("N0"))</span>
                 </div>
-            </div>
-
-            <div class="divider-dashed"></div>
-
-            <!-- Balance Due -->
-            <div class="balance-row font-bold">
-                <span>Balance Due</span>
-                <span class="text-right">0</span>
             </div>
 
             <div class="divider-dashed"></div>
