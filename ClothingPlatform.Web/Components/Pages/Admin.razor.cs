@@ -507,7 +507,10 @@ namespace ClothingPlatform.Web.Components.Pages
                     var search = regularOrderSearch.Trim();
                     regularQuery = regularQuery.Where(o => OrderMatchesSearch(o, search));
                 }
-                var filteredOrderRows = regularQuery.ToList();
+                var filteredOrderRows = regularQuery
+                    .OrderBy(o => GetStatusSortOrder(OrderWorkflow.Normalize(o.OrderStatus)))
+                    .ThenByDescending(o => o.OrderId)
+                    .ToList();
                 filteredOrders = orders;
 
                 // Apply guest orders filter & search
@@ -879,6 +882,21 @@ namespace ClothingPlatform.Web.Components.Pages
             await LoadData();
             await Task.CompletedTask;
         }
+
+        /// <summary>
+        /// Returns a sort rank matching the left-to-right filter chip order shown in the UI:
+        /// Pending → Processing → Confirm → Cancelled (Customer) → Cancelled (Staff)
+        /// </summary>
+        private static int GetStatusSortOrder(string? status) => status switch
+        {
+            "Pending"            => 0,
+            "Processing"         => 1,
+            "Confirm"            => 2,
+            "CancelledByCustomer" => 3,
+            "Cancelled"          => 4,
+            "CancelledByStaff"   => 5,
+            _                    => 99
+        };
 
         private async Task UpdateOrderStatus(Order order, string newStatus)
         {

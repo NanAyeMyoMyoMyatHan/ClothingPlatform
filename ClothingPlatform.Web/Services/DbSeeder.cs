@@ -14,7 +14,7 @@ namespace ClothingPlatform.Web.Services
             // db.Database.EnsureCreated();
 
             // Clean up old PascalCase permissions if they exist
-            var oldPermissionNames = new List<string> { "Dashboard.View", "Users.Manage", "Products.Manage", "Orders.Manage", "Customers.View", "Reports.Generate", "Settings.Manage", "Permissions.Manage", "Logs.View", "Staff.Manage" };
+            var oldPermissionNames = new List<string> { "Dashboard.View", "Users.Manage", "Products.Manage", "Orders.Manage", "Customers.View", "Reports.Generate", "Settings.Manage", "Permissions.Manage", "Logs.View", "Staff.Manage", "users.manage" };
             var oldPerms = db.Permissions.Where(p => oldPermissionNames.Contains(p.PermissionName)).ToList();
             if (oldPerms.Any())
             {
@@ -36,7 +36,7 @@ namespace ClothingPlatform.Web.Services
 
             // 1b. Seed known permissions (matching mockup)
             var permDashboardView  = EnsurePermission(db, "dashboard.view",  "Can view dashboard");
-            var permUsersManage    = EnsurePermission(db, "users.manage",    "Can create, edit, delete users");
+
             var permProductsManage = EnsurePermission(db, "products.manage", "Create, edit, and delete products and catalog items");
             var permOrdersCreate   = EnsurePermission(db, "orders.create",   "Can place new orders");
             var permOrdersView     = EnsurePermission(db, "orders.view",     "Can view order history and lists");
@@ -51,7 +51,7 @@ namespace ClothingPlatform.Web.Services
 
             // 1c. Grant all permissions to the admin role (admin always has full access)
             EnsureRolePermission(db, adminRole.RoleId, permDashboardView.PermissionId);
-            EnsureRolePermission(db, adminRole.RoleId, permUsersManage.PermissionId);
+
             EnsureRolePermission(db, adminRole.RoleId, permProductsManage.PermissionId);
             EnsureRolePermission(db, adminRole.RoleId, permOrdersCreate.PermissionId);
             EnsureRolePermission(db, adminRole.RoleId, permOrdersView.PermissionId);

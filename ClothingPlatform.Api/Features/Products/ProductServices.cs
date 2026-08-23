@@ -34,29 +34,21 @@ namespace ClothingPlatform.Api.Features.Product
                 await _db.SaveChangesAsync();
 
                 int newProductId = newProduct.ProductId;
-                string imageUrl = "stdCoat.jpg";
-
-                // 🌟 WebRootPath မရှိရင် ContentRootPath ထဲက wwwroot ကို လှမ်းယူခိုင်းလိုက်တာပါ (စိတ်အချရဆုံး)
-                var webRootPath = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
+                string imageUrl = "";
 
                 if (!string.IsNullOrEmpty(model.ImageBase64) && !string.IsNullOrEmpty(model.ImageFileName))
                 {
-                    // အပေါ်က ရှာဖွေထားတဲ့ webRootPath ကို သုံးမယ်
-                    var folder = Path.Combine(webRootPath, "images", "products");
-
-                    // Folder အဆင့်ဆင့် ရှိမရှိ သေချာအောင် စစ်ပြီး မရှိရင် ဆောက်မယ်
-                    if (!Directory.Exists(folder))
+                    // Store as base64 data URL directly in DB — no file system needed,
+                    // so images survive container restarts on Railway/Hugging Face.
+                    var ext = Path.GetExtension(model.ImageFileName).TrimStart('.').ToLowerInvariant();
+                    var mime = ext switch
                     {
-                        Directory.CreateDirectory(folder);
-                    }
-
-                    var fileName = $"{Guid.NewGuid()}_{model.ImageFileName}";
-                    var filePath = Path.Combine(folder, fileName);
-
-                    var bytes = Convert.FromBase64String(model.ImageBase64);
-                    await File.WriteAllBytesAsync(filePath, bytes);
-
-                    imageUrl = fileName;
+                        "png"  => "image/png",
+                        "gif"  => "image/gif",
+                        "webp" => "image/webp",
+                        _      => "image/jpeg"
+                    };
+                    imageUrl = $"data:{mime};base64,{model.ImageBase64}";
                 }
 
                 _db.ProductImages.Add(new ProductImage
@@ -180,34 +172,29 @@ namespace ClothingPlatform.Api.Features.Product
                 // User က ပုံအသစ် ရွေးပေးလိုက်မှသာ (Base64 ပါလာမှသာ) ပုံအသစ် သွားသိမ်းမယ်
                 if (!string.IsNullOrEmpty(request.ImageBase64) && !string.IsNullOrEmpty(request.ImageFileName))
                 {
-                    var webRootPath = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
-                    var folder = Path.Combine(webRootPath, "images", "products");
-
-                    if (!Directory.Exists(folder))
+                    // Store as base64 data URL directly in DB — no file system needed.
+                    var ext = Path.GetExtension(request.ImageFileName).TrimStart('.').ToLowerInvariant();
+                    var mime = ext switch
                     {
-                        Directory.CreateDirectory(folder);
-                    }
-
-                    var fileName = $"{Guid.NewGuid()}_{request.ImageFileName}";
-                    var filePath = Path.Combine(folder, fileName);
-
-                    var bytes = Convert.FromBase64String(request.ImageBase64);
-                    await File.WriteAllBytesAsync(filePath, bytes);
-
-                    try { File.SetLastWriteTime(filePath, DateTime.Now.AddSeconds(-5)); } catch { }
+                        "png"  => "image/png",
+                        "gif"  => "image/gif",
+                        "webp" => "image/webp",
+                        _      => "image/jpeg"
+                    };
+                    var dataUrl = $"data:{mime};base64,{request.ImageBase64}";
 
                     var existingImage = _db.ProductImages.FirstOrDefault(i => i.ProductId == request.Id && i.IsPrimary == true);
 
                     if (existingImage != null)
                     {
-                        existingImage.ImageUrl = fileName;
+                        existingImage.ImageUrl = dataUrl;
                     }
                     else
                     {
                         _db.ProductImages.Add(new ProductImage
                         {
                             ProductId = request.Id,
-                            ImageUrl = fileName,
+                            ImageUrl = dataUrl,
                             IsPrimary = true
                         });
                     }
