@@ -466,13 +466,7 @@ else
                                 var raw = prod.ProductImages?
                                 .FirstOrDefault(i => i.IsPrimary == true)?.ImageUrl?.Trim() ?? "";
 
-                                string imgSrc;
-                                if (string.IsNullOrWhiteSpace(raw))
-                                    imgSrc = "/images/products/no-image.svg";
-                                else if (raw.StartsWith("http") || raw.StartsWith("data:"))
-                                    imgSrc = raw;
-                                else
-                                    imgSrc = "/images/products/no-image.svg";
+                                string imgSrc = ResolveAdminProductImageUrl(raw);
                                 <tr>
                                     <td>
                                         <img src="@imgSrc" alt="@prod.Name" style="width:60px;height:60px;object-fit:cover;border-radius:6px;" onerror="this.src='/images/products/no-image.svg'" />

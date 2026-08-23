@@ -226,28 +226,11 @@ public static class SchemaCompatibility
             """;
         await db.Database.ExecuteSqlRawAsync(limitsSql, cancellationToken);
 
-        // 6. Widen image_url to TEXT and clear stale filename-only image rows
-        //    (files saved to local disk are lost on container restart; only http/data: URLs are permanent)
+        // 6. Widen image_url to TEXT so base64 data URLs fit
         const string imageUrlFixSql = """
-            -- Widen column so base64 data URLs fit
             ALTER TABLE product_images ALTER COLUMN image_url TYPE text;
-
-            -- Clear image rows whose URL is a plain filename (not a URL, not a data URI).
-            -- These files no longer exist on disk after a container restart, so they
-            -- would only produce a broken-image icon. Setting them to '' lets the UI
-            -- show the no-image placeholder cleanly.
-            UPDATE product_images
-            SET image_url = ''
-            WHERE image_url IS NOT NULL
-              AND image_url <> ''
-              AND image_url NOT LIKE 'http%'
-              AND image_url NOT LIKE 'data:%'
-              AND image_url NOT LIKE '/%';
             """;
-        try
-        {
-            await db.Database.ExecuteSqlRawAsync(imageUrlFixSql, cancellationToken);
-        }
-        catch { /* column may already be text — safe to ignore */ }
+        try { await db.Database.ExecuteSqlRawAsync(imageUrlFixSql, cancellationToken); }
+        catch { /* already text — safe to ignore */ }
     }
 }
