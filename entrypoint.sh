@@ -66,7 +66,14 @@ if [ -n "${DB_HOST}" ] && [ -f /app/migration.sql ]; then
     else
         echo "=== Database already has schema, skipping migration ==="
     fi
+
+    # ─── Always ensure image_url column can hold base64 data URLs ────────────
+    echo "=== Ensuring image_url column is TEXT type ==="
+    psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" \
+        -c "ALTER TABLE product_images ALTER COLUMN image_url TYPE text;" 2>/dev/null || true
+    echo "=== Column check done ==="
 fi
+
 
 # ─── Nginx setup ─────────────────────────────────────────────────────────────
 mkdir -p /tmp/client_body /tmp/fastcgi_temp /tmp/proxy_temp /tmp/scgi_temp /tmp/uwsgi_temp

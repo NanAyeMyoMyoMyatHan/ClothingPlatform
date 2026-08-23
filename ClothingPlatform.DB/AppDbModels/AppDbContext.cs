@@ -357,8 +357,6 @@ public partial class AppDbContext : DbContext
 
             entity.Property(e => e.ImageId).HasColumnName("image_id");
             entity.Property(e => e.ImageUrl)
-                .HasMaxLength(255)
-                .IsUnicode(false)
                 .HasColumnName("image_url");
             entity.Property(e => e.IsPrimary)
                 .HasDefaultValue(false)
