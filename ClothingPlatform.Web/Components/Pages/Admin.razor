@@ -466,22 +466,13 @@ else
                                 var raw = prod.ProductImages?
                                 .FirstOrDefault(i => i.IsPrimary == true)?.ImageUrl?.Trim() ?? "";
 
-                                // Images are saved by the API - load from API server base URL
                                 string imgSrc;
                                 if (string.IsNullOrWhiteSpace(raw))
-                                {
                                     imgSrc = "/images/products/no-image.svg";
-                                }
                                 else if (raw.StartsWith("http") || raw.StartsWith("data:"))
-                                {
                                     imgSrc = raw;
-                                }
                                 else
-                                {
-                                    var fileName = raw.Replace("images/products/", "").TrimStart('/');
-                                    var apiBase = Http.BaseAddress?.ToString().TrimEnd('/') ?? "";
-                                    imgSrc = $"{apiBase}/images/products/{fileName}";
-                                }
+                                    imgSrc = "/images/products/no-image.svg";
                                 <tr>
                                     <td>
                                         <img src="@imgSrc" alt="@prod.Name" style="width:60px;height:60px;object-fit:cover;border-radius:6px;" onerror="this.src='/images/products/no-image.svg'" />
