@@ -874,15 +874,24 @@ else
                 else
                 {
                     <section class="ops-section p-0">
-                        <div class="ops-filter-row mb-3">
-                            <button type="button" class="filter-chip @(string.IsNullOrWhiteSpace(guestPaymentFilter) ? "active" : "")" @onclick='() => { guestPaymentFilter = ""; LoadData(); }'>
+                        <div class="ops-filter-row ops-filter-row-six mb-3">
+                            <button type="button" class="filter-chip @(string.IsNullOrWhiteSpace(guestStatusFilter) || guestStatusFilter == "All" ? "active" : "")" @onclick='() => FilterGuestOrders("All")'>
                                 <strong>@allGuestOrders.Count</strong><span>All</span>
                             </button>
-                            <button type="button" class="filter-chip @(guestPaymentFilter == "paid" ? "active" : "")" @onclick='() => { guestPaymentFilter = "paid"; LoadData(); }'>
-                                <strong>@allGuestOrders.Count(g => (g.PaymentStatus ?? "unpaid").Equals("paid", StringComparison.OrdinalIgnoreCase))</strong><span>Paid</span>
+                            <button type="button" class="filter-chip @(guestStatusFilter == "Pending" ? "active" : "")" @onclick='() => FilterGuestOrders("Pending")'>
+                                <strong>@allGuestOrders.Count(g => NormalizeStatus(g.OrderStatus) == "Pending")</strong><span>Pending</span>
                             </button>
-                            <button type="button" class="filter-chip @(guestPaymentFilter == "unpaid" ? "active" : "")" @onclick='() => { guestPaymentFilter = "unpaid"; LoadData(); }'>
-                                <strong>@allGuestOrders.Count(g => !(g.PaymentStatus ?? "unpaid").Equals("paid", StringComparison.OrdinalIgnoreCase))</strong><span>Unpaid</span>
+                            <button type="button" class="filter-chip @(guestStatusFilter == "Processing" ? "active" : "")" @onclick='() => FilterGuestOrders("Processing")'>
+                                <strong>@allGuestOrders.Count(g => NormalizeStatus(g.OrderStatus) == "Processing")</strong><span>Processing</span>
+                            </button>
+                            <button type="button" class="filter-chip @(guestStatusFilter == "Confirm" ? "active" : "")" @onclick='() => FilterGuestOrders("Confirm")'>
+                                <strong>@allGuestOrders.Count(g => NormalizeStatus(g.OrderStatus) == "Confirm")</strong><span>Confirm</span>
+                            </button>
+                            <button type="button" class="filter-chip @(guestStatusFilter == "CancelledByCustomer" ? "active" : "")" @onclick='() => FilterGuestOrders("CancelledByCustomer")'>
+                                <strong>@allGuestOrders.Count(g => NormalizeStatus(g.OrderStatus) == "CancelledByCustomer" || NormalizeStatus(g.OrderStatus) == "Cancelled")</strong><span>Cancelled (Customer)</span>
+                            </button>
+                            <button type="button" class="filter-chip @(guestStatusFilter == "CancelledByStaff" ? "active" : "")" @onclick='() => FilterGuestOrders("CancelledByStaff")'>
+                                <strong>@allGuestOrders.Count(g => NormalizeStatus(g.OrderStatus) == "CancelledByStaff")</strong><span>Cancelled (Staff)</span>
                             </button>
                         </div>
 

@@ -203,7 +203,7 @@ namespace ClothingPlatform.Web.Components.Pages
         private string ordersTab = "regular";
         private string regularOrderSearch = "";
         private string guestOrderSearch = "";
-        private string guestPaymentFilter = "";
+        private string guestStatusFilter = "";
         private List<GuestOrder> allGuestOrders = new();
         private List<GuestOrder> filteredGuestOrders = new();
         private List<GuestOrder> PagedGuestOrders { get; set; } = new();
@@ -512,16 +512,19 @@ namespace ClothingPlatform.Web.Components.Pages
 
                 // Apply guest orders filter & search
                 var guestQuery = allGuestOrders.AsEnumerable();
-                if (!string.IsNullOrWhiteSpace(guestPaymentFilter))
+                if (!string.IsNullOrEmpty(guestStatusFilter) && !guestStatusFilter.Equals("All", StringComparison.OrdinalIgnoreCase))
                 {
-                    guestQuery = guestQuery.Where(g => string.Equals(g.PaymentStatus ?? "unpaid", guestPaymentFilter, StringComparison.OrdinalIgnoreCase));
+                    guestQuery = guestQuery.Where(g => OrderWorkflow.Normalize(g.OrderStatus) == OrderWorkflow.Normalize(guestStatusFilter));
                 }
                 if (!string.IsNullOrWhiteSpace(guestOrderSearch))
                 {
                     var search = guestOrderSearch.Trim();
                     guestQuery = guestQuery.Where(g => GuestOrderMatchesSearch(g, search));
                 }
-                filteredGuestOrders = guestQuery.ToList();
+                filteredGuestOrders = guestQuery
+                    .OrderBy(g => GetStatusSortOrder(OrderWorkflow.Normalize(g.OrderStatus)))
+                    .ThenByDescending(g => g.GuestOrderId)
+                    .ToList();
 
                 // Regular Order Pagination safety check & subsetting
                 orderTotalCount = filteredOrderRows.Count;
@@ -881,6 +884,13 @@ namespace ClothingPlatform.Web.Components.Pages
             ApplyOrderFilter();
             await LoadData();
             await Task.CompletedTask;
+        }
+
+        private async Task FilterGuestOrders(string status)
+        {
+            guestStatusFilter = status;
+            guestOrderPage = 1;
+            await LoadData();
         }
 
         /// <summary>
