@@ -1864,6 +1864,11 @@ namespace ClothingPlatform.Web.Components.Pages
             try
             {
                 var token = ServerCookies.GetAuthToken();
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    token = Session.AuthToken;
+                }
+
                 using var request = new HttpRequestMessage(
                     HttpMethod.Get,
                     $"api/report/admin.csv?from={reportFrom:yyyy-MM-dd}&to={reportTo:yyyy-MM-dd}");

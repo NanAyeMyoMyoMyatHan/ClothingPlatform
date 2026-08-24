@@ -1,4 +1,4 @@
-﻿using ClothingPlatform.DB.AppDbModels;
+using ClothingPlatform.DB.AppDbModels;
 using ClothingPlatform.Api.Models.Cart;
 using Microsoft.EntityFrameworkCore;
 
@@ -115,7 +115,11 @@ namespace ClothingPlatform.Api.Features.Cart
                     ImageUrl = ci.Variant.Product.ProductImages
                         .Where(i => i.IsPrimary == true)
                         .Select(i => i.ImageUrl)
-                        .FirstOrDefault() ?? string.Empty
+                        .FirstOrDefault()
+                        ?? ci.Variant.Product.ProductImages
+                            .Select(i => i.ImageUrl)
+                            .FirstOrDefault()
+                        ?? string.Empty
                 });
         }
     }
