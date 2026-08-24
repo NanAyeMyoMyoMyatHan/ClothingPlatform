@@ -140,7 +140,25 @@ namespace ClothingPlatform.Web.Components.Pages
             try
             {
                 var authRequest = new AuthRequest { Email = loginEmail.Trim(), Password = loginPassword };
-                var response = await HttpServices.ExecuteAsync<AuthResponse>("api/auth/login", authRequest, EnumHttpMethod.Post);
+                AuthResponse? response = null;
+                try
+                {
+                    response = await HttpServices.ExecuteAsync<AuthResponse>("api/auth/login", authRequest, EnumHttpMethod.Post);
+                }
+                catch (Exception apiEx)
+                {
+                    // Distinguish between 401 (wrong credentials) and other failures (API down, etc.)
+                    var msg = apiEx.Message ?? "";
+                    if (msg.Contains("401") || msg.Contains("Unauthorized", StringComparison.OrdinalIgnoreCase))
+                    {
+                        loginErrorMessage = "Incorrect email and password";
+                    }
+                    else
+                    {
+                        loginErrorMessage = $"Cannot reach the server. Please make sure the API is running. ({msg})";
+                    }
+                    return;
+                }
 
                 if (response != null && !string.IsNullOrWhiteSpace(response.AccessToken))
                 {
@@ -213,7 +231,7 @@ namespace ClothingPlatform.Web.Components.Pages
             }
             catch (Exception ex)
             {
-                loginErrorMessage = "Incorrect email and password";
+                loginErrorMessage = $"Login error: {ex.Message}";
             }
             finally
             {

@@ -21,7 +21,14 @@ namespace ClothingPlatform.Api.Features.Auth
         }
         public async Task<AuthResponse?> LoginAsync(AuthRequest request)
         {
-            await EnsurePortalSeedDataAsync();
+            try
+            {
+                await EnsurePortalSeedDataAsync();
+            }
+            catch
+            {
+                // Seed failures should not block login for existing users
+            }
 
             var email = request.Email.Trim().ToLowerInvariant();
             var user = await _db.Users
@@ -128,7 +135,7 @@ namespace ClothingPlatform.Api.Features.Auth
             await EnsureRolePermissionAsync(staffRole.RoleId, dashboardPermission.PermissionId);
             await EnsureRolePermissionAsync(staffRole.RoleId, productsPermission.PermissionId);
 
-            await EnsureSeedUserAsync("Admin", "User", "admin@boutique.com", "admin123", "09252522525", "Chic Boutique HQ", adminRole.RoleId);
+            await EnsureSeedUserAsync("Admin", "User", "admin@boutique.com", "admin1234", "09252522525", "Chic Boutique HQ", adminRole.RoleId);
             await EnsureSeedUserAsync("Thiri", "San", "staff@boutique.com", "staff123", "09222333444", "No. 456, Boutique Rd, Yangon", staffRole.RoleId);
 
             await _db.SaveChangesAsync();
@@ -211,6 +218,11 @@ namespace ClothingPlatform.Api.Features.Auth
             if (user.RoleId != roleId)
             {
                 user.RoleId = roleId;
+            }
+
+            if (!PasswordMatches(password, user.PasswordHash.Trim()))
+            {
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
             }
         }
 

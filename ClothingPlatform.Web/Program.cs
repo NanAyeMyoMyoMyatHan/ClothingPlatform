@@ -56,6 +56,7 @@ using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await SchemaCompatibility.EnsureCancelledOrderStatusSupportAsync(db);
+        ClothingPlatform.Web.Services.DbSeeder.Seed(db);
     }
     catch (Exception ex)
     {

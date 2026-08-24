@@ -29,39 +29,76 @@ namespace ClothingPlatform.Api.Filters
 
         public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
         {
-            bool hasPermission = false;
-
-            var role = context.HttpContext.User.FindFirstValue(ClaimTypes.Role);
-            if (string.Equals(role, "admin", StringComparison.OrdinalIgnoreCase))
+            var userPrincipal = context.HttpContext.User;
+            if (userPrincipal?.Identity == null || !userPrincipal.Identity.IsAuthenticated)
             {
-                hasPermission = true;
+                context.Result = new ForbidResult();
+                return;
             }
-            else if (_checkFromDb)
+
+            // 1. Check if user is admin (admins have full permission access)
+            var role = userPrincipal.FindFirst(c =>
+                c.Type == ClaimTypes.Role ||
+                string.Equals(c.Type, "role", StringComparison.OrdinalIgnoreCase) ||
+                c.Type.EndsWith("/role", StringComparison.OrdinalIgnoreCase))?.Value;
+
+            if (string.Equals(role, "admin", StringComparison.OrdinalIgnoreCase) || userPrincipal.IsInRole("admin"))
             {
-                var userIdString = context.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (int.TryParse(userIdString, out int userId))
+                return;
+            }
+
+            // 2. Check token claims directly for the required permission
+            bool hasTokenPermission = userPrincipal.Claims.Any(c =>
+                (string.Equals(c.Type, "permission", StringComparison.OrdinalIgnoreCase) ||
+                 c.Type.EndsWith("/permission", StringComparison.OrdinalIgnoreCase)) &&
+                string.Equals(c.Value, _permission, StringComparison.OrdinalIgnoreCase));
+
+            if (hasTokenPermission && !_checkFromDb)
+            {
+                return;
+            }
+
+            // 3. Check DB permissions
+            var userIdString = userPrincipal.FindFirst(c =>
+                c.Type == ClaimTypes.NameIdentifier ||
+                string.Equals(c.Type, "nameid", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(c.Type, "sub", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(c.Type, "userId", StringComparison.OrdinalIgnoreCase) ||
+                c.Type.EndsWith("/nameidentifier", StringComparison.OrdinalIgnoreCase))?.Value;
+
+            if (int.TryParse(userIdString, out int userId))
+            {
+                var user = await _context.Users
+                    .Include(u => u.Role)
+                    .FirstOrDefaultAsync(u => u.UserId == userId);
+
+                if (user != null)
                 {
-                    var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
-                    if (user != null)
+                    if (string.Equals(user.Role?.RoleName, "admin", StringComparison.OrdinalIgnoreCase))
                     {
-                        hasPermission = await (from rp in _context.RolePermissions
-                                               join p in _context.Permissions on rp.PermissionId equals p.PermissionId
-                                               where rp.RoleId == user.RoleId && p.PermissionName == _permission
-                                               select p.PermissionId).AnyAsync();
+                        return;
+                    }
+
+                    var hasDbPermission = await (from rp in _context.RolePermissions
+                                           join p in _context.Permissions on rp.PermissionId equals p.PermissionId
+                                           where rp.RoleId == user.RoleId &&
+                                                 p.PermissionName.ToLower() == _permission.ToLower()
+                                           select p.PermissionId).AnyAsync();
+
+                    if (hasDbPermission)
+                    {
+                        return;
                     }
                 }
             }
-            else
+
+            // Fallback: If DB check didn't pass or userId wasn't in DB, allow if token has permission claim
+            if (hasTokenPermission)
             {
-                hasPermission = context.HttpContext.User.HasClaim(c =>
-                    c.Type == "permission" && c.Value == _permission);
+                return;
             }
 
-            if (!hasPermission)
-            {
-                context.Result = new ForbidResult();
-            }
+            context.Result = new ForbidResult();
         }
     }
-
 }

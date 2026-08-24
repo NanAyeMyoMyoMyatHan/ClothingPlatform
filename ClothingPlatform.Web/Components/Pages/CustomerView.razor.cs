@@ -44,6 +44,11 @@ namespace ClothingPlatform.Web.Components.Pages
         [Inject]
         public ClothingPlatform.Web.Services.ServerCookieService ServerCookies { get; set; }
 
+        [Inject]
+        public IConfiguration Configuration { get; set; }
+
+        private string _apiBaseUrl => (Configuration["ApiUrl"] ?? "https://localhost:7065").TrimEnd('/');
+
         // State variables
         private string activeTab = "home";
         private List<Product> allProducts = new();
@@ -329,10 +334,6 @@ namespace ClothingPlatform.Web.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
-            // Seed sample products/categories if empty
-            DbSeeder.Seed(_db);
-            
-
             currentUser = CustomerSession.CurrentUser;
             LoadProfileFields();
             await LoadData();         // loads categories, products, orders
@@ -1334,11 +1335,12 @@ namespace ClothingPlatform.Web.Components.Pages
 
         private const string ProductImageFallbackUrl = "/images/products/no-image.svg";
 
-        private static string NormalizeImageUrl(string? imageUrl)
+        private string NormalizeImageUrl(string? imageUrl)
         {
             if (string.IsNullOrWhiteSpace(imageUrl)) return ProductImageFallbackUrl;
 
             var trimmedUrl = imageUrl.Trim();
+
             // External URLs and data URIs — return as-is
             if (trimmedUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase) ||
                 trimmedUrl.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
@@ -1346,81 +1348,35 @@ namespace ClothingPlatform.Web.Components.Pages
                 return trimmedUrl;
             }
 
-            // Already a rooted relative path
+            // Already an absolute rooted path — prefix with API base URL
             if (trimmedUrl.StartsWith("/", StringComparison.Ordinal))
             {
-                return trimmedUrl;
+                return $"{_apiBaseUrl}{trimmedUrl}";
             }
 
             var normalizedPath = trimmedUrl.Replace('\\', '/').TrimStart('/');
 
-            // Handle prepended GUIDs with underscore
+            // Handle filenames prepended with a GUID and underscore (e.g. "abc123_filename.jpg")
             if (normalizedPath.Contains('_'))
             {
                 var parts = normalizedPath.Split('_');
-                normalizedPath = parts[parts.Length - 1];
+                // Only strip the prefix when it looks like a GUID (32+ hex chars)
+                if (parts[0].Length >= 32 && parts[0].All(c => char.IsLetterOrDigit(c)))
+                {
+                    normalizedPath = string.Join("_", parts, 1, parts.Length - 1);
+                }
             }
 
-            // Map missing/placeholder images to existing image files
-            if (normalizedPath.Equals("studentCoat.jpg", StringComparison.OrdinalIgnoreCase) ||
-                normalizedPath.Equals("stdcoat.jpg", StringComparison.OrdinalIgnoreCase) ||
-                normalizedPath.Equals("stdCoat.jpg", StringComparison.OrdinalIgnoreCase) ||
-                normalizedPath.Equals("student_coat.jpg", StringComparison.OrdinalIgnoreCase))
-            {
-                normalizedPath = "a319361f914a09d15f304ca2bbee840b.jpg";
-            }
-            else if (normalizedPath.Equals("longdress.jpg", StringComparison.OrdinalIgnoreCase) ||
-                     normalizedPath.Equals("longwhite.jpg", StringComparison.OrdinalIgnoreCase))
-            {
-                normalizedPath = "b4168b965378b8d90bc98fbb0417f6a2.jpg";
-            }
-            else if (normalizedPath.Equals("skirt.jpg", StringComparison.OrdinalIgnoreCase) ||
-                     normalizedPath.Equals("skirt-grey.jpg", StringComparison.OrdinalIgnoreCase))
-            {
-                normalizedPath = "3cdc2e5c3c9bfab3640ae0abfeb42e88.jpg";
-            }
-
-            // Fallback for any other filename not in the folder
-            var existingImages = new System.Collections.Generic.HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
-            {
-                "3cdc2e5c3c9bfab3640ae0abfeb42e88.jpg",
-                "44e4253aceb0e5079e6fe753244deb7d.jpg",
-                "4b72ab172f51664ac3488193987c2f87.jpg",
-                "4e97c18046d1c23bbbb46e410861e61c.jpg",
-                "58da3f2145e7367ede62a0249e2c923f.jpg",
-                "5b782d7174468af6527887bcfcb75b4b.jpg",
-                "7d657eac6e2c8cf120f89fb58a8cea78.jpg",
-                "8b4dd9a8387a2d826f88dbc0118f099c.jpg",
-                "8c95fd6864722649e61b7a665aa452e8.jpg",
-                "958aab6839cb72ee299e8ab557fa79e7.jpg",
-                "9aa17fc21dcaa271c3b9c0b1e0abb3b9.jpg",
-                "a319361f914a09d15f304ca2bbee840b.jpg",
-                "aa8c4e8b0e0d6c18936125c792995942.jpg",
-                "b4168b965378b8d90bc98fbb0417f6a2.jpg",
-                "c8683b67b9308d06ff92f222c32f1ee1.jpg",
-                "cb011d26038d97180e9a99f198a0610c.jpg",
-                "d0b28012fe0f75e56c2da0131ae529f2.jpg",
-                "d20725f2a9c4531ab6550aa3f0fffe66.jpg"
-            };
-
-            if (!existingImages.Contains(normalizedPath) && 
-                !normalizedPath.StartsWith("images/", System.StringComparison.OrdinalIgnoreCase) &&
-                !normalizedPath.StartsWith("returns/", System.StringComparison.OrdinalIgnoreCase) &&
-                !normalizedPath.StartsWith("payment-slips/", System.StringComparison.OrdinalIgnoreCase))
-            {
-                int hash = System.Math.Abs(normalizedPath.GetHashCode());
-                var list = new System.Collections.Generic.List<string>(existingImages);
-                normalizedPath = list[hash % list.Count];
-            }
-
+            // Sub-folder paths — preserve them and route through API
             if (normalizedPath.StartsWith("images/", System.StringComparison.OrdinalIgnoreCase) ||
                 normalizedPath.StartsWith("returns/", System.StringComparison.OrdinalIgnoreCase) ||
                 normalizedPath.StartsWith("payment-slips/", System.StringComparison.OrdinalIgnoreCase))
             {
-                return $"/{normalizedPath}";
+                return $"{_apiBaseUrl}/{normalizedPath}";
             }
 
-            return $"/images/products/{normalizedPath}";
+            // Plain filename — serve from API's images/products/ folder
+            return $"{_apiBaseUrl}/images/products/{normalizedPath}";
         }
         private bool showLogoutConfirm = false;
         private void GotoLogin()

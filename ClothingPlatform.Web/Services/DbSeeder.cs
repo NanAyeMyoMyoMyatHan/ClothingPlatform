@@ -30,7 +30,7 @@ namespace ClothingPlatform.Web.Services
             var staffRole = EnsureRole(db, "staff", "Staff operations access");
             var customerRole = EnsureRole(db, "customer", "Customer shopping account");
 
-            EnsureSeedUser(db, "Admin", "User", "admin@boutique.com", "admin123", adminRole.RoleId, "No. 123, Luxury Ave, Yangon", "09252522525");
+            EnsureSeedUser(db, "Admin", "User", "admin@boutique.com", "admin1234", adminRole.RoleId, "No. 123, Luxury Ave, Yangon", "09252522525");
             EnsureSeedUser(db, "Thiri", "San", "staff@boutique.com", "staff123", staffRole.RoleId, "No. 456, Boutique Rd, Yangon", "09222333444");
             EnsureSeedUser(db, "Emily", "Watson", "emily@gmail.com", "12345678", customerRole.RoleId, "No. 789, Style Street, Yangon", "09999888777");
 
@@ -337,6 +337,15 @@ namespace ClothingPlatform.Web.Services
             return role;
         }
 
+        private static bool PasswordMatches(string password, string storedHash)
+        {
+            if (storedHash.StartsWith("$2", StringComparison.Ordinal))
+            {
+                return BCrypt.Net.BCrypt.Verify(password, storedHash);
+            }
+            return string.Equals(storedHash, password, StringComparison.Ordinal);
+        }
+
         private static void EnsureSeedUser(
             AppDbContext db,
             string firstName,
@@ -351,9 +360,19 @@ namespace ClothingPlatform.Web.Services
             var user = db.Users.FirstOrDefault(u => u.Email.ToLower() == normalizedEmail);
             if (user != null)
             {
+                bool changed = false;
                 if (user.RoleId != roleId)
                 {
                     user.RoleId = roleId;
+                    changed = true;
+                }
+                if (!PasswordMatches(password, user.PasswordHash.Trim()))
+                {
+                    user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
+                    changed = true;
+                }
+                if (changed)
+                {
                     db.SaveChanges();
                 }
 

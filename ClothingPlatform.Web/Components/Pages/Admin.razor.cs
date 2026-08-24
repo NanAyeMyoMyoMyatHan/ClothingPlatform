@@ -331,10 +331,7 @@ namespace ClothingPlatform.Web.Components.Pages
                     return;
                 }
 
-                await using (var db = await DbFactory.CreateDbContextAsync())
-                {
-                    DbSeeder.Seed(db);
-                }
+
 
                 Console.WriteLine("Component");
                 if(model.ImageDto == null)
@@ -626,25 +623,28 @@ namespace ClothingPlatform.Web.Components.Pages
                     .Take(returnPageSize)
                     .ToList();
 
-                // Compute dashboard KPI stats
-                TotalRevenue = orders.Where(o => !OrderWorkflow.IsCancelled(o.OrderStatus)).Sum(o => o.TotalAmount);
-                TotalOrders = orders.Count;
-                PendingOrders = orders.Count(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Pending);
-                CancelledOrders = orders.Count(o => OrderWorkflow.IsCancelled(o.OrderStatus));
+                // Compute dashboard KPI stats from allOrders (direct DB — always reliable)
+                TotalRevenue = allOrders.Where(o => !OrderWorkflow.IsCancelled(o.OrderStatus)).Sum(o => o.TotalAmount);
+                TotalOrders = allOrders.Count;
+                PendingOrders = allOrders.Count(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Pending);
+                CancelledOrders = allOrders.Count(o => OrderWorkflow.IsCancelled(o.OrderStatus));
                 TotalCustomers = customers.Count;
 
-                // Compute category revenues
+                // Compute category revenues from allOrders (direct DB)
                 var categoryRevsMap = new Dictionary<string, decimal>();
                 var totalProductRevenue = 0m;
 
-                foreach (var ord in orders.Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Confirm))
+                foreach (var ord in allOrders.Where(o => OrderWorkflow.Normalize(o.OrderStatus) == OrderWorkflow.Confirm))
                 {
                     foreach (var item in ord.OrderItems)
                     {
-                        var prod = allProducts.FirstOrDefault(p => p.Name == item.ProductName);
+                        var productName = item.Variant?.Product?.Name ?? "";
+                        var prod = allProducts.FirstOrDefault(p => p.Name == productName);
                         var catName = prod?.Category?.Name ?? "Uncategorized";
-                        var rev = item.Quantity * (item.PricePerUnit - item.PurchasePrice);
-                        
+                        var priceAtPurchase = item.PriceAtPurchase;
+                        var purchasePrice = item.Variant?.PurchasePrice ?? 0;
+                        var rev = item.Quantity * (priceAtPurchase - purchasePrice);
+
                         if (categoryRevsMap.ContainsKey(catName))
                         {
                             categoryRevsMap[catName] += rev;
