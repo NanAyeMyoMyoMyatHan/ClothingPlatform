@@ -3483,12 +3483,18 @@
                                                 </button>
                                             </div>
                                         }
-                                        else if (OrderWorkflow.Normalize(order.OrderStatus) == OrderWorkflow.Confirm && CanRequestReturn(order) && !userReturns.Any(r => r.OrderId == order.OrderId && !string.Equals(r.Status, "Rejected", StringComparison.OrdinalIgnoreCase)))
+                                        else if (OrderWorkflow.Normalize(order.OrderStatus) == OrderWorkflow.Confirm)
                                         {
-                                            <div style="margin-bottom: 24px; display: flex; justify-content: flex-end;">
-                                                <button class="btn-primary-rose" @onclick="() => InitiateReturn(order)" @onclick:stopPropagation="true" style="padding: 10px 24px; font-size: 0.72rem;">
-                                                    Request Return / Exchange
-                                                </button>
+                                            <div style="margin-bottom: 24px; display: flex; justify-content: flex-end; gap: 12px; align-items: center; flex-wrap: wrap;">
+                                                <a href="/receipt/@order.OrderId" target="_blank" class="btn-secondary-rose" style="padding: 10px 20px; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; border-radius: 8px; border: 1px solid var(--rose); color: var(--rose); font-weight: 600; background: #fff;" @onclick:stopPropagation="true">
+                                                    <i class="bi bi-receipt"></i> View Official Receipt
+                                                </a>
+                                                @if (CanRequestReturn(order) && !userReturns.Any(r => r.OrderId == order.OrderId && !string.Equals(r.Status, "Rejected", StringComparison.OrdinalIgnoreCase)))
+                                                {
+                                                    <button class="btn-primary-rose" @onclick="() => InitiateReturn(order)" @onclick:stopPropagation="true" style="padding: 10px 24px; font-size: 0.72rem;">
+                                                        Request Return / Exchange
+                                                    </button>
+                                                }
                                             </div>
                                         }
 
@@ -4920,9 +4926,13 @@
                 </div>
             </div>
             <div class="cart-footer" style="padding: 20px; border-top: 1px solid #F3F4F6; display: flex; flex-direction: column; gap: 12px; background: #fff;">
-                @if (selectedNotification.OrderId.HasValue)
+                @if (selectedNotification.OrderId.HasValue && selectedNotification.Title.Contains("Confirmed", StringComparison.OrdinalIgnoreCase))
                 {
                     <button class="btn-checkout" @onclick="ViewReceiptFromNotification" style="width: 100%; height: 48px; background: var(--rose); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; transition: background 0.15s;">View Order Receipt</button>
+                }
+                else if (selectedNotification.OrderId.HasValue)
+                {
+                    <button class="btn-checkout" @onclick="ViewPurchasesFromNotification" style="width: 100%; height: 48px; background: var(--rose); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; transition: background 0.15s;">View My Purchases</button>
                 }
                 <button class="qty-btn" @onclick="CloseNotificationDrawer" style="width: 100%; height: 46px; background: white; border: 1px solid #D1D5DB; color: #374151; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;">Dismiss</button>
             </div>

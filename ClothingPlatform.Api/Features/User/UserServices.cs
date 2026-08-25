@@ -146,7 +146,7 @@ namespace ClothingPlatform.Api.Features.User
             var query = _db.Users
                 .AsNoTracking()
                 .Include(u => u.Role)
-                .Where(u => u.Role.RoleName == roleName);
+                .Where(u => u.Role != null && (u.Role.RoleName.ToLower() == roleName.ToLower() || u.Role.RoleName == roleName));
 
             var totalCount = await query.CountAsync();
 
@@ -161,7 +161,7 @@ namespace ClothingPlatform.Api.Features.User
                     Last_Name = u.LastName,
                     Email = u.Email,
                     Address = u.Address,
-                    Role = u.Role.RoleName,
+                    Role = u.Role != null ? u.Role.RoleName : roleName,
                     PhoneNo = u.PhoneNumber,
                     CreatedAt = u.CreatedAt
                 })

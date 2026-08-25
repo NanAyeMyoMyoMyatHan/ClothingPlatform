@@ -214,6 +214,7 @@ CREATE TABLE products(
 	is_featured boolean NULL,
 	created_at timestamp without time zone NULL,
 	promo_id int NULL,
+	is_deleted boolean NOT NULL DEFAULT false,
 PRIMARY KEY  
 (
 	product_id

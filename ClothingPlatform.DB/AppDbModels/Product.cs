@@ -16,6 +16,9 @@ public partial class Product
     public bool? IsFeatured { get; set; }
 
     public DateTime? CreatedAt { get; set; }
+ 
+    [System.ComponentModel.DataAnnotations.Schema.Column("is_deleted")]
+    public bool IsDeleted { get; set; } = false;
 
     [System.ComponentModel.DataAnnotations.Schema.Column("promo_id")]
     public int? PromoId { get; set; }

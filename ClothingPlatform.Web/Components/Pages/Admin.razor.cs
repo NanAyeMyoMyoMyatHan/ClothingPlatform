@@ -59,10 +59,10 @@ namespace ClothingPlatform.Web.Components.Pages
         private bool profileSaved = false;
 
         private bool IsPortalOperator => Session.IsAdmin || Session.IsStaff;
-        private bool CanViewCustomers => Session.HasPermission("customers.view");
-        private bool CanManageStaff => Session.HasPermission("staff.manage");
-        private bool CanManageProducts => Session.HasPermission("products.manage");
-        private bool CanViewReports => Session.HasPermission("reports.generate");
+        private bool CanViewCustomers => Session.IsAdmin || Session.HasPermission("customers.view");
+        private bool CanManageStaff => Session.IsAdmin || Session.HasPermission("staff.manage");
+        private bool CanManageProducts => Session.IsAdmin || Session.HasPermission("products.manage");
+        private bool CanViewReports => Session.IsAdmin || Session.HasPermission("reports.generate");
         private bool CanAccessAdminInsights => Session.IsAdmin || CanViewReports;
         private string PortalHeadline => Session.IsAdmin ? "Admin Panel" : "Operations Portal";
         private string PortalShellLabel => Session.IsAdmin ? "Admin Control" : "Shared Operations";
@@ -415,6 +415,7 @@ namespace ClothingPlatform.Web.Components.Pages
                 
                 if (CanViewCustomers)
                 {
+                    bool customersLoaded = false;
                     try
                     {
                         var result = await HttpClientServices.ExecuteAsync<PagedResult<UserModel>>(
@@ -422,13 +423,47 @@ namespace ClothingPlatform.Web.Components.Pages
                             null,
                             EnumHttpMethod.Get);
 
-                        PageCustomer = result?.Items ?? new();
-                        customerTotalCount = result?.TotalCount ?? 0;
-                        customerTotalPage = (int)Math.Ceiling((double)customerTotalCount / customerPageSize);
+                        if (result?.Items != null && result.Items.Any())
+                        {
+                            PageCustomer = result.Items;
+                            customerTotalCount = result.TotalCount;
+                            customerTotalPage = (int)Math.Ceiling((double)customerTotalCount / customerPageSize);
+                            customersLoaded = true;
+                        }
                     }
                     catch (Exception apiEx)
                     {
                         Console.WriteLine($"[Admin LoadData] API customers load warning: {apiEx.Message}");
+                    }
+
+                    if (!customersLoaded)
+                    {
+                        var customerQuery = db.Users
+                            .Include(u => u.Role)
+                            .Where(u => u.Role != null && (u.Role.RoleName.ToLower() == "customer" || u.Role.RoleName == "customer"))
+                            .AsNoTracking();
+
+                        customerTotalCount = await customerQuery.CountAsync();
+                        customerTotalPage = (int)Math.Ceiling((double)customerTotalCount / customerPageSize);
+                        if (customerPage > customerTotalPage && customerTotalPage > 0) customerPage = customerTotalPage;
+                        if (customerPage < 1) customerPage = 1;
+
+                        PageCustomer = await customerQuery
+                            .OrderByDescending(u => u.UserId)
+                            .Skip((customerPage - 1) * customerPageSize)
+                            .Take(customerPageSize)
+                            .Select(u => new UserModel
+                            {
+                                Id = u.UserId,
+                                First_Name = u.FirstName,
+                                Last_Name = u.LastName,
+                                Email = u.Email,
+                                Address = u.Address,
+                                Role = u.Role != null ? u.Role.RoleName : "customer",
+                                PhoneNo = u.PhoneNumber,
+                                CreatedAt = u.CreatedAt
+                            })
+                            .ToListAsync();
                     }
                 }
                 else
@@ -440,6 +475,7 @@ namespace ClothingPlatform.Web.Components.Pages
 
                 if (CanManageStaff)
                 {
+                    bool staffLoaded = false;
                     try
                     {
                         var staff = await HttpClientServices.ExecuteAsync<PagedResult<UserModel>>(
@@ -447,14 +483,49 @@ namespace ClothingPlatform.Web.Components.Pages
                             null,
                             EnumHttpMethod.Get);
 
-                        PageStaff = staff?.Items ?? new();
-                        recentStaff = PageStaff.Take(5).ToList();
-                        staffTotalCount = staff?.TotalCount ?? 0;
-                        staffTotalPage = (int)Math.Ceiling((double)staffTotalCount / staffPageSize);
+                        if (staff?.Items != null && staff.Items.Any())
+                        {
+                            PageStaff = staff.Items;
+                            recentStaff = PageStaff.Take(5).ToList();
+                            staffTotalCount = staff.TotalCount;
+                            staffTotalPage = (int)Math.Ceiling((double)staffTotalCount / staffPageSize);
+                            staffLoaded = true;
+                        }
                     }
                     catch (Exception apiEx)
                     {
                         Console.WriteLine($"[Admin LoadData] API staff load warning: {apiEx.Message}");
+                    }
+
+                    if (!staffLoaded)
+                    {
+                        var staffQuery = db.Users
+                            .Include(u => u.Role)
+                            .Where(u => u.Role != null && (u.Role.RoleName.ToLower() == "staff" || u.Role.RoleName == "staff"))
+                            .AsNoTracking();
+
+                        staffTotalCount = await staffQuery.CountAsync();
+                        staffTotalPage = (int)Math.Ceiling((double)staffTotalCount / staffPageSize);
+                        if (staffPage > staffTotalPage && staffTotalPage > 0) staffPage = staffTotalPage;
+                        if (staffPage < 1) staffPage = 1;
+
+                        PageStaff = await staffQuery
+                            .OrderByDescending(u => u.UserId)
+                            .Skip((staffPage - 1) * staffPageSize)
+                            .Take(staffPageSize)
+                            .Select(u => new UserModel
+                            {
+                                Id = u.UserId,
+                                First_Name = u.FirstName,
+                                Last_Name = u.LastName,
+                                Email = u.Email,
+                                Address = u.Address,
+                                Role = u.Role != null ? u.Role.RoleName : "staff",
+                                PhoneNo = u.PhoneNumber,
+                                CreatedAt = u.CreatedAt
+                            })
+                            .ToListAsync();
+                        recentStaff = PageStaff.Take(5).ToList();
                     }
                 }
                 else
@@ -990,6 +1061,17 @@ namespace ClothingPlatform.Web.Components.Pages
                 }
 
                 dbOrder.OrderStatus = OrderWorkflow.CancelledByStaff;
+
+                db.CustomerNotifications.Add(new CustomerNotification
+                {
+                    UserId = dbOrder.UserId,
+                    OrderId = dbOrder.OrderId,
+                    Title = "Order Cancellation Update",
+                    Message = $"Dear valued customer, we sincerely apologize, but your order ORD-{dbOrder.OrderId:D4} has been cancelled due to an unexpected stock issue. Click to view order details.",
+                    IsRead = false,
+                    CreatedAt = DateTime.Now
+                });
+
                 await db.SaveChangesAsync();
 
                 successMessage = UiMessages.Admin.OrderCancelled(orderId);
@@ -1858,10 +1940,28 @@ namespace ClothingPlatform.Web.Components.Pages
         {
             try
             {
-                adminReport = await HttpClientServices.ExecuteAsync<AdminReportSummaryDto>(
-                    $"api/report/admin?from={reportFrom:yyyy-MM-dd}&to={reportTo:yyyy-MM-dd}",
-                    null,
-                    EnumHttpMethod.Get);
+                bool apiLoaded = false;
+                try
+                {
+                    adminReport = await HttpClientServices.ExecuteAsync<AdminReportSummaryDto>(
+                        $"api/report/admin?from={reportFrom:yyyy-MM-dd}&to={reportTo:yyyy-MM-dd}",
+                        null,
+                        EnumHttpMethod.Get);
+                    if (adminReport != null)
+                    {
+                        apiLoaded = true;
+                    }
+                }
+                catch (Exception apiEx)
+                {
+                    Console.WriteLine($"[AdminReport] API load warning: {apiEx.Message}");
+                }
+
+                if (!apiLoaded)
+                {
+                    adminReport = await GenerateAdminReportDirectAsync();
+                }
+                errorMessage = "";
             }
             catch (Exception ex)
             {
@@ -1869,29 +1969,70 @@ namespace ClothingPlatform.Web.Components.Pages
             }
         }
 
+        private async Task<AdminReportSummaryDto> GenerateAdminReportDirectAsync()
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+            var start = reportFrom.Date;
+            var end = reportTo.Date.AddDays(1);
+
+            var orders = await db.Orders
+                .AsNoTracking()
+                .Include(o => o.User)
+                .Include(o => o.Payments)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Variant)
+                .Where(o => o.CreatedAt >= start && o.CreatedAt < end)
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync();
+
+            var rows = orders.Select(o => new AdminReportOrderDto
+            {
+                OrderId = o.OrderId,
+                OrderDate = o.CreatedAt,
+                CustomerName = o.User != null ? $"{o.User.FirstName} {o.User.LastName}".Trim() : "Customer",
+                OrderStatus = OrderWorkflow.Normalize(o.OrderStatus),
+                PaymentStatus = o.PaymentStatus,
+                PaymentMethod = o.Payments.FirstOrDefault()?.PaymentMethod ?? "cod",
+                TotalAmount = o.OrderItems.Sum(oi => oi.Quantity * (oi.PriceAtPurchase - (oi.Variant != null ? oi.Variant.PurchasePrice : 0)))
+            }).ToList();
+
+            return new AdminReportSummaryDto
+            {
+                From = start,
+                To = reportTo.Date,
+                TotalOrders = rows.Count,
+                PendingOrders = rows.Count(o => o.OrderStatus == OrderWorkflow.Pending),
+                ProcessingOrders = rows.Count(o => o.OrderStatus == OrderWorkflow.Processing),
+                ConfirmOrders = rows.Count(o => o.OrderStatus == OrderWorkflow.Confirm),
+                TotalRevenue = rows.Sum(o => o.TotalAmount),
+                PaidRevenue = rows.Where(o =>
+                        string.Equals(o.PaymentStatus, "paid", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(o.PaymentStatus, "completed", StringComparison.OrdinalIgnoreCase))
+                    .Sum(o => o.TotalAmount),
+                Orders = rows
+            };
+        }
+
         private async Task DownloadAdminReportCsv()
         {
             try
             {
-                var token = ServerCookies.GetAuthToken();
-                if (string.IsNullOrWhiteSpace(token))
+                var report = adminReport ?? await GenerateAdminReportDirectAsync();
+                var csv = new System.Text.StringBuilder();
+                csv.AppendLine("OrderId,OrderDate,CustomerName,OrderStatus,PaymentStatus,PaymentMethod,TotalAmount");
+                foreach (var row in report.Orders)
                 {
-                    token = Session.AuthToken;
+                    csv.AppendLine(string.Join(",",
+                        row.OrderId,
+                        $"\"{row.OrderDate?.ToString("yyyy-MM-dd HH:mm") ?? ""}\"",
+                        $"\"{row.CustomerName?.Replace("\"", "\"\"") ?? ""}\"",
+                        $"\"{row.OrderStatus?.Replace("\"", "\"\"") ?? ""}\"",
+                        $"\"{row.PaymentStatus?.Replace("\"", "\"\"") ?? ""}\"",
+                        $"\"{row.PaymentMethod?.Replace("\"", "\"\"") ?? ""}\"",
+                        row.TotalAmount.ToString("0.00")));
                 }
 
-                using var request = new HttpRequestMessage(
-                    HttpMethod.Get,
-                    $"api/report/admin.csv?from={reportFrom:yyyy-MM-dd}&to={reportTo:yyyy-MM-dd}");
-
-                if (!string.IsNullOrWhiteSpace(token))
-                {
-                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                }
-
-                var response = await Http.SendAsync(request);
-                response.EnsureSuccessStatusCode();
-                var csv = await response.Content.ReadAsStringAsync();
-                var dataUrl = "data:text/csv;charset=utf-8," + Uri.EscapeDataString(csv);
+                var dataUrl = "data:text/csv;charset=utf-8," + Uri.EscapeDataString(csv.ToString());
                 var fileName = $"admin-report-{reportFrom:yyyyMMdd}-{reportTo:yyyyMMdd}.csv";
                 await JSRuntime.InvokeVoidAsync("eval",
                     $"const a=document.createElement('a');a.href='{dataUrl}';a.download='{fileName}';document.body.appendChild(a);a.click();a.remove();");
@@ -2358,29 +2499,58 @@ namespace ClothingPlatform.Web.Components.Pages
 
             try
             {
-                var matrix = await HttpClientServices.ExecuteAsync<PermissionMatrixDto>(
-                    "api/permission/matrix",
-                    null,
-                    EnumHttpMethod.Get);
-
-                if (matrix != null)
+                bool apiLoaded = false;
+                try
                 {
-                    permRoles = matrix.Roles ?? new();
-                    permList = matrix.Permissions ?? new();
+                    var matrix = await HttpClientServices.ExecuteAsync<PermissionMatrixDto>(
+                        "api/permission/matrix",
+                        null,
+                        EnumHttpMethod.Get);
 
-                    // Rebuild local grant dictionary
+                    if (matrix != null && matrix.Roles != null && matrix.Roles.Any())
+                    {
+                        permRoles = matrix.Roles ?? new();
+                        permList = matrix.Permissions ?? new();
+
+                        // Rebuild local grant dictionary
+                        permGrants = new Dictionary<(int, int), bool>();
+                        foreach (var grant in matrix.Grants ?? new())
+                        {
+                            permGrants[(grant.PermissionId, grant.RoleId)] = grant.Granted;
+                        }
+
+                        // Default to the first manageable role tab
+                        if (activePermRoleId == 0 && permRoles.Any())
+                        {
+                            activePermRoleId = permRoles[0].RoleId;
+                        }
+                        apiLoaded = true;
+                    }
+                }
+                catch (Exception apiEx)
+                {
+                    Console.WriteLine($"[PermissionMatrix] API load warning: {apiEx.Message}");
+                }
+
+                if (!apiLoaded)
+                {
+                    var directMatrix = await GeneratePermissionMatrixDirectAsync();
+                    permRoles = directMatrix.Roles ?? new();
+                    permList = directMatrix.Permissions ?? new();
+
                     permGrants = new Dictionary<(int, int), bool>();
-                    foreach (var grant in matrix.Grants ?? new())
+                    foreach (var grant in directMatrix.Grants ?? new())
                     {
                         permGrants[(grant.PermissionId, grant.RoleId)] = grant.Granted;
                     }
 
-                    // Default to the first manageable role tab
                     if (activePermRoleId == 0 && permRoles.Any())
                     {
                         activePermRoleId = permRoles[0].RoleId;
                     }
                 }
+
+                permErrorMessage = "";
             }
             catch (Exception ex)
             {
@@ -2391,6 +2561,98 @@ namespace ClothingPlatform.Web.Components.Pages
                 isLoadingPermissions = false;
                 StateHasChanged();
             }
+        }
+
+        private async Task<PermissionMatrixDto> GeneratePermissionMatrixDirectAsync()
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+
+            var roles = await db.Roles
+                .Where(r => r.RoleName != "admin")
+                .OrderBy(r => r.RoleName)
+                .Select(r => new RoleDto
+                {
+                    RoleId = r.RoleId,
+                    RoleName = r.RoleName,
+                    Description = r.Description
+                })
+                .AsNoTracking()
+                .ToListAsync();
+
+            var permissions = await db.Permissions
+                .OrderBy(p => p.PermissionName)
+                .Select(p => new PermissionDto
+                {
+                    PermissionId = p.PermissionId,
+                    PermissionName = p.PermissionName,
+                    Description = p.Description
+                })
+                .AsNoTracking()
+                .ToListAsync();
+
+            var roleIds = roles.Select(r => r.RoleId).ToList();
+            var grantedPairs = await db.RolePermissions
+                .Where(rp => roleIds.Contains(rp.RoleId))
+                .Select(rp => new { rp.RoleId, rp.PermissionId })
+                .AsNoTracking()
+                .ToListAsync();
+
+            var grantSet = grantedPairs
+                .Select(g => (g.PermissionId, g.RoleId))
+                .ToHashSet();
+
+            var grants = new List<GrantEntryDto>();
+            foreach (var perm in permissions)
+            {
+                foreach (var role in roles)
+                {
+                    grants.Add(new GrantEntryDto
+                    {
+                        PermissionId = perm.PermissionId,
+                        RoleId = role.RoleId,
+                        Granted = grantSet.Contains((perm.PermissionId, role.RoleId))
+                    });
+                }
+            }
+
+            return new PermissionMatrixDto
+            {
+                Roles = roles,
+                Permissions = permissions,
+                Grants = grants
+            };
+        }
+
+        private async Task UpdateRolePermissionsDirectAsync(int roleId, List<int> permissionIds)
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+
+            var role = await db.Roles.FirstOrDefaultAsync(r => r.RoleId == roleId);
+            if (role == null || role.RoleName == "admin")
+            {
+                return;
+            }
+
+            var validPermIds = await db.Permissions
+                .Where(p => permissionIds.Contains(p.PermissionId))
+                .Select(p => p.PermissionId)
+                .ToListAsync();
+
+            var existing = await db.RolePermissions
+                .Where(rp => rp.RoleId == roleId)
+                .ToListAsync();
+
+            db.RolePermissions.RemoveRange(existing);
+
+            var newGrants = validPermIds.Select(pId => new RolePermission
+            {
+                RoleId = roleId,
+                PermissionId = pId,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await db.RolePermissions.AddRangeAsync(newGrants);
+            await db.SaveChangesAsync();
         }
 
         private void TogglePermission(int roleId, int permId)
@@ -2428,15 +2690,29 @@ namespace ClothingPlatform.Web.Components.Pages
                     .Select(p => p.PermissionId)
                     .ToList();
 
-                var request = new UpdateRolePermissionsRequest { PermissionIds = grantedIds };
+                bool apiSaved = false;
+                try
+                {
+                    var request = new UpdateRolePermissionsRequest { PermissionIds = grantedIds };
+                    await HttpClientServices.ExecuteAsync<object>(
+                        $"api/permission/role/{roleId}",
+                        request,
+                        EnumHttpMethod.Put);
+                    apiSaved = true;
+                }
+                catch (Exception apiEx)
+                {
+                    Console.WriteLine($"[SaveRolePermissions] API save warning: {apiEx.Message}");
+                }
 
-                await HttpClientServices.ExecuteAsync<object>(
-                    $"api/permission/role/{roleId}",
-                    request,
-                    EnumHttpMethod.Put);
+                if (!apiSaved)
+                {
+                    await UpdateRolePermissionsDirectAsync(roleId, grantedIds);
+                }
 
                 var roleName = permRoles.FirstOrDefault(r => r.RoleId == roleId)?.RoleName ?? "Role";
                 permSuccessMessage = $"✓ Permissions for '{roleName}' saved. Changes apply on next login.";
+                permErrorMessage = "";
             }
             catch (Exception ex)
             {
@@ -2530,16 +2806,139 @@ namespace ClothingPlatform.Web.Components.Pages
                     ? $"&to={stockReportTo:yyyy-MM-dd}"
                     : "";
 
-                stockReport = await HttpClientServices.ExecuteAsync<StockReportSummaryDto>(
-                    $"api/report/stock?{categoryParam}{searchParam}{fromParam}{toParam}",
-                    null,
-                    EnumHttpMethod.Get);
+                bool apiLoaded = false;
+                try
+                {
+                    stockReport = await HttpClientServices.ExecuteAsync<StockReportSummaryDto>(
+                        $"api/report/stock?{categoryParam}{searchParam}{fromParam}{toParam}",
+                        null,
+                        EnumHttpMethod.Get);
+                    if (stockReport != null)
+                    {
+                        apiLoaded = true;
+                    }
+                }
+                catch (Exception apiEx)
+                {
+                    Console.WriteLine($"[StockReport] API load warning: {apiEx.Message}");
+                }
+
+                if (!apiLoaded)
+                {
+                    stockReport = await GenerateStockReportDirectAsync();
+                }
+
                 stockReportPage = 1;
+                errorMessage = "";
             }
             catch (Exception ex)
             {
                 errorMessage = $"Failed to load stock report: {ex.Message}";
             }
+        }
+
+        private async Task<StockReportSummaryDto> GenerateStockReportDirectAsync()
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+
+            DateTime? dateStart = stockReportUseDateFilter ? stockReportFrom.Date : null;
+            DateTime? dateEnd = stockReportUseDateFilter ? stockReportTo.Date.AddDays(1) : null;
+
+            var variantsQuery = db.ProductVariants
+                .AsNoTracking()
+                .Include(v => v.Product)
+                    .ThenInclude(p => p.Category)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(stockReportCategoryFilter))
+            {
+                variantsQuery = variantsQuery.Where(v =>
+                    v.Product != null && v.Product.Category != null &&
+                    v.Product.Category.Name.ToLower().Contains(stockReportCategoryFilter.ToLower()));
+            }
+
+            if (!string.IsNullOrWhiteSpace(stockReportSearch))
+            {
+                var s = stockReportSearch.ToLower();
+                variantsQuery = variantsQuery.Where(v =>
+                    (v.Product != null && v.Product.Name.ToLower().Contains(s)) ||
+                    v.Sku.ToLower().Contains(s) ||
+                    v.Color.ToLower().Contains(s) ||
+                    v.Size.ToLower().Contains(s));
+            }
+
+            var variants = await variantsQuery.ToListAsync();
+
+            var regularOrdersQuery = db.OrderItems
+                .AsNoTracking()
+                .Include(oi => oi.Order)
+                .AsQueryable();
+
+            if (dateStart.HasValue)
+                regularOrdersQuery = regularOrdersQuery.Where(oi => oi.Order != null && oi.Order.CreatedAt >= dateStart.Value);
+            if (dateEnd.HasValue)
+                regularOrdersQuery = regularOrdersQuery.Where(oi => oi.Order != null && oi.Order.CreatedAt < dateEnd.Value);
+
+            var soldFromOrders = await regularOrdersQuery
+                .GroupBy(oi => oi.VariantId)
+                .Select(g => new { VariantId = g.Key, SoldQty = g.Sum(oi => oi.Quantity) })
+                .ToListAsync();
+
+            var guestOrdersQuery = db.GuestOrderItems
+                .AsNoTracking()
+                .Include(gi => gi.GuestOrder)
+                .AsQueryable();
+
+            if (dateStart.HasValue)
+                guestOrdersQuery = guestOrdersQuery.Where(gi => gi.GuestOrder != null && gi.GuestOrder.CreatedAt >= dateStart.Value);
+            if (dateEnd.HasValue)
+                guestOrdersQuery = guestOrdersQuery.Where(gi => gi.GuestOrder != null && gi.GuestOrder.CreatedAt < dateEnd.Value);
+
+            var soldFromGuestOrders = await guestOrdersQuery
+                .GroupBy(gi => gi.VariantId)
+                .Select(g => new { VariantId = g.Key, SoldQty = g.Sum(gi => gi.Quantity) })
+                .ToListAsync();
+
+            var soldDict = soldFromOrders
+                .Concat(soldFromGuestOrders)
+                .GroupBy(x => x.VariantId)
+                .ToDictionary(g => g.Key, g => g.Sum(x => x.SoldQty));
+
+            var items = variants.Select(v =>
+            {
+                var soldQty = soldDict.TryGetValue(v.VariantId, out var sq) ? sq : 0;
+                var addedStock = v.StockQuantity + soldQty;
+                return new StockReportItemDto
+                {
+                    VariantId = v.VariantId,
+                    ProductId = v.ProductId,
+                    ProductName = v.Product?.Name ?? "Unknown Product",
+                    CategoryName = v.Product?.Category?.Name ?? "Uncategorized",
+                    Size = v.Size,
+                    Color = v.Color,
+                    Sku = v.Sku,
+                    CurrentStock = v.StockQuantity,
+                    TotalSoldQty = soldQty,
+                    TotalAddedStock = addedStock,
+                    SalePrice = v.SalePrice ?? 0,
+                    PurchasePrice = v.PurchasePrice
+                };
+            }).OrderByDescending(i => i.VariantId).ToList();
+
+            return new StockReportSummaryDto
+            {
+                GeneratedAt = DateTime.Now,
+                DateFrom = dateStart,
+                DateTo = dateEnd.HasValue ? dateEnd.Value.AddDays(-1) : null,
+                TotalProducts = items.Select(i => i.ProductId).Distinct().Count(),
+                TotalVariants = items.Count,
+                TotalCurrentStock = items.Sum(i => i.CurrentStock),
+                TotalSoldUnits = items.Sum(i => i.TotalSoldQty),
+                TotalAddedStock = items.Sum(i => i.TotalAddedStock),
+                LowStockCount = items.Count(i => i.CurrentStock > 0 && i.CurrentStock < 5),
+                OutOfStockCount = items.Count(i => i.CurrentStock == 0),
+                Items = items
+            };
         }
 
         private async Task ChangeStockReportPage(int newPage)

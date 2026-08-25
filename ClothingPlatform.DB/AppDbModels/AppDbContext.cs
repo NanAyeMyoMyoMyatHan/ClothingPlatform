@@ -343,6 +343,12 @@ public partial class AppDbContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("name");
 
+            entity.Property(e => e.IsDeleted)
+                .HasDefaultValue(false)
+                .HasColumnName("is_deleted");
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+
             entity.HasOne(d => d.Category).WithMany(p => p.Products)
                 .HasForeignKey(d => d.CategoryId)
                 .OnDelete(DeleteBehavior.ClientSetNull)

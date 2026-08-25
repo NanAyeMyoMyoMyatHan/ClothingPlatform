@@ -123,6 +123,19 @@
             transform: translateY(-1px);
         }
 
+    .staff-grid {
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        gap: 24px;
+        align-items: start;
+    }
+
+    @@media (max-width: 992px) {
+        .staff-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
 </style>
 
 @if (!isPortalReady)
@@ -1009,7 +1022,7 @@ else
                         @if (!PageCustomer.Any())
                         {
                             <tr>
-                                <td colspan="6" class="text-center py-4 text-muted">No registered customers.</td>
+                                <td colspan="7" class="text-center py-4 text-muted">No registered customers.</td>
                             </tr>
                         }
                         else
@@ -1045,32 +1058,32 @@ else
 
                     <div class="mb-3">
                         <label class="form-label text-muted small text-uppercase fw-bold">First Name <span class="text-danger">*</span></label>
-                        <input type="text" class="luxury-input" @bind="staffForm.FirstName" placeholder="e.g., Amara" required />
+                        <input type="text" class="luxury-input" @bind="staffForm.FirstName" placeholder="e.g., Amara" autocomplete="off" required />
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label text-muted small text-uppercase fw-bold">Last Name <span class="text-danger">*</span></label>
-                        <input type="text" class="luxury-input" @bind="staffForm.LastName" placeholder="e.g., Nguyen" required />
+                        <input type="text" class="luxury-input" @bind="staffForm.LastName" placeholder="e.g., Nguyen" autocomplete="off" required />
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label text-muted small text-uppercase fw-bold">Email Address <span class="text-danger">*</span></label>
-                        <input type="email" class="luxury-input" @bind="staffForm.Email" placeholder="staff@chicboutique.com" required />
+                        <input type="email" class="luxury-input" @bind="staffForm.Email" placeholder="staff@chicboutique.com" autocomplete="new-email" required />
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label text-muted small text-uppercase fw-bold">Password <span class="text-danger">*</span></label>
-                        <input type="password" class="luxury-input" @bind="staffForm.Password" placeholder="Min. 6 characters" required />
+                        <input type="password" class="luxury-input" @bind="staffForm.Password" placeholder="Min. 6 characters" autocomplete="new-password" required />
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label text-muted small text-uppercase fw-bold">Phone Number</label>
-                        <input type="text" class="luxury-input" @bind="staffForm.Phone" placeholder="+95 9 xxx xxx xxx" />
+                        <input type="text" class="luxury-input" @bind="staffForm.Phone" placeholder="+95 9 xxx xxx xxx" autocomplete="off" />
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label text-muted small text-uppercase fw-bold">Address</label>
-                        <textarea class="luxury-input" @bind="staffForm.Address" rows="2" placeholder="Staff residential address..."></textarea>
+                        <textarea class="luxury-input" @bind="staffForm.Address" rows="2" placeholder="Staff residential address..." autocomplete="off"></textarea>
                     </div>
 
                     <div class="mt-4 d-grid gap-2">

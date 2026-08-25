@@ -39,6 +39,11 @@ public static class SchemaCompatibility
                     ALTER TABLE guest_orders RENAME COLUMN paymentstatus TO payment_status;
                 END IF;
 
+                -- Ensure products has is_deleted column for soft delete support
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'products' AND column_name = 'is_deleted') THEN
+                    ALTER TABLE products ADD COLUMN is_deleted boolean NOT NULL DEFAULT false;
+                END IF;
+
                 -- Automatically synchronize primary key sequences with MAX(id) across all tables
                 PERFORM setval('users_user_id_seq', COALESCE((SELECT MAX(user_id) FROM users), 1));
                 PERFORM setval('roles_role_id_seq', COALESCE((SELECT MAX(role_id) FROM roles), 1));

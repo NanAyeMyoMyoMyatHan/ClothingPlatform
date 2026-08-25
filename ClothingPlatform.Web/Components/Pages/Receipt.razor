@@ -1,5 +1,6 @@
 @page "/receipt/{OrderId:int}"
 @using ClothingPlatform.DB.AppDbModels
+@using ClothingPlatform.Api.Models.Order
 @using Microsoft.EntityFrameworkCore
 @inject IDbContextFactory<AppDbContext> DbFactory
 @inject NavigationManager Nav
@@ -10,9 +11,6 @@
         <button class="btn-back" @onclick="GoBack">
             <i class="bi bi-arrow-left"></i> Back to Shop
         </button>
-        <button class="btn-print" @onclick="PrintReceipt">
-            <i class="bi bi-printer"></i> Print Receipt
-        </button>
     </div>
 
     @if (isLoading)
@@ -22,12 +20,12 @@
             <p>Generating Receipt...</p>
         </div>
     }
-    else if (order == null)
+    else if (order == null || OrderWorkflow.Normalize(order.OrderStatus) != OrderWorkflow.Confirm)
     {
         <div class="receipt-error">
             <i class="bi bi-exclamation-triangle-fill"></i>
-            <h3>Receipt Not Found</h3>
-            <p>The requested order receipt could not be loaded or you do not have permission to view it.</p>
+            <h3>Receipt Unavailable</h3>
+            <p>Official receipts are only available for confirmed orders. This order is currently @(order != null ? (OrderWorkflow.Normalize(order.OrderStatus) == OrderWorkflow.CancelledByStaff ? "Cancelled by Staff" : order.OrderStatus) : "unavailable").</p>
         </div>
     }
     else

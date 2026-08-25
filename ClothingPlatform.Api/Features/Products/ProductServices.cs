@@ -293,24 +293,14 @@ namespace ClothingPlatform.Api.Features.Product
         public async Task<bool> DeleteProductAsync(int productId)
         {
             var product = await _db.Products
-                .Include(p => p.ProductVariants)
-                .Include(p => p.ProductImages)
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(p => p.ProductId == productId);
 
-            if (product == null)
+            if (product == null || product.IsDeleted)
                 return false;
 
-            var variantIds = product.ProductVariants.Select(v => v.VariantId).ToList();
-
-            var relatedOrderItems = _db.OrderItems
-                .Where(oi => variantIds.Contains(oi.VariantId));
-            var relatedSalesLogs = _db.StaffSalesLogs.Where(x => variantIds.Contains(x.VariantId));
-            _db.StaffSalesLogs.RemoveRange(relatedSalesLogs);
-            
-            _db.OrderItems.RemoveRange(relatedOrderItems);
-            _db.ProductImages.RemoveRange(product.ProductImages);
-            _db.ProductVariants.RemoveRange(product.ProductVariants);
-            _db.Products.Remove(product);
+            // Soft delete: mark as deleted so historical order/sales data remains intact
+            product.IsDeleted = true;
 
             await _db.SaveChangesAsync();
 
