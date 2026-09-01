@@ -53,6 +53,7 @@ namespace ClothingPlatform.Api.Features.Order
                 UserId = model.UserId,
                 TotalAmount = model.TotalPrice,
                 OrderStatus = OrderWorkflow.Pending,
+                PaymentStatus = NormalizePaymentMethod(model.PaymentMethod) == "cod" ? "unpaid" : "pending",
                 ShippingAddress = fullAddress
             };
             _db.Orders.Add(order);

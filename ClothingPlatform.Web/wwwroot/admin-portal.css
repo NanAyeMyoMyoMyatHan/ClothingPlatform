@@ -152,6 +152,8 @@
         padding: 2rem;
         min-height: 100vh;
         background-color: var(--bg-primary);
+        overflow-x: hidden;
+        max-width: calc(100vw - 260px);
     }
 
         /* Header text (Hello, Aye Aye / date) */
@@ -214,6 +216,8 @@
         border-radius: 12px;
         padding: 1rem;
         box-shadow: 0 4px 15px rgba(139, 26, 26, 0.05);
+        overflow-x: auto;
+        min-width: 0;
     }
 
     .luxury-table {

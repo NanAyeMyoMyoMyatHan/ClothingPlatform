@@ -1088,7 +1088,7 @@ namespace ClothingPlatform.Web.Components.Pages
                     UserId = currentUser.UserId,
                     TotalAmount = total,
                     OrderStatus = OrderWorkflow.Pending,
-                    PaymentStatus = "unpaid",
+                    PaymentStatus = selectedPayment == "cod" ? "unpaid" : "pending",
                     ShippingAddress = $"{coAddress}, {coCity} (Phone: {coPhone})",
                     CreatedAt = DateTime.Now,
                     AppliedPromo = appliedPromoCodes.Any() ? string.Join(",", appliedPromoCodes) : null
